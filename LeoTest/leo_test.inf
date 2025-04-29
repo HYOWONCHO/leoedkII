@@ -1,0 +1,90 @@
+## @file
+#  Brief Description of UEFI MyHelloWorld
+#
+#  Detailed Description of UEFI MyWizardDriver
+#
+#  Copyright for UEFI  MyHelloWorld
+#
+#  License for UEFI  MyHelloWorld
+#
+##
+
+[Defines]
+  INF_VERSION                    = 1.25
+  BASE_NAME                      = LeoTest
+  MODULE_UNI_FILE                 = leo_test.uni
+  FILE_GUID                      = 2eb48e1b-aaea-4557-bc78-bbe9e5c04328
+  MODULE_TYPE                    = UEFI_APPLICATION
+  VERSION_STRING                 = 1.0
+  ENTRY_POINT                    = UefiMain
+
+#
+# The following information is for reference only and not required by the build tools.
+#
+#  VALID_ARCHITECTURES           = IA32 X64 IPF EBC Etc...
+#
+
+#!include MdePkg/MdeLibs.dsc.inc
+
+[Sources]
+  leo_test.c
+  SBC_Log.c
+  SBC_CryptAES.c
+  SBC_FileCtrl.c
+
+[Packages]
+  EmulatorPkg/EmulatorPkg.dec
+  MdePkg/MdePkg.dec
+  MdeModulePkg/MdeModulePkg.dec
+  CryptoPkg/CryptoPkg.dec
+  SecurityPkg/SecurityPkg.dec
+  UefiPayloadPkg/UefiPayloadPkg.dec
+  ShellPkg/ShellPkg.dec
+
+[LibraryClasses]
+  UefiApplicationEntryPoint
+  BaseLib
+  BaseMemoryLib
+  UefiBootServicesTableLib
+  UefiRuntimeServicesTableLib
+  DebugLib
+  UefiLib
+  MemoryAllocationLib
+  DxeServicesLib
+  PrintLib
+  RngLib
+  BaseCryptLib
+  ShellLib
+  HandleParsingLib
+  ShellCommandLib
+  PcdLib
+  DevicePathLib
+  #UefiDriverEntryPoint
+
+
+
+[Guids]
+  ## SOMETIMES_CONSUMES   ## GUID # Locate protocol
+  ## SOMETIMES_CONSUMES   ## GUID # SmiHandlerRegister
+
+  ##gEdkiiMemoryProfileGuid
+  ##gEdkiiPiSmmCommunicationRegionTableGuid    ## SOMETIMES_CONSUMES ## SystemTable
+  ##gEfiFileSystemVolumeLabelInfoIdGuid           # SOMETIMES_CONSUMED
+  ##gEfiFileInfoGuid                              # SOMETIMES_CONSUMED
+  ##gEfiFileSystemInfoGuid                        # SOMETIMES_CONSUME
+
+[Ppis]
+
+[Protocols]
+  gEfiSimpleFileSystemProtocolGuid
+
+[FeaturePcd]
+
+[Pcd]
+
+[UserExtensions.TianoCore."ExtraFiles"]
+  leo_test_extra.uni
+
+[BuildOptions.X64]
+GCC:DEBUG_GCC5_X64_CC_FLAGS = -flto
+
