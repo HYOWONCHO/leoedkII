@@ -27,17 +27,32 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-#include "leo_test.h"
+// Block Io
+#include <Protocol/BlockIo.h>
+#include <Protocol/DiskInfo.h>
 
-#ifdef UEFI_FILE_OP
+#include "leo_test.h"
+// Length value
+
+
 #include <Library/UefiBootServicesTableLib.h>
 #include <Library/FileHandleLib.h>
-#endif
+
+#include <Protocol/Smbios.h>
+
+#include <Library/UnitTestLib.h>
+
+#include <openssl/objects.h>
+#include <openssl/bn.h>
+#include <openssl/ec.h>
 
 #include "SBC_Log.h"
 #include "SBC_ErrorType.h"
 #include "SBC_CryptAES.h"
 #include "SBC_FileCtrl.h"
+#include "SBC_TypeDefs.h"
+#include "SBC_EccSignVerify.h"
+#include "SBC_Config.h"
 
 //#include <openssl/sha.h>
 //
@@ -69,17 +84,6 @@ GLOBAL_REMOVE_IF_UNREFERENCED CONST UINT8  Aes128CbcData[] = {
 
 
 #endif
-
-VOID *Ec1;
-VOID *Ec2;
-// Length value
-typedef struct _lv_t {
-  UINTN length;
-  UINT8 *value;
-}LV_t;
-
-
-
 
 UINT32  gMaximumBasicFunction = CPUID_SIGNATURE;
 VOID CpuidSerialNumber(VOID)
@@ -139,115 +143,14 @@ TrimDataUINT32ToUINT8(UINT32 *InBuf, UINT8 *OutBuf, UINT32 BufLen)
 
 }
 
-EFI_STATUS
-SBC_CreateKey(VOID **keyContext, LV_t *privkey, LV_t *pubkey)
-{
-  //BOOLEAN ret;
-
-  VOID *_keyContext = NULL;
-
-  if(keyContext == NULL) {
-    return EFI_INVALID_PARAMETER;
-  }
-  Print(L"Ecc new by Nid ( Length : %d )\n", pubkey->length);
-
-  // Allocate and initialize one Elliptic Curve Context
-  _keyContext = EcNewByNid(CRYPTO_NID_SECP256R1);
-  if(_keyContext == NULL) {
-    Print(L"Allocate ECC curve context fail \n");
-    return EFI_NOT_READY;
-  }
-
-  Print(L"KeyContext Objec : 0x%x \n", *keyContext);
-
-  EcGenerateKey(_keyContext,  pubkey->value, &pubkey->length);
-  Print(L"Public key: \n");
-  //x_mem_print_bin(NULL,pubkey->value, pubkey->length);
-
-  *keyContext = _keyContext;
-
-
-  return EFI_SUCCESS;
-}
 
 
 
 
-#define EC_CURVE_NUM_SUPPORTED  3
-UINTN  EcCurveList[EC_CURVE_NUM_SUPPORTED]   = { CRYPTO_NID_SECP256R1, CRYPTO_NID_SECP384R1, CRYPTO_NID_SECP521R1 };
-UINTN  EcKeyHalfSize[EC_CURVE_NUM_SUPPORTED] = { 32, 48, 66 };
-
-EFI_STATUS
-TestVerifyEcDh (
-    VOID
-  )
-{
-
-  UINTN    CurveCount;
-
-  for (CurveCount = 0; CurveCount < EC_CURVE_NUM_SUPPORTED; CurveCount++) {
-    Print(L"Curve %x \n", EcCurveList[CurveCount]);
-    Ec1 = EcNewByNid (EcCurveList[CurveCount]);
-    if (Ec1 == NULL) {
-      Print(L"EC1Allocate ECC curve context fail \n");
-      return 0;
-    }
-
-    Ec2 = EcNewByNid (EcCurveList[CurveCount]);
-    if (Ec2 == NULL) {
-      Print(L"EC2 Allocate ECC curve context fail \n");
-      return 0;
-    }
-  }
-
-  return 0;
-}
-
-/**
- * @brief Generate the RNG
- *
- * @param[in]   seed      Random seed buffer
- * @param[in]   szseed    Length of seed buffer
- * @param[in]   szrng     Number of Random size
- * @param[out]  rngdata   Random data
- *
- * @return  On success, return the SBCOK, otherwise return approiate value
- */
-SBCStatus SBC_RngGeneration(UINT8* seed, UINTN szseed, UINTN szrng, UINT8* rngdata)
-{
-
-  BOOLEAN status = TRUE;
-
-
-  if(seed == NULL || rngdata == NULL) {
-    Print(L"%s args point to NULL \n", __FUNCTION__);
-    return SBCNULLP;
-  }
-
-  if(szseed <= 0 || szrng <= 0) {
-    Print(L"%s arg has length os zero \n");
-    return SBCZEROL;
-  }
 
 
 
-  status = RandomSeed(seed, szseed);
-  if(status == FALSE) {
-    Print(L"RandomSeed fail \n");
-    return SBCFAIL;
-  }
 
-  status = RandomBytes(rngdata, szrng);
-  if(status != TRUE) {
-    Print(L"RandomBytes fail \n");
-    return SBCFAIL;
-  }
-
-  return SBCOK;
-
-
-
-}
 
 /**
  * @brif Obtain the Hash of message
@@ -587,6 +490,481 @@ WriteToFile (
     return EFI_SUCCESS;
 }
 
+
+
+EFI_STATUS GetDiskSerialNumber(VOID) 
+{
+    EFI_STATUS Status;
+    EFI_HANDLE *HandleBuffer;
+    UINTN HandleCount;
+    EFI_BLOCK_IO_PROTOCOL *BlockIo;
+    
+    // Locate handles supporting Block IO Protocol
+    Status = gBS->LocateHandleBuffer(ByProtocol, &gEfiBlockIoProtocolGuid, NULL, &HandleCount, &HandleBuffer);
+    if (EFI_ERROR(Status)) {
+          DEBUG((DEBUG_ERROR, "[%a:%d] LocateHandleBuffer :%d \n",__FUNCTION__,__LINE__, Status));
+        return Status;
+    }
+
+    // Loop through all block devices
+    for (UINTN i = 0; i < HandleCount; i++) {
+        Status = gBS->HandleProtocol(HandleBuffer[i], &gEfiBlockIoProtocolGuid, (VOID **)&BlockIo);
+        if (EFI_ERROR(Status)) {
+          DEBUG((DEBUG_ERROR, "[%a:%d] HandleProtocol :%d \n",__FUNCTION__,__LINE__, Status));
+            continue;
+        }
+
+        if (BlockIo->Media->RemovableMedia) {
+            Print(L"Skipping removable media...\n");
+            continue;
+        }
+
+        // At this point, the BlockIo interface allows interaction with the disk
+        // The Serial Number is typically retrieved through a pass-through ATA command
+        Print(L"Disk detected, but retrieving serial requires ATA pass-through.\n");
+    }
+
+    return EFI_SUCCESS;
+}
+
+EFI_STATUS SBC_SSDGetSN(VOID)
+{
+  EFI_BLOCK_IO_PROTOCOL *BlockIo;
+  EFI_HANDLE *Handles;
+  UINTN HandleCount;
+  UINTN Index;
+  EFI_DISK_INFO_PROTOCOL *DiskInfo;
+  UINT8 IdentifyData[512]; // Buffer for device info
+  UINTN BufferSize = sizeof(IdentifyData);
+  EFI_STATUS Status;
+
+  DEBUG((DEBUG_INFO, "[%a:%d] Locate Block I/O Protocol for the SSD) \n",
+           __FUNCTION__,__LINE__));
+#if 1
+  // Locate Block I/O Protocol for the SSD
+  Status = gBS->LocateHandleBuffer(ByProtocol, &gEfiSimpleFileSystemProtocolGuid, 
+                                   NULL, &HandleCount, &Handles);
+  if (EFI_ERROR(Status)) {
+    DEBUG((DEBUG_ERROR, "[%a:%d] LocateHandleBuffer  \n",
+           __FUNCTION__,__LINE__));
+    return Status;
+  }
+
+  DEBUG((DEBUG_ERROR, "[%a:%d] Handle Count  (%d) \n",
+           __FUNCTION__,__LINE__, HandleCount));
+
+
+  for( Index = 0; Index < HandleCount; Index++ ) {
+    Status = gBS->HandleProtocol(
+                              Handles[Index],
+                              &gEfiBlockIoProtocolGuid,
+                              (VOID **)&BlockIo
+                              );
+    if(!EFI_ERROR(Status)) {
+      continue;
+    }
+
+    DEBUG((DEBUG_INFO, "[%a:%d] Buffre Size : %d \n", __FUNCTION__,__LINE__, Index));
+  // Retrieve Disk Info Protocol
+    Status = gBS->HandleProtocol(Handles[Index], &gEfiDiskInfoProtocolGuid, (VOID **)&DiskInfo);
+    if (EFI_ERROR(Status)) {
+      DEBUG((DEBUG_ERROR, "[%a:%d] HandleProtocol (0x%p) \n",
+             __FUNCTION__,__LINE__, DiskInfo));
+      return Status;
+    }
+
+    Status = DiskInfo->Identify(DiskInfo, (VOID *)IdentifyData, (UINT32 *)&BufferSize);
+    if (EFI_ERROR(Status)) {
+      DEBUG((DEBUG_ERROR, "[%a:%d] Identify (0x%p) \n",
+             __FUNCTION__,__LINE__));
+      return Status;
+
+    }
+
+    // Extract Serial Number (Example for SATA)
+    CHAR16 SerialNumber[21];
+    CopyMem(SerialNumber, &IdentifyData[20], 20); // Serial is stored at offset 20 in IDENTIFY DEVICE
+    SerialNumber[20] = L'\0'; // Null-terminate
+
+    Print(L"SSD Serial Number: %s\n", SerialNumber);
+
+  }
+
+#endif
+//DEBUG((DEBUG_INFO, "[%a:%d]\n", __FUNCTION__,__LINE__));
+//Status = gBS->LocateProtocol(&gEfiDiskInfoProtocolGuid,
+//                           NULL,
+//                           (VOID**)&DiskInfo);
+//if (EFI_ERROR(Status)) {
+//  DEBUG((DEBUG_ERROR, "[%a:%d] LocateProtocol (0x%p) \n",
+//         __FUNCTION__,__LINE__, DiskInfo));
+//  return Status;
+//}
+//DEBUG((DEBUG_INFO, "[%a:%d]\n", __FUNCTION__,__LINE__));
+//DEBUG((DEBUG_INFO, "[%a:%d] ( Disk Info 0x%p 0x%p) \n",
+//                    __FUNCTION__,__LINE__,DiskInfo, *DiskInfo));
+  // Query the IDENTIFY DEVICE data
+  Status = DiskInfo->Identify(DiskInfo, (VOID *)IdentifyData, (UINT32 *)&BufferSize);
+  if (EFI_ERROR(Status)) {
+    DEBUG((DEBUG_ERROR, "[%a:%d] Identify (0x%p) \n",
+           __FUNCTION__,__LINE__));
+    return Status;
+
+  }
+
+  // Extract Serial Number (Example for SATA)
+  CHAR16 SerialNumber[21];
+  CopyMem(SerialNumber, &IdentifyData[20], 20); // Serial is stored at offset 20 in IDENTIFY DEVICE
+  SerialNumber[20] = L'\0'; // Null-terminate
+
+  Print(L"SSD Serial Number: %s\n", SerialNumber);
+
+  return EFI_SUCCESS;
+
+}
+
+EFI_STATUS GetMemorySerialNumbers() {
+    EFI_SMBIOS_PROTOCOL *Smbios;
+    EFI_STATUS Status;
+    EFI_SMBIOS_HANDLE SmbiosHandle = SMBIOS_HANDLE_PI_RESERVED;
+    SMBIOS_TABLE_TYPE17 *Type17Record;
+    EFI_SMBIOS_TABLE_HEADER *Record;
+
+    DEBUG((DEBUG_INFO, "[%a:%d] \n",__FUNCTION__,__LINE__));
+    Status = gBS->LocateProtocol(&gEfiSmbiosProtocolGuid, NULL, (VOID **)&Smbios);
+    if (EFI_ERROR(Status)) {
+        DEBUG((DEBUG_ERROR , "%a:%d LocateProtocol fail (%d) \n",__func__, __LINE__, Status));
+        return Status;
+    }
+
+    while (!EFI_ERROR((Status = Smbios->GetNext(Smbios, &SmbiosHandle, NULL, &Record, NULL)))) {
+        //DEBUG((DEBUG_INFO, "[%a:%d] (GetNext : %d) (Record->Type : %d) \n",__FUNCTION__,__LINE__, Status,Record->Type));
+        if (Record->Type == SMBIOS_TYPE_MEMORY_DEVICE) {
+            Type17Record = (SMBIOS_TABLE_TYPE17 *)Record;
+            
+
+            // Extract Serial Number (this is an index into the string table)
+            UINT8 SerialNumberIndex = Type17Record->SerialNumber;
+            CHAR8 *SerialNumberString = (CHAR8 *)(Record + Record->Length);
+            DEBUG((DEBUG_INFO, "[%a:%d] SerialNumberIndex : %d \n", __FUNCTION__,__LINE__,SerialNumberIndex));
+            if (SerialNumberIndex > 0) {
+                // Move to the correct string entry in the table
+                for (UINT8 i = 1; i < SerialNumberIndex; i++) {
+                    while (*SerialNumberString != '\0') {
+                        SerialNumberString++;
+                    }
+                    SerialNumberString++;
+                }
+                
+                // Print the Serial Number
+                Print(L"Memory Serial Number: %a\n", SerialNumberString);
+            }
+        }
+    }
+
+    return EFI_SUCCESS;
+}
+
+
+#include <Protocol/LoadedImage.h>
+
+EFI_STATUS ListInstalledProtocols() 
+{
+    EFI_STATUS Status;
+    UINTN HandleCount;
+    EFI_HANDLE *HandleBuffer;
+    
+    Status = gBS->LocateHandleBuffer(ByProtocol, NULL, NULL, &HandleCount, &HandleBuffer);
+    if (EFI_ERROR(Status)) {
+        DEBUG((DEBUG_ERROR, "[%a:%d] (LocateHandleBuffer Fal : %d) \n",__FUNCTION__,__LINE__, Status));
+        return Status;
+    }
+    
+    Print(L"Installed Protocols: %d\n", HandleCount);
+    return EFI_SUCCESS;
+}
+
+EFI_STATUS GetMotherboardSerialNumber() 
+{
+    EFI_SMBIOS_PROTOCOL *Smbios;
+    EFI_STATUS Status;
+    EFI_SMBIOS_HANDLE SmbiosHandle = SMBIOS_HANDLE_PI_RESERVED;
+    SMBIOS_TABLE_TYPE2 *Type2Record;
+    EFI_SMBIOS_TABLE_HEADER *Record;
+
+    Status = gBS->LocateProtocol(&gEfiSmbiosProtocolGuid, NULL, (VOID **)&Smbios);
+    if (EFI_ERROR(Status)) {
+        DEBUG((DEBUG_ERROR, "[%a:%d] (LocateProtocol : %d) \n",__FUNCTION__,__LINE__, Status));
+        return Status;
+    }
+
+    while (!EFI_ERROR((Status = Smbios->GetNext(Smbios, &SmbiosHandle, NULL, &Record, NULL)))) {
+        //DEBUG((DEBUG_INFO, "[%a:%d] (GetNext : %d) (Record->Type : %d) \n",__FUNCTION__,__LINE__, Status,Record->Type));
+        if (Record->Type == SMBIOS_TYPE_BASEBOARD_INFORMATION) {
+            Type2Record = (SMBIOS_TABLE_TYPE2 *)Record;
+
+            // Extract Serial Number (this is an index into the string table)
+            UINT8 SerialNumberIndex = Type2Record->SerialNumber;
+            CHAR8 *SerialNumberString = (CHAR8 *)(Record + Record->Length);
+            DEBUG((DEBUG_INFO, "[%a:%d] SerialNumberIndex : %d \n", __FUNCTION__,__LINE__,SerialNumberIndex));
+            if (SerialNumberIndex > 0) {
+                //Print(L"Motherboard Serial Number: %a\n", SerialNumberString);
+                //SBC_mem_print_bin("Before SN", (UINT8 *)SerialNumberString, 64);
+                // Move to the correct string entry in the table
+                for (UINT8 i = 1; i < SerialNumberIndex; i++) {
+                    while (*SerialNumberString != '\0') {
+                        SerialNumberString++;
+                    }
+                    SerialNumberString++;
+                }
+
+                // Print the Serial Number
+                Print(L"Motherboard Serial Number: %a\n", SerialNumberString);
+                SBC_mem_print_bin("SN", (UINT8 *)SerialNumberString, SerialNumberIndex);
+            }
+        }
+    }
+
+    DEBUG((DEBUG_INFO, "[%a:%d]  \n",__FUNCTION__,__LINE__));
+
+    return EFI_SUCCESS;
+}
+
+
+
+//int ecdh_test_func(UINT8 *alice_q, UINT8 *alice_xy, UINT8 *bob_q, UINT8 *bob_xy)
+int ecdh_test_func()
+{
+  int ret = -1;
+
+
+  unsigned char alice_q[32] = {
+  	0xC8, 0x8F, 0x01, 0xF5, 0x10, 0xD9, 0xAC, 0x3F, 0x70, 0xA2, 0x92, 0xDA,
+  	0xA2, 0x31, 0x6D, 0xE5, 0x44, 0xE9, 0xAA, 0xB8, 0xAF, 0xE8, 0x40, 0x49,
+  	0xC6, 0x2A, 0x9C, 0x57, 0x86, 0x2D, 0x14, 0x33
+  };
+
+  unsigned char alice_xy[64] = {
+  	0xDA, 0xD0, 0xB6, 0x53, 0x94, 0x22, 0x1C, 0xF9, 0xB0, 0x51, 0xE1, 0xFE,
+  	0xCA, 0x57, 0x87, 0xD0, 0x98, 0xDF, 0xE6, 0x37, 0xFC, 0x90, 0xB9, 0xEF,
+  	0x94, 0x5D, 0x0C, 0x37, 0x72, 0x58, 0x11, 0x80, 0x52, 0x71, 0xA0, 0x46,
+  	0x1C, 0xDB, 0x82, 0x52, 0xD6, 0x1F, 0x1C, 0x45, 0x6F, 0xA3, 0xE5, 0x9A,
+  	0xB1, 0xF4, 0x5B, 0x33, 0xAC, 0xCF, 0x5F, 0x58, 0x38, 0x9E, 0x05, 0x77,
+  	0xB8, 0x99, 0x0B, 0xB3
+  };
+
+  unsigned char bob_q[32] = {
+  	0xC6, 0xEF, 0x9C, 0x5D, 0x78, 0xAE, 0x01, 0x2A, 0x01, 0x11, 0x64, 0xAC,
+  	0xB3, 0x97, 0xCE, 0x20, 0x88, 0x68, 0x5D, 0x8F, 0x06, 0xBF, 0x9B, 0xE0,
+  	0xB2, 0x83, 0xAB, 0x46, 0x47, 0x6B, 0xEE, 0x53
+  };
+
+  unsigned char bob_xy[64] = {
+  	0xD1, 0x2D, 0xFB, 0x52, 0x89, 0xC8, 0xD4, 0xF8, 0x12, 0x08, 0xB7, 0x02,
+  	0x70, 0x39, 0x8C, 0x34, 0x22, 0x96, 0x97, 0x0A, 0x0B, 0xCC, 0xB7, 0x4C,
+  	0x73, 0x6F, 0xC7, 0x55, 0x44, 0x94, 0xBF, 0x63, 0x56, 0xFB, 0xF3, 0xCA,
+  	0x36, 0x6C, 0xC2, 0x3E, 0x81, 0x57, 0x85, 0x4C, 0x13, 0xC5, 0x8D, 0x6A,
+  	0xAC, 0x23, 0xF0, 0x46, 0xAD, 0xA3, 0x0F, 0x83, 0x53, 0xE7, 0x4F, 0x33,
+  	0x03, 0x98, 0x72, 0xAB
+  };
+
+  unsigned char expected_answer[32] = {
+    0xD6, 0x84, 0x0F, 0x6B, 0x42, 0xF6, 0xED, 0xAF, 0xD1, 0x31, 0x16, 0xE0,
+    0xE1, 0x25, 0x65, 0x20, 0x2F, 0xEF, 0x8E, 0x9E, 0xCE, 0x7D, 0xCE, 0x03,
+    0x81, 0x24, 0x64, 0xD0, 0x4B, 0x94, 0x42, 0xDE
+  };
+
+  SBCEccCtx *alice;
+  SBCEccCtx *bob;
+
+  UINT8 bobkey[256] ={0, };
+  UINT8 alicekey[256] = {0, };
+  
+
+
+
+  alice = AllocatePool(sizeof *alice);
+  if(alice == NULL) {
+    DEBUG((DEBUG_ERROR, "%s:%d ECC test allocate fail \n", __FUNCTION__,__LINE__));
+    ret = SBCNULLP;
+    goto errdone;
+  }
+
+  bob = AllocatePool(sizeof *bob);
+  if(alice == NULL) {
+    DEBUG((DEBUG_ERROR, "%s:%d ECC test allocate fail \n", __FUNCTION__,__LINE__));
+    ret = SBCNULLP;
+    goto errdone;
+  }
+
+  ZeroMem(alice, sizeof(SBCEccCtx));
+  ZeroMem(bob, sizeof(SBCEccCtx));
+  alice->curveid = CRYPTO_NID_SECP256R1;
+  alice->sharedkey.value = alicekey;
+
+  dprint("--- Alice Testing ---");
+  if(SBC_GenShareSeucrityKey(alice,
+                             alice_q, 32,
+                             bob_xy, 64) != SBCOK) {
+    eprint("Alice get shared scret key fail");
+    goto errdone;
+
+  }
+
+  bob->curveid = CRYPTO_NID_SECP256R1;
+  bob->sharedkey.value = bobkey;
+  dprint("--- Bob Testing ---");
+  if(SBC_GenShareSeucrityKey(bob,
+                             bob_q, 32,
+                             alice_xy, 64) != SBCOK) {
+    eprint("Bob get shared scret key fail");
+    goto errdone;
+
+  }
+
+  SBC_external_mem_print_bin("Alice secret key", alice->sharedkey.value, alice->sharedkey.length);
+  SBC_external_mem_print_bin("Bob secret key", bob->sharedkey.value, bob->sharedkey.length);
+
+  SBC_external_mem_print_bin("Expected Answer", expected_answer, bob->sharedkey.length);
+
+  if(CompareMem(expected_answer, alice->sharedkey.value, sizeof expected_answer) != 0) {
+    eprint("Compare fail value %a != %a for length %d bytes", 
+           expected_answer,
+           alice->sharedkey.value,
+           sizeof expected_answer
+           );
+  }
+  else {
+    Print(L"Alice DH answer passed \n");
+  }
+
+  if(CompareMem(expected_answer, bob->sharedkey.value, sizeof expected_answer) != 0) {
+    eprint("Compare fail value %a != %a for length %d bytes", 
+           expected_answer,
+           alice->sharedkey.value,
+           sizeof expected_answer
+           );
+  }
+  else {
+    Print(L"Bob DH answer passed \n");
+  }
+
+  ret = 0;
+
+
+errdone:
+
+  if(alice != NULL) {
+    FreePool(alice);
+  }
+
+  if(bob != NULL) {
+    FreePool(bob);
+  }
+
+  return ret;
+
+
+
+}
+
+int ecc_test_func(VOID)
+{
+  SBCEccCtx *alice;
+  SBCEccCtx *bob;
+
+//SBCEccCtx xalice;
+//SBCEccCtx xbob;
+  UINT8 pubkey[256];
+  UINT8 privkey[256];
+  UINT8 bobpriv[256];
+  UINT8 bobpub[256];
+
+  UINT8 bobkey[256];
+  UINT8 alicekey[256];
+
+//LV_t lvpub;
+//LV_t lvpriv;
+  UINTN keybit = 256;
+
+  SBCStatus ret = SBCOK;
+
+  alice = AllocatePool(sizeof *alice);
+  if(alice == NULL) {
+    DEBUG((DEBUG_ERROR, "%a:%d ECC test allocate fail \n", __FUNCTION__,__LINE__));
+    ret = SBCNULLP;
+    goto errdone;
+  }
+
+  alice->pubkey.value = (VOID *)pubkey;
+  alice->privkey.value = (VOID *)privkey;
+  alice->privkey.length = keybit >> 3;
+  alice->pubkey.length = 64;//alice->privkey.length * 2;
+  alice->sharedkey.value = (VOID *)alicekey;
+  alice->sharedkey.length = 0;
+
+  ret = SBC_EccKeyGen(alice, CRYPTO_NID_SECP256R1);
+  if(ret != SBCOK) {
+    DEBUG((DEBUG_ERROR, "%a:%d ECC key gen fail \n", __FUNCTION__,__LINE__));
+    ret = SBCFAIL;
+    goto errdone;
+  }
+
+  SBC_mem_print_bin("alice Private Key", alice->privkey.value, alice->privkey.length);
+  SBC_mem_print_bin("alice Pub Key", alice->pubkey.value, alice->pubkey.length);
+
+  bob = AllocatePool(sizeof *bob);
+  if(bob == NULL) {
+    DEBUG((DEBUG_ERROR, "%a:%d ECC test allocate fail \n", __FUNCTION__,__LINE__));
+    ret = SBCNULLP;
+    goto errdone;
+  }
+
+  bob->pubkey.value = (VOID *)bobpub;
+  bob->privkey.value = (VOID *)bobpriv;
+  bob->privkey.length = keybit >> 3;
+  bob->pubkey.length = 64; //bob->privkey.length * 2;
+  bob->sharedkey.value = (VOID *)bobkey;
+  bob->sharedkey.length = 0;
+
+  //alice->curveid = CRYPTO_NID_SECP256R1;
+  ret = SBC_EccKeyGen(bob, CRYPTO_NID_SECP256R1);
+  if(ret != SBCOK) {
+    DEBUG((DEBUG_ERROR, "%a:%d ECC key gen fail \n", __FUNCTION__,__LINE__));
+    ret = SBCFAIL;
+    goto errdone;
+  }
+
+  SBC_mem_print_bin("Bob Private Key", bob->privkey.value, bob->privkey.length);
+  SBC_mem_print_bin("Bob Pub Key", bob->pubkey.value, bob->pubkey.length);
+
+  //ecdh_test_func(alice->privkey.value, alice->pubkey.value,
+  //               bob->privkey.value, bob->pubkey.value);
+  ecdh_test_func();
+
+errdone:
+
+  if(alice != NULL) {
+    FreePool(alice);
+  }
+
+  if(bob != NULL) {
+    FreePool(bob);
+  }
+
+  return ret;
+}
+#ifdef SBC_HASH_UNITEST_ENABLE
+VOID SBC_HashMain(VOID);
+#endif
+
+#ifdef SBC_AES_UNITEST_ENABLE
+VOID SBC_AES_TestMain(VOID);
+#endif
+
+#ifdef SBC_ECDSA_TEST_ENABLE
+VOID SBC_EcDsa_TestMain(VOID);
+#endif
 EFI_STATUS
 EFIAPI
 UefiMain (
@@ -594,6 +972,18 @@ UefiMain (
   IN EFI_SYSTEM_TABLE  *SystemTable
   )
 {
+#ifdef SBC_HASH_UNITEST_ENABLE
+  SBC_HashMain();
+#endif
+#ifdef SBC_AES_UNITEST_ENABLE
+  SBC_AES_TestMain();
+#endif
+
+#ifdef SBC_ECDSA_TEST_ENABLE
+  //ecc_test_func();
+  SBC_EcDsa_TestMain();
+#endif
+#if 0
   BOOLEAN ret = 0;
   //UINT32 rand[32] ={0, };
   UINT8 randout[32] = {0, };
@@ -700,21 +1090,14 @@ UefiMain (
 
   HmacSha256Free(hmacHandle);
 
-  //DEBUG((DEBUG_INFO , "%s:%d \n",__func__, __LINE__));
 #if 1
   aesctx.cbc = &cbcctx;
   aesctx.key = Aes256CbcKey;
-  //DEBUG((DEBUG_INFO , "%s:%d \n",__func__, __LINE__));
   aesctx.keylen =SBC_KEY_STRENGTH_256;
-  //DEBUG((DEBUG_INFO , "%s:%d \n",__func__, __LINE__));
   aesctx.algoid = SBC_CIPHER_AES_CBC;
-  //DEBUG((DEBUG_INFO , "%s:%d \n",__func__, __LINE__));
   aesctx.in = &plainlv;
-  //DEBUG((DEBUG_INFO , "%s:%d \n",__func__, __LINE__));
   aesctx.out = &enclv;
-  //DEBUG((DEBUG_INFO , "%s:%d \n",__func__, __LINE__));
   aesctx.iv = Aes128CbcIvec;
-  //DEBUG((DEBUG_INFO , "%s:%d \n",__func__, __LINE__));
 #endif
 
 
@@ -753,27 +1136,35 @@ UefiMain (
       //DEBUG((DEBUG_INFO , "%s:%d \n",__func__, __LINE__));
     Print(L"Decrypt Buff \r\n");
     SBC_mem_print_bin(NULL, aesctx.out->value, aesctx.out->length);
-    DEBUG((DEBUG_INFO , "%s:%d \n",__func__, __LINE__));
   }
 
 
   SBC_AESDeInit(&aesctx);
-  DEBUG((DEBUG_INFO , "%s:%d \n",__func__, __LINE__));
+  DEBUG((DEBUG_INFO , "%a:%d \n",__func__, __LINE__));
 
+
+  ecc_test_func();
+  
+  //TestVerifyEcDh();
+
+  //GetDiskSerialNumber();
+//ListInstalledProtocols();
+//GetMotherboardSerialNumber();
+//GetMemorySerialNumbers();
   /// File Test
-  EFI_HANDLE HandleBuffer = NULL;
-  UINTN HandleCount;
-  CHAR16 fname[] = L"LeoTest/leo_test/deps.txt";
+//EFI_HANDLE HandleBuffer = NULL;
+//UINTN HandleCount;
+  //CHAR16 fname[] = L"LeoTest/leo_test/deps.txt";
   //CHAR8 fdata[] = "welcom test file";
   //SBCStatus fret = SBCOK;
 
-  HandleCount = SBC_GetFileSysHandleBuffer(&HandleBuffer);
-    if(HandleCount <= 0) {
-    Print(L"Protocol not found (%d) \n", HandleCount);
-    return 3;
-  }
+//HandleCount = SBC_GetFileSysHandleBuffer(&HandleBuffer);
+//  if(HandleCount <= 0) {
+//  Print(L"Protocol not found (%d) \n", HandleCount);
+//  return 3;
+//}
 
-  SBC_ListDirectory(HandleBuffer);
+  //SBC_ListDirectory(HandleBuffer);
 
 //  if((fret = SBC_CreateFile(HandleBuffer, fname)) != SBCOK) {
 //    DEBUG((DEBUG_ERROR,"%a:%d Fail (%d) \n", fret));
@@ -783,11 +1174,11 @@ UefiMain (
     //WriteToFile(HandleBuffer);
 //  SBC_ListDirectory(HandleBuffer);
 //  SBCWriteFile(HandleBuffer, fname, fdata);
-    SBC_ReadFlie(HandleBuffer, fname );
+    //SBC_ReadFlie(HandleBuffer, fname );
  
 
-
-
+    //SBC_SSDGetSN();
+#endif   
    return EFI_SUCCESS;
 }
 
