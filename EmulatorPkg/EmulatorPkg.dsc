@@ -133,7 +133,8 @@
   ImagePropertiesRecordLib|MdeModulePkg/Library/ImagePropertiesRecordLib/ImagePropertiesRecordLib.inf
   RngLib|MdeModulePkg/Library/BaseRngLibTimerLib/BaseRngLibTimerLib.inf
   IntrinsicLib|CryptoPkg/Library/IntrinsicLib/IntrinsicLib.inf
-  OpensslLib|CryptoPkg/Library/OpensslLib/OpensslLibCrypto.inf
+  #OpensslLib|CryptoPkg/Library/OpensslLib/OpensslLibCrypto.inf
+  OpensslLib|CryptoPkg/Library/OpensslLib/OpensslLibFull.inf
   BaseCryptLib|CryptoPkg/Library/BaseCryptLib/BaseCryptLib.inf
 
 !if $(SECURE_BOOT_ENABLE) == TRUE
