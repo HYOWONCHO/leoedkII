@@ -9,10 +9,10 @@
 
 UINTN  SBC_FileSysHandleBuffer(EFI_HANDLE *handle)
 {
+#if 0
   EFI_STATUS Status;
   EFI_HANDLE *h;
   UINTN hdlcnt = 0;
-#error "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
    DEBUG((DEBUG_ERROR, "Buffer finding !!! \n"));
   // Confirm that the Protocol Available
   Status = gBS->LocateHandleBuffer(ByProtocol,
@@ -34,9 +34,12 @@ UINTN  SBC_FileSysHandleBuffer(EFI_HANDLE *handle)
 
   *handle = *h;
   return hdlcnt;
+#endif
 
+    return 0;
 }
 
+#if 0
 SBCStatus  SBC_CreateFile(EFI_HANDLE h, CHAR16 *fname)
 {
     EFI_STATUS Status;
@@ -78,4 +81,4 @@ SBCStatus  SBC_CreateFile(EFI_HANDLE h, CHAR16 *fname)
 
 
 }
-
+#endif

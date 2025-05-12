@@ -169,7 +169,7 @@ void SBC_mem_print_bin(
     UINT32 i, sz;
 
     if(title) {
-        Print(L"%s (length of buffer: %d) \r\r\n", title, length) ;
+        Print(L"%a (length of buffer: %d) \r\r\n", title, length) ;
     }
 
     if (!buffer) {
@@ -203,3 +203,49 @@ void SBC_mem_print_bin(
         length -= sz;
     }
 }
+
+
+void SBC_external_mem_print_bin(
+        CHAR8 *title /**< [in] display name strings */,
+        UINT8* buffer /**< [in] print buffer  */,
+        UINT32 length /**< [in] length of buffer */
+        )
+{
+    UINT32 i, sz;
+
+    if(title) {
+        DEBUG((DEBUG_INFO,"%a (length of buffer: %d) \r\r\n", title, length)) ;
+    }
+
+    if (!buffer) {
+        return;
+    }
+
+    while (length > 0) {
+        sz = length;
+        if (sz > LINE_LEN)
+            sz = LINE_LEN;
+
+        DEBUG((DEBUG_INFO,"\t"));
+        for (i = 0; i < LINE_LEN; i++) {
+            if (i < length)
+                DEBUG((DEBUG_INFO,"%02x ", buffer[i]));
+            else
+                DEBUG((DEBUG_INFO,"   "));
+        }
+        DEBUG((DEBUG_INFO," | "));
+        for (i = 0; i < sz; i++) {
+            if (buffer[i] > 31 && buffer[i] < 127)
+                DEBUG((DEBUG_INFO,"%c", buffer[i]));
+            else
+                DEBUG((DEBUG_INFO,"."));
+        }
+        DEBUG((DEBUG_INFO,"\r\r\n"));
+
+
+        buffer += sz;
+        length -= sz;
+    }
+}
+
+

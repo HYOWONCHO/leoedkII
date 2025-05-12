@@ -30,7 +30,10 @@
   leo_test.c
   SBC_Log.c
   SBC_CryptAES.c
+  SBC_SystemControl.c
   SBC_FileCtrl.c
+  SBC_EccSignVeriify.c
+  SBC_Hashing.c
 
 [Packages]
   EmulatorPkg/EmulatorPkg.dec
@@ -77,6 +80,8 @@
 
 [Protocols]
   gEfiSimpleFileSystemProtocolGuid
+  gEfiBlockIoProtocolGuid
+  gEfiBlockIoProtocolGuid
 
 [FeaturePcd]
 

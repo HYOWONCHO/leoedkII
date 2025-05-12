@@ -5,6 +5,9 @@
 #include "SBC_CryptAES.h"
 #include "SBC_Log.h"
 
+#include "SBC_Util.h"
+#include "SBC_Config.h"
+
 
 /**
  * Initialize the AES context for use
@@ -53,27 +56,27 @@ static SBCStatus SBC_AES_CBCEncrypt(SBC_AESCBCCtx *ctx)
 
   SBCStatus ret = SBCOK;
 
-  //DEBUG((DEBUG_INFO , "%s:%d \n",__func__, __LINE__));
-  SBC_AES_RET_VAL_IF_FAIL((ctx != NULL), SBCNULLP);
-  //DEBUG((DEBUG_INFO , "%s:%d \n",__func__, __LINE__));
-  SBC_AES_RET_VAL_IF_FAIL((ctx->handle != NULL), SBCNULLP);
-  //DEBUG((DEBUG_INFO , "%s:%d \n",__func__, __LINE__));
-  SBC_AES_RET_VAL_IF_FAIL((ctx->iv != NULL), SBCNULLP);
-  //DEBUG((DEBUG_INFO , "%s:%d \n",__func__, __LINE__));
-  SBC_AES_RET_VAL_IF_FAIL((ctx->keylv.value != NULL), SBCNULLP);
-  //DEBUG((DEBUG_INFO , "%s:%d \n",__func__, __LINE__));
-  SBC_AES_RET_VAL_IF_FAIL((ctx->keylv.length != 0), SBCZEROL);
-  //DEBUG((DEBUG_INFO , "%s:%d \n",__func__, __LINE__));
-
-  Print(L"Ctx Handle : 0x%08x \r\n", ctx->handle);
-  Print(L"Ctx Iv \r\n");
-  SBC_mem_print_bin(NULL, ctx->iv, 16);
-
-  Print(L"Ctx Key \r\n");
-  SBC_mem_print_bin(NULL, ctx->keylv.value, SBC_KEY_LEN_128);
-
-  Print(L"Ctx PlainText \r\n");
-  SBC_mem_print_bin(NULL, ctx->inlv->value, ctx->inlv->length);
+////DEBUG((DEBUG_INFO , "%s:%d \n",__func__, __LINE__));
+//SBC_AES_RET_VAL_IF_FAIL((ctx != NULL), SBCNULLP);
+////DEBUG((DEBUG_INFO , "%s:%d \n",__func__, __LINE__));
+//SBC_AES_RET_VAL_IF_FAIL((ctx->handle != NULL), SBCNULLP);
+////DEBUG((DEBUG_INFO , "%s:%d \n",__func__, __LINE__));
+//SBC_AES_RET_VAL_IF_FAIL((ctx->iv != NULL), SBCNULLP);
+////DEBUG((DEBUG_INFO , "%s:%d \n",__func__, __LINE__));
+//SBC_AES_RET_VAL_IF_FAIL((ctx->keylv.value != NULL), SBCNULLP);
+////DEBUG((DEBUG_INFO , "%s:%d \n",__func__, __LINE__));
+//SBC_AES_RET_VAL_IF_FAIL((ctx->keylv.length != 0), SBCZEROL);
+////DEBUG((DEBUG_INFO , "%s:%d \n",__func__, __LINE__));
+//
+//Print(L"Ctx Handle : 0x%08x \r\n", ctx->handle);
+//Print(L"Ctx Iv \r\n");
+//SBC_mem_print_bin(NULL, ctx->iv, 16);
+//
+//Print(L"Ctx Key \r\n");
+//SBC_mem_print_bin(NULL, ctx->keylv.value, SBC_KEY_LEN_128);
+//
+//Print(L"Ctx PlainText \r\n");
+//SBC_mem_print_bin(NULL, ctx->inlv->value, ctx->inlv->length);
 
 
 #if 1
@@ -82,7 +85,7 @@ static SBCStatus SBC_AES_CBCEncrypt(SBC_AESCBCCtx *ctx)
                    ctx->inlv->length,
                    ctx->iv, 
                    ctx->outlv->value) != TRUE) {
-    Print(L"AesCbcEnrypt behavior fail \r\n");
+    eprint("AesCbcEnrypt behavior fail \r\n");
     ret = SBCENCFAIL;
     goto ErrorDone;
   }
@@ -112,7 +115,7 @@ static SBCStatus SBC_AESGcmEncrypt(SBC_AESContext *ctx)
                        gcm->msg->value, gcm->msg->length,
                        gcm->tag->value, gcm->tag->length,
                        gcm->out->value, &gcm->out->length)) {
-    Print(L"GCM Encrypt fail \r\n");
+    DEBUG((DEBUG_ERROR,"%a:%d GCM Encrypt fail \r\n",__FUNCTION__,__LINE__));
     return SBCENCFAIL;
   }
 
@@ -148,12 +151,12 @@ SBCStatus SBC_AESEncrypt(SBC_AESContext *ctx)
   SBCStatus ret = SBCOK;
 
   //DEBUG((DEBUG_INFO , "%s:%d \n",__func__, __LINE__));
-  SBC_AES_RET_VAL_IF_FAIL((ctx != NULL), SBCNULLP);
+  //SBC_AES_RET_VAL_IF_FAIL((ctx != NULL), SBCNULLP);
   //DEBUG((DEBUG_INFO , "%s:%d \n",__func__, __LINE__));
   switch(ctx->algoid) {
     case SBC_CIPHER_AES_CBC:
-      DEBUG((DEBUG_INFO , "%s:%d \n",__func__, __LINE__));
-      SBC_AES_RET_VAL_IF_FAIL((ctx->cbc != NULL), SBCNULLP);
+     // DEBUG((DEBUG_INFO , "%s:%d \n",__func__, __LINE__));
+      //SBC_AES_RET_VAL_IF_FAIL((ctx->cbc != NULL), SBCNULLP);
       //DEBUG((DEBUG_INFO , "%s:%d \n",__func__, __LINE__));
 
       ctx->cbc->handle = ctx->handle;
@@ -187,8 +190,8 @@ static SBCStatus SBC_AES_CBCDecrypt(SBC_AESContext *ctx)
 {
   //SBCSttaus ret = SBCOK;
 
-  Print(L"Encrypt Message : \r\n");
-  SBC_mem_print_bin(NULL, ctx->in->value, ctx->in->length);
+  //Print(L"Encrypt Message : \r\n");
+  //SBC_mem_print_bin(NULL, ctx->in->value, ctx->in->length);
   
 
   if(AesCbcDecrypt(ctx->handle, 
@@ -236,6 +239,179 @@ SBCStatus SBC_AESDecrypt(SBC_AESContext *ctx)
 ErrorDnoe:
   return ret;
 }
+
+#ifdef SBC_AES_UNITEST_ENABLE
+
+
+#include "aes_vectortable.h"
+VOID SBC_AES_TestMain(VOID)
+{
+
+  SBCStatus ret = SBCOK;
+
+  int testcnt = 0;
+  UINT8 plaintxt[256] = {0, };
+  UINT8 aesbuf[256] = {0, };
+  UINT8 ivbuf[256] = {0, };
+  UINT8 answer[256] = {0, };
+  UINT8 keybuf[256] = {0, };
+  UINT8 cmpbuf[256] = {0, };
+  UINT32 convlen =0 ;
+
+  SBC_AESCBCCtx  cbcctx;
+
+  SBC_CipherTLV plainlv = {
+    .tag = 0,
+    //.length = (UINTN)strlen((unsigned char *)aesbuf),
+    .length = 0,
+    .value = (UINT8 *)plaintxt
+  };
+
+  SBC_CipherTLV enclv = {
+    .tag = 0,
+    .length = 0,
+    .value = aesbuf
+  };
+
+  //UINT8 symmkey[SBC_KEY_LEN_256] = {0, };
+  SBC_AESContext aesctx[26]; /* = {
+    .handle = NULL,
+    .key = symmkey,
+    .keylen = SBC_KEY_STRENGTH_256,
+    .algoid = SBC_CIPHER_NONE
+  }; */
+  
+
+  
+  testcnt = sizeof gt_aescbc_vector  / sizeof(SBCAESTestVectorMsg_t);
+  //testcnt = 1;
+  for(int x = 0; x < testcnt; x++) {
+
+    dprint("--- %-5d ---", x);
+    convlen = _convert_str_to_hex((UINT8 *)gt_aescbc_vector[x].msg , plaintxt);
+    SBC_external_mem_print_bin("Plain Text", plaintxt, convlen);
+    plainlv.length = convlen;
+    //plainlv.value = plaintxt;
+    CopyMem((VOID *)cmpbuf, (VOID *)plaintxt, convlen);
+    convlen = _convert_str_to_hex((UINT8 *)gt_aescbc_vector[x].key, keybuf);
+    SBC_external_mem_print_bin("Key ", keybuf, convlen);
+
+    convlen = _convert_str_to_hex((UINT8 *)gt_aescbc_vector[x].iv, ivbuf);
+    ///SBC_external_mem_print_bin("IV", ivbuf, convlen);
+
+    convlen = _convert_str_to_hex((UINT8 *)gt_aescbc_vector[x].answer, answer);
+    SBC_external_mem_print_bin("Answer", answer, convlen);
+
+    aesctx[x].key = keybuf;
+    aesctx[x].keylen  = SBC_KEY_STRENGTH_256;
+    SBC_AESInit(&aesctx[x]);
+
+    aesctx[x].cbc = &cbcctx;
+    aesctx[x].key = keybuf;
+    aesctx[x].keylen = SBC_KEY_STRENGTH_256 >> 3;
+    aesctx[x].algoid = SBC_CIPHER_AES_CBC;
+    aesctx[x].in = &plainlv;
+    aesctx[x].out = &enclv;
+    aesctx[x].iv = ivbuf;
+
+    //SBC_external_mem_print_bin("Key", aesctx[x].key, aesctx[x].keylen);
+    //SBC_external_mem_print_bin("IV", ivbuf, 16);
+
+    //SBC_external_mem_print_bin("Message", aesctx[x].in->value, aesctx[x].in->length);
+
+    if(SBC_AESEncrypt(&aesctx[x]) != SBCOK) {
+      eprint("AES counter %d Encrypt fail " ,x );
+      continue;
+    }
+
+    SBC_external_mem_print_bin("Encrytp", aesctx[x].out->value, aesctx[x].out->length);
+
+    if(CompareMem((const void *)enclv.value, (const void *)answer, enclv.length) != 0 ) {
+      Print(L"Counter %d Encrypt answer fail ... \n", x);
+      //continue;
+    }
+    else {
+      Print(L"Counter %d Encrypt answer ok ... \n", x);
+    }
+
+    
+    aesctx[x].in = &enclv;
+    aesctx[x].out = &plainlv;
+
+    if(SBC_AESDecrypt(&aesctx[x]) != SBCOK) {
+      eprint("AES decrypt fail, x");
+      
+      continue;
+    }
+
+    if(CompareMem((const void *)cmpbuf, (const void *)plainlv.value, plainlv.length) != 0 ) {
+       Print(L"AES count %d test fail ... \n", x);
+      //continue;
+    }
+    else{
+      Print(L"AES count %d  test success ... \n", x);
+    }
+    SBC_external_mem_print_bin("Decrypt", aesctx[x].out->value, aesctx[x].out->length);
+
+    SBC_AESDeInit(&aesctx[x]);
+    dprint("----------------------------------------------");
+
+  }
+
+
+errdone:
+
+ 
+
+  return;
+}
+
+VOID SBC_AesGcmTestMain(VOID)
+{
+  SBCStatus ret = SBCOK;
+
+  int testcnt = 0;
+  UINT8 plaintxt[256] = {0, };
+  UINT8 aesbuf[256] = {0, };
+  UINT8 ivbuf[256] = {0, };
+  UINT8 answer[256] = {0, };
+  UINT8 keybuf[256] = {0, };
+  UINT8 cmpbuf[256] = {0, };
+  UINT32 convlen =0 ;
+
+  SBC_AESCBCCtx  cbcctx;
+
+  SBC_CipherTLV plainlv = {
+    .tag = 0,
+    //.length = (UINTN)strlen((unsigned char *)aesbuf),
+    .length = 0,
+    .value = (UINT8 *)plaintxt
+  };
+
+  SBC_CipherTLV enclv = {
+    .tag = 0,
+    .length = 0,
+    .value = aesbuf
+  };
+
+
+  testcnt = sizeof aes_gcm_vectors  / sizeof(struct aes_gcm_vectors_st);
+  //testcnt = 1;
+  for(int x = 0; x < testcnt; x++) {
+
+    aesctx[x].key = aes_gcm_vectors[0].key;
+    aesctx[x].keylen  = SBC_KEY_STRENGTH_128;
+    SBC_AESInit(&aesctx[x]);
+
+    SBC_AESGcmEncrypt(SBC_AESContext *ctx)
+
+
+
+    SBC_AESDeInit(&aesctx[x]);
+  }
+  return;
+}
+#endif
 
 
 
