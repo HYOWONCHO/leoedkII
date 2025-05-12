@@ -379,7 +379,7 @@ UnitTestDebugAssert (
 #define _DEBUG_PRINT(PrintLevel, ...)              \
     do {                                             \
       if (DebugPrintLevelEnabled (PrintLevel)) {     \
-        DebugPrint (PrintLevel, ##__VA_ARGS__);      \
+        DebugPrint (PrintLevel,  ##__VA_ARGS__);      \
       }                                              \
     } while (FALSE)
 #define _DEBUGLIB_DEBUG(Expression)  _DEBUG_PRINT Expression
