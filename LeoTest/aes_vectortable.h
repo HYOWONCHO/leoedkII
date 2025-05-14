@@ -1,6 +1,7 @@
 #ifndef _AES_VECTORTABLE_
 #define _AES_VECTORTABLE_
 
+#include <stdint.h>
 
 
 typedef struct  {
