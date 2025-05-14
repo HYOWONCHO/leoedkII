@@ -954,12 +954,18 @@ errdone:
 
   return ret;
 }
+
+#ifdef SBC_BASEANSWER_TEST
+SBCStatus  SBC_BaseAnswerValidate(UINT8 *answer, UINTN answerl);
+#endif
+
 #ifdef SBC_HASH_UNITEST_ENABLE
 VOID SBC_HashMain(VOID);
 #endif
 
 #ifdef SBC_AES_UNITEST_ENABLE
 VOID SBC_AES_TestMain(VOID);
+VOID SBC_AesGcmTestMain(VOID);
 #endif
 
 #ifdef SBC_ECDSA_TEST_ENABLE
@@ -977,11 +983,18 @@ UefiMain (
 #endif
 #ifdef SBC_AES_UNITEST_ENABLE
   SBC_AES_TestMain();
+  SBC_AesGcmTestMain();
 #endif
 
 #ifdef SBC_ECDSA_TEST_ENABLE
   //ecc_test_func();
   SBC_EcDsa_TestMain();
+
+#endif
+
+#ifdef SBC_BASEANSWER_TEST
+  CHAR8 *base_answer = "anti-tampering!?";
+  SBC_BaseAnswerValidate((UINT8 *)base_answer, strlen(base_answer));
 #endif
 #if 0
   BOOLEAN ret = 0;

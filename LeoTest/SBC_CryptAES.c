@@ -109,15 +109,23 @@ static SBCStatus SBC_AESGcmEncrypt(SBC_AESContext *ctx)
 
   gcm = ctx->gcm;
 
-  if(AeadAesGcmEncrypt(gcm->key->value, gcm->key->length,
-                       gcm->iv->value, gcm->iv->length,
-                       gcm->aad->value, gcm->aad->length,
-                       gcm->msg->value, gcm->msg->length,
-                       gcm->tag->value, gcm->tag->length,
-                       gcm->out->value, &gcm->out->length)) {
+//SBC_external_mem_print_bin("GCM enc key", gcm->key.value, gcm->key.length);
+//SBC_external_mem_print_bin("GCM iv result", gcm->iv.value, gcm->iv.length);
+////SBC_external_mem_print_bin("GCM aad result", gcm->aad.value, gcm->aad.length);
+//SBC_external_mem_print_bin("GCM msg result", gcm->msg.value, gcm->msg.length);
+//SBC_external_mem_print_bin("GCM tag result", gcm->tag.value, gcm->tag.length);
+
+  if(AeadAesGcmEncrypt(gcm->key.value, gcm->key.length,
+                       gcm->iv.value, gcm->iv.length,
+                       gcm->aad.value, gcm->aad.length,
+                       gcm->msg.value, gcm->msg.length,
+                       gcm->tag.value, gcm->tag.length,
+                       gcm->out.value, &gcm->out.length) == FALSE) {
     DEBUG((DEBUG_ERROR,"%a:%d GCM Encrypt fail \r\n",__FUNCTION__,__LINE__));
     return SBCENCFAIL;
   }
+
+  //SBC_external_mem_print_bin("GCM enc result", gcm->out.value, gcm->out.length);
 
   return SBCOK;
 
@@ -125,19 +133,19 @@ static SBCStatus SBC_AESGcmEncrypt(SBC_AESContext *ctx)
 
 static SBCStatus SBC_AESGcmDecrypt(SBC_AESContext *ctx)
 {
-  SBC_AESGcmCtx *gcm = NULL;
-
-  gcm = ctx->gcm;
-
-  if(AeadAesGcmDecrypt(gcm->key->value, gcm->key->length,
-                       gcm->iv->value, gcm->iv->length,
-                       gcm->aad->value, gcm->aad->length,
-                       gcm->msg->value, gcm->msg->length,
-                       gcm->tag->value, gcm->tag->length,
-                       gcm->out->value, &gcm->out->length)) {
-    Print(L"GCM Decrypt fail \r\n");
-    return SBCENCFAIL;
-  }
+//SBC_AESGcmCtx *gcm = NULL;
+//
+//gcm = ctx->gcm;
+//
+//if(AeadAesGcmDecrypt(gcm->key->value, gcm->key->length,
+//                     gcm->iv->value, gcm->iv->length,
+//                     gcm->aad->value, gcm->aad->length,
+//                     gcm->msg->value, gcm->msg->length,
+//                     gcm->tag->value, gcm->tag->length,
+//                     gcm->out->value, &gcm->out->length)) {
+//  Print(L"GCM Decrypt fail \r\n");
+//  return SBCENCFAIL;
+//}
 
   return SBCOK;
 
@@ -247,7 +255,7 @@ ErrorDnoe:
 VOID SBC_AES_TestMain(VOID)
 {
 
-  SBCStatus ret = SBCOK;
+  //SBCStatus ret = SBCOK;
 
   int testcnt = 0;
   UINT8 plaintxt[256] = {0, };
@@ -311,6 +319,7 @@ VOID SBC_AES_TestMain(VOID)
     aesctx[x].keylen = SBC_KEY_STRENGTH_256 >> 3;
     aesctx[x].algoid = SBC_CIPHER_AES_CBC;
     aesctx[x].in = &plainlv;
+
     aesctx[x].out = &enclv;
     aesctx[x].iv = ivbuf;
 
@@ -358,9 +367,6 @@ VOID SBC_AES_TestMain(VOID)
 
   }
 
-
-errdone:
-
  
 
   return;
@@ -371,43 +377,58 @@ VOID SBC_AesGcmTestMain(VOID)
   SBCStatus ret = SBCOK;
 
   int testcnt = 0;
-  UINT8 plaintxt[256] = {0, };
-  UINT8 aesbuf[256] = {0, };
-  UINT8 ivbuf[256] = {0, };
-  UINT8 answer[256] = {0, };
-  UINT8 keybuf[256] = {0, };
-  UINT8 cmpbuf[256] = {0, };
-  UINT32 convlen =0 ;
+  UINT8 cipherbuf[256] = {0, };
+  UINT8 tagbuf[256] = {0, };
+  SBC_AESContext aesctx;
+  SBC_AESGcmCtx  gcmctx;
 
-  SBC_AESCBCCtx  cbcctx;
-
-  SBC_CipherTLV plainlv = {
-    .tag = 0,
-    //.length = (UINTN)strlen((unsigned char *)aesbuf),
-    .length = 0,
-    .value = (UINT8 *)plaintxt
-  };
-
-  SBC_CipherTLV enclv = {
-    .tag = 0,
-    .length = 0,
-    .value = aesbuf
-  };
 
 
   testcnt = sizeof aes_gcm_vectors  / sizeof(struct aes_gcm_vectors_st);
   //testcnt = 1;
   for(int x = 0; x < testcnt; x++) {
 
-    aesctx[x].key = aes_gcm_vectors[0].key;
-    aesctx[x].keylen  = SBC_KEY_STRENGTH_128;
-    SBC_AESInit(&aesctx[x]);
+    dprint("--- AES GCM Test Count %d ---", x);
+    gcmctx.key.value = (UINT8 *)aes_gcm_vectors[x].key;
+    gcmctx.key.length = SBC_KEY_LEN_128;
+    gcmctx.iv.value = (UINT8 *)aes_gcm_vectors[x].iv;
+    gcmctx.iv.length = 12;
+    gcmctx.aad.value = (UINT8 *)aes_gcm_vectors[x].auth;
+    gcmctx.aad.length = aes_gcm_vectors[x].auth_size;
+    gcmctx.msg.value = (UINT8 *)aes_gcm_vectors[x].plaintext;
+    gcmctx.msg.length = aes_gcm_vectors[x].plaintext_size;
+    gcmctx.tag.value = tagbuf;
+    gcmctx.tag.length = 16;
 
-    SBC_AESGcmEncrypt(SBC_AESContext *ctx)
+    gcmctx.out.value = cipherbuf;
+    gcmctx.out.length = sizeof cipherbuf;
 
 
 
-    SBC_AESDeInit(&aesctx[x]);
+
+
+    aesctx.gcm = &gcmctx;
+    //SBC_AESInit(&aesctx[x]);
+
+    ret = SBC_AESGcmEncrypt(&aesctx);
+    if(ret != SBCOK) {
+      eprint("GCM ENCRYPT FAIL \n");
+      continue;
+    }
+
+    SBC_external_mem_print_bin("GCM Answer", (UINT8 *)aes_gcm_vectors[x].tag, 16);
+    SBC_external_mem_print_bin("GCM TAG", gcmctx.tag.value, gcmctx.tag.length);
+    if(CompareMem(gcmctx.tag.value, aes_gcm_vectors[x].tag, 16) != 0) {
+      Print(L"AES GCM %d test fail \n",x);
+      continue;
+    }
+
+    Print(L"AES GCM %d test success \n",x);
+
+
+
+
+    //SBC_AESDeInit(&aesctx[x]);
   }
   return;
 }

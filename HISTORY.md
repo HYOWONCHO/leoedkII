@@ -15,3 +15,9 @@
   * ECDH TEST BUG FIXED
   * ECDSA API DESIGN AND test
   * AES AND SHA TEST
+
+## 2025-05-14 
+  * Version : leokII_tag_v0.1.1
+  * File Read / Write 
+    - Only tested over Emulator environment 
+  * Base-answer Function design 

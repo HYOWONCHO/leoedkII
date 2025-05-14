@@ -45,12 +45,12 @@ typedef struct _aes_cbc_context_t {
  * @author leoc (4/25/25)
  */
 typedef struct _aes_gcm_context_t {
-  SBC_CipherTLV *key;     /*!< Key regarding Encryptoin and Decectypion*/
-  SBC_CipherTLV *iv;      /*!< Initial vector */
-  SBC_CipherTLV *aad;     /*!< Addtional authenticated data */
-  SBC_CipherTLV *msg;     /*!< Message buffer pointer to encryption and decryption*/
-  SBC_CipherTLV *tag;     
-  SBC_CipherTLV *out;
+  SBC_CipherTLV key;     /*!< Key regarding Encryptoin and Decectypion*/
+  SBC_CipherTLV iv;      /*!< Initial vector */
+  SBC_CipherTLV aad;     /*!< Addtional authenticated data */
+  SBC_CipherTLV msg;     /*!< Message buffer pointer to encryption and decryption*/
+  SBC_CipherTLV tag;     
+  SBC_CipherTLV out;
 }SBC_AESGcmCtx;
 
 
