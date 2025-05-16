@@ -957,6 +957,7 @@ errdone:
 
 #ifdef SBC_BASEANSWER_TEST
 SBCStatus  SBC_BaseAnswerValidate(UINT8 *answer, UINTN answerl);
+SBCStatus SBC_GenDeviceID(UINT8 *devid);
 #endif
 
 #ifdef SBC_HASH_UNITEST_ENABLE
@@ -994,7 +995,11 @@ UefiMain (
 
 #ifdef SBC_BASEANSWER_TEST
   CHAR8 *base_answer = "anti-tampering!?";
+  UINT8 devid[32] = {0,};
   SBC_BaseAnswerValidate((UINT8 *)base_answer, strlen(base_answer));
+
+  SBC_GenDeviceID(devid);
+  SBC_external_mem_print_bin("Device ID", devid, sizeof devid);
 #endif
 #if 0
   BOOLEAN ret = 0;

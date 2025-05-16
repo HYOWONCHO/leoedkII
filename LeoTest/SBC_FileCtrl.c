@@ -3,11 +3,88 @@
 #include <Library/UefiRuntimeServicesTableLib.h>
 #include <Library/UefiLib.h>
 #include <Library/BaseMemoryLib.h>
+#include <Library/MemoryAllocationLib.h>
+#include <Guid/FileInfo.h>
 
 #include "SBC_FileCtrl.h"
-#include "SBC_Log.h"
-#include "SBC_ErrorType.h"
 
+
+
+//SBCStatus  SBC_GetFileSize(IN CHAR16 *FileName, OUT *FileSize)
+SBCStatus  SBC_GetFileSize(CHAR16 *FileName, UINTN  *FileSize)
+{
+    EFI_STATUS Status;
+
+    EFI_HANDLE ImageHandle;
+    EFI_SIMPLE_FILE_SYSTEM_PROTOCOL *FileSystem;
+    EFI_FILE_PROTOCOL *Root;
+  EFI_FILE_PROTOCOL *File;
+  UINTN              InfoSize = 0;
+  EFI_FILE_INFO     *FileInfo;
+
+    if(SBC_FileSysFindHndl(&ImageHandle) <= 0) {
+       
+        eprint("SBC_FileSysFindHndl fail");
+        return SBCFAIL;
+    }
+
+  Status = gBS->HandleProtocol(ImageHandle, 
+                               &gEfiSimpleFileSystemProtocolGuid,
+                               (VOID **)&FileSystem);
+  if(EFI_ERROR(Status)) {
+    DEBUG((DEBUG_INFO, " %a:%d Locate File Systam fail (%d) \r\n", 
+           __FUNCTION__, __LINE__, Status));
+    return SBCFAIL;
+  }
+
+  // Open the root directory of the volume.
+  Status = FileSystem->OpenVolume(FileSystem, &Root);
+  if (EFI_ERROR(Status)) {
+    eprint("Failed to open volume: %r\n", Status);
+    return SBCFAIL;
+  }
+
+  // Open the file using the provided Unicode file name.
+  Status = Root->Open(Root, &File, FileName, EFI_FILE_MODE_READ, 0);
+  if (EFI_ERROR(Status)) {
+    eprint("Failed to open file %s: %r\n", FileName, Status);
+    Root->Close(Root);
+    return SBCFAIL;
+  }
+
+  // Query for the size of buffer needed to hold the file info.
+  Status = File->GetInfo(File, &gEfiFileInfoGuid, &InfoSize, NULL);
+  if (Status != EFI_BUFFER_TOO_SMALL) {
+    eprint("Unexpected status when querying file info size: %r\n", Status);
+    File->Close(File);
+    Root->Close(Root);
+    return SBCFAIL;
+  }
+
+  // Allocate memory for the file info structure.
+  FileInfo = AllocatePool(InfoSize);
+  if (FileInfo == NULL) {
+    File->Close(File);
+    Root->Close(Root);
+    eprint("Allocate memory for the file info structure : EFI_OUT_OF_RESOURCES ");
+    return SBCFAIL;
+  }
+
+  // Retrieve the file info.
+  Status = File->GetInfo(File, &gEfiFileInfoGuid, &InfoSize, FileInfo);
+  if (EFI_ERROR(Status)) {
+    eprint("Failed to retrieve file info: %r\n", Status);
+  } else {
+    *FileSize = FileInfo->FileSize;
+  }
+
+  // Clean up allocated memory and open handles.
+  FreePool(FileInfo);
+  File->Close(File);
+  Root->Close(Root);
+    return SBCOK;
+
+}
 
 EFI_STATUS SBC_ReadFile(EFI_HANDLE ImageHandle, CHAR16 *FileNames, LV_t *out)
 {

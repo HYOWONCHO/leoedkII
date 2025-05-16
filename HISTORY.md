@@ -16,8 +16,7 @@
   * ECDSA API DESIGN AND test
   * AES AND SHA TEST
 
-## 2025-05-14 
-  * Version : leokII_tag_v0.1.1
-  * File Read / Write 
-    - Only tested over Emulator environment 
-  * Base-answer Function design 
+## 2025-05-16
+  * Generate key pair using DICE seeds
+  * Convert the Raw(DER) to PEM format
+  * File control

@@ -1,3 +1,8 @@
+#include <Library/BaseMemoryLib.h>
+#include <Library/MemoryAllocationLib.h>
+#include <Library/BaseLib.h>
+
+
 #include "SBC_CryptAES.h"
 #include "SBC_TypeDefs.h"
 
@@ -5,6 +10,9 @@
 #include "SBC_Config.h"
 #include "SBC_FileCtrl.h"
 
+#include "SBC_Hashing.h"
+#include "SBC_AntiTampering.h"
+#include "SBC_EccSignVerify.h"
 
 static SBCStatus _baseanswer_extract_from_disk(LV_t *lv)
 {
@@ -12,10 +20,12 @@ static SBCStatus _baseanswer_extract_from_disk(LV_t *lv)
     EFI_STATUS Status;
     SBCStatus ret = SBCOK;
     EFI_HANDLE f_hndl = NULL;
+    CHAR16 *basefile = L"base_answer.txt";
+    
     //LV_t bsanswer;
     //UINT8 rdbuf[256];
 #ifdef  SBC_BASEANSWER_TEST
-    CHAR16 *basefile = L"base_answer.txt";
+    
     //CHAR8 *baseanswer[64] = {0, };
     //const CHAR8 *key = "33ac9eccc4cc75e2711618f80b1548e8";
     //const CHAR8 *iv = "0000000000000000";
@@ -26,22 +36,16 @@ static SBCStatus _baseanswer_extract_from_disk(LV_t *lv)
     UINT8 *base_answer = NULL;
     UINT8 *key = NULL;
     UINT8 *tag = NULL;
+    UINTN basefile_sz  = 0;
 #endif
 
     SBC_RET_VALIDATE_ERRCODEMSG((lv != NULL), SBCNULLP, "LV Nill");
+    // check that the protocol is available 
     if(SBC_FileSysFindHndl(&f_hndl) <= 0) {
         ret = SBCFAIL;
         eprint("SBC_FileSysFindHndl fail");
         goto errdone;
     }
-
-    
-
-    Status = SBC_ReadFile(f_hndl, basefile, lv);
-    dprint("Readfile status : %d", Status);
-    //SBC_external_mem_print_bin("Base-answer", (UINT8 *)lv->value, (UINTN)lv->length);
-    SBC_RET_VALIDATE_ERRCODEMSG((Status == EFI_SUCCESS),ret, "Disk read fail");
-
  
 #ifdef  SBC_BASEANSWER_TEST
     //|------------|-----------|----------|
@@ -54,12 +58,36 @@ static SBCStatus _baseanswer_extract_from_disk(LV_t *lv)
     //CopyMem((void *)&lv->value[lv->length], &iv, 12);
     //lv->length += strlen(iv);
 
+
+
+
+    //dprint("%s size : %d", (CHAR8 *)basefile, basefile_sz);
+
+
+
+
 #else
-    // TO DO : SHOULD be extract the IV, Base-answer which included the TAG
-    // And then, decrypt the encrypted base-answer
-#   error "Not yet implement which extrace the base answer from disk"
+    // TO DO : SHOULD be preparing which the file reading.
+
+    ret = SBC_GetFileSize(basefile, &basefile_sz);
+    SBC_RET_VALIDATE_ERRCODEMSG((ret == SBCOK), ret, "File size getting fail");
+
+    lv->value = AllocatePool(basefile_sz);
+    SBC_RET_VALIDATE_ERRCODEMSG((lv->value != NULL), SBCNULLP, "Not enough memory");
+
+    ZeroMem(lv->value, basefile_sz);
 #endif
-    dprint("Key extract");
+
+    Status = SBC_ReadFile(f_hndl, basefile, lv);
+    //dprint("Readfile status : %d", Status);
+    //SBC_external_mem_print_bin("Base-answer", (UINT8 *)lv->value, (UINTN)lv->length);
+    SBC_RET_VALIDATE_ERRCODEMSG((Status == EFI_SUCCESS),ret, "Disk read fail");
+    //dprint("Key extract");
+
+#ifndef  SBC_BASEANSWER_TEST
+    // TODO : basefile decrypt 
+    // IV 
+#endif
 errdone:
     return ret;
 }
@@ -149,6 +177,74 @@ SBCStatus  SBC_BaseAnswerValidate(UINT8 *answer, UINTN answerl)
     
 
 errdone:
+    return ret;
+
+}
+
+SBCStatus SBC_GenDeviceID(UINT8 *devid)
+{
+    SBCStatus ret = SBCOK;
+    at_key_t key;
+    
+#ifndef  SBC_BASEANSWER_TEST
+    hw_uniqueinfo_t info;
+#else
+   hw_uniqueinfo_t info = {
+       .mbsn = { 0x51, 0x43, 0x51, 0x34, 0x53, 0x31, 0x32, 0x34, 0x34, 0x34, 0x30, 0x30, 0x4b, 0x52},
+       .mbsnl = 14,
+       .mmsn = {0x30, 0x30, 0x30, 0x30, 0x30, 0x30, 0x30, 0x30},
+       .mmsnl = 8,
+       .hdsn = {0x36, 0x34, 0x37, 0x39, 0x5f, 0x41, 0x37, 0x39, 0x36, 0x5f, 0x34, 0x41,0x33, 0x30, 0x5f, 0x35, 0x43, 0x37, 0x36 },
+       .hdsnl = 20
+   };
+
+   UINT8 *computebuf = NULL;
+   UINTN cnt = 0;
+#endif
+    SBC_RET_VALIDATE_ERRCODEMSG((devid != NULL),SBCNULLP, "Out buffer Nill");
+
+   
+
+#ifndef  SBC_BASEANSWER_TEST
+    // TODO : read the device information 
+    ZeroMem((void *)&info, sizeof info);
+#else
+    computebuf = AllocatePool(info.mbsnl + info.mmsnl + info.hdsnl);
+    SBC_RET_VALIDATE_ERRCODEMSG((computebuf != NULL),SBCNULLP, "Compute buffer Nill");
+
+    CopyMem((void *)&computebuf[0], info.mbsn, info.mbsnl);
+    cnt = info.mbsnl;
+
+    CopyMem((void *)&computebuf[cnt], info.mmsn, info.mmsnl);
+    cnt += info.mmsnl;
+
+    CopyMem((void *)&computebuf[cnt], info.hdsn, info.hdsnl);
+    cnt += info.mbsnl;
+
+    ret = SBC_HashCompute(
+                             NULL, /* Not yet used */
+                             computebuf,
+                             cnt,
+                             devid
+                          ) ;
+
+
+
+
+#endif
+
+
+    SBC_RET_VALIDATE_ERRCODEMSG((ret == SBCOK), ret, "Hash compute fail");
+
+    SBC_DICESeedKeyPair(devid, &key);
+
+    SBC_external_mem_print_bin("Devid Private", key.d, key.dl);
+    SBC_external_mem_print_bin("Pub", key.q.value, key.ql);
+errdone:
+
+    if(computebuf) {
+        FreePool(computebuf);
+    }
     return ret;
 
 }
