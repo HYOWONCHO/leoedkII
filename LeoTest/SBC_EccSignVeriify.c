@@ -4,6 +4,7 @@
 #include <openssl/objects.h>
 #include <openssl/bn.h>
 #include <openssl/ec.h>
+
 //#include <Library/OpensslLib.h>
 
 #include "SBC_Log.h"
@@ -204,19 +205,7 @@ VOID SBC_EcCtxHndlDeInit(SBCEccCtx *h)
 
 }
 
-/*!
- * Generates ECC Key pair 
- * 
- * \author leoc (5/2/25)
- * 
- * \param[in,out] h       Pointer to ECC handle context 
- * \param curveid ECC curve realted domain parameter ID 
- * 
- * \return On success, return the SBCOK, otherwise return the apporiate value
- * 
- * \note
- *      publickey = privat key * generator point
- */
+
 SBCStatus SBC_EccKeyGen(SBCEccCtx *h, UINTN curveid)
 {
 
@@ -337,21 +326,7 @@ ErrorDone:
     return ret;
 }
 
-/*!
- * Create the ECDSA signature for the given input hash message
- * 
- * \author leoc (5/8/25)
- * 
- * \param[in] h         Pointer to the SBC ECC Context handle 
- * \param[in] hash      Pointer to message size and message hash to be signed      
- * \param[in,out] signature     Pointer to buffer to receive the signature
- * 
- * \return On success, return the SBCOK, otherwise, will return apporiate value
- * 
- * \note
- * In terms of "signature" arguments, when "IN", it is essential to define the size
- * of the signature buffer in bytes, while "OUT" indicates the size at the signature buffer will return.
- */
+
 SBCStatus SBC_EcDsaSign(SBCEccCtx *h, TLV_t *hash, LV_t *signature)
 {
     SBCStatus ret = SBCOK;
@@ -388,21 +363,7 @@ errdone:
 //
 //}
 
-/*!
- * Create the ECDSA signature for the given input hash message
- * 
- * \author leoc (5/8/25)
- * 
- * \param[in] h         Pointer to the SBC ECC Context handle 
- * \param[in] hash      Pointer to message size and message hash to be signed      
- * \param[in,out] signature     Pointer to buffer the signature to be verify
- * 
- * \return On success, return the SBCOK, otherwise, will return apporiate value
- * 
- * \note
- * In terms of "signature" arguments, when "IN", it is essential to define the size
- * of the signature buffer in bytes, while "OUT" indicates the size at the signature buffer will return.
- */
+
 SBCStatus SBC_EcDsaVerify(SBCEccCtx *h, TLV_t *hash, LV_t *signature)
 {
     SBCStatus ret = SBCOK;
@@ -437,6 +398,221 @@ errdone:
 
     return ret;
 
+
+}
+
+SBCStatus  SBC_ConvertRaeKeyPem(
+                                    IN  CONST UINT8  *DerData,
+                                    IN  UINTN         DerSize,
+                                    IN  CONST CHAR8  *PemHeader,
+                                    IN  CONST CHAR8  *PemFooter,
+                                    OUT CHAR8       **PemKey,
+                                    OUT UINTN        *PemKeySize)
+{
+    SBCStatus ret = SBCOK;
+    EFI_STATUS  Status;
+    UINTN       Base64Size = 0;
+    UINT8      *Base64Encoded = NULL;
+    CHAR8      *PemBuffer = NULL;
+    UINTN       HeaderLen, FooterLen;
+    UINTN       NewlineCount, TotalSize;
+    UINTN       i, j, Offset;
+
+    SBC_RET_VALIDATE_ERRCODEMSG(((DerData != NULL) || (PemKey != NULL) || (PemKeySize != NULL)),
+                                 SBCNULLP,
+                                 "ECC key context creaet fail");
+
+    //  Base64-encode the DER data
+    Status = Base64Encode(DerData, DerSize, NULL, &Base64Size);
+    SBC_RET_VALIDATE_ERRCODEMSG(EFI_ERROR(Status), SBCFAIL, " Base64-encode the DER data fail");
+
+    Base64Encoded = AllocateZeroPool(Base64Size);
+    SBC_RET_VALIDATE_ERRCODEMSG((Base64Encoded != NULL), SBCNULLP, "Base64Encoded AlloctaeZeroPool fail");
+
+    Status = Base64Encode(DerData, DerSize, (CHAR8 *)Base64Encoded, &Base64Size);
+    SBC_RET_VALIDATE_ERRCODEMSG(EFI_ERROR(Status), SBCFAIL, " Base64-encode the DER data fail");
+    
+
+    // Insert line breaks every 64 characters
+    // Claculate how many newline characters will be inserted.
+    NewlineCount = (Base64Size % 64 == 0) ? (Base64Size / 64) - 1 : (Base64Size / 64);
+
+    // Prepare final PEM string size 
+    //   Final PEM = Header + newline + Base64 Encoded text (with newlines inserted) + newline + Footer + newline + null terminator.
+
+    HeaderLen  = AsciiStrLen(PemHeader);
+    FooterLen  = AsciiStrLen(PemFooter);
+    TotalSize = HeaderLen + 1
+            + Base64Size + NewlineCount
+            + 1 + FooterLen + 1
+            + 1;  // For the null terminator
+
+    PemBuffer = AllocateZeroPool(TotalSize);
+    SBC_RET_VALIDATE_ERRCODEMSG((PemBuffer != NULL), SBCNULLP, "PemBuffer AlloctaeZeroPool fail");
+    
+
+    // Build the PEM string
+    Offset = 0;
+    // Copy header and newline:
+    CopyMem(PemBuffer + Offset, PemHeader, HeaderLen);
+    Offset += HeaderLen;
+    PemBuffer[Offset++] = '\n';
+
+    // Insert Base64 data with newlines every 64 characters.
+    for (i = 0, j = 0; i < Base64Size; i++, j++) {
+        PemBuffer[Offset++] = (CHAR8)Base64Encoded[i];
+        if (((j + 1) % 64 == 0) && ((i + 1) < Base64Size)) {
+            PemBuffer[Offset++] = '\n';
+            j = -1; // reset j as we just inserted a newline
+        }
+    }
+    PemBuffer[Offset++] = '\n';
+
+    // Copy footer and final newline.
+    CopyMem(PemBuffer + Offset, PemFooter, FooterLen);
+    Offset += FooterLen;
+    PemBuffer[Offset++] = '\n';
+
+    // Null-terminate the PEM string.
+    PemBuffer[Offset] = '\0';
+
+    *PemKey     = PemBuffer;
+    *PemKeySize = Offset;
+
+errdone:
+
+    if(Base64Encoded != NULL) {
+        FreePool(Base64Encoded);
+    }
+    return ret;
+
+}
+
+SBCStatus  SBC_DICESeedKeyPair(UINT8 *dice_seed, at_key_t *key)
+{
+    SBCStatus ret = SBCOK;
+
+    int ecret = 0;
+    EC_KEY *ec_key = NULL;
+    EC_GROUP *group = NULL;
+    BIGNUM *priv_bn = NULL;
+    const BIGNUM *order  =NULL;
+    BN_CTX *ctx = NULL;
+    EC_POINT *pub_point = NULL;
+    CONST EC_POINT *EcPoint = NULL;
+    BIGNUM          *BnX;
+    BIGNUM          *BnY;
+    CONST BIGNUM  *bn_q;
+    UINTN           HalfSize;
+    INTN            XSize;
+    INTN            YSize;
+
+
+    // Generate hte ECC key structure using the secp256r1
+    ec_key = EC_KEY_new_by_curve_name(NID_X9_62_prime256v1);
+    SBC_RET_VALIDATE_ERRCODEMSG((ec_key != NULL), SBCNULLP, "ECC key context creaet fail");
+
+    group = (EC_GROUP *)EC_KEY_get0_group(ec_key);
+    //SBC_RET_VALIDATE_ERRCODEMSG((ec_key != NULL), SBCNULLP, "ECC key context creaet fail");
+    ctx = BN_CTX_new();
+    SBC_RET_VALIDATE_ERRCODEMSG((ctx != NULL), SBCNULLP, "BN context creaet fail");
+
+    // Obtain the order of curve ( available range : [1, n-1])
+    order = EC_GROUP_get0_order(group);
+
+    // Convert from DICE seed to bignum
+    priv_bn=  BN_bin2bn(dice_seed, 32, NULL);
+    SBC_RET_VALIDATE_ERRCODEMSG((priv_bn != NULL), SBCNULLP, "Convert from DICE seed to bignum fail");
+
+    // Modular operation of seed into order: determining the privat ekey within the valid range
+    if(!BN_mod(priv_bn, priv_bn, order, ctx)) {
+        eprint("BN_mod operation fail");
+        ret = SBCFAIL;
+        goto errdone;
+    }
+
+    // Set the private key
+    ecret = EC_KEY_set_private_key(ec_key, priv_bn);
+    SBC_RET_VALIDATE_ERRCODEMSG((ecret != 0), SBCFAIL, "Set the private key fail");
+
+    bn_q = EC_KEY_get0_private_key(ec_key);
+    BN_bn2bin(bn_q, key->d);
+
+    // Public key calculate : P = d * G
+    pub_point = EC_POINT_new(group);
+    SBC_RET_VALIDATE_ERRCODEMSG((pub_point != NULL), SBCNULLP, "Public point nill");
+
+    ecret = EC_POINT_mul(group, pub_point, priv_bn, NULL, NULL, ctx);
+    SBC_RET_VALIDATE_ERRCODEMSG((ecret != 0), SBCFAIL, "EC_POINT_mul fail");
+
+    // ECC pubilckey set
+    ecret = EC_KEY_set_public_key(ec_key,pub_point);
+    SBC_RET_VALIDATE_ERRCODEMSG((ecret != 0), SBCFAIL, "EC_KEY_set_public_key fail");
+
+    HalfSize = (EC_GROUP_get_degree (group) + 7) / 8;
+    dprint("Half size : %d", HalfSize);
+
+    key->dl = HalfSize;
+    key->ql = HalfSize * 2;
+
+
+    EcPoint = EC_KEY_get0_public_key(ec_key);
+    SBC_RET_VALIDATE_ERRCODEMSG((EcPoint != NULL), SBCFAIL, "EC_KEY_get0_public_key fail");
+
+    BnX    = BN_new ();
+    BnY    = BN_new();
+    SBC_RET_VALIDATE_ERRCODEMSG((BnX != NULL), SBCFAIL, "BnX fail");
+    SBC_RET_VALIDATE_ERRCODEMSG((BnY != NULL), SBCFAIL, "BnY fail");
+
+    if (EC_POINT_get_affine_coordinates (group, EcPoint, BnX, BnY, NULL) != 1) {
+          eprint("EC_POINT_get_affine_coordinates fail");
+          ret = SBCFAIL;
+          goto errdone;
+    }
+
+    XSize = BN_num_bytes (BnX);
+    YSize = BN_num_bytes (BnY);
+    if ((XSize <= 0) || (YSize <= 0)) {
+        eprint("XY size is zero");
+        ret = SBCZEROL;
+        goto errdone;
+    }
+
+    dprint("XSize : %d YSize :%d ", XSize, YSize);
+
+    ZeroMem (key->q.value, key->ql);
+    BN_bn2bin(BnX, key->q.qxy.qx);
+    BN_bn2bin(BnY, key->q.qxy.qy);
+
+   // BN_bn2bin(BnX, &PublicKey[0 + HalfSize - XSize]);
+   // BN_bn2bin(BnY, &PublicKey[HalfSize + HalfSize - YSize]);
+    
+
+errdone:
+    if(BnX != NULL) {
+        BN_free(BnX);
+    }
+
+    if(BnY != NULL) {
+        BN_free(BnY);
+    }
+
+    if(priv_bn != NULL) {
+        BN_free(priv_bn);
+    }
+
+    if(ctx != NULL) {
+        BN_CTX_free(ctx);
+    }
+
+    if(ec_key != NULL) {
+        EC_KEY_free(ec_key);
+    }
+
+    if(pub_point != NULL) {
+        EC_POINT_free(pub_point);
+    }
+    return ret;
 
 }
 

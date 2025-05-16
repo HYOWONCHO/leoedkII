@@ -34,6 +34,7 @@
   SBC_FileCtrl.c
   SBC_EccSignVeriify.c
   SBC_Hashing.c
+  SBC_AntiTampering.c
 
 [Packages]
   EmulatorPkg/EmulatorPkg.dec
@@ -67,6 +68,7 @@
 
 
 [Guids]
+  gEfiFileInfoGuid
   ## SOMETIMES_CONSUMES   ## GUID # Locate protocol
   ## SOMETIMES_CONSUMES   ## GUID # SmiHandlerRegister
 
@@ -81,7 +83,7 @@
 [Protocols]
   gEfiSimpleFileSystemProtocolGuid
   gEfiBlockIoProtocolGuid
-  gEfiBlockIoProtocolGuid
+
 
 [FeaturePcd]
 
