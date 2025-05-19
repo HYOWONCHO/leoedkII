@@ -401,7 +401,7 @@ errdone:
 
 }
 
-SBCStatus  SBC_ConvertRaeKeyPem(
+SBCStatus  SBC_ConvertRawKeyPem(
                                     IN  CONST UINT8  *DerData,
                                     IN  UINTN         DerSize,
                                     IN  CONST CHAR8  *PemHeader,
@@ -424,14 +424,25 @@ SBCStatus  SBC_ConvertRaeKeyPem(
 
     //  Base64-encode the DER data
     Status = Base64Encode(DerData, DerSize, NULL, &Base64Size);
-    SBC_RET_VALIDATE_ERRCODEMSG(EFI_ERROR(Status), SBCFAIL, " Base64-encode the DER data fail");
-
+//  dprint("Base64Encode : %d, %d", Status, Base64Size);
+//  Status = Base64Encode(DerData, DerSize, NULL, &Base64Size);
+//  dprint("Base64Encode : %d, %d", Status, Base64Size);
+//  if (EFI_ERROR(Status)) {
+//      eprint("Base64-encode the DER data");
+//      ret = SBCFAIL;
+//      goto errdone;
+//  }
     Base64Encoded = AllocateZeroPool(Base64Size);
+    
     SBC_RET_VALIDATE_ERRCODEMSG((Base64Encoded != NULL), SBCNULLP, "Base64Encoded AlloctaeZeroPool fail");
 
     Status = Base64Encode(DerData, DerSize, (CHAR8 *)Base64Encoded, &Base64Size);
-    SBC_RET_VALIDATE_ERRCODEMSG(EFI_ERROR(Status), SBCFAIL, " Base64-encode the DER data fail");
-    
+    //dprint("Base64Encode : %d", Status);
+    if (EFI_ERROR(Status)) {
+        eprint("Base64-encode the DER data");
+        ret = SBCFAIL;
+        goto errdone;
+    }
 
     // Insert line breaks every 64 characters
     // Claculate how many newline characters will be inserted.

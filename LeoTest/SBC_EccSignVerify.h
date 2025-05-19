@@ -114,7 +114,7 @@ SBCStatus  SBC_DICESeedKeyPair(UINT8 *dice_seed, at_key_t *key);
  * \retval  SBCOK  operation complete successfully
  * \retval  Others  An error occurred
  */
-SBCStatus  SBC_ConvertRaeKeyPem(
+SBCStatus  SBC_ConvertRawKeyPem(
                                     IN  CONST UINT8  *DerData,
                                     IN  UINTN         DerSize,
                                     IN  CONST CHAR8  *PemHeader,

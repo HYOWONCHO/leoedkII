@@ -20,3 +20,6 @@
   * Generate key pair using DICE seeds
   * Convert the Raw(DER) to PEM format
   * File control
+  
+## 2025-05-29
+  * X509 certificate verify and extract the public key from certificate

@@ -188,6 +188,7 @@ SBCStatus SBC_GenDeviceID(UINT8 *devid)
     
 #ifndef  SBC_BASEANSWER_TEST
     hw_uniqueinfo_t info;
+
 #else
    hw_uniqueinfo_t info = {
        .mbsn = { 0x51, 0x43, 0x51, 0x34, 0x53, 0x31, 0x32, 0x34, 0x34, 0x34, 0x30, 0x30, 0x4b, 0x52},
@@ -198,6 +199,13 @@ SBCStatus SBC_GenDeviceID(UINT8 *devid)
        .hdsnl = 20
    };
 
+    CHAR8 *pemkey_priv;
+    CHAR8 *pemkey_pub;
+    UINTN pemsize;
+    CONST CHAR8 *pemheader_priv="-----BEGIN PRIVATE KEY-----";
+    CONST CHAR8 *pemoffter_priv="-----END PRIVATE KEY-----";
+    CONST CHAR8 *pemheader_pub="-----BEGIN PUBLIC KEY-----";
+    CONST CHAR8 *pemoffter_pub="-----END PUBLIC KEY-----";
    UINT8 *computebuf = NULL;
    UINTN cnt = 0;
 #endif
@@ -240,6 +248,20 @@ SBCStatus SBC_GenDeviceID(UINT8 *devid)
 
     SBC_external_mem_print_bin("Devid Private", key.d, key.dl);
     SBC_external_mem_print_bin("Pub", key.q.value, key.ql);
+
+    SBC_ConvertRawKeyPem(
+                    key.d, key.dl,
+                    pemheader_priv, pemoffter_priv,
+                    &pemkey_priv,&pemsize
+            );
+    SBC_external_mem_print_bin("PRIV pem", (UINT8 *)pemkey_priv, (UINT32)pemsize);
+
+    SBC_ConvertRawKeyPem(
+                    key.q.value, key.ql,
+                    pemheader_pub, pemoffter_pub,
+                    &pemkey_pub,&pemsize
+            );
+    SBC_external_mem_print_bin("PUBLIC pem", (UINT8 *)pemkey_pub, (UINT32)pemsize);
 errdone:
 
     if(computebuf) {

@@ -18,6 +18,7 @@
 #define SBC_ECDSA_TEST_ENABLE
 
 
+#define SBC_X509_TEST
 
 
 #endif
