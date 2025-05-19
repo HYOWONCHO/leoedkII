@@ -21,7 +21,7 @@
 		int _expr_val=!!(expr);													\
 		if( !(_expr_val) )	{													\
 			ret = errorcode;													\
-            dprint("'%a' FAILED. : %s", #expr, #msg);                           \
+            dprint("'%a' FAILED. : %a", #expr, #msg);                           \
 			goto errdone;   													\
 		}																		\
 	})

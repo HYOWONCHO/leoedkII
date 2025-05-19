@@ -35,6 +35,7 @@
   SBC_EccSignVeriify.c
   SBC_Hashing.c
   SBC_AntiTampering.c
+  SBC_X509.c
 
 [Packages]
   EmulatorPkg/EmulatorPkg.dec

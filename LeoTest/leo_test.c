@@ -54,6 +54,7 @@
 #include "SBC_EccSignVerify.h"
 #include "SBC_Config.h"
 
+
 //#include <openssl/sha.h>
 //
 #if 1
@@ -972,6 +973,10 @@ VOID SBC_AesGcmTestMain(VOID);
 #ifdef SBC_ECDSA_TEST_ENABLE
 VOID SBC_EcDsa_TestMain(VOID);
 #endif
+
+#ifdef SBC_X509_TEST
+SBCStatus  SBC_X509TestMain(VOID);
+#endif
 EFI_STATUS
 EFIAPI
 UefiMain (
@@ -1000,6 +1005,10 @@ UefiMain (
 
   SBC_GenDeviceID(devid);
   SBC_external_mem_print_bin("Device ID", devid, sizeof devid);
+#endif
+
+#ifdef SBC_X509_TEST
+  SBC_X509TestMain();
 #endif
 #if 0
   BOOLEAN ret = 0;
