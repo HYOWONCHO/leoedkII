@@ -46,6 +46,17 @@ typedef struct _lv_t LV_t;
 typedef struct _lv_t *LV_p;
 
 
+#define KDF_KEY_MAXL                (32)
+typedef struct _kdf_t {
+    UINT8   ikm[KDF_KEY_MAXL];
+    UINTN   ikml;
+    UINT8   salt[KDF_KEY_MAXL];
+    UINTN   saltl;
+    UINT8   info[KDF_KEY_MAXL];   
+    UINTN   infol;    
+}kdf_t;
+
+
 
 static inline void _lv_set_data(LV_t *lv, void *buf, int bufl)
 {
