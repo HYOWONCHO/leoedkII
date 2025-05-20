@@ -133,19 +133,19 @@ static SBCStatus SBC_AESGcmEncrypt(SBC_AESContext *ctx)
 
 static SBCStatus SBC_AESGcmDecrypt(SBC_AESContext *ctx)
 {
-//SBC_AESGcmCtx *gcm = NULL;
-//
-//gcm = ctx->gcm;
-//
-//if(AeadAesGcmDecrypt(gcm->key->value, gcm->key->length,
-//                     gcm->iv->value, gcm->iv->length,
-//                     gcm->aad->value, gcm->aad->length,
-//                     gcm->msg->value, gcm->msg->length,
-//                     gcm->tag->value, gcm->tag->length,
-//                     gcm->out->value, &gcm->out->length)) {
-//  Print(L"GCM Decrypt fail \r\n");
-//  return SBCENCFAIL;
-//}
+  SBC_AESGcmCtx *gcm = NULL;
+
+  gcm = ctx->gcm;
+
+  if(AeadAesGcmDecrypt(gcm->key.value, gcm->key.length,
+                       gcm->iv.value, gcm->iv.length,
+                       gcm->aad.value, gcm->aad.length,
+                       gcm->msg.value, gcm->msg.length,
+                       gcm->tag.value, gcm->tag.length,
+                       gcm->out.value, &gcm->out.length)) {
+    eprint("GCM Decrypt fail \r\n");
+    return SBCENCFAIL;
+  }
 
   return SBCOK;
 
