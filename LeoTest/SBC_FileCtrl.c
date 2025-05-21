@@ -18,9 +18,9 @@ SBCStatus  SBC_GetFileSize(CHAR16 *FileName, UINTN  *FileSize)
     EFI_HANDLE ImageHandle;
     EFI_SIMPLE_FILE_SYSTEM_PROTOCOL *FileSystem;
     EFI_FILE_PROTOCOL *Root;
-  EFI_FILE_PROTOCOL *File;
-  UINTN              InfoSize = 0;
-  EFI_FILE_INFO     *FileInfo;
+    EFI_FILE_PROTOCOL *File;
+    UINTN              InfoSize = 0;
+    EFI_FILE_INFO     *FileInfo;
 
     if(SBC_FileSysFindHndl(&ImageHandle) <= 0) {
        
@@ -230,7 +230,7 @@ UINTN  SBC_FileSysFindHndl(EFI_HANDLE *handle)
   return hdlcnt;
 }
 
-#if 1
+
 SBCStatus  SBC_CreateFile(EFI_HANDLE h, CHAR16 *fname)
 {
     EFI_STATUS Status;
@@ -312,4 +312,29 @@ SBCStatus  SBC_CreateDirectory(EFI_HANDLE h, CHAR16 *fname)
 
 
 }
-#endif
+
+
+VOID SBC_FileCtrlTestMain(VOID)
+{
+    EFI_HANDLE *ImageHandle = NULL;
+    CHAR8 *rdmsg = "Hi, I am Leo, It is an pleasure, to meet you here";
+    UINTN rdmsgl = strlen(testmsg);
+
+    UINT8 wrmsg[64] = 0;
+    LV_t rdlv;
+    LV_t wrlv;
+
+    // Length/Value structure initialize 
+    _lv_set_data(&rdlv, rdmsg, rdmsg);
+    _lv_set_data(&rdlv, wrmsg, 0);
+
+    // Must step) Find the File handle protocol for gEfiSimpleFileSystemProtocolGuid 
+    if(SBC_FileSysFindHndl(&ImageHandle) <= 0) {
+       
+        eprint("SBC_FileSysFindHndl fail");
+        return SBCFAIL;
+    }
+
+
+}
+
