@@ -63,7 +63,7 @@ SBCStatus  SBC_X509VerifyCert(CONST UINT8 *cert, UINTN certl, CONST UINT8 *cacer
 
     status = X509VerifyCert(cert, certl, cacert, cacertl);
     dprint("status : %d \n", status);
-    SBC_RET_VALIDATE_ERRCODEMSG((status == TRUE) , SBCNULLP, "Cert or CACert Nill");
+    SBC_RET_VALIDATE_ERRCODEMSG((status == TRUE) , SBCNULLP, "Certi verify fail");
 
 
 

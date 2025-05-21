@@ -1010,6 +1010,9 @@ UefiMain (
 #ifdef SBC_X509_TEST
   SBC_X509TestMain();
 #endif
+
+  extern VOID SBC_FileCtrlTestMain(VOID);
+  SBC_FileCtrlTestMain();
 #if 0
   BOOLEAN ret = 0;
   //UINT32 rand[32] ={0, };
