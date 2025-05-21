@@ -6,6 +6,8 @@
 #include <Library/MemoryAllocationLib.h>
 #include <Guid/FileInfo.h>
 
+#include <string.h>
+
 #include "SBC_FileCtrl.h"
 
 
@@ -91,8 +93,8 @@ EFI_STATUS SBC_ReadFile(EFI_HANDLE ImageHandle, CHAR16 *FileNames, LV_t *out)
   EFI_STATUS Status;
   EFI_SIMPLE_FILE_SYSTEM_PROTOCOL *FileSystem;
   EFI_FILE_PROTOCOL *RootDir, *File;
-  //UINTN BufferSize = 128;
-  //CHAR8 Buffer[128];
+//UINTN BufferSize = 128;
+//CHAR8 Buffer[128];
 
 
   //TODO 
@@ -179,7 +181,7 @@ EFI_STATUS SBC_WriteFile(EFI_HANDLE ImageHandle, CHAR16 *FileNames, LV_t *out)
   }
 
   // Open the file
-  Status = RootDir->Open(RootDir, &File, FileNames, EFI_FILE_MODE_WRITE, 0);
+  Status = RootDir->Open(RootDir, &File, FileNames, EFI_FILE_MODE_READ | EFI_FILE_MODE_WRITE, 0);
   if (EFI_ERROR(Status)) {
       DEBUG((DEBUG_INFO, " %a:%d RootDir->Open fail (%d) \r\n", 
      __FUNCTION__, __LINE__, Status));
@@ -237,7 +239,7 @@ SBCStatus  SBC_CreateFile(EFI_HANDLE h, CHAR16 *fname)
     EFI_SIMPLE_FILE_SYSTEM_PROTOCOL *FileSystem;
     EFI_FILE_PROTOCOL *RootDir, *File;
 
-    SBCLOGMSG("Starting");
+    //SBCLOGMSG("Starting");
 
     Status = gBS->HandleProtocol(h,
                                &gEfiSimpleFileSystemProtocolGuid,
@@ -316,24 +318,57 @@ SBCStatus  SBC_CreateDirectory(EFI_HANDLE h, CHAR16 *fname)
 
 VOID SBC_FileCtrlTestMain(VOID)
 {
-    EFI_HANDLE *ImageHandle = NULL;
-    CHAR8 *rdmsg = "Hi, I am Leo, It is an pleasure, to meet you here";
-    UINTN rdmsgl = strlen(testmsg);
+    SBCStatus ret = SBCOK;
+    
+    EFI_HANDLE ImageHandle = NULL;
+    CHAR8 *wrmsg = "Hi, I am Leo, It is an pleasure, to meet you here xxxxx";
+    UINTN wrmsgl = strlen(wrmsg);
+    CHAR16 *fname = L"baseanswer.txt"; 
+    //UINTN filesize = 0;
 
-    UINT8 wrmsg[64] = 0;
+    UINT8 rdmsg[64] = {0, };
     LV_t rdlv;
     LV_t wrlv;
 
     // Length/Value structure initialize 
-    _lv_set_data(&rdlv, rdmsg, rdmsg);
-    _lv_set_data(&rdlv, wrmsg, 0);
+    _lv_set_data(&wrlv, wrmsg, wrmsgl);
+    _lv_set_data(&rdlv, rdmsg, 0);
 
     // Must step) Find the File handle protocol for gEfiSimpleFileSystemProtocolGuid 
     if(SBC_FileSysFindHndl(&ImageHandle) <= 0) {
        
         eprint("SBC_FileSysFindHndl fail");
-        return SBCFAIL;
+        return ;
     }
+
+    ret =  SBC_CreateFile(ImageHandle, fname);
+    if (ret != SBCOK) {
+        eprint("%a file create fail", fname);
+        return;
+    }
+
+     ret = SBC_WriteFile(ImageHandle, fname, &wrlv);
+     if (ret != SBCOK) {
+         eprint("%a frile write fail", fname);
+         return;
+     }
+
+
+     SBC_GetFileSize(fname, (UINTN *)&rdlv.length);
+     dprint("File size of %a : %d", fname, rdlv.length);
+
+     
+
+     ret = SBC_ReadFile(ImageHandle, fname, &rdlv);
+     if (ret != SBCOK) {
+         eprint("%a frile read fail", fname);
+         return;
+     }
+
+     SBC_external_mem_print_bin("Read data", rdlv.value, rdlv.length);
+
+     return;
+
 
 
 }
