@@ -84,6 +84,7 @@
 [Protocols]
   gEfiSimpleFileSystemProtocolGuid
   gEfiBlockIoProtocolGuid
+  gEfiSerialIoProtocolGuid
 
 
 [FeaturePcd]
