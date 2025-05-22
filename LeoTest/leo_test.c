@@ -30,6 +30,7 @@
 // Block Io
 #include <Protocol/BlockIo.h>
 #include <Protocol/DiskInfo.h>
+#include <Protocol/SerialIo.h>
 
 #include "leo_test.h"
 // Length value
@@ -562,6 +563,7 @@ EFI_STATUS SBC_SSDGetSN(VOID)
                               (VOID **)&BlockIo
                               );
     if(!EFI_ERROR(Status)) {
+      Print(L"gEfiBlockIoProtocolGuid HandleProtocol fail \n");
       continue;
     }
 
@@ -571,6 +573,7 @@ EFI_STATUS SBC_SSDGetSN(VOID)
     if (EFI_ERROR(Status)) {
       DEBUG((DEBUG_ERROR, "[%a:%d] HandleProtocol (0x%p) \n",
              __FUNCTION__,__LINE__, DiskInfo));
+      Print(L"gEfiDiskInfoProtocolGuid HandleProtocol fail \n");
       return Status;
     }
 
@@ -588,6 +591,7 @@ EFI_STATUS SBC_SSDGetSN(VOID)
     SerialNumber[20] = L'\0'; // Null-terminate
 
     Print(L"SSD Serial Number: %s\n", SerialNumber);
+    SBC_mem_print_bin("Memory Serial Number", (UINT8 *)SerialNumber, 20);
 
   }
 
@@ -597,28 +601,28 @@ EFI_STATUS SBC_SSDGetSN(VOID)
 //                           NULL,
 //                           (VOID**)&DiskInfo);
 //if (EFI_ERROR(Status)) {
-//  DEBUG((DEBUG_ERROR, "[%a:%d] LocateProtocol (0x%p) \n",
-//         __FUNCTION__,__LINE__, DiskInfo));
+  DEBUG((DEBUG_ERROR, "[%a:%d] LocateProtocol (0x%p) \n",
+         __FUNCTION__,__LINE__, DiskInfo));
 //  return Status;
 //}
 //DEBUG((DEBUG_INFO, "[%a:%d]\n", __FUNCTION__,__LINE__));
 //DEBUG((DEBUG_INFO, "[%a:%d] ( Disk Info 0x%p 0x%p) \n",
 //                    __FUNCTION__,__LINE__,DiskInfo, *DiskInfo));
-  // Query the IDENTIFY DEVICE data
-  Status = DiskInfo->Identify(DiskInfo, (VOID *)IdentifyData, (UINT32 *)&BufferSize);
-  if (EFI_ERROR(Status)) {
-    DEBUG((DEBUG_ERROR, "[%a:%d] Identify (0x%p) \n",
-           __FUNCTION__,__LINE__));
-    return Status;
-
-  }
-
-  // Extract Serial Number (Example for SATA)
-  CHAR16 SerialNumber[21];
-  CopyMem(SerialNumber, &IdentifyData[20], 20); // Serial is stored at offset 20 in IDENTIFY DEVICE
-  SerialNumber[20] = L'\0'; // Null-terminate
-
-  Print(L"SSD Serial Number: %s\n", SerialNumber);
+//// Query the IDENTIFY DEVICE data
+//Status = DiskInfo->Identify(DiskInfo, (VOID *)IdentifyData, (UINT32 *)&BufferSize);
+//if (EFI_ERROR(Status)) {
+  DEBUG((DEBUG_ERROR, "[%a:%d] Identify (0x%p) \n",
+         __FUNCTION__,__LINE__));
+//  return Status;
+//
+//}
+//
+//// Extract Serial Number (Example for SATA)
+//CHAR16 SerialNumber[21];
+//CopyMem(SerialNumber, &IdentifyData[20], 20); // Serial is stored at offset 20 in IDENTIFY DEVICE
+//SerialNumber[20] = L'\0'; // Null-terminate
+//
+//Print(L"SSD Serial Number: %s\n", SerialNumber);
 
   return EFI_SUCCESS;
 
@@ -631,10 +635,14 @@ EFI_STATUS GetMemorySerialNumbers() {
     SMBIOS_TABLE_TYPE17 *Type17Record;
     EFI_SMBIOS_TABLE_HEADER *Record;
 
+    UINT8 snbuf[512] = {0 ,};
+    int sncnt = 0;
+
     DEBUG((DEBUG_INFO, "[%a:%d] \n",__FUNCTION__,__LINE__));
     Status = gBS->LocateProtocol(&gEfiSmbiosProtocolGuid, NULL, (VOID **)&Smbios);
     if (EFI_ERROR(Status)) {
-        DEBUG((DEBUG_ERROR , "%a:%d LocateProtocol fail (%d) \n",__func__, __LINE__, Status));
+        //DEBUG((DEBUG_ERROR , "%a:%d LocateProtocol fail (%d) \n",__func__, __LINE__, Status));
+
         return Status;
     }
 
@@ -651,14 +659,17 @@ EFI_STATUS GetMemorySerialNumbers() {
             if (SerialNumberIndex > 0) {
                 // Move to the correct string entry in the table
                 for (UINT8 i = 1; i < SerialNumberIndex; i++) {
+                    sncnt = 0;
                     while (*SerialNumberString != '\0') {
+                        snbuf[sncnt++] = *SerialNumberString;
                         SerialNumberString++;
                     }
                     SerialNumberString++;
                 }
                 
                 // Print the Serial Number
-                Print(L"Memory Serial Number: %a\n", SerialNumberString);
+                //Print(L"Memory Serial Number: %a\n", SerialNumberString);
+                SBC_mem_print_bin("Memory Serial Number", (UINT8 *)snbuf, sncnt);
             }
         }
     }
@@ -678,6 +689,7 @@ EFI_STATUS ListInstalledProtocols()
     Status = gBS->LocateHandleBuffer(ByProtocol, NULL, NULL, &HandleCount, &HandleBuffer);
     if (EFI_ERROR(Status)) {
         DEBUG((DEBUG_ERROR, "[%a:%d] (LocateHandleBuffer Fal : %d) \n",__FUNCTION__,__LINE__, Status));
+        Print(L"ListInstalledProtocols LocateProtocol fail \n");
         return Status;
     }
     
@@ -695,6 +707,7 @@ EFI_STATUS GetMotherboardSerialNumber()
 
     Status = gBS->LocateProtocol(&gEfiSmbiosProtocolGuid, NULL, (VOID **)&Smbios);
     if (EFI_ERROR(Status)) {
+        Print(L"Motherboard Serial Number LocateProtocol fail \n");
         DEBUG((DEBUG_ERROR, "[%a:%d] (LocateProtocol : %d) \n",__FUNCTION__,__LINE__, Status));
         return Status;
     }
@@ -721,7 +734,7 @@ EFI_STATUS GetMotherboardSerialNumber()
 
                 // Print the Serial Number
                 Print(L"Motherboard Serial Number: %a\n", SerialNumberString);
-                SBC_mem_print_bin("SN", (UINT8 *)SerialNumberString, SerialNumberIndex);
+                SBC_mem_print_bin("SN", (UINT8 *)SerialNumberString, strlen(SerialNumberString));
             }
         }
     }
@@ -956,6 +969,119 @@ errdone:
   return ret;
 }
 
+VOID enable_uart_serial(VOID)
+{
+#if 0
+  EFI_HANDLE ControllerHandle;
+  EFI_STATUS Status;
+  UINTN hndlcnt;
+
+  DEBUGPORT_DEVICE  mDebugPortDevice = {
+    DEBUGPORT_DEVICE_SIGNATURE,
+    (EFI_HANDLE)0,
+    (EFI_HANDLE)0,
+    (EFI_DEVICE_PATH_PROTOCOL *)NULL,
+    {
+      DebugPortReset,
+      DebugPortWrite,
+      DebugPortRead,
+      DebugPortPoll
+    },
+    (EFI_HANDLE)0,
+    (EFI_SERIAL_IO_PROTOCOL *)NULL,
+    DEBUGPORT_UART_DEFAULT_BAUDRATE,
+    DEBUGPORT_UART_DEFAULT_FIFO_DEPTH,
+    DEBUGPORT_UART_DEFAULT_TIMEOUT,
+    (EFI_PARITY_TYPE)DEBUGPORT_UART_DEFAULT_PARITY,
+    DEBUGPORT_UART_DEFAULT_DATA_BITS,
+    (EFI_STOP_BITS_TYPE)DEBUGPORT_UART_DEFAULT_STOP_BITS
+  };
+  Status = gBS->LocateHandleBuffer(
+                                     ByProtocol,
+                                     &gEfiSerialIoProtocolGuid,
+                                     NULL,
+                                     &hndlcnt,
+                                     (VOID **)&ControllerHandle
+                                      
+      );
+
+  if (EFI_ERROR(Status)) {
+      Print(L"LocateHandleBuffer not found!\n");
+      DEBUG((DEBUG_ERROR, "SerialIo Protocol not found!\n"));
+      return;
+  } else {
+      Print(L"LocateHandleBuffer enabled.\n");
+      DEBUG((DEBUG_INFO, "SerialIo Protocol enabled.\n"));
+  }
+
+
+  Status = gBS->OpenProtocol(
+                  ControllerHandle,
+                  &gEfiSerialIoPrhotocolGuid,
+                  (VOID **)&mDebugPortDevice.SerialIoBinding,
+
+      );
+  SerialIo->SetAttributes(
+          SerialIo,
+          115200,  // Baud Rate
+          0,       // Receive FIFO Depth
+          0,       // Timeout
+          NoParity,       // Parity
+          8,        // Data
+          OneStopBit        // Stop Bits
+      );
+
+  CHAR8 Buffer[] = "Hello, UART!";
+  UINTN BufferSize = sizeof(Buffer);
+  SerialIo->Write(SerialIo, &BufferSize, Buffer);
+#endif
+
+    EFI_STATUS Status;
+    EFI_SERIAL_IO_PROTOCOL *SerialIo;
+
+    // 1. Locate the Serial IO Protocol
+    Status = gBS->LocateProtocol(&gEfiSerialIoProtocolGuid, NULL, (VOID **)&SerialIo);
+    if (EFI_ERROR(Status)) {
+        Print(L"Error: Unable to locate Serial Io Protocol: %r\n", Status);
+        return ;
+    }
+    Print(L"Serial Io Protocol located successfully.\n");
+
+    // 2. Configure the UART settings
+    //    - Baud Rate: 115200
+    //    - Receive FIFO Depth: 0 (use hardware default)
+    //    - Timeout: 0  (zero indicates that no timeout is applied)
+    //    - Parity: DefaultParity (commonly EfiParityNone in many implementations)
+    //    - Data Bits: 8
+    //    - Stop Bits: DefaultStopBits (commonly one stop bit)
+    Status = SerialIo->SetAttributes(
+                   SerialIo,
+                   115200,           // BaudRate
+                   0,                // Receive FIFO Depth (0 uses default)
+                   0,                // Timeout (in 1/10 ms, 0 means no timeout)
+                   DefaultParity,    // Parity (typically no parity)
+                   8,                // Data Bits
+                   DefaultStopBits   // Stop Bits (typically one stop bit)
+               );
+    if (EFI_ERROR(Status)) {
+        Print(L"Error: Failed to set serial port attributes: %r\n", Status);
+        return;
+    }
+    Print(L"Serial port configured successfully.\n");
+
+    // 3. Write data to the UART
+    CHAR8 Message[] = "Hello from EDK II Serial Port!\n";
+    UINTN MessageSize = sizeof(Message);
+    Status = SerialIo->Write(SerialIo, &MessageSize, Message);
+    if (EFI_ERROR(Status)) {
+        Print(L"Error: Serial write failed: %r\n", Status);
+        return ;
+    }
+    Print(L"Message sent to the serial port.\n");
+    return;
+
+}
+
 #ifdef SBC_BASEANSWER_TEST
 SBCStatus  SBC_BaseAnswerValidate(UINT8 *answer, UINTN answerl);
 SBCStatus SBC_GenDeviceID(UINT8 *devid);
@@ -985,232 +1111,44 @@ UefiMain (
   )
 {
 
-  Print(L"Hi Leo welcomm \n");
-  #ifdef SBC_HASH_UNITEST_ENABLE
-    SBC_HashMain();
-  #endif
-  #ifdef SBC_AES_UNITEST_ENABLE
-    SBC_AES_TestMain();
-    SBC_AesGcmTestMain();
-  #endif
+  Print(L"Enable uart \n");
 
-  #ifdef SBC_ECDSA_TEST_ENABLE
-    //ecc_test_func();
-    SBC_EcDsa_TestMain();
+  GetMotherboardSerialNumber();
+   SBC_SSDGetSN();
+   CpuidSerialNumber();
+   GetMemorySerialNumbers();
+  //enable_uart_serial();
+//#ifdef SBC_HASH_UNITEST_ENABLE
+//  SBC_HashMain();
+//#endif
+//#ifdef SBC_AES_UNITEST_ENABLE
+//  SBC_AES_TestMain();
+//  SBC_AesGcmTestMain();
+//#endif
+//
+//#ifdef SBC_ECDSA_TEST_ENABLE
+//  //ecc_test_func();
+//  SBC_EcDsa_TestMain();
+//
+//#endif
+//
+//#ifdef SBC_BASEANSWER_TEST
+//  CHAR8 *base_answer = "anti-tampering!?";
+//  UINT8 devid[32] = {0,};
+//  SBC_BaseAnswerValidate((UINT8 *)base_answer, strlen(base_answer));
+//
+//  SBC_GenDeviceID(devid);
+//  SBC_external_mem_print_bin("Device ID", devid, sizeof devid);
+//#endif
+//
+//#ifdef SBC_X509_TEST
+//  SBC_X509TestMain();
+//#endif
+//
+//  extern VOID SBC_FileCtrlTestMain(VOID);
+//  SBC_FileCtrlTestMain();
 
-  #endif
-
-  #ifdef SBC_BASEANSWER_TEST
-    CHAR8 *base_answer = "anti-tampering!?";
-    UINT8 devid[32] = {0,};
-    SBC_BaseAnswerValidate((UINT8 *)base_answer, strlen(base_answer));
-
-    SBC_GenDeviceID(devid);
-    SBC_external_mem_print_bin("Device ID", devid, sizeof devid);
-  #endif
-
-  #ifdef SBC_X509_TEST
-    SBC_X509TestMain();
-  #endif
-
-    extern VOID SBC_FileCtrlTestMain(VOID);
-    SBC_FileCtrlTestMain();
-#if 0
-  BOOLEAN ret = 0;
-  //UINT32 rand[32] ={0, };
-  UINT8 randout[32] = {0, };
-  UINT8 hashout[32] = {0, };
-
-  UINT8 mackey[32] = {0, };
-  UINT8 macvalue[32] = {0, };
-  UINT8 macmsg[32] = {0, };
-  VOID *hmacHandle;
-
-
-
-#if 1
-  UINT8 symmkey[SBC_KEY_LEN_256] = {0, };
-  SBC_AESContext aesctx = {
-    .handle = NULL,
-    .key = symmkey,
-    .keylen = SBC_KEY_STRENGTH_256,
-    .algoid = SBC_CIPHER_NONE
-  };
-
-#endif
-#if 0
-  UINT8 pubkeyBuf[66 *2];
-  LV_t public = {
-    .value = pubkeyBuf,
-    .length = sizeof pubkeyBuf,
-  };
-#endif
-
-#if 1
-  //----- AES Test variable start
-  //UINT8 aesbuf[] = L"Welcome to the Enjoy world !!!";
-  //CHAR8 plaintxt[] = "Welcome";
-  UINT8 plaintxt[16] = {0, };
-  UINT8 aesbuf[256] = {0, };
-  SBC_AESCBCCtx  cbcctx;
-  SBC_CipherTLV plainlv = {
-    .tag = 0,
-    //.length = (UINTN)strlen((unsigned char *)aesbuf),
-    .length = sizeof(Aes128CbcData),
-    .value = (UINT8 *)Aes128CbcData
-  };
-
-  SBC_CipherTLV enclv = {
-    .tag = 0,
-    .length = 0,
-    .value = aesbuf
-  };
-#endif
-
-#if 0
-  SBC_CipherTLV declv = {
-    .tag = 0,
-    .length = 0,
-    .value = aesbuf
-  };
-
-#endif
-
-  //----- AES Test variabl end
-  //CHAR8 testfile[] ="/home/leoc/src/edk2/eck2_biuld_setup.sh";
-  SBCLOGMSG("Leo Test Starting \n");
-  //DEBUG((DEBUG_INFO,"Image Handle Ptr : %p \r\n", ImageHandle));
-
-
-  CpuidSerialNumber();
-  ret = RandomBytes(randout, sizeof randout);
-  if(ret == FALSE) {
-    Print(L"RandomByte fail \n");
-    return EFI_LOAD_ERROR;
-  }
-
-  ret = RandomBytes(mackey, 32);
-  if(ret == FALSE) {
-    Print(L"RandomByte fail \n");
-    return EFI_LOAD_ERROR;
-  }
-
-  ret = RandomBytes(plaintxt, 16);
-  if(ret == FALSE) {
-    Print(L"Plaintxt Random byte fail \n");
-    return EFI_LOAD_ERROR;
-  }
-
-
-
-  Print(L"Rand Out : \n");
-  //x_mem_print_bin(NULL,randout, 32);
-
-  Sha256HashAll((CONST VOID *)randout, 32, hashout);
-  Print(L"SHA256 Out : \n");
-  //x_mem_print_bin(NULL,hashout, 32);
-
-  //free(FwPrivKey);
-  //
-
-  hmacHandle = HmacSha256New();
-
-  SBC_hmac_compute(hmacHandle, mackey, sizeof mackey, macmsg, sizeof macmsg, macvalue);
-
-  Print(L"MAC Out : \n");
-  //x_mem_print_bin(NULL,macvalue, 32);
-
-  HmacSha256Free(hmacHandle);
-
-#if 1
-  aesctx.cbc = &cbcctx;
-  aesctx.key = Aes256CbcKey;
-  aesctx.keylen =SBC_KEY_STRENGTH_256;
-  aesctx.algoid = SBC_CIPHER_AES_CBC;
-  aesctx.in = &plainlv;
-  aesctx.out = &enclv;
-  aesctx.iv = Aes128CbcIvec;
-#endif
-
-
-  
-  
-
-  //Print(L"AES Plain text (%d) (%s) \r\n", plainlv.length, (CHAR8 *)plainlv.value);
-  //x_mem_print_bin(NULL, plainlv.value, plainlv.length);
-
-
-  Print(L"AES Init : %d\n", SBC_AESInit(&aesctx));
-  Print(L"AES handle : 0x%08x\n", aesctx.handle);
-  //DEBUG((DEBUG_INFO , "%s:%d \n",__func__, __LINE__));
-
-  //aesctx.in = &enclv;
-  //aesctx.out = &declv;
-#if 1
-  if(SBC_AESEncrypt(&aesctx) != SBCOK) {
-    Print(L"Encrypt Fail \r\n");
-  }
-  else {
-      //DEBUG((DEBUG_INFO , "%s:%d \n",__func__, __LINE__));
-    Print(L"Encrypt Buff \r\n");
-    SBC_mem_print_bin(NULL, aesctx.out->value, aesctx.out->length);
-    DEBUG((DEBUG_INFO , "%s:%d \n",__func__, __LINE__));
-  }
-#endif
-
-
-  aesctx.in = &enclv;
-  aesctx.out = &plainlv;
-  if(SBC_AESDecrypt(&aesctx) != SBCOK) {
-    Print(L"Encrypt Fail \r\n");
-  }
-  else {
-      //DEBUG((DEBUG_INFO , "%s:%d \n",__func__, __LINE__));
-    Print(L"Decrypt Buff \r\n");
-    SBC_mem_print_bin(NULL, aesctx.out->value, aesctx.out->length);
-  }
-
-
-  SBC_AESDeInit(&aesctx);
-  DEBUG((DEBUG_INFO , "%a:%d \n",__func__, __LINE__));
-
-
-  ecc_test_func();
-  
-  //TestVerifyEcDh();
-
-  //GetDiskSerialNumber();
-//ListInstalledProtocols();
-//GetMotherboardSerialNumber();
-//GetMemorySerialNumbers();
-  /// File Test
-//EFI_HANDLE HandleBuffer = NULL;
-//UINTN HandleCount;
-  //CHAR16 fname[] = L"LeoTest/leo_test/deps.txt";
-  //CHAR8 fdata[] = "welcom test file";
-  //SBCStatus fret = SBCOK;
-
-//HandleCount = SBC_GetFileSysHandleBuffer(&HandleBuffer);
-//  if(HandleCount <= 0) {
-//  Print(L"Protocol not found (%d) \n", HandleCount);
-//  return 3;
-//}
-
-  //SBC_ListDirectory(HandleBuffer);
-
-//  if((fret = SBC_CreateFile(HandleBuffer, fname)) != SBCOK) {
-//    DEBUG((DEBUG_ERROR,"%a:%d Fail (%d) \n", fret));
-//    //SBCLOGMSG("Fail(%d)\n", fret);
-//  }
-
-    //WriteToFile(HandleBuffer);
-//  SBC_ListDirectory(HandleBuffer);
-//  SBCWriteFile(HandleBuffer, fname, fdata);
-    //SBC_ReadFlie(HandleBuffer, fname );
- 
-
-    //SBC_SSDGetSN();
-#endif   
+    
    return EFI_SUCCESS;
 }
 
