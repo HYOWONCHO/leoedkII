@@ -984,35 +984,37 @@ UefiMain (
   IN EFI_SYSTEM_TABLE  *SystemTable
   )
 {
-#ifdef SBC_HASH_UNITEST_ENABLE
-  SBC_HashMain();
-#endif
-#ifdef SBC_AES_UNITEST_ENABLE
-  SBC_AES_TestMain();
-  SBC_AesGcmTestMain();
-#endif
 
-#ifdef SBC_ECDSA_TEST_ENABLE
-  //ecc_test_func();
-  SBC_EcDsa_TestMain();
+  Print(L"Hi Leo welcomm \n");
+  #ifdef SBC_HASH_UNITEST_ENABLE
+    SBC_HashMain();
+  #endif
+  #ifdef SBC_AES_UNITEST_ENABLE
+    SBC_AES_TestMain();
+    SBC_AesGcmTestMain();
+  #endif
 
-#endif
+  #ifdef SBC_ECDSA_TEST_ENABLE
+    //ecc_test_func();
+    SBC_EcDsa_TestMain();
 
-#ifdef SBC_BASEANSWER_TEST
-  CHAR8 *base_answer = "anti-tampering!?";
-  UINT8 devid[32] = {0,};
-  SBC_BaseAnswerValidate((UINT8 *)base_answer, strlen(base_answer));
+  #endif
 
-  SBC_GenDeviceID(devid);
-  SBC_external_mem_print_bin("Device ID", devid, sizeof devid);
-#endif
+  #ifdef SBC_BASEANSWER_TEST
+    CHAR8 *base_answer = "anti-tampering!?";
+    UINT8 devid[32] = {0,};
+    SBC_BaseAnswerValidate((UINT8 *)base_answer, strlen(base_answer));
 
-#ifdef SBC_X509_TEST
-  SBC_X509TestMain();
-#endif
+    SBC_GenDeviceID(devid);
+    SBC_external_mem_print_bin("Device ID", devid, sizeof devid);
+  #endif
 
-  extern VOID SBC_FileCtrlTestMain(VOID);
-  SBC_FileCtrlTestMain();
+  #ifdef SBC_X509_TEST
+    SBC_X509TestMain();
+  #endif
+
+    extern VOID SBC_FileCtrlTestMain(VOID);
+    SBC_FileCtrlTestMain();
 #if 0
   BOOLEAN ret = 0;
   //UINT32 rand[32] ={0, };

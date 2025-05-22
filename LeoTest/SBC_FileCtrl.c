@@ -5,6 +5,7 @@
 #include <Library/BaseMemoryLib.h>
 #include <Library/MemoryAllocationLib.h>
 #include <Guid/FileInfo.h>
+#include <Protocol/BlockIo.h>
 
 #include <string.h>
 
@@ -315,6 +316,65 @@ SBCStatus  SBC_CreateDirectory(EFI_HANDLE h, CHAR16 *fname)
 
 }
 
+SBCStatus  SBC_CheckAvailableBlkIODev(VOID)
+{
+    SBCStatus ret = SBCFAIL;
+
+    EFI_HANDLE  *HandleBuffer;
+    UINTN HandleCount; // Handle Count 
+    EFI_STATUS Status;
+    UINT8 Buffer[512];
+    EFI_BLOCK_IO_PROTOCOL *BlockIo;
+
+
+    // Verify that Block IO Protocol is available 
+    Status = gBS->LocateHandleBuffer(
+                                         ByProtocol,
+                                         &gEfiBlockIoProtocolGuid, 
+                                         NULL, 
+                                         &HandleCount, 
+                                         &HandleBuffer
+    );
+
+    if (EFI_ERROR(Status)) {
+
+        // If no devices are found, check whether the correct drivers are loaded.
+        Print(L"No Block IO device found ( %d )\n", Status);
+        goto errdone;
+
+    }
+    else {
+        Print(L"Found %d Block IO device \n" , HandleCount);
+    }
+
+    // Verify Block IO protocol binding
+    Status = gBS->HandleProtocol(HandleBuffer[0], &gEfiBlockIoProtocolGuid, (VOID **)&BlockIo);
+    if (EFI_ERROR(Status)) {
+        Print(L"Failed to bind Block IO Protocol.(%d)\n",Status);
+        goto errdone;
+    }
+
+    // Debug ReadBlock or WriteBlock
+    Status = BlockIo->ReadBlocks(BlockIo, BlockIo->Media->MediaId, 0, sizeof(Buffer), Buffer);
+    if (EFI_ERROR(Status)) {
+        Print(L"Block read failed: %r\n", Status);
+        goto errdone;
+    } else {
+        Print(L"Block read success.\n");
+    }
+
+
+    Print(L"Block Size: %d\n", BlockIo->Media->BlockSize);
+    Print(L"Last Block: %lld\n", BlockIo->Media->LastBlock);
+    Print(L"Media Present: %s\n", BlockIo->Media->MediaPresent ? L"Yes" : L"No");
+
+    ret = SBCOK;
+
+errdone:
+    return ret;
+
+}
+
 
 VOID SBC_FileCtrlTestMain(VOID)
 {
@@ -367,6 +427,8 @@ VOID SBC_FileCtrlTestMain(VOID)
 
      SBC_external_mem_print_bin("Read data", rdlv.value, rdlv.length);
 
+
+     SBC_CheckAvailableBlkIODev();
      return;
 
 
