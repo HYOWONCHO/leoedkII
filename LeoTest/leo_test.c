@@ -1204,7 +1204,7 @@ UefiMain (
 
   Print(L"Enable uart \n");
 
-  GetSSDSerial();
+  //GetSSDSerial();
 
 //GetMotherboardSerialNumber();
 // SBC_SSDGetSN();
@@ -1225,14 +1225,14 @@ UefiMain (
 //
 //#endif
 //
-//#ifdef SBC_BASEANSWER_TEST
+#ifdef SBC_BASEANSWER_TEST
 //  CHAR8 *base_answer = "anti-tampering!?";
-//  UINT8 devid[32] = {0,};
+  UINT8 devid[32] = {0,};
 //  SBC_BaseAnswerValidate((UINT8 *)base_answer, strlen(base_answer));
 //
-//  SBC_GenDeviceID(devid);
-//  SBC_external_mem_print_bin("Device ID", devid, sizeof devid);
-//#endif
+  SBC_GenDeviceID(devid);
+  SBC_external_mem_print_bin("Device ID", devid, sizeof devid);
+#endif
 //
 //#ifdef SBC_X509_TEST
 //  SBC_X509TestMain();

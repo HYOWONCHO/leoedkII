@@ -2,7 +2,12 @@
 #include <Library/MemoryAllocationLib.h>
 #include <Library/BaseLib.h>
 #include <Protocol/Smbios.h> // System Management BIOS header
+#include <Uefi.h>
+#include <Library/PcdLib.h>
+#include <Library/UefiLib.h>
+#include <Library/UefiBootServicesTableLib.h>
 
+#include <Library/BaseLib.h>
 
 #include "SBC_CryptAES.h"
 #include "SBC_TypeDefs.h"
@@ -14,6 +19,61 @@
 #include "SBC_Hashing.h"
 #include "SBC_AntiTampering.h"
 #include "SBC_EccSignVerify.h"
+
+
+static SBCStatus _board_sn(hw_uniqueinfo_t *p)
+{
+    SBCStatus ret = SBCFAIL;
+    EFI_SMBIOS_PROTOCOL *Smbios;
+    EFI_STATUS Status;
+    EFI_SMBIOS_HANDLE SmbiosHandle = SMBIOS_HANDLE_PI_RESERVED;
+    SMBIOS_TABLE_TYPE2 *Type2Record; // Base Board Information
+    EFI_SMBIOS_TABLE_HEADER *Record;
+
+
+    dprint();
+    SBC_RET_VALIDATE_ERRCODEMSG((p != NULL), SBCNULLP, "HW structure NIll");
+
+    dprint();
+    Status = gBS->LocateProtocol(&gEfiSmbiosProtocolGuid, NULL, (VOID **)&Smbios);
+    SBC_RET_VALIDATE_ERRCODEMSG((Status == EFI_SUCCESS), SBCPROTO, "Smbiod Protocol Not found");
+
+    dprint();
+    p->mbsnl = 0;
+    while(!EFI_ERROR((Status = Smbios->GetNext(Smbios, &SmbiosHandle, NULL, &Record, NULL)))) {
+        dprint("Record->Type : %d\n", Record->Type);
+        if(Record->Type == SMBIOS_TYPE_BASEBOARD_INFORMATION) {
+
+            Type2Record = (SMBIOS_TABLE_TYPE2 *)Record;
+            // Extract Serial Number (this is an index into the string table)
+            UINT8 SerialNumberIndex = Type2Record->SerialNumber;
+            dprint();
+            CHAR8 *SerialNumberString = (CHAR8 *)(Record + Record->Length);
+            dprint();
+
+            if (SerialNumberIndex > 0) {
+                dprint();
+                while (*SerialNumberString != '\0') {
+                    dprint();
+                    p->mbsn[p->mbsnl++] = *SerialNumberString;
+                    dprint();
+                    SerialNumberString++;
+                    dprint();
+                }
+                dprint();
+                SerialNumberString++;
+            }
+        }
+        dprint();
+    }
+dprint();
+    ret = SBCOK;
+
+errdone:
+
+    return ret;
+}
+
 
 
 static SBCStatus _baseanswer_extract_from_disk(LV_t *lv)
@@ -221,6 +281,9 @@ SBCStatus SBC_GenDeviceID(UINT8 *devid)
     // TODO : read the device information 
     ZeroMem((void *)&info, sizeof info);
 #else
+
+    _board_sn(&info);
+    SBC_external_mem_print_bin("Board SN", info.mbsn,info.mbsnl);
     computebuf = AllocatePool(info.mbsnl + info.mmsnl + info.hdsnl);
     SBC_RET_VALIDATE_ERRCODEMSG((computebuf != NULL),SBCNULLP, "Compute buffer Nill");
 
@@ -266,6 +329,8 @@ SBCStatus SBC_GenDeviceID(UINT8 *devid)
                     &pemkey_pub,&pemsize
             );
     SBC_external_mem_print_bin("PUBLIC pem", (UINT8 *)pemkey_pub, (UINT32)pemsize);
+
+    
 errdone:
 
     if(computebuf) {
