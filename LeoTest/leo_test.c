@@ -21,6 +21,7 @@
 
 #include <Library/ShellLib.h>
 #include <Library/MemoryAllocationLib.h>
+#include <Protocol/Smbios.h>
 
 
 #include <string.h>
@@ -492,7 +493,97 @@ WriteToFile (
     return EFI_SUCCESS;
 }
 
+// Hypothetical vendor-specific SMBIOS record for an SSD.
+// (Replace 0xC0 with the proper type value and define the fields as per your platform.)
+#pragma pack(1)
+typedef struct {
+  EFI_SMBIOS_TABLE_HEADER Hdr;
+  UINT8               Reserved;
+  // ... Other fields specific to the record
+  UINT8               SerialNumberStrIndex; // Index into the strings section
+  // ... Possibly more fields ...
+} SMBIOS_VENDOR_STORAGE;
+#pragma pack()
 
+//
+// Helper function to get a string from an SMBIOS record.
+// The strings follow immediately after the formatted portion of the record.
+// They are ASCII, null-terminated, and the block ends with a double-NULL.
+//
+CHAR8 *
+GetSmbiosString (
+  IN EFI_SMBIOS_TABLE_HEADER *Record,
+  IN UINT8              StringNumber
+  )
+{
+  UINTN   Index;
+  CHAR8   *StringPtr;
+
+  if (StringNumber == 0) {
+    return NULL;
+  }
+
+  // Point to the first string following the fixed structure.
+  StringPtr = (CHAR8 *)(Record + 1);
+
+  //
+  // Loop until we reach the designated string.
+  //
+  for (Index = 1; Index < StringNumber; Index++) {
+    // Skip the current string.
+    while (*StringPtr != 0) {
+      StringPtr++;
+    }
+    // Skip the null terminator.
+    StringPtr++;
+    // If we've reached the end (double-NULL), return NULL.
+    if (*StringPtr == 0) {
+      return NULL;
+    }
+  }
+
+  return StringPtr;
+}
+
+EFI_STATUS GetSSDSerial(VOID)
+{
+    EFI_STATUS            Status;
+  EFI_SMBIOS_PROTOCOL   *Smbios;
+  EFI_SMBIOS_TABLE_HEADER   *Record;
+  EFI_SMBIOS_HANDLE     SmbiosHandle = SMBIOS_HANDLE_PI_RESERVED;
+  CHAR8                 *SerialString;
+
+  // Locate the SMBIOS protocol.
+  Status = gBS->LocateProtocol(&gEfiSmbiosProtocolGuid, NULL, (VOID **)&Smbios);
+  if (EFI_ERROR(Status)) {
+    Print(L"Error locating SMBIOS protocol: %r\n", Status);
+    return Status;
+  }
+
+  // Iterate through all SMBIOS records.
+  while ((Status = Smbios->GetNext(Smbios, &SmbiosHandle, NULL, &Record, NULL)) == EFI_SUCCESS) {
+    //
+    // Check if this record is our assumed vendor-specific SSD record.
+    // In this example, we check for record type 0xC0.
+    // Adjust this value as needed.
+    //
+
+    Print(L"Record->Type : 0x%02x\n", Record->Type);
+    if (Record->Type == 0xC0) {
+      SMBIOS_VENDOR_STORAGE *StorageRecord = (SMBIOS_VENDOR_STORAGE *)Record;
+      
+      // Get the serial number string using the string index.
+      SerialString = GetSmbiosString(Record, StorageRecord->SerialNumberStrIndex);
+      if (SerialString != NULL) {
+        Print(L"SSD Serial Number: %a\n", SerialString);
+      } else {
+        Print(L"SSD serial number string not found.\n");
+      }
+    }
+  }
+
+  return Status;
+}
 
 EFI_STATUS GetDiskSerialNumber(VOID) 
 {
@@ -1113,10 +1204,12 @@ UefiMain (
 
   Print(L"Enable uart \n");
 
-  GetMotherboardSerialNumber();
-   SBC_SSDGetSN();
-   CpuidSerialNumber();
-   GetMemorySerialNumbers();
+  GetSSDSerial();
+
+//GetMotherboardSerialNumber();
+// SBC_SSDGetSN();
+// CpuidSerialNumber();
+// GetMemorySerialNumbers();
   //enable_uart_serial();
 //#ifdef SBC_HASH_UNITEST_ENABLE
 //  SBC_HashMain();
