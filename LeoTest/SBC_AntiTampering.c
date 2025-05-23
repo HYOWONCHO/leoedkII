@@ -1,6 +1,7 @@
 #include <Library/BaseMemoryLib.h>
 #include <Library/MemoryAllocationLib.h>
 #include <Library/BaseLib.h>
+#include <Protocol/Smbios.h> // System Management BIOS header
 
 
 #include "SBC_CryptAES.h"
@@ -13,6 +14,7 @@
 #include "SBC_Hashing.h"
 #include "SBC_AntiTampering.h"
 #include "SBC_EccSignVerify.h"
+
 
 static SBCStatus _baseanswer_extract_from_disk(LV_t *lv)
 {
@@ -135,6 +137,8 @@ errdone:
     return ret;
 
 }
+
+
 
 SBCStatus  SBC_BaseAnswerValidate(UINT8 *answer, UINTN answerl)
 {
