@@ -6,7 +6,7 @@
 #include <Library/PcdLib.h>
 #include <Library/UefiLib.h>
 #include <Library/UefiBootServicesTableLib.h>
-
+#include <Protocol/Smbios.h>
 #include <Library/BaseLib.h>
 
 #include "SBC_CryptAES.h"
@@ -20,53 +20,97 @@
 #include "SBC_AntiTampering.h"
 #include "SBC_EccSignVerify.h"
 
+#if 0
+#pragma pack(1)
+typedef struct {
+  EFI_SMBIOS_TABLE_HEADER Hdr;
+  UINT8               Reserved;
+  // ... Other fields specific to the record
+  UINT8               SerialNumberStrIndex; // Index into the strings section
+  // ... Possibly more fields ...
+} SMBIOS_VENDOR_STORAGE;
+#pragma pack()
 
-static SBCStatus _board_sn(hw_uniqueinfo_t *p)
+
+static CHAR8 * _get_smbios_strig (IN EFI_SMBIOS_TABLE_HEADER *Record,IN UINT8 StringngNumber)
+{
+  UINTN   Index;
+  CHAR8   *String;
+
+  if (StringngNumber == 0) {
+    return NULL;
+  }
+
+  // Point to the first string following the fixed structure.
+  String = (CHAR8 *)(Record+1);
+
+  //
+  // Loop until we reach the designated string.
+  //
+  for (Index = 1; Index <= StringngNumber; Index++) {
+    if (StringngNumber == Index) {
+      return String;
+    }
+
+    //
+    // Skip string
+    //
+    for ( ; *String != 0; String++) {
+    }
+
+    String++;
+
+    if (*String == 0) {
+      //
+      // If double NULL then we are done.
+      //  Return pointer to next structure in Smbios.
+      //  if you pass in a -1 you will always get here
+      //
+      //Smbios->Raw = (UINT8 *)++String;
+      return NULL;
+    }
+  }
+
+  return String;
+}
+
+
+static SBCStatus _baseboard_sn(hw_uniqueinfo_t *p)
 {
     SBCStatus ret = SBCFAIL;
     EFI_SMBIOS_PROTOCOL *Smbios;
     EFI_STATUS Status;
     EFI_SMBIOS_HANDLE SmbiosHandle = SMBIOS_HANDLE_PI_RESERVED;
-    SMBIOS_TABLE_TYPE2 *Type2Record; // Base Board Information
+    //SMBIOS_TABLE_TYPE2 *Type2Record; // Base Board Information
     EFI_SMBIOS_TABLE_HEADER *Record;
+    CHAR8                 *SerialString;
 
 
-    dprint();
     SBC_RET_VALIDATE_ERRCODEMSG((p != NULL), SBCNULLP, "HW structure NIll");
 
-    dprint();
     Status = gBS->LocateProtocol(&gEfiSmbiosProtocolGuid, NULL, (VOID **)&Smbios);
     SBC_RET_VALIDATE_ERRCODEMSG((Status == EFI_SUCCESS), SBCPROTO, "Smbiod Protocol Not found");
 
-    dprint();
     p->mbsnl = 0;
     while(!EFI_ERROR((Status = Smbios->GetNext(Smbios, &SmbiosHandle, NULL, &Record, NULL)))) {
-        dprint("Record->Type : %d\n", Record->Type);
         if(Record->Type == SMBIOS_TYPE_BASEBOARD_INFORMATION) {
+            SMBIOS_VENDOR_STORAGE *StorageRecord = (SMBIOS_VENDOR_STORAGE *)Record;
+            // Get the serial number string using the string index.
+            SerialString = _get_smbios_strig(Record + Record->Length, StorageRecord->SerialNumberStrIndex);
+            if (SerialString != NULL) {
+                p->mbsnl = strlen(SerialString);
+                CopyMem(p->mbsn, SerialString, p->mbsnl);
+                SBC_external_mem_print_bin("_baseboard_sn", (UINT8 *)SerialString, p->mbsnl);
+            }
+            else {
+                Print(L"_baseboard_sn serial number string not found.\n");
+                ret = SBCFAIL;
+                goto errdone;
 
-            Type2Record = (SMBIOS_TABLE_TYPE2 *)Record;
-            // Extract Serial Number (this is an index into the string table)
-            UINT8 SerialNumberIndex = Type2Record->SerialNumber;
-            dprint();
-            CHAR8 *SerialNumberString = (CHAR8 *)(Record + Record->Length);
-            dprint();
-
-            if (SerialNumberIndex > 0) {
-                dprint();
-                while (*SerialNumberString != '\0') {
-                    dprint();
-                    p->mbsn[p->mbsnl++] = *SerialNumberString;
-                    dprint();
-                    SerialNumberString++;
-                    dprint();
-                }
-                dprint();
-                SerialNumberString++;
             }
         }
-        dprint();
     }
-dprint();
+
     ret = SBCOK;
 
 errdone:
@@ -74,7 +118,202 @@ errdone:
     return ret;
 }
 
+static SBCStatus _memorydevice_sn(hw_uniqueinfo_t *p)
+{
+    SBCStatus ret = SBCFAIL;
+    EFI_SMBIOS_PROTOCOL *Smbios;
+    EFI_STATUS Status;
+    EFI_SMBIOS_HANDLE SmbiosHandle = SMBIOS_HANDLE_PI_RESERVED;
+    //SMBIOS_TABLE_TYPE17 *TypeRecord; // Base Board Information
+    EFI_SMBIOS_TABLE_HEADER *Record;
+    CHAR8                 *SerialString;
 
+    SBC_RET_VALIDATE_ERRCODEMSG((p != NULL), SBCNULLP, "HW structure NIll");
+
+    Status = gBS->LocateProtocol(&gEfiSmbiosProtocolGuid, NULL, (VOID **)&Smbios);
+    SBC_RET_VALIDATE_ERRCODEMSG((Status == EFI_SUCCESS), SBCPROTO, "Smbiod Protocol Not found");
+
+    p->mmsnl = 0;
+    while(!EFI_ERROR((Status = Smbios->GetNext(Smbios, &SmbiosHandle, NULL, &Record, NULL)))) {
+        if(Record->Type == SMBIOS_TYPE_MEMORY_DEVICE) {
+            SMBIOS_VENDOR_STORAGE *StorageRecord = (SMBIOS_VENDOR_STORAGE *)Record;
+            // Get the serial number string using the string index.
+            SerialString = _get_smbios_strig(Record, StorageRecord->SerialNumberStrIndex);
+            if (SerialString != NULL) {
+                p->mmsnl = strlen(SerialString);
+                CopyMem(p->mmsn, SerialString, p->mmsnl);
+                SBC_external_mem_print_bin("_memorydevice_sn", (UINT8 *)SerialString, p->mmsnl);
+            }
+            else {
+                Print(L"_memorydevice_sn serial number string not found.\n");
+                ret = SBCFAIL;
+                goto errdone;
+
+            }
+        }
+    }
+
+
+    ret = SBCOK;
+
+errdone:
+
+    return ret;
+}
+
+#endif
+
+
+static SBCStatus _baseboard_sn(hw_uniqueinfo_t *p)
+{
+    SBCStatus ret = SBCFAIL;
+    EFI_SMBIOS_PROTOCOL *Smbios;
+    EFI_STATUS Status;
+    EFI_SMBIOS_HANDLE SmbiosHandle = SMBIOS_HANDLE_PI_RESERVED;
+    SMBIOS_TABLE_TYPE2 *Type2Record; // Base Board Information
+    EFI_SMBIOS_TABLE_HEADER *Record;
+    UINT32 cnt = 0;
+
+
+    SBC_RET_VALIDATE_ERRCODEMSG((p != NULL), SBCNULLP, "HW structure NIll");
+
+    Status = gBS->LocateProtocol(&gEfiSmbiosProtocolGuid, NULL, (VOID **)&Smbios);
+    SBC_RET_VALIDATE_ERRCODEMSG((Status == EFI_SUCCESS), SBCPROTO, "Smbiod Protocol Not found");
+
+    p->mmsnl = 0;
+    while(!EFI_ERROR((Status = Smbios->GetNext(Smbios, &SmbiosHandle, NULL, &Record, NULL)))) {
+        //dprint("Record->Type : %d\n", Record->Type);
+        if(Record->Type == 2) {
+
+            Type2Record = (SMBIOS_TABLE_TYPE2 *)Record;
+            // Extract Serial Number (this is an index into the string table)
+            //UINT8 SerialNumberIndex = Type2Record->SerialNumber;
+            UINT8 SerialNumberIndex = Type2Record->Manufacturer;
+            //CHAR8 *SerialNumberString = (CHAR8 *)(Record + Record->Length);
+            CHAR8 *SerialNumberString = (CHAR8 *)(Record + Record->Length);
+            SBC_external_mem_print_bin("_baseboard record", (UINT8 *)Record, 0x79);
+            dprint("serial number index : %d", SerialNumberIndex);
+            if (SerialNumberIndex > 0) {
+#if 0
+                for (UINT8 i = 1; i < SerialNumberIndex; i++) {
+
+                    while (*SerialNumberString != '\0') {
+                        //p->mbsn[p->mbsnl++] = *SerialNumberString;
+                        SerialNumberString++;
+                        cnt++;
+                    }
+                    SerialNumberString++;
+                    cnt++;
+                }
+
+#else
+
+                for (UINT16 Index = 1; Index <= SerialNumberIndex; Index++) {
+                    if (SerialNumberIndex == Index ) {
+                        break;
+                    }
+
+                    // Skip String
+                    for (; *SerialNumberString != 0; SerialNumberString++);
+
+                    SerialNumberString++;
+                    if (*SerialNumberString == 0) {
+                        Print(L"f you pass in a -1 you will always get here\n");
+                    }
+                    cnt++;
+                }
+#endif
+                Print(L"_baseboard_sn Serial Number: %a (Count : %d)\n", 
+                      SerialNumberString,
+                      cnt);
+
+
+                p->mbsnl = strlen(SerialNumberString);
+                SBC_mem_print_bin("_baseboard_sn", (UINT8 *)SerialNumberString, p->mbsnl);
+                CopyMem(p->mbsn, SerialNumberString, p->mbsnl);
+
+
+            }
+        }
+    }
+    ret = SBCOK;
+
+errdone:
+
+    return ret;
+}
+
+//static SBCStatus _memorydevice_sn(hw_uniqueinfo_t *p)
+//{
+//    SBCStatus ret = SBCFAIL;
+//    EFI_SMBIOS_PROTOCOL *Smbios;
+//    EFI_STATUS Status;
+//    EFI_SMBIOS_HANDLE SmbiosHandle = SMBIOS_HANDLE_PI_RESERVED;
+//    SMBIOS_TABLE_TYPE17 *Type2Record; // Base Board Information
+//    EFI_SMBIOS_TABLE_HEADER *Record;
+//    UINT32 cnt = 0;
+//
+//
+//    SBC_RET_VALIDATE_ERRCODEMSG((p != NULL), SBCNULLP, "HW structure NIll");
+//
+//    Status = gBS->LocateProtocol(&gEfiSmbiosProtocolGuid, NULL, (VOID **)&Smbios);
+//    SBC_RET_VALIDATE_ERRCODEMSG((Status == EFI_SUCCESS), SBCPROTO, "Smbiod Protocol Not found");
+//
+//    p->mmsnl = 0;
+//    while(!EFI_ERROR((Status = Smbios->GetNext(Smbios, &SmbiosHandle, NULL, &Record, NULL)))) {
+//        //dprint("Record->Type : %d\n", Record->Type);
+//        if(Record->Type == SMBIOS_TYPE_MEMORY_DEVICE) {
+//
+//            Type2Record = (SMBIOS_TABLE_TYPE17 *)Record;
+//            // Extract Serial Number (this is an index into the string table)
+//            UINT8 SerialNumberIndex = Type2Record->SerialNumber;
+//            dprint("serial number index : %d", SerialNumberIndex);
+//            CHAR8 *SerialNumberString = (CHAR8 *)(Record + Record->Length);
+//            SBC_mem_print_bin("_memorydevice_sn record", (UINT8 *)Record, Record->Length);
+//            if (SerialNumberIndex > 0) {
+//#if 0
+//                for (UINT8 i = 1; i < SerialNumberIndex; i++) {
+//
+//                    while (*SerialNumberString != '\0') {
+//                        //p->mbsn[p->mbsnl++] = *SerialNumberString;
+//                        SerialNumberString++;
+//                        cnt++;
+//                    }
+//                    SerialNumberString++;
+//                    cnt++;
+//                }
+//
+//#else
+//
+//                for (UINT16 Index = 1; Index <= SerialNumberIndex; Index++) {
+//                    if (SerialNumberIndex == Index ) {
+//                        break;
+//                    }
+//
+//                    // Skip String
+//                    for (; *SerialNumberString != 0; SerialNumberString++);
+//
+//                    SerialNumberString++;
+//                    if (*SerialNumberString == 0) {
+//                        Print(L"f you pass in a -1 you will always get here\n");
+//                    }
+//                    cnt++;
+//                }
+//#endif
+//                Print(L"_memorydevice_sn Serial Number: %a (%d)\n",
+//                      SerialNumberString,cnt);
+//                SBC_mem_print_bin("_memorydevice_sn", (UINT8 *)SerialNumberString, 32);
+//
+//            }
+//        }
+//    }
+//    ret = SBCOK;
+//
+//errdone:
+//
+//    return ret;
+//}
+//
 
 static SBCStatus _baseanswer_extract_from_disk(LV_t *lv)
 {
@@ -281,9 +520,15 @@ SBCStatus SBC_GenDeviceID(UINT8 *devid)
     // TODO : read the device information 
     ZeroMem((void *)&info, sizeof info);
 #else
+    //_memorydevice_sn(&info);
+    //SBC_external_mem_print_bin("MemoryDevice SN", info.mmsn, info.mmsnl);
+    //SBC_mem_print_bin("MemoryDevice SN", info.mmsn, info.mmsnl);
 
-    _board_sn(&info);
-    SBC_external_mem_print_bin("Board SN", info.mbsn,info.mbsnl);
+    _baseboard_sn(&info);
+    SBC_external_mem_print_bin("BaseBoard SN", info.mbsn,info.mbsnl);
+    SBC_mem_print_bin("BaseBoard SN", info.mbsn,info.mbsnl);
+
+
     computebuf = AllocatePool(info.mbsnl + info.mmsnl + info.hdsnl);
     SBC_RET_VALIDATE_ERRCODEMSG((computebuf != NULL),SBCNULLP, "Compute buffer Nill");
 
