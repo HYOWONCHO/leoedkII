@@ -187,12 +187,13 @@ static SBCStatus _baseboard_sn(hw_uniqueinfo_t *p)
 
             Type2Record = (SMBIOS_TABLE_TYPE2 *)Record;
             // Extract Serial Number (this is an index into the string table)
-            //UINT8 SerialNumberIndex = Type2Record->SerialNumber;
-            UINT8 SerialNumberIndex = Type2Record->Manufacturer;
-            //CHAR8 *SerialNumberString = (CHAR8 *)(Record + Record->Length);
+            UINT8 SerialNumberIndex = Type2Record->SerialNumber;
+            //UINT8 SerialNumberIndex = Type2Record->Manufacturer;
+            //CHAR8 *SerialNumberString = (CHAR8 *)(Record + c);
             CHAR8 *SerialNumberString = (CHAR8 *)(Record + Record->Length);
             SBC_external_mem_print_bin("_baseboard record", (UINT8 *)Record, 0x79);
-            dprint("serial number index : %d", SerialNumberIndex);
+            dprint("serial number index : %d (Record Length : 0x%x)", 
+                   SerialNumberIndex, Record->Length);
             if (SerialNumberIndex > 0) {
 #if 0
                 for (UINT8 i = 1; i < SerialNumberIndex; i++) {
@@ -208,7 +209,7 @@ static SBCStatus _baseboard_sn(hw_uniqueinfo_t *p)
 
 #else
 
-                for (UINT16 Index = 1; Index <= SerialNumberIndex; Index++) {
+                for (UINT16 Index = 1; Index < SerialNumberIndex; Index++) {
                     if (SerialNumberIndex == Index ) {
                         break;
                     }
