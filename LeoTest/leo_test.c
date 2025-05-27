@@ -620,153 +620,7 @@ EFI_STATUS GetDiskSerialNumber(VOID)
     return EFI_SUCCESS;
 }
 
-EFI_STATUS SBC_SSDGetSN(VOID)
-{
-  EFI_BLOCK_IO_PROTOCOL *BlockIo;
-  EFI_HANDLE *Handles;
-  UINTN HandleCount;
-  UINTN Index;
-  EFI_DISK_INFO_PROTOCOL *DiskInfo;
-  UINT8 IdentifyData[512]; // Buffer for device info
-  UINTN BufferSize = sizeof(IdentifyData);
-  EFI_STATUS Status;
 
-  DEBUG((DEBUG_INFO, "[%a:%d] Locate Block I/O Protocol for the SSD) \n",
-           __FUNCTION__,__LINE__));
-#if 1
-  // Locate Block I/O Protocol for the SSD
-  Status = gBS->LocateHandleBuffer(ByProtocol, &gEfiSimpleFileSystemProtocolGuid, 
-                                   NULL, &HandleCount, &Handles);
-  if (EFI_ERROR(Status)) {
-    DEBUG((DEBUG_ERROR, "[%a:%d] LocateHandleBuffer  \n",
-           __FUNCTION__,__LINE__));
-    return Status;
-  }
-
-  DEBUG((DEBUG_ERROR, "[%a:%d] Handle Count  (%d) \n",
-           __FUNCTION__,__LINE__, HandleCount));
-
-
-  for( Index = 0; Index < HandleCount; Index++ ) {
-    Status = gBS->HandleProtocol(
-                              Handles[Index],
-                              &gEfiBlockIoProtocolGuid,
-                              (VOID **)&BlockIo
-                              );
-    if(!EFI_ERROR(Status)) {
-      Print(L"gEfiBlockIoProtocolGuid HandleProtocol fail \n");
-      continue;
-    }
-
-    DEBUG((DEBUG_INFO, "[%a:%d] Buffre Size : %d \n", __FUNCTION__,__LINE__, Index));
-  // Retrieve Disk Info Protocol
-    Status = gBS->HandleProtocol(Handles[Index], &gEfiDiskInfoProtocolGuid, (VOID **)&DiskInfo);
-    if (EFI_ERROR(Status)) {
-      DEBUG((DEBUG_ERROR, "[%a:%d] HandleProtocol (0x%p) \n",
-             __FUNCTION__,__LINE__, DiskInfo));
-      Print(L"gEfiDiskInfoProtocolGuid HandleProtocol fail \n");
-      return Status;
-    }
-
-    Status = DiskInfo->Identify(DiskInfo, (VOID *)IdentifyData, (UINT32 *)&BufferSize);
-    if (EFI_ERROR(Status)) {
-      DEBUG((DEBUG_ERROR, "[%a:%d] Identify (0x%p) \n",
-             __FUNCTION__,__LINE__));
-      return Status;
-
-    }
-
-    // Extract Serial Number (Example for SATA)
-    CHAR16 SerialNumber[21];
-    CopyMem(SerialNumber, &IdentifyData[20], 20); // Serial is stored at offset 20 in IDENTIFY DEVICE
-    SerialNumber[20] = L'\0'; // Null-terminate
-
-    Print(L"SSD Serial Number: %s\n", SerialNumber);
-    SBC_mem_print_bin("Memory Serial Number", (UINT8 *)SerialNumber, 20);
-
-  }
-
-#endif
-//DEBUG((DEBUG_INFO, "[%a:%d]\n", __FUNCTION__,__LINE__));
-//Status = gBS->LocateProtocol(&gEfiDiskInfoProtocolGuid,
-//                           NULL,
-//                           (VOID**)&DiskInfo);
-//if (EFI_ERROR(Status)) {
-  DEBUG((DEBUG_ERROR, "[%a:%d] LocateProtocol (0x%p) \n",
-         __FUNCTION__,__LINE__, DiskInfo));
-//  return Status;
-//}
-//DEBUG((DEBUG_INFO, "[%a:%d]\n", __FUNCTION__,__LINE__));
-//DEBUG((DEBUG_INFO, "[%a:%d] ( Disk Info 0x%p 0x%p) \n",
-//                    __FUNCTION__,__LINE__,DiskInfo, *DiskInfo));
-//// Query the IDENTIFY DEVICE data
-//Status = DiskInfo->Identify(DiskInfo, (VOID *)IdentifyData, (UINT32 *)&BufferSize);
-//if (EFI_ERROR(Status)) {
-  DEBUG((DEBUG_ERROR, "[%a:%d] Identify (0x%p) \n",
-         __FUNCTION__,__LINE__));
-//  return Status;
-//
-//}
-//
-//// Extract Serial Number (Example for SATA)
-//CHAR16 SerialNumber[21];
-//CopyMem(SerialNumber, &IdentifyData[20], 20); // Serial is stored at offset 20 in IDENTIFY DEVICE
-//SerialNumber[20] = L'\0'; // Null-terminate
-//
-//Print(L"SSD Serial Number: %s\n", SerialNumber);
-
-  return EFI_SUCCESS;
-
-}
-
-EFI_STATUS GetMemorySerialNumbers() {
-    EFI_SMBIOS_PROTOCOL *Smbios;
-    EFI_STATUS Status;
-    EFI_SMBIOS_HANDLE SmbiosHandle = SMBIOS_HANDLE_PI_RESERVED;
-    SMBIOS_TABLE_TYPE17 *Type17Record;
-    EFI_SMBIOS_TABLE_HEADER *Record;
-
-    UINT8 snbuf[512] = {0 ,};
-    int sncnt = 0;
-
-    DEBUG((DEBUG_INFO, "[%a:%d] \n",__FUNCTION__,__LINE__));
-    Status = gBS->LocateProtocol(&gEfiSmbiosProtocolGuid, NULL, (VOID **)&Smbios);
-    if (EFI_ERROR(Status)) {
-        //DEBUG((DEBUG_ERROR , "%a:%d LocateProtocol fail (%d) \n",__func__, __LINE__, Status));
-
-        return Status;
-    }
-
-    while (!EFI_ERROR((Status = Smbios->GetNext(Smbios, &SmbiosHandle, NULL, &Record, NULL)))) {
-        //DEBUG((DEBUG_INFO, "[%a:%d] (GetNext : %d) (Record->Type : %d) \n",__FUNCTION__,__LINE__, Status,Record->Type));
-        if (Record->Type == SMBIOS_TYPE_MEMORY_DEVICE) {
-            Type17Record = (SMBIOS_TABLE_TYPE17 *)Record;
-            
-
-            // Extract Serial Number (this is an index into the string table)
-            UINT8 SerialNumberIndex = Type17Record->SerialNumber;
-            CHAR8 *SerialNumberString = (CHAR8 *)(Record + Record->Length);
-            DEBUG((DEBUG_INFO, "[%a:%d] SerialNumberIndex : %d \n", __FUNCTION__,__LINE__,SerialNumberIndex));
-            if (SerialNumberIndex > 0) {
-                // Move to the correct string entry in the table
-                for (UINT8 i = 1; i < SerialNumberIndex; i++) {
-                    sncnt = 0;
-                    while (*SerialNumberString != '\0') {
-                        snbuf[sncnt++] = *SerialNumberString;
-                        SerialNumberString++;
-                    }
-                    SerialNumberString++;
-                }
-                
-                // Print the Serial Number
-                //Print(L"Memory Serial Number: %a\n", SerialNumberString);
-                SBC_mem_print_bin("Memory Serial Number", (UINT8 *)snbuf, sncnt);
-            }
-        }
-    }
-
-    return EFI_SUCCESS;
-}
 
 
 #include <Protocol/LoadedImage.h>
@@ -788,52 +642,7 @@ EFI_STATUS ListInstalledProtocols()
     return EFI_SUCCESS;
 }
 
-EFI_STATUS GetMotherboardSerialNumber() 
-{
-    EFI_SMBIOS_PROTOCOL *Smbios;
-    EFI_STATUS Status;
-    EFI_SMBIOS_HANDLE SmbiosHandle = SMBIOS_HANDLE_PI_RESERVED;
-    SMBIOS_TABLE_TYPE2 *Type2Record;
-    EFI_SMBIOS_TABLE_HEADER *Record;
 
-    Status = gBS->LocateProtocol(&gEfiSmbiosProtocolGuid, NULL, (VOID **)&Smbios);
-    if (EFI_ERROR(Status)) {
-        Print(L"Motherboard Serial Number LocateProtocol fail \n");
-        DEBUG((DEBUG_ERROR, "[%a:%d] (LocateProtocol : %d) \n",__FUNCTION__,__LINE__, Status));
-        return Status;
-    }
-
-    while (!EFI_ERROR((Status = Smbios->GetNext(Smbios, &SmbiosHandle, NULL, &Record, NULL)))) {
-        //DEBUG((DEBUG_INFO, "[%a:%d] (GetNext : %d) (Record->Type : %d) \n",__FUNCTION__,__LINE__, Status,Record->Type));
-        if (Record->Type == SMBIOS_TYPE_BASEBOARD_INFORMATION) {
-            Type2Record = (SMBIOS_TABLE_TYPE2 *)Record;
-
-            // Extract Serial Number (this is an index into the string table)
-            UINT8 SerialNumberIndex = Type2Record->SerialNumber;
-            CHAR8 *SerialNumberString = (CHAR8 *)(Record + Record->Length);
-            DEBUG((DEBUG_INFO, "[%a:%d] SerialNumberIndex : %d \n", __FUNCTION__,__LINE__,SerialNumberIndex));
-            if (SerialNumberIndex > 0) {
-                //Print(L"Motherboard Serial Number: %a\n", SerialNumberString);
-                //SBC_mem_print_bin("Before SN", (UINT8 *)SerialNumberString, 64);
-                // Move to the correct string entry in the table
-                for (UINT8 i = 1; i < SerialNumberIndex; i++) {
-                    while (*SerialNumberString != '\0') {
-                        SerialNumberString++;
-                    }
-                    SerialNumberString++;
-                }
-
-                // Print the Serial Number
-                Print(L"Motherboard Serial Number: %a\n", SerialNumberString);
-                SBC_mem_print_bin("SN", (UINT8 *)SerialNumberString, strlen(SerialNumberString));
-            }
-        }
-    }
-
-    DEBUG((DEBUG_INFO, "[%a:%d]  \n",__FUNCTION__,__LINE__));
-
-    return EFI_SUCCESS;
-}
 
 
 
@@ -1230,6 +1039,8 @@ UefiMain (
   UINT8 devid[32] = {0,};
 //  SBC_BaseAnswerValidate((UINT8 *)base_answer, strlen(base_answer));
 //
+  GetDiskSerialNumber();
+  GetSSDSerial();
   SBC_GenDeviceID(devid);
   SBC_external_mem_print_bin("Device ID", devid, sizeof devid);
 #endif
