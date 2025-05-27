@@ -985,7 +985,7 @@ VOID enable_uart_serial(VOID)
 
 }
 
-#if (LEO_EMUPKG == TRUE)
+#ifdef LEO_EMUPKG
 RETURN_STATUS EFIAPI SerialPortInitialize(VOID)
 {
   RETURN_STATUS ret = RETURN_SUCCESS;
@@ -1047,10 +1047,10 @@ UefiMain (
 
   status = SerialPortInitialize();
   if(status != RETURN_SUCCESS) {
-    Print(L"SerialPortInitialize fail \n");
+    dprint("SerialPortInitialize fail \n");
   }
   else {
-    Print(L"SerialPortInitialize done \n");
+    dprint("SerialPortInitialize done \n");
   }
 
 
