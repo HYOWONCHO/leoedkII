@@ -41,6 +41,11 @@
   #
   DEFINE REDFISH_ENABLE = FALSE
 
+  #
+  # Leo Emulator PKG define
+  #
+  DEFINE LEO_EMUPKG = TRUE
+
 [SkuIds]
   0|DEFAULT
 
@@ -481,7 +486,13 @@
 
   MdeModulePkg/Application/HelloWorld/HelloWorld.inf
   MdeModulePkg/Application/MemoryProfileInfo/MemoryProfileInfo.inf
-  LeoTest/leo_test.inf
+  LeoTest/leo_test.inf {
+  	<LibraryClasses>
+   	PlatformHookLib|MdeModulePkg/Library/PlatformHookLibSerialPortPpi/PlatformHookLibSerialPortPpi.inf
+		PciLib|MdePkg/Library/BasePciLibCf8/BasePciLibCf8.inf
+		IoLib|MdePkg/Library/BaseIoLibIntrinsic/BaseIoLibIntrinsic.inf
+		PciCf8Lib|MdePkg/Library/BasePciCf8Lib/BasePciCf8Lib.inf
+  }
 #NetworkPkg/Application/VConfig/VConfig.inf
   #NetworkPkg/Dhcp4Dxe/Dhcp4Dxe.inf
 
