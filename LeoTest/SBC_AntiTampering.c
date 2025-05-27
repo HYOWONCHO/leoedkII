@@ -189,9 +189,9 @@ static SBCStatus _baseboard_sn(hw_uniqueinfo_t *p)
             // Extract Serial Number (this is an index into the string table)
             UINT8 SerialNumberIndex = Type2Record->SerialNumber;
             //UINT8 SerialNumberIndex = Type2Record->Manufacturer;
-            //CHAR8 *SerialNumberString = (CHAR8 *)(Record + c);
-            CHAR8 *SerialNumberString = (CHAR8 *)(Record + Record->Length);
-            SBC_external_mem_print_bin("_baseboard record", (UINT8 *)Record, 0x79);
+            //CHAR8 *SerialNumberString = (CHAR8 *)(Record);
+            CHAR8 *SerialNumberString = (((CHAR8 *)Record) + Record->Length);
+            SBC_external_mem_print_bin("_baseboard record", (UINT8 *)SerialNumberString, 0x79 - Record->Length);
             dprint("serial number index : %d (Record Length : 0x%x)", 
                    SerialNumberIndex, Record->Length);
             if (SerialNumberIndex > 0) {
@@ -209,17 +209,23 @@ static SBCStatus _baseboard_sn(hw_uniqueinfo_t *p)
 
 #else
 
-                for (UINT16 Index = 1; Index < SerialNumberIndex; Index++) {
-                    if (SerialNumberIndex == Index ) {
+                for (UINT16 Index = 1; Index <= SerialNumberIndex; Index++) {
+                    if (SerialNumberIndex == Index) {
+                        dprint("Index equal break");
                         break;
                     }
 
                     // Skip String
-                    for (; *SerialNumberString != 0; SerialNumberString++);
+                    for (; *SerialNumberString != 0; SerialNumberString++) {
+                        dprint("0x%x ", *SerialNumberString);
+                    }
+                    dprint("");
 
                     SerialNumberString++;
                     if (*SerialNumberString == 0) {
-                        Print(L"f you pass in a -1 you will always get here\n");
+                        Print(L"f you pass in a -1 you will "
+                               "always get here\n");
+                        SBC_mem_print_bin("_baseboard_sn", (UINT8 *)SerialNumberString, p->mbsnl);
                     }
                     cnt++;
                 }
