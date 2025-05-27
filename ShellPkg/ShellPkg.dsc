@@ -121,7 +121,12 @@
 		TimerLib|MdePkg/Library/SecPeiDxeTimerLibCpu/SecPeiDxeTimerLibCpu.inf
 		RngLib|MdeModulePkg/Library/BaseRngLibTimerLib/BaseRngLibTimerLib.inf
 		BaseCryptLib|CryptoPkg/Library/BaseCryptLib/BaseCryptLib.inf
-		OpensslLib|CryptoPkg/Library/OpensslLib/OpensslLibFull.inf	
+		OpensslLib|CryptoPkg/Library/OpensslLib/OpensslLibFull.inf
+		SerialPortLib|MdeModulePkg/Library/BaseSerialPortLib16550/BaseSerialPortLib16550.inf
+		PlatformHookLib|MdeModulePkg/Library/PlatformHookLibSerialPortPpi/PlatformHookLibSerialPortPpi.inf
+		PciLib|MdePkg/Library/BasePciLibCf8/BasePciLibCf8.inf	
+		IoLib|MdePkg/Library/BaseIoLibIntrinsic/BaseIoLibIntrinsic.inf
+		PciCf8Lib|MdePkg/Library/BasePciCf8Lib/BasePciCf8Lib.inf
   }
 
 

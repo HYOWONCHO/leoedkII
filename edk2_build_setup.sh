@@ -1,4 +1,4 @@
 
-. edksetup.sh
+. ./edksetup.sh
 
-export EDK_TOOLS_PATH=$HOME/src/edk2/BaseTools
+export EDK_TOOLS_PATH=$PWD/BaseTools

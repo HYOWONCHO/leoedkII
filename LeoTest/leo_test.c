@@ -32,7 +32,9 @@
 #include <Protocol/BlockIo.h>
 #include <Protocol/DiskInfo.h>
 #include <Protocol/SerialIo.h>
-
+// Serial 
+#include <Library/SerialPortLib.h>
+#include <Library/PcdLib.h>
 #include "leo_test.h"
 // Length value
 
@@ -43,6 +45,7 @@
 #include <Protocol/Smbios.h>
 
 #include <Library/UnitTestLib.h>
+
 
 #include <openssl/objects.h>
 #include <openssl/bn.h>
@@ -982,6 +985,35 @@ VOID enable_uart_serial(VOID)
 
 }
 
+/*
+RETURN_STATUS EFIAPI SerialPortInitialize(VOID)                                
+{                                                                              
+  RETURN_STATUS ret = RETURN_SUCCESS;                                          
+                                                                               
+  UINT64              BaudRate;                                                
+  UINT32              ReceiveFifoDepth;                                        
+  EFI_PARITY_TYPE     Parity;                                                  
+  UINT8               DataBits;                                                
+  EFI_STOP_BITS_TYPE  StopBits;                                                
+                                                                               
+  BaudRate         = FixedPcdGet64 (PcdUartDefaultBaudRate);                   
+  ReceiveFifoDepth = 0;         // Use default FIFO depth                      
+  Parity           = (EFI_PARITY_TYPE)FixedPcdGet8 (PcdUartDefaultParity);     
+  DataBits         = FixedPcdGet8 (PcdUartDefaultDataBits);                    
+  StopBits         = (EFI_STOP_BITS_TYPE)FixedPcdGet8 (PcdUartDefaultStopBits);
+                                                                               
+                                                                               
+  dprint("----- SerialProtInitialize -----");                                  
+  dprint("Baud Rate : %d", BaudRate);                                          
+  dprint("ReceiveFifoDepth : %d", ReceiveFifoDepth);                           
+  dprint("Parity : %d", (UINT32)Parity);                                       
+  dprint("DataBits : %d", (UINT32)DataBits);                                   
+  dprint("StopBits : %d", (UINT32)StopBits);                                   
+                                                                               
+  return ret;                                                                  
+}                                                                              
+*/
+
 #ifdef SBC_BASEANSWER_TEST
 SBCStatus  SBC_BaseAnswerValidate(UINT8 *answer, UINTN answerl);
 SBCStatus SBC_GenDeviceID(UINT8 *devid);
@@ -1011,7 +1043,18 @@ UefiMain (
   )
 {
 
-  Print(L"Enable uart \n");
+  RETURN_STATUS status = RETURN_SUCCESS;
+
+  status = SerialPortInitialize();
+  if(status != RETURN_SUCCESS) {
+    Print(L"SerialPortInitialize fail \n");
+  }
+  else {
+    Print(L"SerialPortInitialize done \n");
+  }
+
+
+  //Print(L"Enable uart \n");
 
   //GetSSDSerial();
 
