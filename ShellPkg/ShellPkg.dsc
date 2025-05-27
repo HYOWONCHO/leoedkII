@@ -21,15 +21,22 @@
   BUILD_TARGETS                  = DEBUG|RELEASE|NOOPT
   SKUID_IDENTIFIER               = DEFAULT
 
+  DEFINE TPM2_CONFIG_ENABLE      = FALSE
+  DEFINE DEBUG_ON_SERIAL_PORT    = TRUE
+
 !include MdePkg/MdeLibs.dsc.inc
 
 [LibraryClasses]
   IntrinsicLib|CryptoPkg/Library/IntrinsicLib/IntrinsicLib.inf
-  RngLib|MdeModulePkg/Library/BaseRngLibTimerLib/BaseRngLibTimerLib.inf
-  BaseCryptLib|CryptoPkg/Library/BaseCryptLib/BaseCryptLib.inf
-  OpensslLib|CryptoPkg/Library/OpensslLib/OpensslLibFull.inf
+#  RngLib|MdeModulePkg/Library/BaseRngLibTimerLib/BaseRngLibTimerLib.inf
+#  BaseCryptLib|CryptoPkg/Library/BaseCryptLib/BaseCryptLib.inf
+#  OpensslLib|CryptoPkg/Library/OpensslLib/OpensslLibFull.inf
+!ifdef $(DEBUG_ON_SERIAL_PORT)
   DebugLib|MdePkg/Library/BaseDebugLibSerialPort/BaseDebugLibSerialPort.inf
-  TimerLib|MdePkg/Library/SecPeiDxeTimerLibCpu/SecPeiDxeTimerLibCpu.inf
+!else
+  DebugLib|OvmfPkg/Library/PlatformDebugLibIoPort/PlatformDebugLibIoPort.inf
+!endif
+#  TimerLib|MdePkg/Library/SecPeiDxeTimerLibCpu/SecPeiDxeTimerLibCpu.inf
 
 [LibraryClasses.common]
   UefiApplicationEntryPoint|MdePkg/Library/UefiApplicationEntryPoint/UefiApplicationEntryPoint.inf
@@ -80,6 +87,7 @@
 [PcdsFixedAtBuild]
   gEfiMdePkgTokenSpaceGuid.PcdDebugPropertyMask|0xFF
   gEfiMdePkgTokenSpaceGuid.PcdUefiLibMaxPrintBufferSize|16000
+
 !ifdef $(NO_SHELL_PROFILES)
   gEfiShellPkgTokenSpaceGuid.PcdShellProfileMask|0x00
 !endif #$(NO_SHELL_PROFILES)
@@ -104,7 +112,17 @@
   ShellPkg/Library/UefiShellNetwork1CommandsLib/UefiShellNetwork1CommandsLib.inf
   ShellPkg/Library/UefiShellNetwork2CommandsLib/UefiShellNetwork2CommandsLib.inf
 
-  LeoTest/leo_test.inf
+  LeoTest/leo_test.inf {
+	<PcdsFixedAtBuild>
+		gEfiMdePkgTokenSpaceGuid.PcdDebugPropertyMask|0xff
+		gEfiMedPkgTokenSpaceGuid.PcdDebugPrintErrorLevel|0xffffffff
+		gEfiMdePkgTokenSpaceGuid.PcdDebugPintErrorLevel|0x80000000
+	<LibraryClasses>
+		TimerLib|MdePkg/Library/SecPeiDxeTimerLibCpu/SecPeiDxeTimerLibCpu.inf
+		RngLib|MdeModulePkg/Library/BaseRngLibTimerLib/BaseRngLibTimerLib.inf
+		BaseCryptLib|CryptoPkg/Library/BaseCryptLib/BaseCryptLib.inf
+		OpensslLib|CryptoPkg/Library/OpensslLib/OpensslLibFull.inf	
+  }
 
 
 
