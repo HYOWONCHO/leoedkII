@@ -141,7 +141,7 @@ CHAR8               *gSmbiosType2Strings[] = {
   "http://www.tianocore.org/edk2/",
   "EmulatorPkg",
   "1.0",
-  "Base Board Serial#",
+  "PF16PU1F",
   "Base Board Asset Tag#",
   "Part Component",
   NULL
@@ -386,7 +386,7 @@ SMBIOS_TABLE_TYPE17  gSmbiosType17Template = {
   },
   0,          // Speed;
   3,          // Manufacturer String
-  0,          // SerialNumber String
+  4,          // SerialNumber String
   0,          // AssetTag String
   0,          // PartNumber String
   0,          // Attributes;
@@ -397,6 +397,7 @@ CHAR8                *gSmbiosType17Strings[] = {
   "OS Virtual Memory",
   "malloc",
   "OSV",
+  "334CA77B",
   NULL
 };
 
