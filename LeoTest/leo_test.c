@@ -985,34 +985,34 @@ VOID enable_uart_serial(VOID)
 
 }
 
-/*
-RETURN_STATUS EFIAPI SerialPortInitialize(VOID)                                
-{                                                                              
-  RETURN_STATUS ret = RETURN_SUCCESS;                                          
-                                                                               
-  UINT64              BaudRate;                                                
-  UINT32              ReceiveFifoDepth;                                        
-  EFI_PARITY_TYPE     Parity;                                                  
-  UINT8               DataBits;                                                
-  EFI_STOP_BITS_TYPE  StopBits;                                                
-                                                                               
-  BaudRate         = FixedPcdGet64 (PcdUartDefaultBaudRate);                   
-  ReceiveFifoDepth = 0;         // Use default FIFO depth                      
-  Parity           = (EFI_PARITY_TYPE)FixedPcdGet8 (PcdUartDefaultParity);     
-  DataBits         = FixedPcdGet8 (PcdUartDefaultDataBits);                    
+#if (LEO_EMUPKG == TRUE)
+RETURN_STATUS EFIAPI SerialPortInitialize(VOID)
+{
+  RETURN_STATUS ret = RETURN_SUCCESS;
+
+  UINT64              BaudRate;
+  UINT32              ReceiveFifoDepth;
+  EFI_PARITY_TYPE     Parity;
+  UINT8               DataBits;
+  EFI_STOP_BITS_TYPE  StopBits;
+
+  BaudRate         = FixedPcdGet64 (PcdUartDefaultBaudRate);
+  ReceiveFifoDepth = 0;         // Use default FIFO depth
+  Parity           = (EFI_PARITY_TYPE)FixedPcdGet8 (PcdUartDefaultParity);
+  DataBits         = FixedPcdGet8 (PcdUartDefaultDataBits);
   StopBits         = (EFI_STOP_BITS_TYPE)FixedPcdGet8 (PcdUartDefaultStopBits);
-                                                                               
-                                                                               
-  dprint("----- SerialProtInitialize -----");                                  
-  dprint("Baud Rate : %d", BaudRate);                                          
-  dprint("ReceiveFifoDepth : %d", ReceiveFifoDepth);                           
-  dprint("Parity : %d", (UINT32)Parity);                                       
-  dprint("DataBits : %d", (UINT32)DataBits);                                   
-  dprint("StopBits : %d", (UINT32)StopBits);                                   
-                                                                               
-  return ret;                                                                  
-}                                                                              
-*/
+
+
+  dprint("----- SerialProtInitialize -----");
+  dprint("Baud Rate : %d", BaudRate);
+  dprint("ReceiveFifoDepth : %d", ReceiveFifoDepth);
+  dprint("Parity : %d", (UINT32)Parity);
+  dprint("DataBits : %d", (UINT32)DataBits);
+  dprint("StopBits : %d", (UINT32)StopBits);
+
+  return ret;
+}
+#endif
 
 #ifdef SBC_BASEANSWER_TEST
 SBCStatus  SBC_BaseAnswerValidate(UINT8 *answer, UINTN answerl);
