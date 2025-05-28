@@ -1214,6 +1214,10 @@ errdone:
 
 
 
+
+
+/*
+
 #include <Ppi/NvmExpressPassThru.h>
 #include <IndustryStandard/Nvme.h>
 
@@ -1225,150 +1229,151 @@ typedef struct {
 } NVME_CONTROLLER_DATA;
 #pragma pack()
 
-// Define an NVMe command structure, as used with the NVMe Pass Thru Protocol.
-typedef struct {
-    UINT8   Opcode;
-    UINT8   Flags;
-    UINT16  CommandId;
-    UINT32  NSID;       // For Identify Controller, NSID is set to 0.
-    UINT64  Reserved;
-    UINT64  MPTR;
-    UINT32  Cdw10;      // Contains the CNS field (Controller or Namespace Structure)
-    UINT32  Cdw11;
-    UINT32  Cdw12;
-    UINT32  Cdw13;
-    UINT32  Cdw14;
-    UINT32  Cdw15;
-} NVME_COMMAND;
-
-EFI_STATUS nvme_get_serial(VOID)
-{
-    EFI_STATUS                Status;
-    EFI_HANDLE                *HandleBuffer;
-    UINTN                     HandleCount;
-    UINTN                     Index;
-    EFI_NVM_EXPRESS_PASS_THRU_PROTOCOL *NvmePassThru;
-    EFI_NVM_EXPRESS_COMMAND                   Command;
-    EFI_NVM_EXPRESS_PASS_THRU_COMMAND_PACKET  CommandPacket;
-    EFI_NVM_EXPRESS_COMPLETION                Completion;
-    NVME_ADMIN_CONTROLLER_DATA                ControllerData;
-    
-   
-    // Locate handles that support the NVMe Pass Thru Protocol.
-    Status = gBS->LocateHandleBuffer(
-                        ByProtocol,
-                        &gEfiNvmExpressPassThruProtocolGuid,
-                        NULL,
-                        &HandleCount,
-                        &HandleBuffer);
-    if (EFI_ERROR(Status)) {
-        Print(L"Error: No NVMe devices found - %r\n", Status);
-        return Status;
-    }
-
-    Print(L"Found %u NVMe device(s).\n", HandleCount);
-
-    for (Index = 0; Index < HandleCount; Index++) {
-        // Get the NVMe Pass Thru Protocol from the current handle.
-        Status = gBS->HandleProtocol(
-                           HandleBuffer[Index],
-                           &gEfiNvmExpressPassThruProtocolGuid,
-                           (VOID**)&NvmePassThru);
-        if (EFI_ERROR(Status)) {
-            Print(L"Error: Could not access NVMe Pass Thru on device %u - %r\n", Index, Status);
-            continue;
-        }
-
-        // Allocate a buffer for the NVMe Identify Controller data.
-        // The Identify Controller data is 4096 bytes.
-        UINT32 BufferSize = 4096;
-        VOID *Buffer = AllocatePool(BufferSize);
-        if (Buffer == NULL) {
-            Print(L"Error: Failed to allocate memory for device %u\n", Index);
-            continue;
-        }
-        SetMem(Buffer, BufferSize, 0);
-
-        // Prepare the NVMe Identify Controller command.
+// Define an NVMe command structure, as used with the NVMe Pass Thru Protocol.                      
+typedef struct {                                                                                    
+    UINT8   Opcode;                                                                                 
+    UINT8   Flags;                                                                                  
+    UINT16  CommandId;                                                                              
+    UINT32  NSID;       // For Identify Controller, NSID is set to 0.                               
+    UINT64  Reserved;                                                                               
+    UINT64  MPTR;                                                                                   
+    UINT32  Cdw10;      // Contains the CNS field (Controller or Namespace Structure)               
+    UINT32  Cdw11;                                                                                  
+    UINT32  Cdw12;                                                                                  
+    UINT32  Cdw13;                                                                                  
+    UINT32  Cdw14;                                                                                  
+    UINT32  Cdw15;                                                                                  
+} NVME_COMMAND;                                                                                     
+                                                                                                    
+EFI_STATUS nvme_get_serial(VOID)                                                                    
+{                                                                                                   
+    EFI_STATUS                Status;                                                               
+    EFI_HANDLE                *HandleBuffer;                                                        
+    UINTN                     HandleCount;                                                          
+    UINTN                     Index;                                                                
+    EFI_NVM_EXPRESS_PASS_THRU_PROTOCOL *NvmePassThru;                                               
+    EFI_NVM_EXPRESS_COMMAND                   Command;                                              
+    EFI_NVM_EXPRESS_PASS_THRU_COMMAND_PACKET  CommandPacket;                                        
+    EFI_NVM_EXPRESS_COMPLETION                Completion;                                           
+    NVME_ADMIN_CONTROLLER_DATA                ControllerData;                                       
+                                                                                                    
+                                                                                                    
+    // Locate handles that support the NVMe Pass Thru Protocol.                                     
+    Status = gBS->LocateHandleBuffer(                                                               
+                        ByProtocol,                                                                 
+                        &gEfiNvmExpressPassThruProtocolGuid,                                        
+                        NULL,                                                                       
+                        &HandleCount,                                                               
+                        &HandleBuffer);                                                             
+    if (EFI_ERROR(Status)) {                                                                        
+        Print(L"Error: No NVMe devices found - %r\n", Status);                                      
+        return Status;                                                                              
+    }                                                                                               
+                                                                                                    
+    Print(L"Found %u NVMe device(s).\n", HandleCount);                                              
+                                                                                                    
+    for (Index = 0; Index < HandleCount; Index++) {                                                 
+        // Get the NVMe Pass Thru Protocol from the current handle.                                 
+        Status = gBS->HandleProtocol(                                                               
+                           HandleBuffer[Index],                                                     
+                           &gEfiNvmExpressPassThruProtocolGuid,                                     
+                           (VOID**)&NvmePassThru);                                                  
+        if (EFI_ERROR(Status)) {                                                                    
+            Print(L"Error: Could not access NVMe Pass Thru on device %u - %r\n", Index, Status);    
+            continue;                                                                               
+        }                                                                                           
+                                                                                                    
+        // Allocate a buffer for the NVMe Identify Controller data.                                 
+        // The Identify Controller data is 4096 bytes.                                              
+        UINT32 BufferSize = 4096;                                                                   
+        VOID *Buffer = AllocatePool(BufferSize);                                                    
+        if (Buffer == NULL) {                                                                       
+            Print(L"Error: Failed to allocate memory for device %u\n", Index);                      
+            continue;                                                                               
+        }                                                                                           
+        SetMem(Buffer, BufferSize, 0);                                                              
+                                                                                                    
+        // Prepare the NVMe Identify Controller command.                                            
         // Opcode 0x06 is the Identify command. Setting NSID to 0 indicates we want controller data.
-        // The lower 8 bits of Cdw10 (called CNS) must be set to 1 for Identify Controller.
-//      NVME_COMMAND NvmeCmd;
-//      SetMem(&NvmeCmd, sizeof(NvmeCmd), 0);
-//      NvmeCmd.Opcode = 0x06;    // Identify command opcode
-//      NvmeCmd.NSID   = 0;       // 0 for Identify Controller command
-//      NvmeCmd.Cdw10  = 1;       // CNS = 1 --> Identify Controller
-//
-//      // Issue the NVMe command using the PassThru function.
-//      // A timeout (here 10 seconds in microseconds) is provided.
-//      UINT32 Timeout = 10 * 1000 * 1000;  // 10 seconds
-//      Status = NvmePassThru->PassThru(
-//                             NvmePassThru,
-//                             0,           // NamespaceId is 0 for controller command.
-//                             &NvmeCmd,
-//                             &BufferSize,
-//                             Buffer,
-//                             Timeout,
-//                             NULL);
-
-        ZeroMem (&CommandPacket, sizeof (EFI_NVM_EXPRESS_PASS_THRU_COMMAND_PACKET));
-        ZeroMem (&Command, sizeof (EFI_NVM_EXPRESS_COMMAND));
-        ZeroMem (&Completion, sizeof (EFI_NVM_EXPRESS_COMPLETION));
-
-        Command.Cdw0.Opcode = 0x06; // Identify Command opcode
-        Command.Nsid = 0;
-        Command.Cdw10 = 1;    // CNS = 1 ---> Identify controller.
-        CommandPacket.NvmeCmd        = &Command;
-        CommandPacket.NvmeCompletion = &Completion;
-        CommandPacket.TransferBuffer = &ControllerData;
-        CommandPacket.TransferLength = sizeof (ControllerData);
-        CommandPacket.CommandTimeout = EFI_TIMER_PERIOD_SECONDS (5);
-        CommandPacket.QueueType      = NVME_ADMIN_QUEUE;
-
-
-                //
-        // Set bit 0 (Cns bit) to 1 to identify a controller
-        //
-        Command.Cdw10 = 1;
-        Command.Flags = CDW10_VALID;
-        Status = NvmePassThru->PassThru(
-                       NvmePassThru,
-                       0,           // NamespaceId is 0 for controller command.
-                       &CommandPacket,
-                       NULL);
-        if (EFI_ERROR(Status)) {
-            Print(L"Error: NVMe Identify command failed on device %u - %r\n", Index, Status);
-            FreePool(Buffer);
-            continue;
-        }
-
-        // Interpret the buffer as NVME_CONTROLLER_DATA.
-        NVME_CONTROLLER_DATA *nvme_ctrldata = 
-            (NVME_CONTROLLER_DATA *)CommandPacket.TransferBuffer;
-        
-        //NVME_CONTROLLER_DATA *ControllerData = (NVME_CONTROLLER_DATA *)Buffer;
-        
-        // Copy the 20-byte serial number into a local buffer and null-terminate it.
-        CHAR8 Serial[21];
-        CopyMem(Serial, nvme_ctrldata->SerialNumber, 20);
-        Serial[20] = '\0';
-
-        // Trim trailing spaces from the serial number.
-        for (INTN i = 19; i >= 0; i--) {
-            if (Serial[i] == ' ')
-                Serial[i] = '\0';
-            else
-                break;
-        }
-
-        Print(L"NVMe Device %u Serial Number: %a\n", Index, Serial);
-        SBC_mem_print_bin("NVME DEV SN", (UINT8 *)Serial, 32);
-        FreePool(Buffer);
-    }
-
-    FreePool(HandleBuffer);
-    return EFI_SUCCESS;
-}
-
+        // The lower 8 bits of Cdw10 (called CNS) must be set to 1 for Identify Controller.         
+//      NVME_COMMAND NvmeCmd;                                                                       
+//      SetMem(&NvmeCmd, sizeof(NvmeCmd), 0);                                                       
+//      NvmeCmd.Opcode = 0x06;    // Identify command opcode                                        
+//      NvmeCmd.NSID   = 0;       // 0 for Identify Controller command                              
+//      NvmeCmd.Cdw10  = 1;       // CNS = 1 --> Identify Controller                                
+//                                                                                                  
+//      // Issue the NVMe command using the PassThru function.                                      
+//      // A timeout (here 10 seconds in microseconds) is provided.                                 
+//      UINT32 Timeout = 10 * 1000 * 1000;  // 10 seconds                                           
+//      Status = NvmePassThru->PassThru(                                                            
+//                             NvmePassThru,                                                        
+//                             0,           // NamespaceId is 0 for controller command.             
+//                             &NvmeCmd,                                                            
+//                             &BufferSize,                                                         
+//                             Buffer,                                                              
+//                             Timeout,                                                             
+//                             NULL);                                                               
+                                                                                                    
+        ZeroMem (&CommandPacket, sizeof (EFI_NVM_EXPRESS_PASS_THRU_COMMAND_PACKET));                
+        ZeroMem (&Command, sizeof (EFI_NVM_EXPRESS_COMMAND));                                       
+        ZeroMem (&Completion, sizeof (EFI_NVM_EXPRESS_COMPLETION));                                 
+                                                                                                    
+        Command.Cdw0.Opcode = 0x06; // Identify Command opcode                                      
+        Command.Nsid = 0;                                                                           
+        Command.Cdw10 = 1;    // CNS = 1 ---> Identify controller.                                  
+        CommandPacket.NvmeCmd        = &Command;                                                    
+        CommandPacket.NvmeCompletion = &Completion;                                                 
+        CommandPacket.TransferBuffer = &ControllerData;                                             
+        CommandPacket.TransferLength = sizeof (ControllerData);                                     
+        CommandPacket.CommandTimeout = EFI_TIMER_PERIOD_SECONDS (5);                                
+        CommandPacket.QueueType      = NVME_ADMIN_QUEUE;                                            
+                                                                                                    
+                                                                                                    
+                //                                                                                  
+        // Set bit 0 (Cns bit) to 1 to identify a controller                                        
+        //                                                                                          
+        Command.Cdw10 = 1;                                                                          
+        Command.Flags = CDW10_VALID;                                                                
+        Status = NvmePassThru->PassThru(                                                            
+                       NvmePassThru,                                                                
+                       0,           // NamespaceId is 0 for controller command.                     
+                       &CommandPacket,                                                              
+                       NULL);                                                                       
+        if (EFI_ERROR(Status)) {                                                                    
+            Print(L"Error: NVMe Identify command failed on device %u - %r\n", Index, Status);       
+            FreePool(Buffer);                                                                       
+            continue;                                                                               
+        }                                                                                           
+                                                                                                    
+        // Interpret the buffer as NVME_CONTROLLER_DATA.                                            
+        NVME_CONTROLLER_DATA *nvme_ctrldata =                                                       
+            (NVME_CONTROLLER_DATA *)CommandPacket.TransferBuffer;                                   
+                                                                                                    
+        //NVME_CONTROLLER_DATA *ControllerData = (NVME_CONTROLLER_DATA *)Buffer;                    
+                                                                                                    
+        // Copy the 20-byte serial number into a local buffer and null-terminate it.                
+        CHAR8 Serial[21];                                                                           
+        CopyMem(Serial, nvme_ctrldata->SerialNumber, 20);                                           
+        Serial[20] = '\0';                                                                          
+                                                                                                    
+        // Trim trailing spaces from the serial number.                                             
+        for (INTN i = 19; i >= 0; i--) {                                                            
+            if (Serial[i] == ' ')                                                                   
+                Serial[i] = '\0';                                                                   
+            else                                                                                    
+                break;                                                                              
+        }                                                                                           
+                                                                                                    
+        Print(L"NVMe Device %u Serial Number: %a\n", Index, Serial);                                
+        SBC_mem_print_bin("NVME DEV SN", (UINT8 *)Serial, 32);                                      
+        FreePool(Buffer);                                                                           
+    }                                                                                               
+                                                                                                    
+    FreePool(HandleBuffer);                                                                         
+    return EFI_SUCCESS;                                                                             
+}                                                                                                   
+                                                                                                    
+*/
 
 #ifdef SBC_BASEANSWER_TEST
 SBCStatus  SBC_BaseAnswerValidate(UINT8 *answer, UINTN answerl);
@@ -1437,14 +1442,14 @@ UefiMain (
 //
 #ifdef SBC_BASEANSWER_TEST
 
-  nvme_get_serial();
+  //nvme_get_serial();
 //  CHAR8 *base_answer = "anti-tampering!?";
-//  UINT8 devid[32] = {0,};
+    UINT8 devid[32] = {0,};
 ////  SBC_BaseAnswerValidate((UINT8 *)base_answer, strlen(base_answer));
 //  get_blokio_handleparse();
 //  GetDiskSerialNumber();
 //  GetSSDSerial();
-//  SBC_GenDeviceID(devid);
+    SBC_GenDeviceID(devid);
 //  SBC_external_mem_print_bin("Device ID", devid, sizeof devid);
 #endif
 //
