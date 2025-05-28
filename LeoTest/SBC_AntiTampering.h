@@ -8,8 +8,8 @@ typedef struct _hw_unique_info_t {
     UINTN   mbsnl;
     UINT8   mmsn[64];            /*!< Memory serial */
     UINTN   mmsnl;
-    UINT8   hdsn[64];            /*!< SSD serial */
-    UINTN   hdsnl;           /*!< Length of  SSD serial */
+    UINT8   nvmesn[64];            /*!< SSD serial */
+    UINTN   nvmesnl;           /*!< Length of  SSD serial */
     //at_key_t *key;
 }hw_uniqueinfo_t;
 

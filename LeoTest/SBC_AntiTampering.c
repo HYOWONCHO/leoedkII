@@ -9,6 +9,11 @@
 #include <Protocol/Smbios.h>
 #include <Library/BaseLib.h>
 
+
+// NVME parsing 
+#include <Ppi/NvmExpressPassThru.h>
+#include <IndustryStandard/Nvme.h>
+
 #include "SBC_CryptAES.h"
 #include "SBC_TypeDefs.h"
 
@@ -19,6 +24,15 @@
 #include "SBC_Hashing.h"
 #include "SBC_AntiTampering.h"
 #include "SBC_EccSignVerify.h"
+
+#pragma pack(1)
+typedef struct {
+    UINT8   Reserved[4];
+    CHAR8   SerialNumber[20];
+    // The rest of the 4096-byte structure is not used in this example.
+} NVME_CONTROLLER_DATA;
+#pragma pack()
+
 
 #if 0
 #pragma pack(1)
@@ -163,6 +177,126 @@ errdone:
 
 #endif
 
+
+SBCStatus _nvme_get_serial(hw_uniqueinfo_t *p)
+{
+    SBCStatus                 ret = SBCFAIL;
+    EFI_STATUS                Status;
+    EFI_HANDLE                *HandleBuffer;
+    UINTN                     HandleCount;
+    UINTN                     Index;
+    EFI_NVM_EXPRESS_PASS_THRU_PROTOCOL *NvmePassThru;
+    EFI_NVM_EXPRESS_COMMAND                   Command;
+    EFI_NVM_EXPRESS_PASS_THRU_COMMAND_PACKET  CommandPacket;
+    EFI_NVM_EXPRESS_COMPLETION                Completion;
+    NVME_ADMIN_CONTROLLER_DATA                ControllerData;
+    
+   
+    // Locate handles that support the NVMe Pass Thru Protocol.
+    Status = gBS->LocateHandleBuffer(
+                        ByProtocol,
+                        &gEfiNvmExpressPassThruProtocolGuid,
+                        NULL,
+                        &HandleCount,
+                        &HandleBuffer);
+    if (EFI_ERROR(Status)) {
+        Print(L"Error: No NVMe devices found - %r\n", Status);
+        ret = SBCFAIL;
+        goto errdone;
+    }
+
+    Print(L"Found %u NVMe device(s).\n", HandleCount);
+
+    for (Index = 0; Index < HandleCount; Index++) {
+        // Get the NVMe Pass Thru Protocol from the current handle.
+        Status = gBS->HandleProtocol(
+                           HandleBuffer[Index],
+                           &gEfiNvmExpressPassThruProtocolGuid,
+                           (VOID**)&NvmePassThru);
+        if (EFI_ERROR(Status)) {
+            Print(L"Error: Could not access NVMe Pass Thru on device %u - %r\n", Index, Status);
+            continue;
+        }
+
+        // Allocate a buffer for the NVMe Identify Controller data.
+        // The Identify Controller data is 4096 bytes.
+        UINT32 BufferSize = 4096;
+        VOID *Buffer = AllocatePool(BufferSize);
+        if (Buffer == NULL) {
+            Print(L"Error: Failed to allocate memory for device %u\n", Index);
+            continue;
+        }
+        SetMem(Buffer, BufferSize, 0);
+
+        // Prepare the NVMe Identify Controller command.
+        // Opcode 0x06 is the Identify command. Setting NSID to 0 indicates we want controller data.
+        // The lower 8 bits of Cdw10 (called CNS) must be set to 1 for Identify Controller.
+
+        ZeroMem (&CommandPacket, sizeof (EFI_NVM_EXPRESS_PASS_THRU_COMMAND_PACKET));
+        ZeroMem (&Command, sizeof (EFI_NVM_EXPRESS_COMMAND));
+        ZeroMem (&Completion, sizeof (EFI_NVM_EXPRESS_COMPLETION));
+
+        Command.Cdw0.Opcode = 0x06; // Identify Command opcode
+        Command.Nsid = 0;
+        Command.Cdw10 = 1;    // CNS = 1 ---> Identify controller.
+        CommandPacket.NvmeCmd        = &Command;
+        CommandPacket.NvmeCompletion = &Completion;
+        CommandPacket.TransferBuffer = &ControllerData;
+        CommandPacket.TransferLength = sizeof (ControllerData);
+        CommandPacket.CommandTimeout = EFI_TIMER_PERIOD_SECONDS (5);
+        CommandPacket.QueueType      = NVME_ADMIN_QUEUE;
+
+
+                //
+        // Set bit 0 (Cns bit) to 1 to identify a controller
+        //
+        Command.Cdw10 = 1;
+        Command.Flags = CDW10_VALID;
+        Status = NvmePassThru->PassThru(
+                       NvmePassThru,
+                       0,           // NamespaceId is 0 for controller command.
+                       &CommandPacket,
+                       NULL);
+        if (EFI_ERROR(Status)) {
+            Print(L"Error: NVMe Identify command failed on device %u - %r\n", Index, Status);
+            FreePool(Buffer);
+            continue;
+        }
+
+        // Interpret the buffer as NVME_CONTROLLER_DATA.
+        NVME_CONTROLLER_DATA *nvme_ctrldata = 
+            (NVME_CONTROLLER_DATA *)CommandPacket.TransferBuffer;
+        
+        //NVME_CONTROLLER_DATA *ControllerData = (NVME_CONTROLLER_DATA *)Buffer;
+        
+        // Copy the 20-byte serial number into a local buffer and null-terminate it.
+        CHAR8 Serial[21];
+        CopyMem(Serial, nvme_ctrldata->SerialNumber, 20);
+        Serial[20] = '\0';
+
+        // Trim trailing spaces from the serial number.
+        for (INTN i = 19; i >= 0; i--) {
+            if (Serial[i] == ' ')
+                Serial[i] = '\0';
+            else
+                break;
+        }
+
+        Print(L"NVMe Device %u Serial Number: %a\n", Index, Serial);
+        //SBC_mem_print_bin("NVME DEV SN", (UINT8 *)Serial, 32);
+        p->nvmesnl = strlen(Serial);
+        CopyMem(p->nvmesn, Serial, p->nvmesnl);
+        FreePool(Buffer);
+        break;
+    }
+
+    ret = SBCOK;
+errdone:
+    if (HandleBuffer) {
+        FreePool(HandleBuffer);
+    }
+    return ret;
+}
 
 static SBCStatus _baseboard_sn(hw_uniqueinfo_t *p)
 {
@@ -502,8 +636,8 @@ SBCStatus SBC_GenDeviceID(UINT8 *devid)
        .mbsnl = 14,
        .mmsn = {0x30, 0x30, 0x30, 0x30, 0x30, 0x30, 0x30, 0x30},
        .mmsnl = 8,
-       .hdsn = {0x36, 0x34, 0x37, 0x39, 0x5f, 0x41, 0x37, 0x39, 0x36, 0x5f, 0x34, 0x41,0x33, 0x30, 0x5f, 0x35, 0x43, 0x37, 0x36 },
-       .hdsnl = 20
+       .nvmesn = {0x36, 0x34, 0x37, 0x39, 0x5f, 0x41, 0x37, 0x39, 0x36, 0x5f, 0x34, 0x41,0x33, 0x30, 0x5f, 0x35, 0x43, 0x37, 0x36 },
+       .nvmesnl = 20
    };
 
     CHAR8 *pemkey_priv;
@@ -524,27 +658,37 @@ SBCStatus SBC_GenDeviceID(UINT8 *devid)
     // TODO : read the device information 
     ZeroMem((void *)&info, sizeof info);
 #else
-    _memorydevice_sn(&info);
-    SBC_external_mem_print_bin("MemoryDevice SN", info.mmsn, info.mmsnl);
-    SBC_mem_print_bin("MemoryDevice SN", info.mmsn, info.mmsnl);
 
     _baseboard_sn(&info);
     SBC_external_mem_print_bin("BaseBoard SN", info.mbsn,info.mbsnl);
     SBC_mem_print_bin("BaseBoard SN", info.mbsn,info.mbsnl);
 
+    _memorydevice_sn(&info);
+    SBC_external_mem_print_bin("MemoryDevice SN", info.mmsn, info.mmsnl);
+    SBC_mem_print_bin("MemoryDevice SN", info.mmsn, info.mmsnl);
 
-    computebuf = AllocatePool(info.mbsnl + info.mmsnl + info.hdsnl);
+    _nvme_get_serial(&info);
+    SBC_external_mem_print_bin("NVME SN", info.nvmesn,info.nvmesnl);
+    SBC_mem_print_bin("NVME SN", info.nvmesn,info.nvmesnl);
+
+
+    computebuf = AllocatePool(info.mbsnl + info.mmsnl + info.nvmesnl);
     SBC_RET_VALIDATE_ERRCODEMSG((computebuf != NULL),SBCNULLP, "Compute buffer Nill");
 
+    cnt = 0;
+    //Print(L" cnt : %d \n", cnt);
     CopyMem((void *)&computebuf[0], info.mbsn, info.mbsnl);
     cnt = info.mbsnl;
 
+    //Print(L"Next cnt : %d \n", cnt);
     CopyMem((void *)&computebuf[cnt], info.mmsn, info.mmsnl);
     cnt += info.mmsnl;
 
-    CopyMem((void *)&computebuf[cnt], info.hdsn, info.hdsnl);
-    cnt += info.mbsnl;
+    //Print(L"Next Next cnt : %d \n", cnt);
+    CopyMem((void *)&computebuf[cnt], info.nvmesn, info.nvmesnl);
+    cnt += info.nvmesnl;
 
+    SBC_mem_print_bin("Device ID Raw Fmt", computebuf, cnt);
     ret = SBC_HashCompute(
                              NULL, /* Not yet used */
                              computebuf,
