@@ -236,7 +236,8 @@ SBCStatus _nvme_get_serial(hw_uniqueinfo_t *p)
         ZeroMem (&Command, sizeof (EFI_NVM_EXPRESS_COMMAND));
         ZeroMem (&Completion, sizeof (EFI_NVM_EXPRESS_COMPLETION));
 
-        Command.Cdw0.Opcode = 0x06; // Identify Command opcode
+        //Command.Cdw0.Opcode = 0x06; // Identify Command opcode
+        Command.Cdw0.Opcode = NVME_ADMIN_IDENTIFY_CMD;
         Command.Nsid = 0;
         Command.Cdw10 = 1;    // CNS = 1 ---> Identify controller.
         CommandPacket.NvmeCmd        = &Command;
@@ -698,6 +699,7 @@ SBCStatus SBC_GenDeviceID(UINT8 *devid)
 
 
 
+    SBC_mem_print_bin("Device ID", devid, 32);
 
 #endif
 
