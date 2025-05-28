@@ -90,6 +90,7 @@
   gEfiSimpleFileSystemProtocolGuid
   gEfiBlockIoProtocolGuid
   gEfiSerialIoProtocolGuid
+  gEfiNvmExpressPassThruProtocolGuid
 
 
 [FeaturePcd]
