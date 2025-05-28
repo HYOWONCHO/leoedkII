@@ -571,7 +571,7 @@ EFI_STATUS GetSSDSerial(VOID)
     // Adjust this value as needed.
     //
 
-    Print(L"Record->Type : 0x%02x\n", Record->Type);
+    //Print(L"Record->Type : 0x%02x\n", Record->Type);
     if (Record->Type == 0xC0) {
       SMBIOS_VENDOR_STORAGE *StorageRecord = (SMBIOS_VENDOR_STORAGE *)Record;
       
@@ -588,6 +588,7 @@ EFI_STATUS GetSSDSerial(VOID)
   return Status;
 }
 
+
 EFI_STATUS GetDiskSerialNumber(VOID) 
 {
     EFI_STATUS Status;
@@ -596,11 +597,17 @@ EFI_STATUS GetDiskSerialNumber(VOID)
     EFI_BLOCK_IO_PROTOCOL *BlockIo;
     
     // Locate handles supporting Block IO Protocol
-    Status = gBS->LocateHandleBuffer(ByProtocol, &gEfiBlockIoProtocolGuid, NULL, &HandleCount, &HandleBuffer);
+    Status = gBS->LocateHandleBuffer(ByProtocol
+                                     , &gEfiBlockIoProtocolGuid
+                                     , NULL
+                                     , &HandleCount, 
+                                     &HandleBuffer);
     if (EFI_ERROR(Status)) {
           DEBUG((DEBUG_ERROR, "[%a:%d] LocateHandleBuffer :%d \n",__FUNCTION__,__LINE__, Status));
         return Status;
     }
+
+     Print(L"Found %u Block I/O devices:\n", HandleCount);
 
     // Loop through all block devices
     for (UINTN i = 0; i < HandleCount; i++) {
@@ -610,19 +617,166 @@ EFI_STATUS GetDiskSerialNumber(VOID)
             continue;
         }
 
-        if (BlockIo->Media->RemovableMedia) {
-            Print(L"Skipping removable media...\n");
-            continue;
-        }
+//      if (BlockIo->Media->RemovableMedia) {
+//          Print(L"Skipping removable media...\n");
+//          continue;
+//      }
 
         // At this point, the BlockIo interface allows interaction with the disk
         // The Serial Number is typically retrieved through a pass-through ATA command
         Print(L"Disk detected, but retrieving serial requires ATA pass-through.\n");
+        Print(L"Device %u: Media ID = %u\n", i, BlockIo->Media->MediaId);
     }
 
     return EFI_SUCCESS;
 }
+EFI_STATUS block_io_test(VOID)
+{
+      EFI_STATUS              Status;
+    EFI_HANDLE              *HandleBuffer;
+    UINTN                   HandleCount;
+    UINTN                   Index;
 
+    // Locate all handles that support the EFI Block I/O Protocol.
+    Status = gBS->LocateHandleBuffer(ByProtocol,
+                                     &gEfiBlockIoProtocolGuid,
+                                     NULL,
+                                     &HandleCount,
+                                     &HandleBuffer);
+    if (EFI_ERROR(Status)) {
+        Print(L"Error: LocateHandleBuffer returned %r\n", Status);
+        return Status;
+    }
+
+    Print(L"Found %u Block I/O device(s).\n\n", HandleCount);
+
+    // Process each Block I/O device.
+    for (Index = 0; Index < HandleCount; Index++) {
+        EFI_BLOCK_IO_PROTOCOL *BlockIo;
+
+        // Get the Block I/O protocol interface.
+        Status = gBS->HandleProtocol(HandleBuffer[Index],
+                                     &gEfiBlockIoProtocolGuid,
+                                     (VOID**)&BlockIo);
+        if (EFI_ERROR(Status)) {
+            Print(L"Error: Failed to get Block I/O protocol for device %u: %r\n", Index, Status);
+            continue;
+        }
+
+        // Check whether the media is present.
+        if (!BlockIo->Media->MediaPresent) {
+            Print(L"Device %u: No media present.\n", Index);
+            continue;
+        }
+
+        Print(L"Device %u:\n", Index);
+        Print(L"  Media ID          : %u\n", BlockIo->Media->MediaId);
+        Print(L"  Removable Media   : %d\n", BlockIo->Media->RemovableMedia);
+        Print(L"  Block Size (bytes): %u\n", BlockIo->Media->BlockSize);
+        Print(L"  Last Block        : %lu\n", BlockIo->Media->LastBlock);
+
+        // Attempt to read block 0 (LBA = 0).
+        UINT64 Lba = 0;
+        UINTN BufferSize = BlockIo->Media->BlockSize;
+        VOID *Buffer = AllocatePool(BufferSize);
+        if (Buffer == NULL) {
+            Print(L"Error: Unable to allocate memory for reading block.\n");
+            continue;
+        }
+
+        Status = BlockIo->ReadBlocks(BlockIo,
+                                     BlockIo->Media->MediaId,
+                                     Lba,
+                                     BufferSize,
+                                     Buffer);
+        if (EFI_ERROR(Status)) {
+            Print(L"Error: ReadBlocks failed for device %u: %r\n", Index, Status);
+            FreePool(Buffer);
+            continue;
+        }
+
+        // Print a hex dump of the first 32 bytes from the block.
+        Print(L"  First 32 bytes of block (LBA 0):\n    ");
+        UINTN j;
+        for (j = 0; j < (BufferSize < 32 ? BufferSize : 32); j++) {
+            Print(L"%02x ", ((UINT8 *)Buffer)[j]);
+        }
+        Print(L"\n\n");
+        FreePool(Buffer);
+    }
+
+    FreePool(HandleBuffer);
+    return EFI_SUCCESS;
+}
+
+#include <Protocol/DiskInfo.h>
+VOID test_disk_serial(VOID)
+{
+      EFI_STATUS                   Status;
+    EFI_HANDLE                   *HandleBuffer;
+    UINTN                        HandleCount;
+    UINTN                        Index;
+    //EFI_ATAPI_IDENTIFY_DATA      IdenitfyData;
+
+    // Locate all handles that support EFI Disk Info Protocol.
+    Status = gBS->LocateHandleBuffer(ByProtocol, &gEfiDiskInfoProtocolGuid, NULL, &HandleCount, &HandleBuffer);
+    if (EFI_ERROR(Status)) {
+        Print(L"Error: Failed to locate Disk Info Protocol devices. Status = %r\n", Status);
+        return ;
+    }
+
+    Print(L"Found %d disk device(s) supporting EFI Disk Info Protocol.\n", HandleCount);
+
+    // Enumerate each device handle.
+    for (Index = 0; Index < HandleCount; Index++) {
+        EFI_DISK_INFO_PROTOCOL   *DiskInfo;
+        UINT8                    IdentifyData[512];
+        UINT32                   IdentifyDataSize = sizeof(IdentifyData);
+        CHAR8                    RawSerial[21]; // 20 characters + null terminator
+        UINTN                    i, bufIndex;
+        
+        Status = gBS->HandleProtocol(HandleBuffer[Index], &gEfiDiskInfoProtocolGuid, (VOID**)&DiskInfo);
+        if (EFI_ERROR(Status)) {
+            Print(L"Error: HandleProtocol failed for device %d with status %r\n", Index, Status);
+            continue;
+        }
+
+        //
+        // Attempt the Identify command.
+        // The protocol’s Identify function is called with the current MediaID.
+        //
+        Status = DiskInfo->Identify(DiskInfo, IdentifyData, &IdentifyDataSize);
+        if (EFI_ERROR(Status)) {
+            Print(L"Warning: Identify() failed for device %d. This device may not support ATA Identify. Status = %r\n", Index, Status);
+            continue;
+        }
+
+        //
+        // Extract the serial number:
+        // The serial number is stored in words 10 to 19 (i.e. 20 bytes).
+        // Each word is 2 bytes in big-endian order relative to human-readable ASCII.
+        //
+        bufIndex = 0;
+        for (i = 10; i < 10 + 10; i++) {
+            // Each word is 2 bytes; multiply index by 2 for byte offset.
+            UINTN offset = i * 2;
+            // Swap the bytes: the low-order byte comes second.
+            RawSerial[bufIndex++] = IdentifyData[offset + 1];
+            RawSerial[bufIndex++] = IdentifyData[offset];
+        }
+        RawSerial[bufIndex] = '\0'; // Null terminate the string.
+
+        // Optionally, remove trailing spaces by replacing them with a null.
+        for (i = 0; i < bufIndex; i++) {
+            if (RawSerial[i] == ' ') {
+                RawSerial[i] = '\0';
+                break;
+            }
+        }
+
+        Print(L"Device %d Serial Number: %a\n", Index, RawSerial);
+    }
+}
 
 
 
@@ -1014,6 +1168,208 @@ RETURN_STATUS EFIAPI SerialPortInitialize(VOID)
 }
 #endif
 
+#include <Library/HandleParsingLib.h>
+
+VOID  get_blokio_handleparse(VOID)
+{
+  EFI_HANDLE    *HandleList;
+  EFI_HANDLE    *HandleListWalker;
+  CHAR16        *Name;
+  CONST CHAR16  *Lang = L"EN";
+  CHAR8         *Language;
+  CHAR8         DeviceName[512];
+
+  HandleList = GetHandleListByProtocol(&gEfiBlockIoProtocolGuid);
+  if(HandleList == NULL) {
+    Print(L"GetHandleListByProtocol Nill \n" );
+    goto errdone;
+
+  }
+
+  Language = AllocateZeroPool(StrSize(Lang));
+  AsciiSPrint(Language, StrSize(Lang), "%S", Lang);
+  for(HandleListWalker = HandleList
+      ; HandleListWalker != NULL && *HandleListWalker != NULL
+      ; HandleListWalker++) {
+    Name = NULL;
+    gEfiShellProtocol->GetDeviceName(*HandleListWalker
+                                     ,EFI_DEVICE_NAME_USE_COMPONENT_NAME|EFI_DEVICE_NAME_USE_DEVICE_PATH
+                                     ,(CHAR8 *)Language, &Name);
+
+
+    ZeroMem(DeviceName, sizeof DeviceName);
+    AsciiSPrint(DeviceName, StrSize(Name), "%S", Name);
+
+    SBC_mem_print_bin("Deviec Name", (UINT8 *)DeviceName, 16);
+
+    
+
+
+  }
+
+
+errdone:
+
+}
+
+
+
+#include <Ppi/NvmExpressPassThru.h>
+#include <IndustryStandard/Nvme.h>
+
+#pragma pack(1)
+typedef struct {
+    UINT8   Reserved[4];
+    CHAR8   SerialNumber[20];
+    // The rest of the 4096-byte structure is not used in this example.
+} NVME_CONTROLLER_DATA;
+#pragma pack()
+
+// Define an NVMe command structure, as used with the NVMe Pass Thru Protocol.
+typedef struct {
+    UINT8   Opcode;
+    UINT8   Flags;
+    UINT16  CommandId;
+    UINT32  NSID;       // For Identify Controller, NSID is set to 0.
+    UINT64  Reserved;
+    UINT64  MPTR;
+    UINT32  Cdw10;      // Contains the CNS field (Controller or Namespace Structure)
+    UINT32  Cdw11;
+    UINT32  Cdw12;
+    UINT32  Cdw13;
+    UINT32  Cdw14;
+    UINT32  Cdw15;
+} NVME_COMMAND;
+
+EFI_STATUS nvme_get_serial(VOID)
+{
+    EFI_STATUS                Status;
+    EFI_HANDLE                *HandleBuffer;
+    UINTN                     HandleCount;
+    UINTN                     Index;
+    EFI_NVM_EXPRESS_PASS_THRU_PROTOCOL *NvmePassThru;
+    EFI_NVM_EXPRESS_COMMAND                   Command;
+    EFI_NVM_EXPRESS_PASS_THRU_COMMAND_PACKET  CommandPacket;
+    EFI_NVM_EXPRESS_COMPLETION                Completion;
+    NVME_ADMIN_CONTROLLER_DATA                ControllerData;
+    
+   
+    // Locate handles that support the NVMe Pass Thru Protocol.
+    Status = gBS->LocateHandleBuffer(
+                        ByProtocol,
+                        &gEfiNvmExpressPassThruProtocolGuid,
+                        NULL,
+                        &HandleCount,
+                        &HandleBuffer);
+    if (EFI_ERROR(Status)) {
+        Print(L"Error: No NVMe devices found - %r\n", Status);
+        return Status;
+    }
+
+    Print(L"Found %u NVMe device(s).\n", HandleCount);
+
+    for (Index = 0; Index < HandleCount; Index++) {
+        // Get the NVMe Pass Thru Protocol from the current handle.
+        Status = gBS->HandleProtocol(
+                           HandleBuffer[Index],
+                           &gEfiNvmExpressPassThruProtocolGuid,
+                           (VOID**)&NvmePassThru);
+        if (EFI_ERROR(Status)) {
+            Print(L"Error: Could not access NVMe Pass Thru on device %u - %r\n", Index, Status);
+            continue;
+        }
+
+        // Allocate a buffer for the NVMe Identify Controller data.
+        // The Identify Controller data is 4096 bytes.
+        UINT32 BufferSize = 4096;
+        VOID *Buffer = AllocatePool(BufferSize);
+        if (Buffer == NULL) {
+            Print(L"Error: Failed to allocate memory for device %u\n", Index);
+            continue;
+        }
+        SetMem(Buffer, BufferSize, 0);
+
+        // Prepare the NVMe Identify Controller command.
+        // Opcode 0x06 is the Identify command. Setting NSID to 0 indicates we want controller data.
+        // The lower 8 bits of Cdw10 (called CNS) must be set to 1 for Identify Controller.
+//      NVME_COMMAND NvmeCmd;
+//      SetMem(&NvmeCmd, sizeof(NvmeCmd), 0);
+//      NvmeCmd.Opcode = 0x06;    // Identify command opcode
+//      NvmeCmd.NSID   = 0;       // 0 for Identify Controller command
+//      NvmeCmd.Cdw10  = 1;       // CNS = 1 --> Identify Controller
+//
+//      // Issue the NVMe command using the PassThru function.
+//      // A timeout (here 10 seconds in microseconds) is provided.
+//      UINT32 Timeout = 10 * 1000 * 1000;  // 10 seconds
+//      Status = NvmePassThru->PassThru(
+//                             NvmePassThru,
+//                             0,           // NamespaceId is 0 for controller command.
+//                             &NvmeCmd,
+//                             &BufferSize,
+//                             Buffer,
+//                             Timeout,
+//                             NULL);
+
+        ZeroMem (&CommandPacket, sizeof (EFI_NVM_EXPRESS_PASS_THRU_COMMAND_PACKET));
+        ZeroMem (&Command, sizeof (EFI_NVM_EXPRESS_COMMAND));
+        ZeroMem (&Completion, sizeof (EFI_NVM_EXPRESS_COMPLETION));
+
+        Command.Cdw0.Opcode = 0x06; // Identify Command opcode
+        Command.Nsid = 0;
+        Command.Cdw10 = 1;    // CNS = 1 ---> Identify controller.
+        CommandPacket.NvmeCmd        = &Command;
+        CommandPacket.NvmeCompletion = &Completion;
+        CommandPacket.TransferBuffer = &ControllerData;
+        CommandPacket.TransferLength = sizeof (ControllerData);
+        CommandPacket.CommandTimeout = EFI_TIMER_PERIOD_SECONDS (5);
+        CommandPacket.QueueType      = NVME_ADMIN_QUEUE;
+
+
+                //
+        // Set bit 0 (Cns bit) to 1 to identify a controller
+        //
+        Command.Cdw10 = 1;
+        Command.Flags = CDW10_VALID;
+        Status = NvmePassThru->PassThru(
+                       NvmePassThru,
+                       0,           // NamespaceId is 0 for controller command.
+                       &CommandPacket,
+                       NULL);
+        if (EFI_ERROR(Status)) {
+            Print(L"Error: NVMe Identify command failed on device %u - %r\n", Index, Status);
+            FreePool(Buffer);
+            continue;
+        }
+
+        // Interpret the buffer as NVME_CONTROLLER_DATA.
+        NVME_CONTROLLER_DATA *nvme_ctrldata = 
+            (NVME_CONTROLLER_DATA *)CommandPacket.TransferBuffer;
+        
+        //NVME_CONTROLLER_DATA *ControllerData = (NVME_CONTROLLER_DATA *)Buffer;
+        
+        // Copy the 20-byte serial number into a local buffer and null-terminate it.
+        CHAR8 Serial[21];
+        CopyMem(Serial, nvme_ctrldata->SerialNumber, 20);
+        Serial[20] = '\0';
+
+        // Trim trailing spaces from the serial number.
+        for (INTN i = 19; i >= 0; i--) {
+            if (Serial[i] == ' ')
+                Serial[i] = '\0';
+            else
+                break;
+        }
+
+        Print(L"NVMe Device %u Serial Number: %a\n", Index, Serial);
+        SBC_mem_print_bin("NVME DEV SN", (UINT8 *)Serial, 32);
+        FreePool(Buffer);
+    }
+
+    FreePool(HandleBuffer);
+    return EFI_SUCCESS;
+}
+
+
 #ifdef SBC_BASEANSWER_TEST
 SBCStatus  SBC_BaseAnswerValidate(UINT8 *answer, UINTN answerl);
 SBCStatus SBC_GenDeviceID(UINT8 *devid);
@@ -1048,9 +1404,11 @@ UefiMain (
   status = SerialPortInitialize();
   if(status != RETURN_SUCCESS) {
     dprint("SerialPortInitialize fail \n");
+    Print(L"SerialPortInitialize fail \n");
   }
   else {
     dprint("SerialPortInitialize done \n");
+    Print(L"SerialPortInitialize done \n");
   }
 
 
@@ -1078,14 +1436,16 @@ UefiMain (
 //#endif
 //
 #ifdef SBC_BASEANSWER_TEST
+
+  nvme_get_serial();
 //  CHAR8 *base_answer = "anti-tampering!?";
-  UINT8 devid[32] = {0,};
-//  SBC_BaseAnswerValidate((UINT8 *)base_answer, strlen(base_answer));
-//
-  GetDiskSerialNumber();
-  GetSSDSerial();
-  SBC_GenDeviceID(devid);
-  SBC_external_mem_print_bin("Device ID", devid, sizeof devid);
+//  UINT8 devid[32] = {0,};
+////  SBC_BaseAnswerValidate((UINT8 *)base_answer, strlen(base_answer));
+//  get_blokio_handleparse();
+//  GetDiskSerialNumber();
+//  GetSSDSerial();
+//  SBC_GenDeviceID(devid);
+//  SBC_external_mem_print_bin("Device ID", devid, sizeof devid);
 #endif
 //
 //#ifdef SBC_X509_TEST
