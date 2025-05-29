@@ -13,6 +13,7 @@
 // NVME parsing 
 #include <Ppi/NvmExpressPassThru.h>
 #include <IndustryStandard/Nvme.h>
+#include <Guid/FileInfo.h>
 
 #include "SBC_CryptAES.h"
 #include "SBC_TypeDefs.h"
@@ -177,6 +178,196 @@ errdone:
 }
 
 #endif
+
+EFI_STATUS efi_boot_fsbl_load(LV_t *lv)
+{
+  EFI_STATUS                          Status;
+  EFI_HANDLE                          *HandleBuffer;
+  UINTN                               NumberOfHandles;
+  EFI_SIMPLE_FILE_SYSTEM_PROTOCOL     *SimpleFileSystem;
+  EFI_FILE_PROTOCOL                   *RootFs = NULL;
+  EFI_FILE_PROTOCOL                   *EfiDir = NULL;
+  EFI_FILE_PROTOCOL                   *BootDir = NULL;
+  EFI_FILE_PROTOCOL                   *X64File = NULL;
+  EFI_FILE_INFO                       *FileInfo = NULL;
+  UINTN                               FileInfoSize = 0;
+//VOID                                *FileBuffer = NULL;
+//UINTN                               FileSize = 0;
+
+  // 1. Locate all Simple File System Protocol instances
+  Status = gBS->LocateHandleBuffer (
+                  ByProtocol,
+                  &gEfiSimpleFileSystemProtocolGuid,
+                  NULL,
+                  &NumberOfHandles,
+                  &HandleBuffer
+                  );
+  if (EFI_ERROR (Status)) {
+    Print(L"Failed to locate Simple File System Protocol: %r\n", Status);
+    return Status;
+  }
+
+
+  Print(L"Number of Handles %d \n", NumberOfHandles);
+  // Iterate through found file systems to find the one containing /EFI/BOOT/X64.efi
+  // In a real scenario, you might have logic to identify the correct ESP.
+  // For simplicity, we'll try the first one here.
+  for (UINTN Index = NumberOfHandles - 1; Index < NumberOfHandles; Index++) {
+    Status = gBS->HandleProtocol (
+                    HandleBuffer[Index],
+                    &gEfiSimpleFileSystemProtocolGuid,
+                    (VOID **)&SimpleFileSystem
+                    );
+    if (EFI_ERROR (Status)) {
+      Print(L"Could not find a HandleProtocol file system.\n");
+      continue;
+    }
+
+    // 2. Open the root volume
+    Status = SimpleFileSystem->OpenVolume (
+                                 SimpleFileSystem,
+                                 &RootFs
+                                 );
+    if (!EFI_ERROR (Status)) {
+      // Found a file system, try to open the EFI directory
+      //break; // Exit loop, we found a potential file system
+      Print(L"Could not find a Open the root volume file system.\n");
+      //return EFI_NOT_FOUND;
+      break;
+    }
+  }
+
+  if (RootFs == NULL) {
+    Print(L"Could not find a suitable file system.\n");
+    gBS->FreePool(HandleBuffer);
+    return EFI_NOT_FOUND;
+  }
+
+  // 3. Navigate to /EFI/BOOT/
+  // Open EFI directory
+  Status = RootFs->Open (
+                     RootFs,
+                     &EfiDir,
+                     L"EFI",
+                     EFI_FILE_MODE_READ,
+                     0 // Attributes are 0 for directories
+                     );
+  if (EFI_ERROR (Status)) {
+    Print(L"Failed to open EFI directory: %r\n", Status);
+    goto Exit;
+  }
+
+  // Open BOOT directory
+  Status = EfiDir->Open (
+                     EfiDir,
+                     &BootDir,
+                     L"BOOT",
+                     EFI_FILE_MODE_READ,
+                     0
+                     );
+  if (EFI_ERROR (Status)) {
+    Print(L"Failed to open BOOT directory: %r\n", Status);
+    goto Exit;
+  }
+
+  // 4. Open X64.efi file
+  Status = BootDir->Open (
+                     BootDir,
+                     &X64File,
+                     L"FSBL.efi",
+                     EFI_FILE_MODE_READ, // Open for reading
+                     0 // Not creating, so attributes are 0
+                     );
+  if (EFI_ERROR (Status)) {
+    Print(L"Failed to open X64.efi: %r\n", Status);
+    goto Exit;
+  }
+
+  // 5. Get File Size
+  FileInfoSize = 0;
+  // First call to GetInfo to get the required buffer size
+  Status = X64File->GetInfo (
+                      X64File,
+                      &gEfiFileInfoGuid,
+                      &FileInfoSize,
+                      NULL
+                      );
+  if (Status == EFI_BUFFER_TOO_SMALL) {
+    Status = gBS->AllocatePool (
+                    EfiBootServicesData,
+                    FileInfoSize,
+                    (VOID **)&FileInfo
+                    );
+    if (EFI_ERROR (Status)) {
+      Print(L"Failed to allocate memory for FileInfo: %r\n", Status);
+      goto Exit;
+    }
+    // Second call to GetInfo to actually get the info
+    Status = X64File->GetInfo (
+                        X64File,
+                        &gEfiFileInfoGuid,
+                        &FileInfoSize,
+                        FileInfo
+                        );
+  }
+  if (EFI_ERROR (Status)) {
+    Print(L"Failed to get file info for X64.efi: %r\n", Status);
+    goto Exit;
+  }
+
+  lv->length = FileInfo->FileSize;
+  Print(L"X64.efi file size: %lu bytes\n", lv->length);
+
+  // 6. Read the File Contents
+  Status = gBS->AllocatePool (
+                  EfiBootServicesData,
+                  lv->length,
+                  (VOID **)&lv->value
+                  );
+  if (EFI_ERROR (Status)) {
+    Print(L"Failed to allocate memory for file buffer: %r\n", Status);
+    goto Exit;
+  }
+
+  Status = X64File->Read (
+                      X64File,
+                      (UINTN *)&lv->length, // Pass pointer to size, it will be updated with bytes read
+                      lv->value
+                      );
+  if (EFI_ERROR (Status)) {
+    Print(L"Failed to read X64.efi: %r\n", Status);
+    goto Exit;
+  }
+
+  Print(L"Successfully read X64.efi into memory at address 0x%lx. Read %lu bytes.\n", (UINTN)lv->value, lv->length);
+
+  // At this point, FileBuffer contains the entire content of X64.efi
+  // You can now process this buffer as needed (e.g., parse it, execute it, etc.)
+
+Exit:
+  // 7. Close File Handles and Free Resources
+  if (FileInfo != NULL) {
+    gBS->FreePool(FileInfo);
+  }
+
+  if (X64File != NULL) {
+    X64File->Close(X64File);
+  }
+  if (BootDir != NULL) {
+    BootDir->Close(BootDir);
+  }
+  if (EfiDir != NULL) {
+    EfiDir->Close(EfiDir);
+  }
+  if (RootFs != NULL) {
+    RootFs->Close(RootFs);
+  }
+  if (HandleBuffer != NULL) {
+    gBS->FreePool(HandleBuffer);
+  }
+
+  return Status;
+}
 
 SBCStatus  _read_fsbl_image(LV_t *lv)
 {
@@ -719,7 +910,8 @@ SBCStatus SBC_GenDeviceID(UINT8 *devid)
     SBC_external_mem_print_bin("NVME SN", info.nvmesn,info.nvmesnl);
     SBC_mem_print_bin("NVME SN", info.nvmesn,info.nvmesnl);
 
-    _read_fsbl_image(&rdlv);
+    //_read_fsbl_image(&rdlv);
+    efi_boot_fsbl_load(&rdlv);
     SBC_RET_VALIDATE_ERRCODEMSG((rdlv.value != NULL), SBCNULLP, "FSBL read fail");
 
     computebuf = AllocatePool(info.mbsnl + info.mmsnl + info.nvmesnl + rdlv.length);
