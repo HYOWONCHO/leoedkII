@@ -224,6 +224,305 @@ EFI_STATUS _get_directory_and_file(VOID)
 
 }
 
+#include <Protocol/DevicePathToText.h>
+EFI_STATUS test_deivce_paht_string(EFI_HANDLE ImageHandle)
+{
+    EFI_STATUS                      Status;
+  EFI_LOADED_IMAGE_PROTOCOL       *LoadedImage;
+  EFI_DEVICE_PATH_PROTOCOL        *DevicePath = NULL;
+  EFI_DEVICE_PATH_TO_TEXT_PROTOCOL *DevicePathToText = NULL;
+  CHAR16                          *DevicePathStr = NULL;
+
+  //
+  // 1. Open the Loaded Image Protocol on your own ImageHandle
+  //
+  Status = gBS->OpenProtocol (
+                  ImageHandle,
+                  &gEfiLoadedImageProtocolGuid,
+                  (VOID **)&LoadedImage,
+                  ImageHandle,
+                  NULL,
+                  EFI_OPEN_PROTOCOL_GET_PROTOCOL
+                  );
+
+  if (EFI_ERROR (Status)) {
+    Print(L"ERROR: Failed to open LoadedImageProtocol on ImageHandle: %r\n", Status);
+    return Status;
+  }
+
+  Print(L"Successfully opened LoadedImageProtocol.\n");
+  Print(L"Image Base: 0x%p\n", LoadedImage->ImageBase);
+  Print(L"Image Size: 0x%llx\n", LoadedImage->ImageSize);
+
+  //
+  // 2. Get the Device Path from the Loaded Image Protocol
+  //    The FilePath member of EFI_LOADED_IMAGE_PROTOCOL is an EFI_DEVICE_PATH_PROTOCOL
+  //    that describes the location from which the image was loaded.
+  //
+  DevicePath = LoadedImage->FilePath;
+
+  if (DevicePath == NULL) {
+    Print(L"WARNING: LoadedImage->FilePath is NULL. Cannot get device path string.\n");
+    return EFI_NOT_FOUND;
+  }
+
+  //
+  // 3. Locate the EFI_DEVICE_PATH_TO_TEXT_PROTOCOL
+  //    This protocol provides the function to convert the binary device path
+  //    into a human-readable string.
+  //
+  Status = gBS->LocateProtocol (
+                  &gEfiDevicePathToTextProtocolGuid, // The GUID of the protocol to locate
+                  NULL,                                // No registration context needed
+                  (VOID **)&DevicePathToText          // Pointer to receive the protocol interface
+                  );
+
+  if (EFI_ERROR (Status)) {
+    Print(L"ERROR: Failed to locate DevicePathToTextProtocol: %r\n", Status);
+    // You can still return success, just won't print the path
+    return Status;
+  }
+
+  //
+  // 4. Convert the Device Path to a human-readable string
+  //    The ConvertDevicePathToText function allocates a buffer for the string
+  //    which you must later free using FreePool.
+  //
+  DevicePathStr = DevicePathToText->ConvertDevicePathToText (
+                                      DevicePath,
+                                      FALSE, // DisplayOnly: FALSE for full path (e.g., PCI(..)/HD(..))
+                                             //              TRUE for display only (e.g., Fs0:\path)
+                                      FALSE  // AllowShortcuts: FALSE for canonical path
+                                             //                 TRUE for simplified path (e.g., PciRoot(0x0)/Pci(0x1F,0x2)/Sata(0x0,0x0,0x0)/HD(1,GPT,...) -> Fs0:\)
+                                    );
+
+  if (DevicePathStr == NULL) {
+    Print(L"ERROR: Failed to convert Device Path to text.\n");
+    return EFI_OUT_OF_RESOURCES; // Or appropriate error
+  }
+
+  //
+  // 5. Print the Device Path String
+  //
+  Print(L"\nDevice Path of current image: %s\n", DevicePathStr);
+
+  //
+  // 6. Clean up: Free the allocated string buffer
+  //
+  FreePool(DevicePathStr);
+
+  return EFI_SUCCESS;
+}
+
+
+EFI_STATUS test_open_protocol(EFI_HANDLE ImageHandle)
+{
+  EFI_STATUS                      Status;
+  EFI_SIMPLE_FILE_SYSTEM_PROTOCOL *SimpleFileSystem;
+  EFI_FILE_PROTOCOL               *Root;
+  EFI_FILE_PROTOCOL               *FileHandle;
+  UINTN                           BufferSize;
+  VOID                            *Buffer;
+  EFI_DEVICE_PATH_PROTOCOL        *DevicePath;
+  EFI_LOADED_IMAGE_PROTOCOL       *LoadedImage;
+  EFI_HANDLE                      *HandleBuffer;
+  UINTN                           NumberOfHandles;
+  UINTN                           Index;
+  CHAR16                          FilePath[] = L"\\EFI\\BOOT\\FSBL.efi"; // Path relative to the root of the file system
+  BOOLEAN                         FoundFs1 = FALSE;
+  EFI_DEVICE_PATH_TO_TEXT_PROTOCOL *DevicePathToText = NULL;
+  CHAR16                          *DevicePathStr = NULL;
+
+
+  // 1. Get the Loaded Image Protocol to determine the current device
+  //    This is one way to find the file system where your current image is located.
+  //    You could also iterate all SimpleFileSystem protocols to find FS1 explicitly.
+  Status = gBS->OpenProtocol (
+                  ImageHandle,
+                  &gEfiLoadedImageProtocolGuid,
+                  (VOID **)&LoadedImage,
+                  ImageHandle,
+                  NULL,
+                  EFI_OPEN_PROTOCOL_GET_PROTOCOL
+                  );
+  if (EFI_ERROR (Status)) {
+    Print(L"Failed to open LoadedImageProtocol: %r\n", Status);
+    return Status;
+  }
+
+  // 2. Locate all Simple File System Protocols
+  Status = gBS->LocateHandleBuffer (
+                  ByProtocol,
+                  &gEfiSimpleFileSystemProtocolGuid,
+                  NULL,
+                  &NumberOfHandles,
+                  &HandleBuffer
+                  );
+  if (EFI_ERROR (Status)) {
+    Print(L"Failed to locate SimpleFileSystemProtocol handles: %r\n", Status);
+    return Status;
+  }
+
+  Print(L"Number of HandleBuffre : %d \n", NumberOfHandles);
+
+  for (Index = 0; Index < NumberOfHandles; Index++) {
+    Status = gBS->OpenProtocol (
+                    HandleBuffer[Index],
+                    &gEfiSimpleFileSystemProtocolGuid,
+                    (VOID **)&SimpleFileSystem,
+                    ImageHandle,
+                    NULL,
+                    EFI_OPEN_PROTOCOL_GET_PROTOCOL
+                    );
+    if (EFI_ERROR (Status)) {
+      continue; // Skip if we can't open this instance
+    }
+
+    // You would need a more robust way to identify "FS1:".
+    // In a real scenario, you'd match the device path, or assume a specific order.
+    // For demonstration, let's just use the first one we find.
+    // A better approach would involve parsing device paths to find the specific volume
+    // that corresponds to FS1.
+    // For simplicity, we'll assume the first SimpleFileSystem protocol is the one you want.
+    // In a real scenario, you might need to convert the DevicePath to a human-readable string
+    // to identify "FS1:". This is usually done with DevicePathToText protocol.
+    // For now, let's just try the first found one and open its volume.
+
+    // This is a simplification. To reliably identify "FS1:", you'd need to:
+    // 1. Get the DevicePath of the handle: gBS->HandleProtocol(HandleBuffer[Index], &gEfiDevicePathProtocolGuid, (VOID**)&DevicePath);
+    // 2. Convert DevicePath to text: gBS->LocateProtocol(&gEfiDevicePathToTextProtocolGuid, NULL, (VOID**)&DevicePathToText);
+    //    DevicePathToText->ConvertDevicePathToText(DevicePath, FALSE, FALSE);
+    // 3. Compare the resulting string (e.g., L"Fsi(" or similar representation for FS1)
+
+    gBS->HandleProtocol(HandleBuffer[Index], &gEfiDevicePathProtocolGuid, (VOID**)&DevicePath);
+    gBS->LocateProtocol(&gEfiDevicePathToTextProtocolGuid, NULL, (VOID**)&DevicePathToText);
+    DevicePathStr = DevicePathToText->ConvertDevicePathToText(DevicePath, FALSE, FALSE);
+
+    Print(L"Device path str : %s \n", DevicePathStr);
+
+    Status = SimpleFileSystem->OpenVolume (SimpleFileSystem, &Root);
+    if (EFI_ERROR (Status)) {
+      Print(L"Failed to open volume: %r\n", Status);
+      continue;
+    }
+
+    FoundFs1 = TRUE; // Assuming we found the correct file system
+    Print(L"Found a file system, attempting to open: %s\n", FilePath);
+    break; // Found the file system, exit loop
+  }
+
+  gBS->FreePool(HandleBuffer);
+
+  if (!FoundFs1) {
+    Print(L"Could not locate the desired file system (FS1:).\n");
+    return EFI_NOT_FOUND;
+  }
+
+  // 3. Open the X64.efi file
+  Status = Root->Open (
+                    Root,
+                    &FileHandle,
+                    FilePath,
+                    EFI_FILE_MODE_READ,
+                    0 // Attributes: no special attributes for reading
+                    );
+  if (EFI_ERROR (Status)) {
+    Print(L"Failed to open file %s: %r\n", FilePath, Status);
+    Root->Close(Root);
+    return Status;
+  }
+
+  // 4. Get the file size
+  EFI_FILE_INFO *FileInfo;
+  BufferSize = 0;
+  // First call to GetInfo with BufferSize = 0 to get the required buffer size
+  Status = FileHandle->GetInfo (
+                         FileHandle,
+                         &gEfiFileInfoGuid,
+                         &BufferSize,
+                         NULL
+                         );
+  if (Status != EFI_BUFFER_TOO_SMALL) {
+    Print(L"Failed to get file info (first call): %r\n", Status);
+    FileHandle->Close(FileHandle);
+    Root->Close(Root);
+    return Status;
+  }
+
+  Status = gBS->AllocatePool (EfiBootServicesData, BufferSize, (VOID **)&FileInfo);
+  if (EFI_ERROR (Status)) {
+    Print(L"Failed to allocate memory for file info: %r\n", Status);
+    FileHandle->Close(FileHandle);
+    Root->Close(Root);
+    return Status;
+  }
+
+  Status = FileHandle->GetInfo (
+                         FileHandle,
+                         &gEfiFileInfoGuid,
+                         &BufferSize,
+                         FileInfo
+                         );
+  if (EFI_ERROR (Status)) {
+    Print(L"Failed to get file info (second call): %r\n", Status);
+    gBS->FreePool(FileInfo);
+    FileHandle->Close(FileHandle);
+    Root->Close(Root);
+    return Status;
+  }
+
+  UINT64 FileSize = FileInfo->FileSize;
+  Print(L"File size of %s: %llu bytes\n", FilePath, FileSize);
+  gBS->FreePool(FileInfo);
+
+  // 5. Allocate buffer to read the file content
+  Buffer = NULL;
+  Status = gBS->AllocatePool (EfiBootServicesData, FileSize, &Buffer);
+  if (EFI_ERROR (Status)) {
+    Print(L"Failed to allocate memory for file content: %r\n", Status);
+    FileHandle->Close(FileHandle);
+    Root->Close(Root);
+    return Status;
+  }
+
+  // 6. Read the file content
+  BufferSize = (UINTN)FileSize; // BufferSize must be UINTN for Read()
+  Status = FileHandle->Read (
+                         FileHandle,
+                         &BufferSize,
+                         Buffer
+                         );
+  if (EFI_ERROR (Status)) {
+    Print(L"Failed to read file: %r\n", Status);
+    gBS->FreePool(Buffer);
+    FileHandle->Close(FileHandle);
+    Root->Close(Root);
+    return Status;
+  }
+
+  Print(L"Successfully read %u bytes from %s.\n", (UINT32)BufferSize, FilePath);
+
+  // Now 'Buffer' contains the content of X64.efi.
+  // You can process this content (e.g., parse it as an EFI executable)
+
+  // Example: print a few bytes (assuming it's a binary file)
+  // Be careful printing raw binary data to the console, it might not be readable.
+  // For demonstration, let's print the first 16 bytes in hex.
+  Print(L"First 16 bytes of file:\n");
+  for (UINTN i = 0; i < MIN(16, BufferSize); i++) {
+    Print(L"%02x ", ((UINT8*)Buffer)[i]);
+  }
+  Print(L"\n");
+
+  // 7. Close the file and volume handles
+  FileHandle->Close(FileHandle);
+  Root->Close(Root);
+  gBS->FreePool(Buffer);
+
+  return EFI_SUCCESS;
+  
+
+}
 
 #ifdef SBC_BASEANSWER_TEST
 SBCStatus  SBC_BaseAnswerValidate(UINT8 *answer, UINTN answerl);
@@ -290,12 +589,14 @@ UefiMain (
 
   //nvme_get_serial();
 //  CHAR8 *base_answer = "anti-tampering!?";
-    UINT8 devid[32] = {0,};
+//    UINT8 devid[32] = {0,};
 ////  SBC_BaseAnswerValidate((UINT8 *)base_answer, strlen(base_answer));
 //  get_blokio_handleparse();
 //  GetDiskSerialNumber();
 //  GetSSDSerial();
-    SBC_GenDeviceID(devid);
+//    SBC_GenDeviceID(devid);
+    test_open_protocol(ImageHandle);
+    test_deivce_paht_string(ImageHandle);
 //  SBC_external_mem_print_bin("Device ID", devid, sizeof devid);
 #endif
 //
