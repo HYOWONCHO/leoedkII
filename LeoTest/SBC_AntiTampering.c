@@ -25,6 +25,7 @@
 #include "SBC_AntiTampering.h"
 #include "SBC_EccSignVerify.h"
 
+
 #pragma pack(1)
 typedef struct {
     UINT8   Reserved[4];
@@ -177,6 +178,48 @@ errdone:
 
 #endif
 
+SBCStatus  _read_fsbl_image(LV_t *lv)
+{
+    SBCStatus           ret = SBCOK;
+    //UINT16              *fname = L"LeoTest.efi";
+    EFI_HANDLE          handle = NULL;
+    UINT16              *fsblid  = STRING_TOKEN(STR_FSBL_F_NAME);
+
+    SBC_RET_VALIDATE_ERRCODEMSG((lv != NULL), SBCNULLP, "Output buffer is Nill");
+
+    //Investigate file size
+    ret = SBC_GetFileSize(fsblid, ((UINTN *)&lv->length));
+    dprint("FSBL File Size : %d , Status : %d",  lv->length, ret);
+    SBC_RET_VALIDATE_ERRCODEMSG(((ret != SBCFAIL) && (lv->length > 0)), ret, "FSBL F Size fail or File not found");
+
+
+    //Allocate the File data buffer
+    //It must release from caller
+    lv->value = AllocateZeroPool((UINTN)lv->length);
+    SBC_RET_VALIDATE_ERRCODEMSG((lv->value != NULL), SBCNULLP, "Output buffer create Nill");
+
+    //Find the File handle protocol object
+    SBC_FileSysFindHndl(&handle);
+    SBC_RET_VALIDATE_ERRCODEMSG((handle != NULL), SBCNULLP, "Handle find fail");
+
+    ret = SBC_ReadFile(handle, fsblid, lv);
+    SBC_RET_VALIDATE_ERRCODEMSG((ret == SBCOK), ret, "FSBL read fail");
+
+
+    //SBC_external_mem_print_bin((CHAR8 *)fsblid, lv->value, lv->length);
+
+    return ret;
+
+errdone:
+
+    if (lv->value) {
+        gBS->FreePool(lv->value);
+        lv->value = NULL;
+    }
+    return ret;
+
+}
+
 
 SBCStatus _nvme_get_serial(hw_uniqueinfo_t *p)
 {
@@ -190,8 +233,8 @@ SBCStatus _nvme_get_serial(hw_uniqueinfo_t *p)
     EFI_NVM_EXPRESS_PASS_THRU_COMMAND_PACKET  CommandPacket;
     EFI_NVM_EXPRESS_COMPLETION                Completion;
     NVME_ADMIN_CONTROLLER_DATA                ControllerData;
-    
-   
+
+
     // Locate handles that support the NVMe Pass Thru Protocol.
     Status = gBS->LocateHandleBuffer(
                         ByProtocol,
@@ -265,11 +308,11 @@ SBCStatus _nvme_get_serial(hw_uniqueinfo_t *p)
         }
 
         // Interpret the buffer as NVME_CONTROLLER_DATA.
-        NVME_CONTROLLER_DATA *nvme_ctrldata = 
+        NVME_CONTROLLER_DATA *nvme_ctrldata =
             (NVME_CONTROLLER_DATA *)CommandPacket.TransferBuffer;
-        
+
         //NVME_CONTROLLER_DATA *ControllerData = (NVME_CONTROLLER_DATA *)Buffer;
-        
+
         // Copy the 20-byte serial number into a local buffer and null-terminate it.
         CHAR8 Serial[21];
         CopyMem(Serial, nvme_ctrldata->SerialNumber, 20);
@@ -327,7 +370,7 @@ static SBCStatus _baseboard_sn(hw_uniqueinfo_t *p)
             //CHAR8 *SerialNumberString = (CHAR8 *)(Record);
             CHAR8 *SerialNumberString = (((CHAR8 *)Record) + Record->Length);
             SBC_external_mem_print_bin("_baseboard record", (UINT8 *)SerialNumberString, 0x79 - Record->Length);
-            dprint("serial number index : %d (Record Length : 0x%x)", 
+            dprint("serial number index : %d (Record Length : 0x%x)",
                    SerialNumberIndex, Record->Length);
             if (SerialNumberIndex > 0) {
 #if 0
@@ -360,7 +403,7 @@ static SBCStatus _baseboard_sn(hw_uniqueinfo_t *p)
                     cnt++;
                 }
 #endif
-                Print(L"_baseboard_sn Serial Number: %a (Count : %d)\n", 
+                Print(L"_baseboard_sn Serial Number: %a (Count : %d)\n",
                       SerialNumberString,
                       cnt);
 
@@ -627,6 +670,10 @@ SBCStatus SBC_GenDeviceID(UINT8 *devid)
 {
     SBCStatus ret = SBCOK;
     at_key_t key;
+    LV_t    rdlv = {
+        .value = NULL,
+        .length = 0
+    };
     
 #ifndef  SBC_BASEANSWER_TEST
     hw_uniqueinfo_t info;
@@ -672,8 +719,10 @@ SBCStatus SBC_GenDeviceID(UINT8 *devid)
     SBC_external_mem_print_bin("NVME SN", info.nvmesn,info.nvmesnl);
     SBC_mem_print_bin("NVME SN", info.nvmesn,info.nvmesnl);
 
+    _read_fsbl_image(&rdlv);
+    SBC_RET_VALIDATE_ERRCODEMSG((rdlv.value != NULL), SBCNULLP, "FSBL read fail");
 
-    computebuf = AllocatePool(info.mbsnl + info.mmsnl + info.nvmesnl);
+    computebuf = AllocatePool(info.mbsnl + info.mmsnl + info.nvmesnl + rdlv.length);
     SBC_RET_VALIDATE_ERRCODEMSG((computebuf != NULL),SBCNULLP, "Compute buffer Nill");
 
     cnt = 0;
@@ -689,7 +738,12 @@ SBCStatus SBC_GenDeviceID(UINT8 *devid)
     CopyMem((void *)&computebuf[cnt], info.nvmesn, info.nvmesnl);
     cnt += info.nvmesnl;
 
-    SBC_mem_print_bin("Device ID Raw Fmt", computebuf, cnt);
+        //Print(L"Next Next cnt : %d \n", cnt);
+    CopyMem((void *)&computebuf[cnt], rdlv.value, rdlv.length);
+    cnt += rdlv.length;
+
+    dprint("DICE message length  : %d", cnt);
+    //SBC_mem_print_bin("Device ID Raw Fmt", computebuf, cnt);
     ret = SBC_HashCompute(
                              NULL, /* Not yet used */
                              computebuf,

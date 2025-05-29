@@ -1,6 +1,7 @@
 #ifndef _SBC_ANTITAMPERING_
 #define _SBC_ANTITAMPERING_
 
+#define STR_FSBL_F_NAME             L"LeoTest.efi"
 
 
 typedef struct _hw_unique_info_t {
