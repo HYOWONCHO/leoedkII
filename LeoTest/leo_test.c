@@ -134,6 +134,96 @@ errdone:
 }
 
 
+EFI_STATUS _get_directory_and_file(VOID)
+{
+  
+  EFI_STATUS                          Status;
+  EFI_HANDLE                          *HandleBuffer;
+  UINTN                               NumberOfHandles;
+  EFI_SIMPLE_FILE_SYSTEM_PROTOCOL     *SimpleFileSystem;
+  EFI_FILE_PROTOCOL                   *Root;
+  EFI_FILE_INFO                       *FileInfo;
+  UINTN                               FileInfoSize;
+
+  // Locate all Simple File System Protocol instances
+  Status = gBS->LocateHandleBuffer (
+                  ByProtocol,
+                  &gEfiSimpleFileSystemProtocolGuid,
+                  NULL,
+                  &NumberOfHandles,
+                  &HandleBuffer
+                  );
+  if (EFI_ERROR (Status)) {
+    Print(L"Failed to locate Simple File System Protocol: %r\n", Status);
+    return Status;
+  }
+
+  // Iterate through found file systems
+  for (UINTN Index = 0; Index < NumberOfHandles; Index++) {
+    Status = gBS->HandleProtocol (
+                    HandleBuffer[Index],
+                    &gEfiSimpleFileSystemProtocolGuid,
+                    (VOID **)&SimpleFileSystem
+                    );
+    if (EFI_ERROR (Status)) {
+      Print(L"Failed to get Simple File System Protocol from handle: %r\n", Status);
+      continue;
+    }
+
+    // Open the root volume
+    Status = SimpleFileSystem->OpenVolume (
+                                 SimpleFileSystem,
+                                 &Root
+                                 );
+    if (EFI_ERROR (Status)) {
+      Print(L"Failed to open file system volume: %r\n", Status);
+      continue;
+    }
+
+    Print(L"\n--- Listing contents of a file system ---\n");
+
+    // Allocate a buffer for file info (adjust size as needed)
+    FileInfoSize = sizeof(EFI_FILE_INFO) + 256; // Max path length + struct size
+    Status = gBS->AllocatePool (
+                    EfiBootServicesData,
+                    FileInfoSize,
+                    (VOID **)&FileInfo
+                    );
+    if (EFI_ERROR (Status)) {
+      Print(L"Failed to allocate memory for file info: %r\n", Status);
+      Root->Close(Root);
+      continue;
+    }
+
+    // Read directory entries
+    while (TRUE) {
+      UINTN   ReadSize = FileInfoSize;
+      Status = Root->Read (
+                       Root,
+                       &ReadSize,
+                       FileInfo
+                       );
+
+      if (EFI_ERROR (Status) || ReadSize == 0) {
+        break; // End of directory or error
+      }
+
+      // Print file/directory name and attributes
+      Print(L"%s %s\n",
+            (FileInfo->Attribute & EFI_FILE_DIRECTORY) ? L"<DIR>" : L"     ",
+            FileInfo->FileName
+            );
+    }
+
+    gBS->FreePool (FileInfo);
+    Root->Close(Root); // Close the root directory handle
+  }
+
+  gBS->FreePool (HandleBuffer);
+  return EFI_SUCCESS;
+
+}
+
 
 #ifdef SBC_BASEANSWER_TEST
 SBCStatus  SBC_BaseAnswerValidate(UINT8 *answer, UINTN answerl);
@@ -166,6 +256,7 @@ UefiMain (
 
   RETURN_STATUS status = RETURN_SUCCESS;
 
+  _get_directory_and_file();
   status = SerialPortInitialize();
   if(status != RETURN_SUCCESS) {
     dprint("SerialPortInitialize fail \n");
