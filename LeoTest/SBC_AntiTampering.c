@@ -743,6 +743,7 @@ SBCStatus SBC_GenDeviceID(UINT8 *devid)
     cnt += rdlv.length;
 
     dprint("DICE message length  : %d", cnt);
+    Print(L"DICE message length  : %d \n", cnt);
     //SBC_mem_print_bin("Device ID Raw Fmt", computebuf, cnt);
     ret = SBC_HashCompute(
                              NULL, /* Not yet used */
