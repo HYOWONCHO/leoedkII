@@ -408,7 +408,7 @@ EFI_STATUS test_open_protocol(EFI_HANDLE ImageHandle)
 
     FoundFs1 = TRUE; // Assuming we found the correct file system
     Print(L"Found a file system, attempting to open: %s\n", FilePath);
-    break; // Found the file system, exit loop
+    //break; // Found the file system, exit loop
   }
 
   gBS->FreePool(HandleBuffer);
