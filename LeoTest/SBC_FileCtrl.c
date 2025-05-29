@@ -85,7 +85,7 @@ SBCStatus  SBC_GetFileSize(CHAR16 *FileName, UINTN  *FileSize)
   FreePool(FileInfo);
   File->Close(File);
   Root->Close(Root);
-    return SBCOK;
+  return SBCOK;
 
 }
 
@@ -145,7 +145,7 @@ EFI_STATUS SBC_ReadFile(EFI_HANDLE ImageHandle, CHAR16 *FileNames, LV_t *out)
 
   // Close the file
   File->Close(File);
-
+  RootDir->Close(RootDir);
   return Status;
 
 
@@ -202,6 +202,7 @@ EFI_STATUS SBC_WriteFile(EFI_HANDLE ImageHandle, CHAR16 *FileNames, LV_t *out)
 
   // Close the file
   File->Close(File);
+  RootDir->Close(RootDir);
 
   return Status;
 
