@@ -332,6 +332,7 @@ EFI_STATUS test_open_protocol(EFI_HANDLE ImageHandle)
   BOOLEAN                         FoundFs1 = FALSE;
   EFI_DEVICE_PATH_TO_TEXT_PROTOCOL *DevicePathToText = NULL;
   CHAR16                          *DevicePathStr = NULL;
+  CONST CHAR16                     *deviceidnetiifer = L"NVMe";
 
 
   // 1. Get the Loaded Image Protocol to determine the current device
@@ -399,6 +400,10 @@ EFI_STATUS test_open_protocol(EFI_HANDLE ImageHandle)
     DevicePathStr = DevicePathToText->ConvertDevicePathToText(DevicePath, FALSE, FALSE);
 
     Print(L"Device path str : %s \n", DevicePathStr);
+    if (StrStr((CONST CHAR16 *)DevicePathStr, deviceidnetiifer) == NULL) {
+      Print(L"NVMe path NOT find \n");
+      continue;
+    }
 
     Status = SimpleFileSystem->OpenVolume (SimpleFileSystem, &Root);
     if (EFI_ERROR (Status)) {
@@ -408,7 +413,7 @@ EFI_STATUS test_open_protocol(EFI_HANDLE ImageHandle)
 
     FoundFs1 = TRUE; // Assuming we found the correct file system
     Print(L"Found a file system, attempting to open: %s\n", FilePath);
-    //break; // Found the file system, exit loop
+    break; // Found the file system, exit loop
   }
 
   gBS->FreePool(HandleBuffer);
