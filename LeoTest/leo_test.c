@@ -596,12 +596,11 @@ UefiMain (
 //  CHAR8 *base_answer = "anti-tampering!?";
 //    UINT8 devid[32] = {0,};
 ////  SBC_BaseAnswerValidate((UINT8 *)base_answer, strlen(base_answer));
-//  get_blokio_handleparse();
-//  GetDiskSerialNumber();
-//  GetSSDSerial();
+
 //    SBC_GenDeviceID(devid);
-    test_open_protocol(ImageHandle);
-    test_deivce_paht_string(ImageHandle);
+  get_blokio_handleparse();
+    //st_open_protocol(ImageHandle);
+    //st_deivce_paht_string(ImageHandle);
 //  SBC_external_mem_print_bin("Device ID", devid, sizeof devid);
 #endif
 //
