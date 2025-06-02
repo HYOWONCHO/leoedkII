@@ -6,6 +6,7 @@
 #include <Library/MemoryAllocationLib.h>
 #include <Guid/FileInfo.h>
 #include <Protocol/BlockIo.h>
+#include <Protocol/DevicePathToText.h>
 
 #include <string.h>
 
@@ -436,3 +437,235 @@ VOID SBC_FileCtrlTestMain(VOID)
 
 }
 
+SBCStatus  SBC_FindBlkIoHandle(OUT VOID **hblk)
+{
+#define     SBC_MAGIC_LEN           0x04
+#define     SBC_MAGIC_ID            0x50574152
+    EFI_STATUS                      Status;
+    SBCStatus                       ret;
+    EFI_HANDLE                      *HandleBuffer = NULL;
+    UINTN                           NumberOfHandles;
+    VOID                            *ReadBuffer = NULL; // Buffer for raw block data
+    EFI_BLOCK_IO_PROTOCOL           *BlockIo = NULL;
+    UINT32                           magicid = 0UL; 
+   // UINT64                           blkiosz;
+
+    SBC_RET_VALIDATE_ERRCODEMSG((hblk != NULL), SBCNULLP, "Invalid Parameter");
+
+
+    Status = gBS->LocateHandleBuffer(
+                    ByProtocol,
+                    &gEfiBlockIoProtocolGuid,
+                    NULL,
+                    &NumberOfHandles,
+                    &HandleBuffer
+        );
+
+    if (EFI_ERROR(Status)) {
+        Print(L"ERROR: Failed to locate BlockIoProtocol handles: %r\n", Status);
+        SBC_RET_VALIDATE_ERRCODEMSG((Status != EFI_SUCCESS), SBCFAIL, "ERROR: Failed to locate BlockIoProtocol handles");
+    }
+
+    Print(L"Found %d Block I/O Protocol handles.\n", NumberOfHandles);
+
+    for (int idx = 0; idx < NumberOfHandles; idx++) {
+
+        // Get the Block I/O protocol interfcae
+        Status = gBS->HandleProtocol(
+                        HandleBuffer[idx],
+                        &gEfiBlockIoProtocolGuid,
+                        (VOID **)&BlockIo
+            );
+
+        if (EFI_ERROR(Status)) {
+            Print(L"RROR: Could not open BlockIoProtsocol %r\n", Status);
+            SBC_RET_VALIDATE_ERRCODEMSG((Status != EFI_SUCCESS), SBCFAIL, "ERROR: Could not open BlockIoProtocol");
+        }
+
+        //blkiosz = MultU64x32(BlockIo->Media->LastBlock + 1, BlockIo->Media->BlockSize);
+        //Print(L"Found %p Block I/O Protocol Address.\n", BlockIo);
+        
+       
+        //Print(L"INFO: Found SBC Raw Partiiton %r\n", Status);
+
+        ReadBuffer = AllocatePool(BlockIo->Media->BlockSize);
+        if (ReadBuffer == NULL) {
+             Print(L"Buffer allocatino fail \n");
+             ret = SBCNULLP;
+             goto errdone;
+        }
+
+        
+        Status = BlockIo->ReadBlocks( 
+                         BlockIo,
+                         BlockIo->Media->MediaId,
+                         0, // LBA 0
+                         BlockIo->Media->BlockSize,
+                         ReadBuffer
+                         );
+
+        if (EFI_ERROR(Status)) {
+            Print(L"ERROR: Failed to read LBA 0: %r\n", Status);
+            SBC_RET_VALIDATE_ERRCODEMSG((Status != EFI_SUCCESS), SBCFAIL, "ERROR: Could not open BlockIoProtocol");
+            ret = SBCFAIL;
+            goto errdone;
+        }
+
+        SBC_mem_print_bin("Read Block", (UINT8 *)ReadBuffer, SBC_MAGIC_LEN);
+        CopyMem((void *)&magicid, (VOID *)&((UINT8 *)ReadBuffer)[0],SBC_MAGIC_LEN);
+        FreePool(ReadBuffer);
+       
+        Print(L"Found %p Block I/O Protocol Address Magci ID : 0x%x.\n", BlockIo, magicid);
+        if (magicid != SBC_MAGIC_ID) {
+            continue;
+        }
+
+        *hblk = (VOID *)BlockIo;
+        Print(L"0x%p SBC Raw Buffer MagicID found !!! \n", *hblk);
+
+
+       
+        ret = SBCOK;
+        goto errdone;
+    }
+
+errdone:
+    return ret;
+
+}
+
+
+EFI_STATUS
+EFIAPI
+RawPartitionAccessSample (
+  IN EFI_HANDLE        ImageHandle,
+  IN EFI_SYSTEM_TABLE  *SystemTable
+  )
+{
+  EFI_STATUS                      Status;
+  EFI_HANDLE                      *HandleBuffer = NULL;
+  UINTN                           NumberOfHandles;
+  UINTN                           Index;
+  EFI_BLOCK_IO_PROTOCOL           *BlockIo = NULL;
+  EFI_DEVICE_PATH_PROTOCOL        *DevicePath = NULL;
+  EFI_DEVICE_PATH_TO_TEXT_PROTOCOL *DevicePathToText = NULL;
+  CHAR16                          *DevicePathStr = NULL;
+  VOID                            *ReadBuffer = NULL; // Buffer for raw block data
+
+  Print(L"Enumerating block devices...\n");
+
+  //
+  // 1. Locate all handles that support the EFI_BLOCK_IO_PROTOCOL.
+  //
+  Status = gBS->LocateHandleBuffer (
+                  ByProtocol,
+                  &gEfiBlockIoProtocolGuid,
+                  NULL,
+                  &NumberOfHandles,
+                  &HandleBuffer
+                  );
+  if (EFI_ERROR (Status)) {
+    Print(L"ERROR: Failed to locate BlockIoProtocol handles: %r\n", Status);
+    return Status;
+  }
+
+  Print(L"Found %d Block I/O Protocol handles.\n", NumberOfHandles);
+
+  // (Optional) Locate DevicePathToTextProtocol for printing
+  gBS->LocateProtocol (&gEfiDevicePathToTextProtocolGuid, NULL, (VOID **)&DevicePathToText);
+
+  //
+  // 2. Iterate through each handle and get Block IO information.
+  //
+  for (Index = 0; Index < NumberOfHandles; Index++) {
+    Print(L"\n--- Handle %d ---\n", Index);
+
+    // Get the Block I/O Protocol interface
+    Status = gBS->HandleProtocol (
+                    HandleBuffer[Index],
+                    &gEfiBlockIoProtocolGuid,
+                    (VOID **)&BlockIo
+                    );
+    if (EFI_ERROR (Status)) {
+      Print(L"  ERROR: Could not open BlockIoProtocol: %r\n", Status);
+      continue;
+    }
+
+    // Get the Device Path for identification
+    Status = gBS->HandleProtocol (
+                    HandleBuffer[Index],
+                    &gEfiDevicePathProtocolGuid,
+                    (VOID **)&DevicePath
+                    );
+    if (EFI_ERROR (Status)) {
+      Print(L"  WARNING: No Device Path Protocol for this handle: %r\n", Status);
+      DevicePath = NULL; // Ensure it's NULL if not found
+    }
+
+    // Print device path string (if protocol available)
+    if (DevicePath != NULL && DevicePathToText != NULL) {
+      DevicePathStr = DevicePathToText->ConvertDevicePathToText (DevicePath, FALSE, FALSE);
+      if (DevicePathStr != NULL) {
+        Print(L"  Device Path: %s\n", DevicePathStr);
+        FreePool(DevicePathStr);
+        DevicePathStr = NULL; // Reset for next iteration
+      }
+    } else if (DevicePath != NULL) {
+      Print(L"  Device Path present, but DevicePathToTextProtocol not found.\n");
+    }
+
+    // Print Block I/O Media information
+    Print(L"  Media ID: %u\n", BlockIo->Media->MediaId);
+    Print(L"  Removable Media: %a\n", BlockIo->Media->RemovableMedia ? "TRUE" : "FALSE");
+    Print(L"  Media Present: %a\n", BlockIo->Media->MediaPresent ? "TRUE" : "FALSE");
+    Print(L"  Logical Partition: %a\n", BlockIo->Media->LogicalPartition ? "TRUE" : "FALSE");
+    Print(L"  Read Only: %a\n", BlockIo->Media->ReadOnly ? "TRUE" : "FALSE");
+    Print(L"  Block Size: %u bytes\n", BlockIo->Media->BlockSize);
+    Print(L"  Last Block LBA: 0x%Lx\n", BlockIo->Media->LastBlock);
+    Print(L"  Total Size: %Lu bytes\n", MultU64x32(BlockIo->Media->LastBlock + 1, BlockIo->Media->BlockSize));
+
+
+    //
+    // Example: Reading the first block (LBA 0) of the current device/partition
+    //
+    if (BlockIo->Media->MediaPresent && !BlockIo->Media->ReadOnly && BlockIo->Media->BlockSize > 0) {
+        // Allocate a buffer for one block of data
+        ReadBuffer = AllocatePool(BlockIo->Media->BlockSize);
+        if (ReadBuffer == NULL) {
+            Print(L"  ERROR: Failed to allocate buffer for block read.\n");
+            // Continue to next handle or return
+        } else {
+            Print(L"  Attempting to read LBA 0 (size %u bytes)...\n", BlockIo->Media->BlockSize);
+            Status = BlockIo->ReadBlocks(
+                                  BlockIo,
+                                  BlockIo->Media->MediaId,
+                                  0, // LBA 0
+                                  BlockIo->Media->BlockSize,
+                                  ReadBuffer
+                                  );
+            if (EFI_ERROR(Status)) {
+                Print(L"  ERROR: Failed to read LBA 0: %r\n", Status);
+            } else {
+                Print(L"  Successfully read LBA 0.\n");
+                // You can now inspect 'ReadBuffer' to see the raw data.
+                // For example, if it's a disk, LBA 0 might contain MBR or GPT header.
+                // Print(L"  First 16 bytes of LBA 0: ");
+                // for (UINTN i = 0; i < 16; i++) {
+                //   Print(L"%02x ", ((UINT8*)ReadBuffer)[i]);
+                // }
+                // Print(L"\n");
+            }
+            FreePool(ReadBuffer); // Always free the buffer
+            ReadBuffer = NULL;
+        }
+    } else {
+        Print(L"  Cannot read from this device (media not present, read-only, or block size is 0).\n");
+    }
+  }
+
+  if (HandleBuffer != NULL) {
+    FreePool(HandleBuffer);
+  }
+
+  return EFI_SUCCESS;
+}
