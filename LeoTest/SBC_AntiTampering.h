@@ -24,10 +24,65 @@ typedef struct _fhnd_img_t {
 }fhnd_img_t;
 #pragma pack()
 
-
+/**
+ * @fn SBCStatus SBC_GenDeviceID(UINT8 *devid)
+ * 
+ * Creation the Device ID 
+ * 
+ * @author leoc (6/2/25)
+ * 
+ * @param devid  Pointer to Device ID buffer
+ * 
+ * @return On Success, return the SBCOK, otherwise, return the apporiate error
+ *         value.
+ * @note
+ * Device ID = HASH_SHA256(Base Board SN || Memory SN || NVME SSD SN || FSLBL
+ * stream)
+ */
 SBCStatus SBC_GenDeviceID(UINT8 *devid);
+
+/**
+ * @fn SBCStatus SBC_BaseAnswerEncryptStore(UINT8 *out, UINTN *outl)
+ * 
+ * Base Answer is encrypt, and then, It is sotring in the specified location of
+ * Raw Partition
+ * 
+ * @author leoc (6/2/25)
+ * 
+ * @param out    
+ * @param outl   
+ * 
+ * @return On Success, return the SBCOK, otherwise, return the apporiate error
+ *         value. 
+ */
 SBCStatus SBC_BaseAnswerEncryptStore(UINT8 *out, UINTN *outl);
+
+
+/**
+ * Base answer is compare with that readed in stored in the RAW partition.
+ * 
+ * @author leoc (6/2/25)
+ * 
+ * @param answer  
+ * @param answerl 
+ * 
+ * @return On Success, return the SBCOK, otherwise, return the apporiate error
+ *         value. 
+ */
 SBCStatus  SBC_BaseAnswerValidate(UINT8 *answer, UINTN answerl);
+
+/**
+ * @fn SBCStatus SBC_GenFWID(EFI_HANDLE *h_image, UINT8 *devid, UINT8 *fwid)
+ * 
+ * @author leoc (6/2/25)
+ * 
+ * @param h_image EFI Image Handle
+ * @param devid   Pointer to Device ID buffer where computed 
+ * @param fwid    Pointer to FW ID buffer 
+ * 
+ * @return On Success, return the SBCOK, otherwise, return the apporiate error
+ *         value.
+ */
 SBCStatus SBC_GenFWID(EFI_HANDLE *h_image, UINT8 *devid, UINT8 *fwid);
 
 #endif
