@@ -558,18 +558,18 @@ UefiMain (
   )
 {
 
-  RETURN_STATUS status = RETURN_SUCCESS;
-
-  _get_directory_and_file();
-  status = SerialPortInitialize();
-  if(status != RETURN_SUCCESS) {
-    dprint("SerialPortInitialize fail \n");
-    Print(L"SerialPortInitialize fail \n");
-  }
-  else {
-    dprint("SerialPortInitialize done \n");
-    Print(L"SerialPortInitialize done \n");
-  }
+//RETURN_STATUS status = RETURN_SUCCESS;
+//
+//_get_directory_and_file();
+//status = SerialPortInitialize();
+//if(status != RETURN_SUCCESS) {
+//  dprint("SerialPortInitialize fail \n");
+//  Print(L"SerialPortInitialize fail \n");
+//}
+//else {
+//  dprint("SerialPortInitialize done \n");
+//  Print(L"SerialPortInitialize done \n");
+//}
 
 //GetMotherboardSerialNumber();
 // SBC_SSDGetSN();
@@ -591,14 +591,18 @@ UefiMain (
 //#endif
 //
 #ifdef SBC_BASEANSWER_TEST
+extern SBCStatus  SBC_FindBlkIoHandle(OUT VOID **hblk);
 
+  VOID *blkio = NULL;
+  SBC_FindBlkIoHandle(&blkio);
+  Print(L"BlkIO Handle : %p \n", blkio);
   //nvme_get_serial();
 //  CHAR8 *base_answer = "anti-tampering!?";
 //    UINT8 devid[32] = {0,};
 ////  SBC_BaseAnswerValidate((UINT8 *)base_answer, strlen(base_answer));
 
 //    SBC_GenDeviceID(devid);
-  get_blokio_handleparse();
+  //get_blokio_handleparse();
     //st_open_protocol(ImageHandle);
     //st_deivce_paht_string(ImageHandle);
 //  SBC_external_mem_print_bin("Device ID", devid, sizeof devid);
