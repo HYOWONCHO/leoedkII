@@ -39,7 +39,7 @@ typedef struct {
 
 
 
-SBCStatus _nvme_fsbl_load(EFI_HANDLE ImageHandle, LV_t *lv)
+SBCStatus _ssbl_image_load(EFI_HANDLE ImageHandle, LV_t *lv)
 {
   SBCStatus                       ret = SBCFAIL;
   EFI_STATUS                      Status;
@@ -53,7 +53,7 @@ SBCStatus _nvme_fsbl_load(EFI_HANDLE ImageHandle, LV_t *lv)
   EFI_HANDLE                      *HandleBuffer;
   UINTN                           NumberOfHandles;
   UINTN                           Index;
-  CHAR16                          FilePath[] = L"\\EFI\\BOOT\\FSBL.efi"; // Path relative to the root of the file system
+  CHAR16                          FilePath[] = L"\\EFI\\BOOT\\SSBL.efi"; // Path relative to the root of the file system
   BOOLEAN                         FoundFs1 = FALSE;
   EFI_DEVICE_PATH_TO_TEXT_PROTOCOL *DevicePathToText = NULL;
   CHAR16                          *DevicePathStr = NULL;
@@ -224,11 +224,8 @@ SBCStatus _nvme_fsbl_load(EFI_HANDLE ImageHandle, LV_t *lv)
   // Example: print a few bytes (assuming it's a binary file)
   // Be careful printing raw binary data to the console, it might not be readable.
   // For demonstration, let's print the first 16 bytes in hex.
-  Print(L"First 16 bytes of file:\n");
-  for (UINTN i = 0; i < MIN(16, BufferSize); i++) {
-    Print(L"%02x ", ((UINT8*)Buffer)[i]);
-  }
-  Print(L"\n");
+
+  SBC_mem_print_bin("First 16 byte", (UINT8 *)lv->value, 16);
 
   ret = SBCOK;
 errdone:
@@ -1045,3 +1042,46 @@ errdone:
 
 }
 
+
+SBCStatus SBC_GenFWID(EFI_HANDLE *h_image, UINT8 *devid, UINT8 *fwid)
+{
+  SBCStatus ret       = SBCOK;
+  UINT8 *temp = NULL;
+  UINT8 *rdbuf = NULL;
+  LV_t lv;
+
+
+  lv.value = rdbuf;
+  lv.length = 0;
+
+  ret = _ssbl_image_load(h_image, &lv);
+  SBC_RET_VALIDATE_ERRCODEMSG((ret == SBCOK), ret, "SSB Image load fail");
+  SBC_RET_VALIDATE_ERRCODEMSG((lv.length > 0), SBCZEROL, "SSB Image length 0");
+
+  temp = AllocateZeroPool(SBC_AT_HASH_LEN + lv.length);
+  SBC_RET_VALIDATE_ERRCODEMSG((temp != NULL), SBCNULLP, "memeory creation fail");
+
+  CopyMem((void *)&temp[0], devid, SBC_AT_HASH_LEN);
+  CopyMem((void *)&temp[SBC_AT_HASH_LEN], lv.value, lv.length);
+
+  ret = SBC_HashCompute(
+                             NULL, /* Not yet used */
+                             temp,
+                             lv.length + SBC_AT_HASH_LEN,
+                             fwid
+                          ) ;
+
+  SBC_mem_print_bin("FW ID", fwid, 32);
+errdone:
+
+  if (temp != NULL) {
+    FreePool(temp);
+  }
+
+  if (lv.value != NULL) {
+    FreePool(lv.value);
+  }
+  return ret;
+
+
+}
