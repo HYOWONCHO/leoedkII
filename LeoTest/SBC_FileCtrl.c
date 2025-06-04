@@ -27,16 +27,16 @@ SBCStatus  SBC_GetFileSize(CHAR16 *FileName, UINTN  *FileSize)
     EFI_FILE_INFO     *FileInfo;
 
     if(SBC_FileSysFindHndl(&ImageHandle) <= 0) {
-       
+
         eprint("SBC_FileSysFindHndl fail");
         return SBCFAIL;
     }
 
-  Status = gBS->HandleProtocol(ImageHandle, 
+  Status = gBS->HandleProtocol(ImageHandle,
                                &gEfiSimpleFileSystemProtocolGuid,
                                (VOID **)&FileSystem);
   if(EFI_ERROR(Status)) {
-    DEBUG((DEBUG_INFO, " %a:%d Locate File Systam fail (%d) \r\n", 
+    DEBUG((DEBUG_INFO, " %a:%d Locate File Systam fail (%d) \r\n",
            __FUNCTION__, __LINE__, Status));
     return SBCFAIL;
   }
@@ -99,17 +99,17 @@ EFI_STATUS SBC_ReadFile(EFI_HANDLE ImageHandle, CHAR16 *FileNames, LV_t *out)
 //CHAR8 Buffer[128];
 
 
-  //TODO 
+  //TODO
   // out buffer nill check
   DEBUG((DEBUG_INFO,"Image Handle : %p \r\n", ImageHandle));
   DEBUG((DEBUG_INFO,"Read File : %s \r\n", (CHAR8 *)FileNames));
 
   // Locate file system
-  Status = gBS->HandleProtocol(ImageHandle, 
+  Status = gBS->HandleProtocol(ImageHandle,
                                &gEfiSimpleFileSystemProtocolGuid,
                                (VOID **)&FileSystem);
   if(EFI_ERROR(Status)) {
-    DEBUG((DEBUG_INFO, " %a:%d Locate File Systam fail (%d) \r\n", 
+    DEBUG((DEBUG_INFO, " %a:%d Locate File Systam fail (%d) \r\n",
            __FUNCTION__, __LINE__, Status));
     return Status;
   }
@@ -117,7 +117,7 @@ EFI_STATUS SBC_ReadFile(EFI_HANDLE ImageHandle, CHAR16 *FileNames, LV_t *out)
   // Open the roor directory
   Status = FileSystem->OpenVolume(FileSystem, &RootDir);
   if (EFI_ERROR(Status)) {
-        DEBUG((DEBUG_INFO, " %a:%d OpenVolume File Systam fail (%d) \r\n", 
+        DEBUG((DEBUG_INFO, " %a:%d OpenVolume File Systam fail (%d) \r\n",
            __FUNCTION__, __LINE__, Status));
     return Status;
   }
@@ -125,7 +125,7 @@ EFI_STATUS SBC_ReadFile(EFI_HANDLE ImageHandle, CHAR16 *FileNames, LV_t *out)
   // Open the file
   Status = RootDir->Open(RootDir, &File, FileNames, EFI_FILE_MODE_READ, 0);
   if (EFI_ERROR(Status)) {
-      DEBUG((DEBUG_INFO, " %a:%d RootDir->Open fail (%d) \r\n", 
+      DEBUG((DEBUG_INFO, " %a:%d RootDir->Open fail (%d) \r\n",
      __FUNCTION__, __LINE__, Status));
     return Status;
   }
@@ -133,7 +133,7 @@ EFI_STATUS SBC_ReadFile(EFI_HANDLE ImageHandle, CHAR16 *FileNames, LV_t *out)
   // Read the file
   Status = File->Read(File, (UINTN *)&out->length, out->value);
   if (EFI_ERROR(Status)) {
-      DEBUG((DEBUG_INFO, " %a:%d File->Read fail (%d) \r\n", 
+      DEBUG((DEBUG_INFO, " %a:%d File->Read fail (%d) \r\n",
               __FUNCTION__, __LINE__, Status));
       //Print(L"File Content: %a\n", Buffer);
       return Status;
@@ -141,7 +141,7 @@ EFI_STATUS SBC_ReadFile(EFI_HANDLE ImageHandle, CHAR16 *FileNames, LV_t *out)
 
   //out->length = BufferSize;
   //CopyMem(out->value, Buffer, out->length);
-  
+
   //SBC_external_mem_print_bin((CHAR8 *)FileNames, (UINT8 *)out->value, (UINTN)out->length);
 
   // Close the file
@@ -161,15 +161,15 @@ EFI_STATUS SBC_WriteFile(EFI_HANDLE ImageHandle, CHAR16 *FileNames, LV_t *out)
   //CHAR8 Buffer[128];
 
 
-  //TODO 
+  //TODO
   // out buffer nill check
 
   // Locate file system
-  Status = gBS->HandleProtocol(ImageHandle, 
+  Status = gBS->HandleProtocol(ImageHandle,
                                &gEfiSimpleFileSystemProtocolGuid,
                                (VOID **)&FileSystem);
   if(EFI_ERROR(Status)) {
-    DEBUG((DEBUG_INFO, " %a:%d Locate File Systam fail (%d) \r\n", 
+    DEBUG((DEBUG_INFO, " %a:%d Locate File Systam fail (%d) \r\n",
            __FUNCTION__, __LINE__, Status));
     return Status;
   }
@@ -177,7 +177,7 @@ EFI_STATUS SBC_WriteFile(EFI_HANDLE ImageHandle, CHAR16 *FileNames, LV_t *out)
   // Open the roor directory
   Status = FileSystem->OpenVolume(FileSystem, &RootDir);
   if (EFI_ERROR(Status)) {
-        DEBUG((DEBUG_INFO, " %a:%d OpenVolume File Systam fail (%d) \r\n", 
+        DEBUG((DEBUG_INFO, " %a:%d OpenVolume File Systam fail (%d) \r\n",
            __FUNCTION__, __LINE__, Status));
     return Status;
   }
@@ -185,7 +185,7 @@ EFI_STATUS SBC_WriteFile(EFI_HANDLE ImageHandle, CHAR16 *FileNames, LV_t *out)
   // Open the file
   Status = RootDir->Open(RootDir, &File, FileNames, EFI_FILE_MODE_READ | EFI_FILE_MODE_WRITE, 0);
   if (EFI_ERROR(Status)) {
-      DEBUG((DEBUG_INFO, " %a:%d RootDir->Open fail (%d) \r\n", 
+      DEBUG((DEBUG_INFO, " %a:%d RootDir->Open fail (%d) \r\n",
      __FUNCTION__, __LINE__, Status));
     return Status;
   }
@@ -193,7 +193,7 @@ EFI_STATUS SBC_WriteFile(EFI_HANDLE ImageHandle, CHAR16 *FileNames, LV_t *out)
   // Read the file
   Status = File->Write(File, (UINTN *)&out->length, out->value);
   if (EFI_ERROR(Status)) {
-      DEBUG((DEBUG_INFO, " %a:%d File->Read fail (%d) \r\n", 
+      DEBUG((DEBUG_INFO, " %a:%d File->Read fail (%d) \r\n",
               __FUNCTION__, __LINE__, Status));
       //Print(L"File Content: %a\n", Buffer);
       return Status;
@@ -213,25 +213,26 @@ EFI_STATUS SBC_WriteFile(EFI_HANDLE ImageHandle, CHAR16 *FileNames, LV_t *out)
 UINTN  SBC_FileSysFindHndl(EFI_HANDLE *handle)
 {
 
-  EFI_STATUS Status;
-  EFI_HANDLE *h;
-  UINTN hdlcnt = 0;
-   
-  // Confirm that the Protocol Available
-  Status = gBS->LocateHandleBuffer(ByProtocol,
-                                   &gEfiSimpleFileSystemProtocolGuid,
-                                   NULL,
-                                   &hdlcnt,
-                                   &h);
-  if(EFI_ERROR(Status)) {
-    dprint("Protocol not found (%d) \n", Status);
-    return 0;
-  }
+    UINTN hdlcnt = 0;
+    EFI_STATUS Status;
+    EFI_HANDLE *h;
 
-  dprint("Protocol found (count : %d, Handle Buffer : 0x%p) \n",
-        hdlcnt, *h);
 
-  *handle = *h;
+    // Confirm that the Protocol Available
+    Status = gBS->LocateHandleBuffer(ByProtocol,
+                                     &gEfiSimpleFileSystemProtocolGuid,
+                                     NULL,
+                                     &hdlcnt,
+                                     &h);
+    if(EFI_ERROR(Status)) {
+      dprint("Protocol not found (%d) \n", Status);
+      return 0;
+    }
+
+    dprint("Protocol found (count : %d, Handle Buffer : 0x%p) \n",
+          hdlcnt, *h);
+
+    *handle = *h;
   return hdlcnt;
 }
 
@@ -323,18 +324,18 @@ SBCStatus  SBC_CheckAvailableBlkIODev(VOID)
     SBCStatus ret = SBCFAIL;
 
     EFI_HANDLE  *HandleBuffer;
-    UINTN HandleCount; // Handle Count 
+    UINTN HandleCount; // Handle Count
     EFI_STATUS Status;
     UINT8 Buffer[512];
     EFI_BLOCK_IO_PROTOCOL *BlockIo;
 
 
-    // Verify that Block IO Protocol is available 
+    // Verify that Block IO Protocol is available
     Status = gBS->LocateHandleBuffer(
                                          ByProtocol,
-                                         &gEfiBlockIoProtocolGuid, 
-                                         NULL, 
-                                         &HandleCount, 
+                                         &gEfiBlockIoProtocolGuid,
+                                         NULL,
+                                         &HandleCount,
                                          &HandleBuffer
     );
 
@@ -372,7 +373,7 @@ SBCStatus  SBC_CheckAvailableBlkIODev(VOID)
 
     ret = SBCOK;
 
-errdone:
+  errdone:
     return ret;
 
 }
@@ -381,24 +382,24 @@ errdone:
 VOID SBC_FileCtrlTestMain(VOID)
 {
     SBCStatus ret = SBCOK;
-    
+
     EFI_HANDLE ImageHandle = NULL;
     CHAR8 *wrmsg = "Hi, I am Leo, It is an pleasure, to meet you here xxxxx";
     UINTN wrmsgl = strlen(wrmsg);
-    CHAR16 *fname = L"baseanswer.txt"; 
+    CHAR16 *fname = L"baseanswer.txt";
     //UINTN filesize = 0;
 
     UINT8 rdmsg[64] = {0, };
     LV_t rdlv;
     LV_t wrlv;
 
-    // Length/Value structure initialize 
+    // Length/Value structure initialize
     _lv_set_data(&wrlv, wrmsg, wrmsgl);
     _lv_set_data(&rdlv, rdmsg, 0);
 
-    // Must step) Find the File handle protocol for gEfiSimpleFileSystemProtocolGuid 
+    // Must step) Find the File handle protocol for gEfiSimpleFileSystemProtocolGuid
     if(SBC_FileSysFindHndl(&ImageHandle) <= 0) {
-       
+
         eprint("SBC_FileSysFindHndl fail");
         return ;
     }
@@ -419,7 +420,7 @@ VOID SBC_FileCtrlTestMain(VOID)
      SBC_GetFileSize(fname, (UINTN *)&rdlv.length);
      dprint("File size of %a : %d", fname, rdlv.length);
 
-     
+
 
      ret = SBC_ReadFile(ImageHandle, fname, &rdlv);
      if (ret != SBCOK) {
@@ -437,17 +438,80 @@ VOID SBC_FileCtrlTestMain(VOID)
 
 }
 
+static void _sfc_init_info_parse(IN VOID *inbuf, OUT VOID *outbuf)
+{
+    UINT8 *p = NULL;
+    UINT8 *retbuf = NULL;
+
+    sbc_rptn_header_t h;
+
+    ZeroMem((void *)&h, sizeof h);
+    p = (UINT8 *)inbuf;
+    retbuf = (UINT8 *)outbuf;
+
+    CopyMem(h.value, inbuf, sizeof h);
+
+
+    // What TO DO
+    // 1. Extract related the Partition infomation
+
+    // 2. Copy the result to outbuf buffer
+
+    // This two-line MUST remove into this function, later.
+    retbuf++; // Error ignore code
+    p++; // Error ignore code 
+
+
+
+    //return;
+
+
+}
+
+SBCStatus SBC_ReadRawHeaderInfo(IN VOID *blkhnd, OUT VOID *rdbuf,  UINT32 *rdlen)
+{
+    SBCStatus       ret = SBCOK;
+    EFI_STATUS      retval;
+    EFI_BLOCK_IO_PROTOCOL           *blkio = NULL;
+
+    //SBC_RET_VALIDATE_ERRCODEMSG(((rdbuf != NULL) || (rdlen != NULL)), SBCNULLP, "Invalid parameter");
+    SBC_RET_VALIDATE_ERRCODEMSG((rdlen != 0), SBCZEROL, "Invalid parameter");
+
+    blkio  = (EFI_BLOCK_IO_PROTOCOL *)blkhnd;
+
+    *rdlen = blkio->Media->BlockSize;
+    retval = blkio->ReadBlocks(
+                blkio,
+                blkio->Media->MediaId,
+                0,
+                *rdlen,
+                rdbuf
+        );
+    SBC_RET_VALIDATE_ERRCODEMSG((retval == EFI_SUCCESS), SBCIO, "LBA 0 READ BLOCK FAIL");
+
+
+
+    _sfc_init_info_parse(rdbuf, rdbuf);
+
+
+errdone:
+
+    return ret;
+
+}
+
 SBCStatus  SBC_FindBlkIoHandle(OUT VOID **hblk)
 {
 #define     SBC_MAGIC_LEN           0x04
 #define     SBC_MAGIC_ID            0x50574152
-    EFI_STATUS                      Status;
+
     SBCStatus                       ret;
+    EFI_STATUS                      Status;
     EFI_HANDLE                      *HandleBuffer = NULL;
     UINTN                           NumberOfHandles;
     VOID                            *ReadBuffer = NULL; // Buffer for raw block data
     EFI_BLOCK_IO_PROTOCOL           *BlockIo = NULL;
-    UINT32                           magicid = 0UL; 
+    UINT32                           magicid = 0UL;
    // UINT64                           blkiosz;
 
     SBC_RET_VALIDATE_ERRCODEMSG((hblk != NULL), SBCNULLP, "Invalid Parameter");
@@ -484,8 +548,8 @@ SBCStatus  SBC_FindBlkIoHandle(OUT VOID **hblk)
 
         //blkiosz = MultU64x32(BlockIo->Media->LastBlock + 1, BlockIo->Media->BlockSize);
         //Print(L"Found %p Block I/O Protocol Address.\n", BlockIo);
-        
-       
+
+
         //Print(L"INFO: Found SBC Raw Partiiton %r\n", Status);
 
         ReadBuffer = AllocatePool(BlockIo->Media->BlockSize);
@@ -495,8 +559,8 @@ SBCStatus  SBC_FindBlkIoHandle(OUT VOID **hblk)
              goto errdone;
         }
 
-        
-        Status = BlockIo->ReadBlocks( 
+
+        Status = BlockIo->ReadBlocks(
                          BlockIo,
                          BlockIo->Media->MediaId,
                          0, // LBA 0
@@ -514,7 +578,7 @@ SBCStatus  SBC_FindBlkIoHandle(OUT VOID **hblk)
         SBC_mem_print_bin("Read Block", (UINT8 *)ReadBuffer, SBC_MAGIC_LEN);
         CopyMem((void *)&magicid, (VOID *)&((UINT8 *)ReadBuffer)[0],SBC_MAGIC_LEN);
         FreePool(ReadBuffer);
-       
+
         Print(L"Found %p Block I/O Protocol Address Magci ID : 0x%x.\n", BlockIo, magicid);
         if (magicid != SBC_MAGIC_ID) {
             continue;
@@ -524,148 +588,148 @@ SBCStatus  SBC_FindBlkIoHandle(OUT VOID **hblk)
         Print(L"0x%p SBC Raw Buffer MagicID found !!! \n", *hblk);
 
 
-       
+
         ret = SBCOK;
         goto errdone;
     }
 
-errdone:
+  errdone:
     return ret;
 
 }
 
+//EFI_STATUS
+//EFIAPI
+//RawPartitionAccessSample (
+//  IN EFI_HANDLE        ImageHandle,
+//  IN EFI_SYSTEM_TABLE  *SystemTable
+//  )
+//{
+//  EFI_STATUS                      Status = EFI_SUCCESS;
+//  EFI_HANDLE                      *HandleBuffer = NULL;
+//  UINTN                           NumberOfHandles;
+//  UINTN                           Index;
+//  EFI_BLOCK_IO_PROTOCOL           *BlockIo = NULL;
+//  EFI_DEVICE_PATH_PROTOCOL        *DevicePath = NULL;
+//  EFI_DEVICE_PATH_TO_TEXT_PROTOCOL *DevicePathToText = NULL;
+//  CHAR16                          *DevicePathStr = NULL;
+//  VOID                            *ReadBuffer = NULL; // Buffer for raw block data
+//
+//  Print(L"Enumerating block devices...\n");
+//
+//  //
+//  // 1. Locate all handles that support the EFI_BLOCK_IO_PROTOCOL.
+//  //
+//  Status = gBS->LocateHandleBuffer (
+//                  ByProtocol,
+//                  &gEfiBlockIoProtocolGuid,
+//                  NULL,
+//                  &NumberOfHandles,
+//                  &HandleBuffer
+//                  );
+//  if (EFI_ERROR (Status)) {
+//    Print(L"ERROR: Failed to locate BlockIoProtocol handles: %r\n", Status);
+//    return Status;
+//  }
+//
+//  Print(L"Found %d Block I/O Protocol handles.\n", NumberOfHandles);
+//
+//  // (Optional) Locate DevicePathToTextProtocol for printing
+//  gBS->LocateProtocol (&gEfiDevicePathToTextProtocolGuid, NULL, (VOID **)&DevicePathToText);
+//
+//  //
+//  // 2. Iterate through each handle and get Block IO information.
+//  //
+//  for (Index = 0; Index < NumberOfHandles; Index++) {
+//    Print(L"\n--- Handle %d ---\n", Index);
+//
+//    // Get the Block I/O Protocol interface
+//    Status = gBS->HandleProtocol (
+//                    HandleBuffer[Index],
+//                    &gEfiBlockIoProtocolGuid,
+//                    (VOID **)&BlockIo
+//                    );
+//    if (EFI_ERROR (Status)) {
+//      Print(L"  ERROR: Could not open BlockIoProtocol: %r\n", Status);
+//      continue;
+//    }
+//
+//    // Get the Device Path for identification
+//    Status = gBS->HandleProtocol (
+//                    HandleBuffer[Index],
+//                    &gEfiDevicePathProtocolGuid,
+//                    (VOID **)&DevicePath
+//                    );
+//    if (EFI_ERROR (Status)) {
+//      Print(L"  WARNING: No Device Path Protocol for this handle: %r\n", Status);
+//      DevicePath = NULL; // Ensure it's NULL if not found
+//    }
+//
+//    // Print device path string (if protocol available)
+//    if (DevicePath != NULL && DevicePathToText != NULL) {
+//      DevicePathStr = DevicePathToText->ConvertDevicePathToText (DevicePath, FALSE, FALSE);
+//      if (DevicePathStr != NULL) {
+//        Print(L"  Device Path: %s\n", DevicePathStr);
+//        FreePool(DevicePathStr);
+//        DevicePathStr = NULL; // Reset for next iteration
+//      }
+//    } else if (DevicePath != NULL) {
+//      Print(L"  Device Path present, but DevicePathToTextProtocol not found.\n");
+//    }
+//
+//    // Print Block I/O Media information
+//    Print(L"  Media ID: %u\n", BlockIo->Media->MediaId);
+//    Print(L"  Removable Media: %a\n", BlockIo->Media->RemovableMedia ? "TRUE" : "FALSE");
+//    Print(L"  Media Present: %a\n", BlockIo->Media->MediaPresent ? "TRUE" : "FALSE");
+//    Print(L"  Logical Partition: %a\n", BlockIo->Media->LogicalPartition ? "TRUE" : "FALSE");
+//    Print(L"  Read Only: %a\n", BlockIo->Media->ReadOnly ? "TRUE" : "FALSE");
+//    Print(L"  Block Size: %u bytes\n", BlockIo->Media->BlockSize);
+//    Print(L"  Last Block LBA: 0x%Lx\n", BlockIo->Media->LastBlock);
+//    Print(L"  Total Size: %Lu bytes\n", MultU64x32(BlockIo->Media->LastBlock + 1, BlockIo->Media->BlockSize));
+//
+//
+//    //
+//    // Example: Reading the first block (LBA 0) of the current device/partition
+//    //
+//    if (BlockIo->Media->MediaPresent && !BlockIo->Media->ReadOnly && BlockIo->Media->BlockSize > 0) {
+//        // Allocate a buffer for one block of data
+//        ReadBuffer = AllocatePool(BlockIo->Media->BlockSize);
+//        if (ReadBuffer == NULL) {
+//            Print(L"  ERROR: Failed to allocate buffer for block read.\n");
+//            // Continue to next handle or return
+//        } else {
+//            Print(L"  Attempting to read LBA 0 (size %u bytes)...\n", BlockIo->Media->BlockSize);
+//            Status = BlockIo->ReadBlocks(
+//                                  BlockIo,
+//                                  BlockIo->Media->MediaId,
+//                                  0, // LBA 0
+//                                  BlockIo->Media->BlockSize,
+//                                  ReadBuffer
+//                                  );
+//            if (EFI_ERROR(Status)) {
+//                Print(L"  ERROR: Failed to read LBA 0: %r\n", Status);
+//            } else {
+//                Print(L"  Successfully read LBA 0.\n");
+//                // You can now inspect 'ReadBuffer' to see the raw data.
+//                // For example, if it's a disk, LBA 0 might contain MBR or GPT header.
+//                // Print(L"  First 16 bytes of LBA 0: ");
+//                // for (UINTN i = 0; i < 16; i++) {
+//                //   Print(L"%02x ", ((UINT8*)ReadBuffer)[i]);
+//                // }
+//                // Print(L"\n");
+//            }
+//            FreePool(ReadBuffer); // Always free the buffer
+//            ReadBuffer = NULL;
+//        }
+//    } else {
+//        Print(L"  Cannot read from this device (media not present, read-only, or block size is 0).\n");
+//    }
+//  }
+//
+//  if (HandleBuffer != NULL) {
+//    FreePool(HandleBuffer);
+//  }
+//
+//  return EFI_SUCCESS;
+//}
 
-EFI_STATUS
-EFIAPI
-RawPartitionAccessSample (
-  IN EFI_HANDLE        ImageHandle,
-  IN EFI_SYSTEM_TABLE  *SystemTable
-  )
-{
-  EFI_STATUS                      Status;
-  EFI_HANDLE                      *HandleBuffer = NULL;
-  UINTN                           NumberOfHandles;
-  UINTN                           Index;
-  EFI_BLOCK_IO_PROTOCOL           *BlockIo = NULL;
-  EFI_DEVICE_PATH_PROTOCOL        *DevicePath = NULL;
-  EFI_DEVICE_PATH_TO_TEXT_PROTOCOL *DevicePathToText = NULL;
-  CHAR16                          *DevicePathStr = NULL;
-  VOID                            *ReadBuffer = NULL; // Buffer for raw block data
-
-  Print(L"Enumerating block devices...\n");
-
-  //
-  // 1. Locate all handles that support the EFI_BLOCK_IO_PROTOCOL.
-  //
-  Status = gBS->LocateHandleBuffer (
-                  ByProtocol,
-                  &gEfiBlockIoProtocolGuid,
-                  NULL,
-                  &NumberOfHandles,
-                  &HandleBuffer
-                  );
-  if (EFI_ERROR (Status)) {
-    Print(L"ERROR: Failed to locate BlockIoProtocol handles: %r\n", Status);
-    return Status;
-  }
-
-  Print(L"Found %d Block I/O Protocol handles.\n", NumberOfHandles);
-
-  // (Optional) Locate DevicePathToTextProtocol for printing
-  gBS->LocateProtocol (&gEfiDevicePathToTextProtocolGuid, NULL, (VOID **)&DevicePathToText);
-
-  //
-  // 2. Iterate through each handle and get Block IO information.
-  //
-  for (Index = 0; Index < NumberOfHandles; Index++) {
-    Print(L"\n--- Handle %d ---\n", Index);
-
-    // Get the Block I/O Protocol interface
-    Status = gBS->HandleProtocol (
-                    HandleBuffer[Index],
-                    &gEfiBlockIoProtocolGuid,
-                    (VOID **)&BlockIo
-                    );
-    if (EFI_ERROR (Status)) {
-      Print(L"  ERROR: Could not open BlockIoProtocol: %r\n", Status);
-      continue;
-    }
-
-    // Get the Device Path for identification
-    Status = gBS->HandleProtocol (
-                    HandleBuffer[Index],
-                    &gEfiDevicePathProtocolGuid,
-                    (VOID **)&DevicePath
-                    );
-    if (EFI_ERROR (Status)) {
-      Print(L"  WARNING: No Device Path Protocol for this handle: %r\n", Status);
-      DevicePath = NULL; // Ensure it's NULL if not found
-    }
-
-    // Print device path string (if protocol available)
-    if (DevicePath != NULL && DevicePathToText != NULL) {
-      DevicePathStr = DevicePathToText->ConvertDevicePathToText (DevicePath, FALSE, FALSE);
-      if (DevicePathStr != NULL) {
-        Print(L"  Device Path: %s\n", DevicePathStr);
-        FreePool(DevicePathStr);
-        DevicePathStr = NULL; // Reset for next iteration
-      }
-    } else if (DevicePath != NULL) {
-      Print(L"  Device Path present, but DevicePathToTextProtocol not found.\n");
-    }
-
-    // Print Block I/O Media information
-    Print(L"  Media ID: %u\n", BlockIo->Media->MediaId);
-    Print(L"  Removable Media: %a\n", BlockIo->Media->RemovableMedia ? "TRUE" : "FALSE");
-    Print(L"  Media Present: %a\n", BlockIo->Media->MediaPresent ? "TRUE" : "FALSE");
-    Print(L"  Logical Partition: %a\n", BlockIo->Media->LogicalPartition ? "TRUE" : "FALSE");
-    Print(L"  Read Only: %a\n", BlockIo->Media->ReadOnly ? "TRUE" : "FALSE");
-    Print(L"  Block Size: %u bytes\n", BlockIo->Media->BlockSize);
-    Print(L"  Last Block LBA: 0x%Lx\n", BlockIo->Media->LastBlock);
-    Print(L"  Total Size: %Lu bytes\n", MultU64x32(BlockIo->Media->LastBlock + 1, BlockIo->Media->BlockSize));
-
-
-    //
-    // Example: Reading the first block (LBA 0) of the current device/partition
-    //
-    if (BlockIo->Media->MediaPresent && !BlockIo->Media->ReadOnly && BlockIo->Media->BlockSize > 0) {
-        // Allocate a buffer for one block of data
-        ReadBuffer = AllocatePool(BlockIo->Media->BlockSize);
-        if (ReadBuffer == NULL) {
-            Print(L"  ERROR: Failed to allocate buffer for block read.\n");
-            // Continue to next handle or return
-        } else {
-            Print(L"  Attempting to read LBA 0 (size %u bytes)...\n", BlockIo->Media->BlockSize);
-            Status = BlockIo->ReadBlocks(
-                                  BlockIo,
-                                  BlockIo->Media->MediaId,
-                                  0, // LBA 0
-                                  BlockIo->Media->BlockSize,
-                                  ReadBuffer
-                                  );
-            if (EFI_ERROR(Status)) {
-                Print(L"  ERROR: Failed to read LBA 0: %r\n", Status);
-            } else {
-                Print(L"  Successfully read LBA 0.\n");
-                // You can now inspect 'ReadBuffer' to see the raw data.
-                // For example, if it's a disk, LBA 0 might contain MBR or GPT header.
-                // Print(L"  First 16 bytes of LBA 0: ");
-                // for (UINTN i = 0; i < 16; i++) {
-                //   Print(L"%02x ", ((UINT8*)ReadBuffer)[i]);
-                // }
-                // Print(L"\n");
-            }
-            FreePool(ReadBuffer); // Always free the buffer
-            ReadBuffer = NULL;
-        }
-    } else {
-        Print(L"  Cannot read from this device (media not present, read-only, or block size is 0).\n");
-    }
-  }
-
-  if (HandleBuffer != NULL) {
-    FreePool(HandleBuffer);
-  }
-
-  return EFI_SUCCESS;
-}
