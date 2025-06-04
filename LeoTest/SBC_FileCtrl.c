@@ -438,6 +438,8 @@ VOID SBC_FileCtrlTestMain(VOID)
 
 }
 
+
+
 static void _sfc_init_info_parse(IN VOID *inbuf, OUT VOID *outbuf)
 {
     UINT8 *p = NULL;
@@ -496,6 +498,69 @@ SBCStatus SBC_ReadRawHeaderInfo(IN VOID *blkhnd, OUT VOID *rdbuf,  UINT32 *rdlen
 
 errdone:
 
+    return ret;
+
+}
+
+ 
+
+SBCStatus  SBC_RawPartitiionBlockWrite(VOID *blkio, UINT8 *wrbuf, UINT32 wrlen)
+{
+    SBCStatus ret = SBCOK;
+    EFI_STATUS retval = EFI_SUCCESS;
+    //int idx;
+    int leftcnt = 0;
+    int leftcpy = 0;
+    UINT8 *wrp = NULL;
+    EFI_BLOCK_IO_PROTOCOL           *p = NULL;
+    UINT32 wrlba = 0;
+    
+    SBC_RET_VALIDATE_ERRCODEMSG(((p != NULL) || (wrbuf != NULL)), SBCNULLP, "Invalid Parameter");
+    SBC_RET_VALIDATE_ERRCODEMSG((wrlen != 0), SBCZEROL, "Invalid Parameter");
+
+    p = (EFI_BLOCK_IO_PROTOCOL *)blkio;
+    wrp = wrbuf;
+
+    leftcnt = wrlen / p->Media->BlockSize;
+    leftcpy = wrlen % p->Media->BlockSize;
+
+    while( leftcnt > 0) {
+        retval = p->WriteBlocks(
+                        p,
+                        p->Media->MediaId,
+                        wrlba,
+                        p->Media->BlockSize ,
+                        //(wrlen % p->Media->BlockSize == 0) ? wrlen : p->Media->BlockSize ,
+                        wrp
+            );
+
+        if(EFI_ERROR(retval)) {
+            Print(L"Write Block I/O fail : %r", retval);
+            ret = SBCIO;
+            goto errdone;
+        }
+        wrp += p->Media->BlockSize;
+        wrlba++;
+        leftcnt--;
+    };
+
+
+    retval = p->WriteBlocks(
+                    p,
+                    p->Media->MediaId,
+                    wrlba,
+                    leftcpy,
+                    //(wrlen % p->Media->BlockSize == 0) ? wrlen : p->Media->BlockSize ,
+                    wrp
+        );
+
+    if(EFI_ERROR(retval)) {
+        Print(L"Last Write Block I/O fail : %r", retval);
+        ret = SBCIO;
+        goto errdone;
+    }
+
+errdone:
     return ret;
 
 }
