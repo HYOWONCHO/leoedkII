@@ -594,17 +594,19 @@ UefiMain (
 #ifdef SBC_BASEANSWER_TEST
 extern SBCStatus  SBC_FindBlkIoHandle(OUT VOID **hblk);
 
-  //VOID *blkio = NULL;
-  //SBC_FindBlkIoHandle(&blkio);
-  //Print(L"BlkIO Handle : %p \n", blkio);
+  VOID *blkio = NULL;
+  SBC_FindBlkIoHandle(&blkio);
+  Print(L"BlkIO Handle : %p \n", blkio);
   //nvme_get_serial();
 //  CHAR8 *base_answer = "anti-tampering!?";
-    UINT8 devid[32] = {0,};
-    UINT8 fwid[32] = {0,};
+    //UINT8 devid[32] = {0,};
+    //UINT8 fwid[32] = {0,};
 ////  SBC_BaseAnswerValidate((UINT8 *)base_answer, strlen(base_answer));
 
-    SBC_GenDeviceID(devid);
-    SBC_GenFWID(ImageHandle, devid, fwid);
+    //SBC_GenDeviceID(devid);
+    //SBC_GenFWID(ImageHandle, devid, fwid);
+
+
   //get_blokio_handleparse();
     //st_open_protocol(ImageHandle);
     //st_deivce_paht_string(ImageHandle);
