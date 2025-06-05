@@ -29,6 +29,7 @@
 #include "SBC_EccSignVerify.h"
 
 
+
 #pragma pack(1)
 typedef struct {
     UINT8   Reserved[4];
@@ -748,40 +749,56 @@ errdone:
 }
 
 
-static SBCStatus _baseanswer_extract_from_disk(LV_t *lv)
+static SBCStatus _baseanswer_extract_from_disk(base_ansid_t *p)
 {
   SBCStatus ret = SBCOK;
   VOID *blkio = NULL;
-  base_ansid_t ansid;
+  
   UINT32  anslen = 0U;
+  UINT8   streams[512] = {0,};
+  UINT32  offset = 0;
 
-  SBC_RET_VALIDATE_ERRCODEMSG((lv != NULL), SBCNULLP, "Invalid parameter");
+  SBC_RET_VALIDATE_ERRCODEMSG((p != NULL), SBCNULLP, "Invalid parameter");
 
   // Find the Block device handlef for SBC Raw Partition
   ret = SBC_FindBlkIoHandle(&blkio);
-  Print(L"%a:%d \n",__FUNCTION__, __LINE__);
   if (ret != SBCOK || blkio == NULL) {
     Print(L"SBC_FindBlockIoHandle fail (%p)\n", blkio);
     goto errdone;
   }
 
-  Print(L"%a:%d \n",__FUNCTION__, __LINE__);
-  Print(L"Blkio addr : %p\n", blkio);
-  anslen = sizeof ansid;
-  Print(L"%a:%d \n",__FUNCTION__, __LINE__);
+  anslen = BASE_ANS_BLK_LEN;
   // NOTES : It SHOLUD be consider for TAG size if Message is encrypt to  AES-GCM mode
-  ret = SBC_RawPrtReadBlock(blkio, (VOID *)&ansid,  &anslen , BASE_ANS_BLK_LBA);
+  ret = SBC_RawPrtReadBlock(blkio, (VOID *)streams,  &anslen , BASE_ANS_BLK_LBA);
   if (ret != SBCOK) {
     Print(L"SBC_RawPrtReadBlock fail (%p)\n", blkio);
     goto errdone;
   }
-  Print(L"%a:%d \n",__FUNCTION__, __LINE__);
+  //Print(L"%a:%d \n",__FUNCTION__, __LINE__);
 
 
-  SBC_mem_print_bin("Enc Msg Len", (UINT8 *)&ansid.msglen, 4);
-  SBC_mem_print_bin("Enc Message", ansid.encmsg, 16);
-  SBC_mem_print_bin("Enc Key", ansid.key, BASE_ANS_KEY_STR);
-  SBC_mem_print_bin("Enc IV", ansid.iv, BASE_ANS_IV_KEY_STR);
+  // Copy Length
+  offset = BASE_ANS_SAT_OFFSET;
+  CopyMem((void *)&p->msglen, (void *)&streams[offset], 4);
+  p->msglen = 16; // later remove 
+  offset += 4;
+
+  CopyMem((void *)p->encmsg, (void *)&streams[offset], p->msglen);
+  offset += 16;
+
+  CopyMem((void *)p->key, (void *)&streams[offset], BASE_ANS_KEY_STR);
+  offset += BASE_ANS_KEY_STR;
+
+  CopyMem((void *)p->iv, (void *)&streams[offset], BASE_ANS_IV_KEY_STR);
+  offset += BASE_ANS_IV_KEY_STR;
+
+  SBC_mem_print_bin("Enc Msg Len", (UINT8 *)&p->msglen, 4);
+  SBC_mem_print_bin("Enc Message", p->encmsg, 16);
+  SBC_mem_print_bin("Enc Key", p->key, BASE_ANS_KEY_STR);
+  SBC_mem_print_bin("Enc IV", p->iv, BASE_ANS_IV_KEY_STR);
+
+  
+
 
 
 
@@ -838,22 +855,62 @@ errdone:
 SBCStatus  SBC_BaseAnswerValidate(UINT8 *answer, UINTN answerl)
 {
     SBCStatus ret = SBCOK;
-    UINT8 rdbuf[256];
-    UINT8 baseanswer[256] = {0, };
-    LV_t lv = {
-        .value = baseanswer,
-        .length = 0
-    };
+    //UINT8 rdbuf[256];
+    //UINT8 baseanswer[256] = {0, };
+    base_ansid_t ansid;
+    SBC_AESContext ctx;
+    SBC_AESCBCCtx  cbcctx;
+
+    UINT8 decbuf[BASE_ANS_STREAM_LEN] = {0,};
+
+    SBC_CipherTLV enclv;
+    SBC_CipherTLV declv;
 
     SBC_RET_VALIDATE_ERRCODEMSG((answer != NULL), SBCNULLP, "Answer is Nill");
 
-    ZeroMem(&lv, sizeof lv);
+    ZeroMem((void *)&ctx, sizeof ctx);
+    ZeroMem((void *)&cbcctx, sizeof cbcctx);
+    ZeroMem(&ansid, sizeof ansid);
 
-    _lv_set_data(&lv, rdbuf, sizeof rdbuf);
-    ret = _baseanswer_extract_from_disk(&lv);
+    ret = _baseanswer_extract_from_disk(&ansid);
     SBC_RET_VALIDATE_ERRCODEMSG((ret == SBCOK),ret, "Disk read fail");
 
-    
+    ctx.key = ansid.key;
+    ctx.keylen = SBC_KEY_STRENGTH_256;
+    SBC_AESInit(&ctx);
+
+    enclv.value = ansid.encmsg;
+    enclv.length = ansid.msglen;
+
+    declv.value = decbuf;
+    declv.length = 0;
+
+    ctx.cbc = &cbcctx;
+    ctx.key = ansid.key;
+    ctx.keylen = SBC_KEY_STRENGTH_256 >> 3;
+    ctx.algoid = SBC_CIPHER_AES_CBC;
+    ctx.in = &enclv;
+    ctx.out = &declv;
+    ctx.iv = ansid.iv;
+
+    if (SBC_AESDecrypt(&ctx) != SBCOK) {
+      Print(L"Base Answer Decrypt fail \n");
+      ret = SBCFAIL;
+      goto errdone;
+    }
+
+    SBC_mem_print_bin("decrypt msg", answer, answerl);
+    SBC_mem_print_bin("decrypt msg", declv.value, answerl);
+
+    if (CompareMem((const void *)declv.value, (const void *)answer, answerl) != 0) {
+      Print(L"Base Answer validate Fail \n");
+      ret = SBCFAIL;
+      goto errdone;
+    }
+
+    Print(L"Base Answer validate Success \n");
+
+
 
 errdone:
     return ret;

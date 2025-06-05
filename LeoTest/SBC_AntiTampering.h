@@ -3,10 +3,7 @@
 
 #define STR_FSBL_F_NAME             L"FS1:\\EFI\\BOOT\\FSBL.efi"
 #define SBC_AT_HASH_LEN             32
-#define BASE_ANS_MAX_LEN            256
-#define BASE_ANS_KEY_STR            32      /**< Base Answer Encrypt/Decrypt Key Strength */
-#define BASE_ANS_IV_KEY_STR         16      /**< Base Answer IV size */
-#define BASE_ANS_TAG_LEN            32      /**< Base Answer IV size */
+
 
 #pragma pack(1)
 typedef struct _hw_unique_info_t {
@@ -38,6 +35,10 @@ typedef struct _fhnd_img_t {
 #define BASE_ANS_IV_KEY_STR         16      /**< Base Answer IV size */
 #define BASE_ANS_TAG_LEN            32      /**< Base Answer IV size */
 #define BASE_ANS_BLK_LBA            0
+#define BASE_ANS_SAT_OFFSET         0x100 // 256
+#define BASE_ANS_STREAM_LEN         512
+#define BASE_ANS_BLK_LEN            512
+
 
 #pragma pack(1)
 /*!
