@@ -450,7 +450,7 @@ void _sfc_init_info_parse(IN VOID *inbuf, OUT VOID *outbuf)
     ZeroMem((void *)&h, sizeof h);
     p = (UINT8 *)inbuf;
     retbuf = (UINT8 *)outbuf;
-    CopyMem(h.value, (UINT8 *)inbuf, sizeof h);
+    CopyMem(h.value, (UINT8 *)p, sizeof h);
 
     SBC_mem_print_bin("Header Skip Info", h.m.skip, 64 );
     SBC_mem_print_bin("Header Real Info", h.m.info, 64 );
