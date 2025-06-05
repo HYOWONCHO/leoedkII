@@ -3,15 +3,19 @@
 
 #define STR_FSBL_F_NAME             L"FS1:\\EFI\\BOOT\\FSBL.efi"
 #define SBC_AT_HASH_LEN             32
+#define BASE_ANS_MAX_LEN            256
+#define BASE_ANS_KEY_STR            32      /**< Base Answer Encrypt/Decrypt Key Strength */
+#define BASE_ANS_IV_KEY_STR         16      /**< Base Answer IV size */
+#define BASE_ANS_TAG_LEN            32      /**< Base Answer IV size */
 
 #pragma pack(1)
 typedef struct _hw_unique_info_t {
-    UINT8   mbsn[64];            /*!< Motherboard serail */
+    UINT8   mbsn[64];               /*!< Motherboard serail */
     UINTN   mbsnl;
-    UINT8   mmsn[64];            /*!< Memory serial */
+    UINT8   mmsn[64];               //! Memory serial 
     UINTN   mmsnl;
-    UINT8   nvmesn[64];            /*!< SSD serial */
-    UINTN   nvmesnl;           /*!< Length of  SSD serial */
+    UINT8   nvmesn[64];             ///< SSD serial 
+    UINTN   nvmesnl;                /*!< Length of  SSD serial */
     //at_key_t *key;
 }hw_uniqueinfo_t;
 
@@ -23,6 +27,33 @@ typedef struct _fhnd_img_t {
 
 }fhnd_img_t;
 #pragma pack()
+
+/*!
+    \defgroup BaseAnswer In terms of the Base Answer behavior
+    \{
+*/
+
+#define BASE_ANS_MAX_LEN            256
+#define BASE_ANS_KEY_STR            32      /**< Base Answer Encrypt/Decrypt Key Strength */
+#define BASE_ANS_IV_KEY_STR         16      /**< Base Answer IV size */
+#define BASE_ANS_TAG_LEN            32      /**< Base Answer IV size */
+#define BASE_ANS_BLK_LBA            0
+
+#pragma pack(1)
+/*!
+ * \struct base_ansid_t is used to identify the Base Answer 
+
+ * \author leoc (6/5/25)
+ */
+typedef struct _base_ansid_t {
+    UINT32  msglen;                             //! Length of Encrypted Base Answer string 
+    UINT8   encmsg[BASE_ANS_MAX_LEN];           //! Encrypted base answer message
+    UINT8   key[BASE_ANS_KEY_STR];              //! Base Answer decrypt key
+    UINT8   iv[BASE_ANS_IV_KEY_STR];            //! Base Answer decrypt IV value
+    UINT8   tag[BASE_ANS_TAG_LEN];              //! Base Answer decrypt TAG which used in the AES GCM Mode
+}base_ansid_t;
+#pragma pack()
+/*! } */
 
 
 

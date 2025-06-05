@@ -104,7 +104,7 @@ SBCStatus  SBC_CreateDirectory(EFI_HANDLE h, CHAR16 *fname);
                                                                                                              
 /*!                                                                                                          
  *                                                                                                           
- * \fn SBCStatus SBC_ReadRawHeaderInfo(IN VOID *blkhnd, OUT VOID *rdbuf, IN UINT32 *rdlen)                   
+ * \fn SBCStatus SBC_ReadRawPrtHeaderInfo(IN VOID *blkhnd, OUT VOID *rdbuf, IN UINT32 *rdlen)                   
  *                                                                                                           
  * \brief Load the raw-partition header information                                                          
  *                                                                                                           
@@ -116,6 +116,35 @@ SBCStatus  SBC_CreateDirectory(EFI_HANDLE h, CHAR16 *fname);
  *                                                                                                           
  * \return On success, return the SBCOK, otherwise, return the approiate value.                              
  */                                                                                                          
-SBCStatus SBC_ReadRawHeaderInfo(VOID *blkhnd, VOID *rdbuf,  UINT32 *rdlen);                           
+SBCStatus SBC_ReadRawPrtHeaderInfo(VOID *blkhnd, VOID *rdbuf,  UINT32 *rdlen);
+                           
+                           
+/*!
+ * \fn SBCStatus SBC_RawPrtReadBlock(VOID *blkhnd, VOID *rdbuf,  UINT32 *rdlen, UINTN rlba)
+ * 
+ * \author leoc (6/5/25)
+ * 
+ * \param blkhnd Context handle for Block IO
+ * \param rdbuf  Pointer to the destination buffer for the data
+ * \param rdlen  Size of rdbuf
+ * \param rlba   Starting Logical Block Address to read from
+ * 
+ * \retval  SBCOK   Data ws read correctly form the device
+ * \retval  Othrewise value is Error 
+ */
+SBCStatus SBC_RawPrtReadBlock(VOID *blkhnd, VOID *rdbuf,  UINT32 *rdlen, UINTN rlba);     
+                      
+/*!
+ * \fn SBCStatus  SBC_FindBlkIoHandle(OUT VOID **hblk)
+ * 
+ * Find the Block Protocol interface for SBC Raw Partition 
+ * 
+ * \author leoc (6/5/25)
+ * 
+ * \param hblk   
+ * 
+ * \return SBCStatus 
+ */
+SBCStatus  SBC_FindBlkIoHandle(OUT VOID **hblk);                      
 
 #endif

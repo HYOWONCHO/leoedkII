@@ -750,78 +750,41 @@ errdone:
 
 static SBCStatus _baseanswer_extract_from_disk(LV_t *lv)
 {
+  SBCStatus ret = SBCOK;
+  VOID *blkio = NULL;
+  base_ansid_t ansid;
+  UINT32  anslen = 0U;
 
-    EFI_STATUS Status;
-    SBCStatus ret = SBCOK;
-    EFI_HANDLE f_hndl = NULL;
-    CHAR16 *basefile = L"base_answer.txt";
-    
-    //LV_t bsanswer;
-    //UINT8 rdbuf[256];
-#ifdef  SBC_BASEANSWER_TEST
-    
-    //CHAR8 *baseanswer[64] = {0, };
-    //const CHAR8 *key = "33ac9eccc4cc75e2711618f80b1548e8";
-    //const CHAR8 *iv = "0000000000000000";
-    // need to convert from str to hex;
-    //UINT8 *answer = "E06B9DBDB345C774B545FFC65333307C732B5C524D384B32DA7E5C8646B26A";  
-    //const CHAR8 *answer = "\xE0\x6B\x9D\xBD\xB3\x45\xC7\x74\xB5\x45\xFF\xC6\x53\x33\x30\x7C\x73\x2B\x5C\x52\x4D\x38\x4B\x32\xDA\x7E\x5C\x86\x46\xB2\x6A"; 
-#else
-    UINT8 *base_answer = NULL;
-    UINT8 *key = NULL;
-    UINT8 *tag = NULL;
-    UINTN basefile_sz  = 0;
-#endif
+  SBC_RET_VALIDATE_ERRCODEMSG((lv != NULL), SBCNULLP, "Invalid parameter");
 
-    SBC_RET_VALIDATE_ERRCODEMSG((lv != NULL), SBCNULLP, "LV Nill");
-    // check that the protocol is available 
-    if(SBC_FileSysFindHndl(&f_hndl) <= 0) {
-        ret = SBCFAIL;
-        eprint("SBC_FileSysFindHndl fail");
-        goto errdone;
-    }
- 
-#ifdef  SBC_BASEANSWER_TEST
-    //|------------|-----------|----------|
-    //|  enc msg   | tag msg   |   iv     |
-    //|------------|-----------|----------|
-    //|   ?        |  15B      |   12B    |
-//  CopyMem((void *)&((UINT8 *)lv->value)[lv->length], bsanswer.value, bsanswer.length);
-//  lv->length += bsanswer.length;
-    // Copy IV
-    //CopyMem((void *)&lv->value[lv->length], &iv, 12);
-    //lv->length += strlen(iv);
+  // Find the Block device handlef for SBC Raw Partition
+  ret = SBC_FindBlkIoHandle(&blkio);
+  Print(L"%a:%d \n",__FUNCTION__, __LINE__);
+  if (ret != SBCOK || blkio == NULL) {
+    Print(L"SBC_FindBlockIoHandle fail (%p)\n", blkio);
+    goto errdone;
+  }
+
+  Print(L"%a:%d \n",__FUNCTION__, __LINE__);
+  Print(L"Blkio addr : %p\n", blkio);
+  anslen = sizeof ansid;
+  Print(L"%a:%d \n",__FUNCTION__, __LINE__);
+  // NOTES : It SHOLUD be consider for TAG size if Message is encrypt to  AES-GCM mode
+  ret = SBC_RawPrtReadBlock(blkio, (VOID *)&ansid,  &anslen , BASE_ANS_BLK_LBA);
+  if (ret != SBCOK) {
+    Print(L"SBC_RawPrtReadBlock fail (%p)\n", blkio);
+    goto errdone;
+  }
+  Print(L"%a:%d \n",__FUNCTION__, __LINE__);
+
+
+  SBC_mem_print_bin("Enc Msg Len", (UINT8 *)&ansid.msglen, 4);
+  SBC_mem_print_bin("Enc Message", ansid.encmsg, 16);
+  SBC_mem_print_bin("Enc Key", ansid.key, BASE_ANS_KEY_STR);
+  SBC_mem_print_bin("Enc IV", ansid.iv, BASE_ANS_IV_KEY_STR);
 
 
 
-
-    //dprint("%s size : %d", (CHAR8 *)basefile, basefile_sz);
-
-
-
-
-#else
-    // TO DO : SHOULD be preparing which the file reading.
-
-    ret = SBC_GetFileSize(basefile, &basefile_sz);
-    SBC_RET_VALIDATE_ERRCODEMSG((ret == SBCOK), ret, "File size getting fail");
-
-    lv->value = AllocatePool(basefile_sz);
-    SBC_RET_VALIDATE_ERRCODEMSG((lv->value != NULL), SBCNULLP, "Not enough memory");
-
-    ZeroMem(lv->value, basefile_sz);
-#endif
-
-    Status = SBC_ReadFile(f_hndl, basefile, lv);
-    //dprint("Readfile status : %d", Status);
-    //SBC_external_mem_print_bin("Base-answer", (UINT8 *)lv->value, (UINTN)lv->length);
-    SBC_RET_VALIDATE_ERRCODEMSG((Status == EFI_SUCCESS),ret, "Disk read fail");
-    //dprint("Key extract");
-
-#ifndef  SBC_BASEANSWER_TEST
-    // TODO : basefile decrypt 
-    // IV 
-#endif
 errdone:
     return ret;
 }
@@ -887,29 +850,9 @@ SBCStatus  SBC_BaseAnswerValidate(UINT8 *answer, UINTN answerl)
     ZeroMem(&lv, sizeof lv);
 
     _lv_set_data(&lv, rdbuf, sizeof rdbuf);
-
-   
     ret = _baseanswer_extract_from_disk(&lv);
     SBC_RET_VALIDATE_ERRCODEMSG((ret == SBCOK),ret, "Disk read fail");
-#ifdef  SBC_BASEANSWER_TEST
 
-    SBC_external_mem_print_bin("answer", answer, answerl);
-    SBC_external_mem_print_bin("Base answer", (UINT8 *)lv.value, lv.length - 2);
-    if(strncmp((const char *)lv.value, (const char *)answer, answerl) != 0) {
-        eprint("Expected answer and Base-answer is not idential");
-        Print(L"Expected answer and Base-answer is not idential \n");
-        ret = SBCFAIL;
-        goto errdone;
-    }
-#else
-    // TO DO : SHOULD be extract the IV, Base-answer which included the TAG
-    // And then, decrypt the encrypted base-answer
-#endif
-
-
-
-    Print(L"Expected answer and Base-answer is  idential \n");
-    dprint("Expected answer and Base-answer is  idential");
     
 
 errdone:
