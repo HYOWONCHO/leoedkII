@@ -456,7 +456,7 @@ void _sfc_init_info_parse(IN VOID *inbuf, OUT VOID *outbuf)
     SBC_mem_print_bin("Header Real Info", h.m.info, 64 );
 
     // What TO DO
-    // 1. Extract related the Partition infomation
+    // 1. Extract related the Prt infomation
 
     // 2. Copy the result to outbuf buffer
 
@@ -471,7 +471,7 @@ void _sfc_init_info_parse(IN VOID *inbuf, OUT VOID *outbuf)
 
 }
 
-SBCStatus SBC_ReadRawHeaderInfo(VOID *blkhnd, VOID *rdbuf,  UINT32 *rdlen)
+SBCStatus SBC_ReadRawPrtHeaderInfo(VOID *blkhnd, VOID *rdbuf,  UINT32 *rdlen)
 {
     SBCStatus       ret = SBCOK;
     EFI_STATUS      retval;
@@ -529,9 +529,67 @@ errdone:
 
 }
 
+SBCStatus SBC_RawPrtReadBlock(VOID *blkhnd, VOID *rdbuf,  UINT32 *rdlen, UINTN rlba)
+{
+    SBCStatus       ret = SBCOK;
+    EFI_STATUS      retval;
+    EFI_BLOCK_IO_PROTOCOL           *blkio = NULL;
+    VOID *readbuf = NULL;
+    UINTN   blklen = 0LU;
+
+    //Print(L"%a:%d \n",__FUNCTION__, __LINE__);
+    SBC_RET_VALIDATE_ERRCODEMSG(((rdbuf != NULL) || (rdlen != NULL)), SBCNULLP, "Invalid parameter");
+    SBC_RET_VALIDATE_ERRCODEMSG((*rdlen != 0), SBCZEROL, "Invalid parameter");
+
+    blkio  = (EFI_BLOCK_IO_PROTOCOL *)blkhnd;
+
+    blklen = ALIGN_VALUE(*rdlen, blkio->Media->BlockSize);
+    readbuf = AllocateZeroPool(blklen);
+    if (readbuf == NULL) {
+        Print(L"Allocate Pool fail \n");    
+        ret = SBCNULLP;
+        goto errdone;
+    }
+
+
+    retval = blkio->ReadBlocks(
+                blkio,
+                blkio->Media->MediaId,
+                rlba,
+                blklen,
+                readbuf
+        );
+
+    if (EFI_ERROR(retval)) {
+        Print(L"Read Heade Info fail(%d) %r \n", retval, retval);
+        ret = SBCIO;
+        goto errdone;
+    }
+    SBC_mem_print_bin("Read Buf", readbuf, *rdlen);
+    CopyMem(rdbuf, readbuf, *rdlen);
+    
+    //SBC_mem_print_bin("Rd Bud", rdbuf, SBC_RPTN_INFO_LEN << 1);
+    //Print(L"Read info result %r (Block Size : %d)\n" , retval, blkio->Media->BlockSize);
+    //SBC_RET_VALIDATE_ERRCODEMSG((retval == EFI_SUCCESS), SBCIO, "LBA 0 READ BLOCK FAIL");
+
+
+    //_sfc_init_info_parse(readbuf, rdbuf);
+
+
+    
+
+errdone:
+    if (readbuf != NULL) {
+        FreePool(readbuf);
+        readbuf = NULL;
+    }
+    return ret;
+
+
+}
  
 
-SBCStatus  SBC_RawPartitionBlockWrite(VOID *blkio, UINT8 *wrbuf, UINT32 wrlen)
+SBCStatus  SBC_RawPrtBlockWrite(VOID *blkio, UINT8 *wrbuf, UINT32 wrlen)
 {
     SBCStatus ret = SBCOK;
     EFI_STATUS retval = EFI_SUCCESS;
@@ -693,7 +751,7 @@ SBCStatus  SBC_FindBlkIoHandle(OUT VOID **hblk)
 
 //EFI_STATUS
 //EFIAPI
-//RawPartitionAccessSample (
+//RawPrtAccessSample (
 //  IN EFI_HANDLE        ImageHandle,
 //  IN EFI_SYSTEM_TABLE  *SystemTable
 //  )
@@ -774,7 +832,7 @@ SBCStatus  SBC_FindBlkIoHandle(OUT VOID **hblk)
 //    Print(L"  Media ID: %u\n", BlockIo->Media->MediaId);
 //    Print(L"  Removable Media: %a\n", BlockIo->Media->RemovableMedia ? "TRUE" : "FALSE");
 //    Print(L"  Media Present: %a\n", BlockIo->Media->MediaPresent ? "TRUE" : "FALSE");
-//    Print(L"  Logical Partition: %a\n", BlockIo->Media->LogicalPartition ? "TRUE" : "FALSE");
+//    Print(L"  Logical Prt: %a\n", BlockIo->Media->LogicalPrt ? "TRUE" : "FALSE");
 //    Print(L"  Read Only: %a\n", BlockIo->Media->ReadOnly ? "TRUE" : "FALSE");
 //    Print(L"  Block Size: %u bytes\n", BlockIo->Media->BlockSize);
 //    Print(L"  Last Block LBA: 0x%Lx\n", BlockIo->Media->LastBlock);
@@ -782,7 +840,7 @@ SBCStatus  SBC_FindBlkIoHandle(OUT VOID **hblk)
 //
 //
 //    //
-//    // Example: Reading the first block (LBA 0) of the current device/partition
+//    // Example: Reading the first block (LBA 0) of the current device/Prt
 //    //
 //    if (BlockIo->Media->MediaPresent && !BlockIo->Media->ReadOnly && BlockIo->Media->BlockSize > 0) {
 //        // Allocate a buffer for one block of data
