@@ -565,7 +565,7 @@ SBCStatus SBC_RawPrtReadBlock(VOID *blkhnd, VOID *rdbuf,  UINT32 *rdlen, UINTN r
         ret = SBCIO;
         goto errdone;
     }
-    SBC_mem_print_bin("Read Buf", readbuf, *rdlen);
+    //SBC_mem_print_bin("Read Buf", readbuf, *rdlen);
     CopyMem(rdbuf, readbuf, *rdlen);
     
     //SBC_mem_print_bin("Rd Bud", rdbuf, SBC_RPTN_INFO_LEN << 1);
