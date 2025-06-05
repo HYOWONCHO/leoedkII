@@ -595,8 +595,21 @@ UefiMain (
 extern SBCStatus  SBC_FindBlkIoHandle(OUT VOID **hblk);
 
   VOID *blkio = NULL;
+  UINT8 rdbuf[64] = {0,};
+  UINT32 rdlen = 64;
   SBC_FindBlkIoHandle(&blkio);
   Print(L"BlkIO Handle : %p \n", blkio);
+  if (blkio == NULL) {
+      Print(L"Block Handle is NULL \n");
+      return EFI_DEVICE_ERROR;
+  }
+
+  if(SBC_ReadRawHeaderInfo(blkio, (void *)rdbuf, &rdlen) != SBCOK) {
+    Print(L"Raw Data read fail \n");
+    return EFI_DEVICE_ERROR;
+  }
+
+  Print(L"%a:%d \n", __FUNCTION__, __LINE__);
   //nvme_get_serial();
 //  CHAR8 *base_answer = "anti-tampering!?";
     //UINT8 devid[32] = {0,};
@@ -620,7 +633,9 @@ extern SBCStatus  SBC_FindBlkIoHandle(OUT VOID **hblk);
 //  extern VOID SBC_FileCtrlTestMain(VOID);
 //  SBC_FileCtrlTestMain();
 
+ 
     
+  Print(L"%a:%d \n", __FUNCTION__, __LINE__);
    return EFI_SUCCESS;
 }
 
