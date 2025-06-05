@@ -23,8 +23,8 @@
  *                                                                                                           
  * \author leoc (6/4/25)                                                                                     
  */                                                                                                          
-typedef struct _sbc_rtpn_header_t {
-    union {
+typedef union _sbc_rtpn_header_t {
+    struct {
         UINT8 skip[SBC_RPTN_INFO_LEN]; /**< SKIP Buffer, but it has a Magic ID to find the device in UEFI*/
         UINT8 info[SBC_RPTN_INFO_LEN]; /*!< partition information*/
     }m;
@@ -116,6 +116,6 @@ SBCStatus  SBC_CreateDirectory(EFI_HANDLE h, CHAR16 *fname);
  *                                                                                                           
  * \return On success, return the SBCOK, otherwise, return the approiate value.                              
  */                                                                                                          
-SBCStatus SBC_ReadRawHeaderInfo(IN VOID *blkhnd, OUT VOID *rdbuf,  UINT32 *rdlen);                            
+SBCStatus SBC_ReadRawHeaderInfo(VOID *blkhnd, VOID *rdbuf,  UINT32 *rdlen);                           
 
 #endif

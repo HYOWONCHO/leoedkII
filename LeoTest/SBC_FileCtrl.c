@@ -440,7 +440,7 @@ VOID SBC_FileCtrlTestMain(VOID)
 
 
 
-static void _sfc_init_info_parse(IN VOID *inbuf, OUT VOID *outbuf)
+void _sfc_init_info_parse(IN VOID *inbuf, OUT VOID *outbuf)
 {
     UINT8 *p = NULL;
     UINT8 *retbuf = NULL;
@@ -450,9 +450,10 @@ static void _sfc_init_info_parse(IN VOID *inbuf, OUT VOID *outbuf)
     ZeroMem((void *)&h, sizeof h);
     p = (UINT8 *)inbuf;
     retbuf = (UINT8 *)outbuf;
+    CopyMem(h.value, (UINT8 *)inbuf, sizeof h);
 
-    CopyMem(h.value, inbuf, sizeof h);
-
+    SBC_mem_print_bin("Header Skip Info", h.m.skip, 64 );
+    SBC_mem_print_bin("Header Real Info", h.m.info, 64 );
 
     // What TO DO
     // 1. Extract related the Partition infomation
@@ -470,41 +471,67 @@ static void _sfc_init_info_parse(IN VOID *inbuf, OUT VOID *outbuf)
 
 }
 
-SBCStatus SBC_ReadRawHeaderInfo(IN VOID *blkhnd, OUT VOID *rdbuf,  UINT32 *rdlen)
+SBCStatus SBC_ReadRawHeaderInfo(VOID *blkhnd, VOID *rdbuf,  UINT32 *rdlen)
 {
     SBCStatus       ret = SBCOK;
     EFI_STATUS      retval;
     EFI_BLOCK_IO_PROTOCOL           *blkio = NULL;
+    VOID *readbuf = NULL;
 
-    //SBC_RET_VALIDATE_ERRCODEMSG(((rdbuf != NULL) || (rdlen != NULL)), SBCNULLP, "Invalid parameter");
-    SBC_RET_VALIDATE_ERRCODEMSG((rdlen != 0), SBCZEROL, "Invalid parameter");
+    SBC_RET_VALIDATE_ERRCODEMSG(((rdbuf != NULL) || (rdlen != NULL)), SBCNULLP, "Invalid parameter");
+    SBC_RET_VALIDATE_ERRCODEMSG((*rdlen != 0), SBCZEROL, "Invalid parameter");
 
     blkio  = (EFI_BLOCK_IO_PROTOCOL *)blkhnd;
 
-    *rdlen = blkio->Media->BlockSize;
+    *rdlen = ALIGN_VALUE(*rdlen, blkio->Media->BlockSize);
+    readbuf = AllocateZeroPool(*rdlen);
+    if (readbuf == NULL) {
+        Print(L"Allocate Pool fail \n");
+        ret = SBCNULLP;
+        goto errdone;
+    }
+
     retval = blkio->ReadBlocks(
                 blkio,
                 blkio->Media->MediaId,
                 0,
                 *rdlen,
-                rdbuf
+                readbuf
         );
-    SBC_RET_VALIDATE_ERRCODEMSG((retval == EFI_SUCCESS), SBCIO, "LBA 0 READ BLOCK FAIL");
+
+    if (EFI_ERROR(retval)) {
+        Print(L"Read Heade Info fail(%d) %r \n", retval, retval);
+        ret = SBCIO;
+        goto errdone;
+    }
+
+    //SBC_mem_print_bin("Read Buf", readbuf, SBC_RPTN_INFO_LEN << 1);
+    //CopyMem(rdbuf, readbuf, SBC_RPTN_INFO_LEN << 1);
+    
+    //SBC_mem_print_bin("Rd Bud", rdbuf, SBC_RPTN_INFO_LEN << 1);
+    //Print(L"Read info result %r (Block Size : %d)\n" , retval, blkio->Media->BlockSize);
+    //SBC_RET_VALIDATE_ERRCODEMSG((retval == EFI_SUCCESS), SBCIO, "LBA 0 READ BLOCK FAIL");
 
 
+    _sfc_init_info_parse(readbuf, rdbuf);
 
-    _sfc_init_info_parse(rdbuf, rdbuf);
 
+    
 
 errdone:
 
+    if (readbuf != NULL) {
+        FreePool(readbuf);
+        readbuf = NULL;
+    }
     return ret;
+
 
 }
 
  
 
-SBCStatus  SBC_RawPartitiionBlockWrite(VOID *blkio, UINT8 *wrbuf, UINT32 wrlen)
+SBCStatus  SBC_RawPartitionBlockWrite(VOID *blkio, UINT8 *wrbuf, UINT32 wrlen)
 {
     SBCStatus ret = SBCOK;
     EFI_STATUS retval = EFI_SUCCESS;
@@ -640,16 +667,17 @@ SBCStatus  SBC_FindBlkIoHandle(OUT VOID **hblk)
             goto errdone;
         }
 
-        SBC_mem_print_bin("Read Block", (UINT8 *)ReadBuffer, SBC_MAGIC_LEN);
+        //SBC_mem_print_bin("Read Block", (UINT8 *)ReadBuffer, SBC_MAGIC_LEN);
         CopyMem((void *)&magicid, (VOID *)&((UINT8 *)ReadBuffer)[0],SBC_MAGIC_LEN);
         FreePool(ReadBuffer);
 
-        Print(L"Found %p Block I/O Protocol Address Magci ID : 0x%x.\n", BlockIo, magicid);
+        
         if (magicid != SBC_MAGIC_ID) {
             continue;
         }
 
         *hblk = (VOID *)BlockIo;
+        Print(L"Found %p Block I/O Protocol Address Magci ID : 0x%x.\n", BlockIo, magicid);
         Print(L"0x%p SBC Raw Buffer MagicID found !!! \n", *hblk);
 
 
