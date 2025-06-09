@@ -530,6 +530,43 @@ EFI_STATUS test_open_protocol(EFI_HANDLE ImageHandle)
 
 }
 
+SBCStatus  SBC_DiceKeysGen(EFI_HANDLE ImageHandle, VOID *p)
+{
+    SBCStatus ret = SBCOK;
+    atp_ident_t *h = NULL;
+
+    h = (atp_ident_t *)p;
+
+    ret = SBC_GenDeviceID(h->devid);
+    if (ret != SBCOK) {
+        Print(L"Device ID generate fail \n");
+        goto errdone;
+    }
+
+    //SBC_mem_print_bin("Device ID", h->devid, sizeof h->devid);SBC_mem_print_bin("Device ID", h->devid, sizeof h->devid);
+
+    ret = SBC_GenFWID(ImageHandle, h->devid, h->fwid);
+    if (ret != SBCOK) {
+        Print(L"FW ID generate fail \n");
+        goto errdone;
+    }
+
+    //SBC_mem_print_bin("Firmware ID", h->fwid, sizeof h->fwid);
+
+    ret = SBC_GenOSID(ImageHandle, h->osid, h->fwid);
+    if (ret != SBCOK) {
+        Print(L"FW ID generate fail \n");
+        goto errdone;
+    }
+
+    //SBC_mem_print_bin("Firmware ID", h->fwid, sizeof h->fwid);
+    ret = SBCOK;
+
+errdone:
+    return ret;
+
+}
+
 #ifdef SBC_BASEANSWER_TEST
 SBCStatus  SBC_BaseAnswerValidate(UINT8 *answer, UINTN answerl);
 SBCStatus SBC_GenDeviceID(UINT8 *devid);
@@ -558,89 +595,36 @@ UefiMain (
   IN EFI_SYSTEM_TABLE  *SystemTable
   )
 {
+  atp_ident_t atpid;
+  SBCStatus ret = SBCOK;
 
-//RETURN_STATUS status = RETURN_SUCCESS;
-//
-//_get_directory_and_file();
-//status = SerialPortInitialize();
-//if(status != RETURN_SUCCESS) {
-//  dprint("SerialPortInitialize fail \n");
-//  Print(L"SerialPortInitialize fail \n");
-//}
-//else {
-//  dprint("SerialPortInitialize done \n");
-//  Print(L"SerialPortInitialize done \n");
-//}
 
-//GetMotherboardSerialNumber();
-// SBC_SSDGetSN();
-// CpuidSerialNumber();
-// GetMemorySerialNumbers();
-  //enable_uart_serial();
-//#ifdef SBC_HASH_UNITEST_ENABLE
-//  SBC_HashMain();
-//#endif
-//#ifdef SBC_AES_UNITEST_ENABLE
-//  SBC_AES_TestMain();
-//  SBC_AesGcmTestMain();
-//#endif
-//
-//#ifdef SBC_ECDSA_TEST_ENABLE
-//  //ecc_test_func();
-//  SBC_EcDsa_TestMain();
-//
-//#endif
-//
-#ifdef SBC_BASEANSWER_TEST
+
+  Print(L"Validate the Base Answer !!! \n");
 
   CHAR8 *baseanswer = "SBCBaseAnswer";
   UINTN answlen =strlen(baseanswer);
   SBC_BaseAnswerValidate((UINT8 *)baseanswer , answlen);
+
+  Print(L"Generate the IDs .. !! \n");
+
+  ZeroMem((void *)&atpid ,sizeof atpid);
+
+  ret = SBC_DiceKeysGen(ImageHandle, (VOID *)&atpid);
+  if (ret != SBCOK) {
+    Print(L"Dice Key Gen fail \n");
+    return EFI_LOAD_ERROR;
+  }
+
+
+
+
+
+
+
+
+
   
-//extern SBCStatus  SBC_FindBlkIoHandle(OUT VOID **hblk);
-//
-//  VOID *blkio = NULL;
-//  UINT8 rdbuf[64] = {0,};
-//  UINT32 rdlen = 64;
-//  SBC_FindBlkIoHandle(&blkio);
-//  Print(L"BlkIO Handle : %p \n", blkio);
-//  if (blkio == NULL) {
-//      Print(L"Block Handle is NULL \n");
-//      return EFI_DEVICE_ERROR;
-//  }
-//
-//  if(SBC_ReadRawHeaderInfo(blkio, (void *)rdbuf, &rdlen) != SBCOK) {
-//    Print(L"Raw Data read fail \n");
-//    return EFI_DEVICE_ERROR;
-//  }
-//
-//  Print(L"%a:%d \n", __FUNCTION__, __LINE__);
-  //nvme_get_serial();
-//  CHAR8 *base_answer = "anti-tampering!?";
-    //UINT8 devid[32] = {0,};
-    //UINT8 fwid[32] = {0,};
-////  SBC_BaseAnswerValidate((UINT8 *)base_answer, strlen(base_answer));
-
-    //SBC_GenDeviceID(devid);
-    //SBC_GenFWID(ImageHandle, devid, fwid);
-
-
-  //get_blokio_handleparse();
-    //st_open_protocol(ImageHandle);
-    //st_deivce_paht_string(ImageHandle);
-//  SBC_external_mem_print_bin("Device ID", devid, sizeof devid);
-#endif
-//
-//#ifdef SBC_X509_TEST
-//  SBC_X509TestMain();
-//#endif
-//
-//  extern VOID SBC_FileCtrlTestMain(VOID);
-//  SBC_FileCtrlTestMain();
-
- 
-    
-  Print(L"%a:%d \n", __FUNCTION__, __LINE__);
    return EFI_SUCCESS;
 }
 

@@ -145,6 +145,22 @@ SBCStatus SBC_RawPrtReadBlock(VOID *blkhnd, VOID *rdbuf,  UINT32 *rdlen, UINTN r
  * 
  * \return SBCStatus 
  */
-SBCStatus  SBC_FindBlkIoHandle(OUT VOID **hblk);                      
+SBCStatus  SBC_FindBlkIoHandle(OUT VOID **hblk);  
+                    
+/*!
+ * \fn SBCStatus  SBC_RawPrtBlockWrite(VOID *blkio, UINT8 *wrbuf, UINT32 wrlen, UINT32 wrlba)
+ * 
+ * Write the data in Raw Partition 
+ * 
+ * \author leoc (6/9/25)
+ * 
+ * \param blkio  
+ * \param wrbuf  
+ * \param wrlen  
+ * \param wrlba  
+ * 
+ * \return SBCStatus 
+ */
+SBCStatus  SBC_RawPrtBlockWrite(VOID *blkio, UINT8 *wrbuf, UINT32 wrlen, UINT32 wrlba);                    
 
 #endif
