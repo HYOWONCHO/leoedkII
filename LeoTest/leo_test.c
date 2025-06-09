@@ -553,7 +553,7 @@ SBCStatus  SBC_DiceKeysGen(EFI_HANDLE ImageHandle, VOID *p)
 
     //SBC_mem_print_bin("Firmware ID", h->fwid, sizeof h->fwid);
 
-    ret = SBC_GenOSID(ImageHandle, h->osid, h->fwid);
+    ret = SBC_GenOSID(ImageHandle,  h->fwid, h->osid);
     if (ret != SBCOK) {
         Print(L"FW ID generate fail \n");
         goto errdone;
@@ -598,13 +598,17 @@ UefiMain (
   atp_ident_t atpid;
   SBCStatus ret = SBCOK;
 
-
+  CHAR8 *baseanswer = "SBCBaseAnswer";
+  UINTN answlen =strlen(baseanswer);
 
   Print(L"Validate the Base Answer !!! \n");
 
-  CHAR8 *baseanswer = "SBCBaseAnswer";
-  UINTN answlen =strlen(baseanswer);
-  SBC_BaseAnswerValidate((UINT8 *)baseanswer , answlen);
+
+  ret = SBC_BaseAnswerValidate((UINT8 *)baseanswer , answlen);
+  if (ret != SBCOK) {
+    Print(L"Base Answer validate error \n");
+    return EFI_LOAD_ERROR;
+  }
 
   Print(L"Generate the IDs .. !! \n");
 
@@ -617,12 +621,18 @@ UefiMain (
   }
 
 
-
-
-
-
-
-
+  // If base answer is not record in raw partition 
+//ret = SBC_BaseAnswerEncryptStore(
+//                                    (UINT8 *)baseanswer,
+//                                    answlen,
+//                                    atpid.osid,
+//                                    ATP_IDENT_KEY_STG
+//    );
+//
+//if (ret  != SBCOK) {
+//  Print(L"Base Answer Keyh store fail \n");
+//  return EFI_LOAD_ERROR;
+//}
 
   
    return EFI_SUCCESS;

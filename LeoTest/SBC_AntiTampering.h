@@ -54,8 +54,8 @@ typedef struct _fhnd_img_t {
 
 #define BASE_ANS_MAX_LEN            256
 #define BASE_ANS_KEY_STR            32      /**< Base Answer Encrypt/Decrypt Key Strength */
-#define BASE_ANS_IV_KEY_STR         16      /**< Base Answer IV size */
-#define BASE_ANS_TAG_LEN            32      /**< Base Answer IV size */
+#define BASE_ANS_IV_KEY_STR         12      /**< Base Answer IV size */
+#define BASE_ANS_TAG_LEN            16      /**< Base Answer TAG size */
 #define BASE_ANS_BLK_LBA            0
 #define BASE_ANS_SAT_OFFSET         0x100 // 256
 #define BASE_ANS_STREAM_LEN         512
@@ -75,6 +75,7 @@ typedef struct _base_ansid_t {
     UINT8   iv[BASE_ANS_IV_KEY_STR];            //! Base Answer decrypt IV value
     UINT8   tag[BASE_ANS_TAG_LEN];              //! Base Answer decrypt TAG which used in the AES GCM Mode
 }base_ansid_t;
+
 #pragma pack()
 /*! } */
 
@@ -111,7 +112,7 @@ SBCStatus SBC_GenDeviceID(UINT8 *devid);
  * @return On Success, return the SBCOK, otherwise, return the apporiate error
  *         value. 
  */
-SBCStatus SBC_BaseAnswerEncryptStore(UINT8 *msg, UINT32 msglen);
+SBCStatus SBC_BaseAnswerEncryptStore(UINT8* msg, UINT32 msgl, UINT8 *key, UINT32 keyl);
 
 
 /**
@@ -142,5 +143,7 @@ SBCStatus  SBC_BaseAnswerValidate(UINT8 *answer, UINTN answerl);
 SBCStatus SBC_GenFWID(EFI_HANDLE *h_image, UINT8 *devid, UINT8 *fwid);
 
 SBCStatus SBC_GenOSID(EFI_HANDLE *h_image, UINT8 *fwid, UINT8 *osid);
+
+
 
 #endif

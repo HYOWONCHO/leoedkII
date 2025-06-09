@@ -223,10 +223,10 @@ SBCStatus SBC_AESDecrypt(SBC_AESContext *ctx)
   SBCStatus ret = SBCOK;
 
   //DEBUG((DEBUG_INFO , "%s:%d \n",__func__, __LINE__));
-  SBC_AES_RET_VAL_IF_FAIL((ctx != NULL), SBCNULLP);
-  SBC_AES_RET_VAL_IF_FAIL((ctx->handle != NULL), SBCNULLP);
-  SBC_AES_RET_VAL_IF_FAIL((ctx->in != NULL), SBCNULLP);
-  SBC_AES_RET_VAL_IF_FAIL((ctx->out != NULL), SBCNULLP);
+//SBC_AES_RET_VAL_IF_FAIL((ctx != NULL), SBCNULLP);
+//SBC_AES_RET_VAL_IF_FAIL((ctx->handle != NULL), SBCNULLP);
+//SBC_AES_RET_VAL_IF_FAIL((ctx->in != NULL), SBCNULLP);
+//SBC_AES_RET_VAL_IF_FAIL((ctx->out != NULL), SBCNULLP);
 
   switch(ctx->algoid) {
     case SBC_CIPHER_AES_CBC:
