@@ -947,12 +947,18 @@ errdone:
 }
 
 
-SBCStatus  _baseanswer_store(UINT8 *msg, UINT32 msglen)
+SBCStatus  _baseanswer_store(VOID *p)
 {
     SBCStatus ret = SBCOK;
 
     VOID *blkio = NULL;
+    base_ansid_t *h = NULL;
+    UINT8 loadbuf[BASE_ANS_BLK_LEN] = {0, };
+    UINT8 *cpy = NULL;
+    UINT32 ldlen = BASE_ANS_BLK_LEN;
 
+    h = (base_ansid_t *)p;
+    
     //SBC_RET_VALIDATE_ERRCODEMSG((p != NULL), SBCNULLP, "Invalid parameter");
 
     // Find the Block device handlef for SBC Raw Partition
@@ -962,7 +968,43 @@ SBCStatus  _baseanswer_store(UINT8 *msg, UINT32 msglen)
       goto errdone;
     }
 
-    ret = SBC_RawPrtBlockWrite(blkio, msg, msglen, BASE_ANS_BLK_LBA);
+    ret = SBC_RawPrtReadBlock(blkio, 
+                              (VOID *)loadbuf, 
+                              &ldlen, 
+                              BASE_ANS_BLK_LBA);
+    if (ret != SBCOK) {
+        Print(L"SBC_RawPrtReadBlock fail (%p)\n", blkio);
+        goto errdone;
+    }
+    
+
+    // TODO : Fill up the Base Answer in RAM buffer 
+    cpy = (UINT8 *)&loadbuf[BASE_ANS_SAT_OFFSET];
+    Print(L"Encrypt Message Length : %d \n", h->msglen);
+    CopyMem((void *)cpy, &h->msglen, sizeof h->msglen);
+    cpy += sizeof h->msglen;
+
+    CopyMem((void *)cpy, h->encmsg, h->msglen );
+    cpy += h->msglen;
+
+    CopyMem((void *)cpy, h->tag, BASE_ANS_TAG_LEN);
+    cpy += BASE_ANS_TAG_LEN;
+
+   
+    SBC_mem_print_bin("Store Key", h->key,  32);
+    CopyMem((void *)cpy, h->key, BASE_ANS_KEY_STR);
+    cpy += BASE_ANS_KEY_STR;
+
+    
+
+    CopyMem((void *)cpy, h->iv, BASE_ANS_IV_KEY_STR);
+
+
+    SBC_mem_print_bin("Base Ans write", loadbuf, 512);
+
+
+
+    ret = SBC_RawPrtBlockWrite(blkio, loadbuf, BASE_ANS_BLK_LEN, BASE_ANS_BLK_LBA);
     if (ret != SBCOK) {
       //Print(L"SBC Raw Partition Base Answer write fail \n");
       goto errdone;
@@ -1005,12 +1047,16 @@ static SBCStatus _baseanswer_extract_from_disk(base_ansid_t *p)
 
   // Copy Length
   offset = BASE_ANS_SAT_OFFSET;
+  //SBC_mem_print_bin("Load Buf", (UINT8 *)&streams[offset], 256);
   CopyMem((void *)&p->msglen, (void *)&streams[offset], 4);
-  p->msglen = 16; // later remove 
+  //p->msglen = 16; // later remove 
   offset += 4;
 
   CopyMem((void *)p->encmsg, (void *)&streams[offset], p->msglen);
-  offset += 16;
+  offset += p->msglen;
+
+  CopyMem((void *)p->tag, (void *)&streams[offset], BASE_ANS_TAG_LEN);
+  offset += BASE_ANS_TAG_LEN;
 
   CopyMem((void *)p->key, (void *)&streams[offset], BASE_ANS_KEY_STR);
   offset += BASE_ANS_KEY_STR;
@@ -1019,7 +1065,8 @@ static SBCStatus _baseanswer_extract_from_disk(base_ansid_t *p)
   offset += BASE_ANS_IV_KEY_STR;
 
   SBC_mem_print_bin("Enc Msg Len", (UINT8 *)&p->msglen, 4);
-  SBC_mem_print_bin("Enc Message", p->encmsg, 16);
+  SBC_mem_print_bin("Enc Message", p->encmsg, p->msglen);
+  SBC_mem_print_bin("Tag Message", p->tag, BASE_ANS_TAG_LEN);
   SBC_mem_print_bin("Enc Key", p->key, BASE_ANS_KEY_STR);
   SBC_mem_print_bin("Enc IV", p->iv, BASE_ANS_IV_KEY_STR);
 
@@ -1032,16 +1079,59 @@ errdone:
     return ret;
 }
 
-SBCStatus SBC_BaseAnswerEncryptStore(UINT8 *msg, UINT32 msglen)
+SBCStatus SBC_BaseAnswerEncryptStore(UINT8* msg, UINT32 msgl, UINT8 *key, UINT32 keyl)
 {
     SBCStatus ret = SBCOK;
+    base_ansid_t ansid;
+
+    SBC_AESContext aesctx;
+    SBC_AESGcmCtx  ctx;
+    UINT8 iv[BASE_ANS_IV_KEY_STR] = {0, };
+
+
+    ZeroMem((void *)&ansid ,sizeof ansid);
+    CopyMem((void *)ansid.key, key, BASE_ANS_KEY_STR);
+    CopyMem((void *)ansid.iv, iv, BASE_ANS_IV_KEY_STR);
+
+
+    // A. Encrypt the Message 
+
+    ctx.key.value = ansid.key;
+    ctx.key.length = BASE_ANS_KEY_STR;
+    ctx.iv.value = ansid.iv;
+    ctx.iv.length = BASE_ANS_IV_KEY_STR;
+    ctx.aad.value = NULL;
+    ctx.aad.length = 0;
+    ctx.msg.value = msg;
+    ctx.msg.length = msgl;
+    ctx.tag.value = ansid.tag;
+    ctx.tag.length = BASE_ANS_TAG_LEN;
+
+    ctx.out.value = ansid.encmsg;
+    ctx.out.length = sizeof ansid.encmsg;
 
     
-    // A. Compute the FWID 
+
+    aesctx.gcm = &ctx;
+    aesctx.algoid = SBC_CIPHER_AES_GCM;
+
+    ret = SBC_AESEncrypt(&aesctx);
+    if (ret != SBCOK) {
+      Print(L"Base Encrypt Fail \n");
+      goto errdone;
+    }
+
+    ansid.msglen = ctx.out.length;
+
+    ret = _baseanswer_store((VOID *)&ansid);
+    if (ret != SBCOK) {
+      Print(L"Base Answer storing fail \n");
+      goto errdone;
+    }
 
 
-    //_baseanswer_store()
-//errdone:
+    ret = SBCOK;
+errdone:
 
     return ret;
 
@@ -1055,51 +1145,48 @@ SBCStatus  SBC_BaseAnswerValidate(UINT8 *answer, UINTN answerl)
     //UINT8 rdbuf[256];
     //UINT8 baseanswer[256] = {0, };
     base_ansid_t ansid;
-    SBC_AESContext ctx;
-    SBC_AESCBCCtx  cbcctx;
+    SBC_AESContext aesctx;
+    SBC_AESGcmCtx  ctx;
 
     UINT8 decbuf[BASE_ANS_STREAM_LEN] = {0,};
-
-    SBC_CipherTLV enclv;
-    SBC_CipherTLV declv;
 
     SBC_RET_VALIDATE_ERRCODEMSG((answer != NULL), SBCNULLP, "Answer is Nill");
 
     ZeroMem((void *)&ctx, sizeof ctx);
-    ZeroMem((void *)&cbcctx, sizeof cbcctx);
+    ZeroMem((void *)&aesctx, sizeof aesctx);
     ZeroMem(&ansid, sizeof ansid);
 
     ret = _baseanswer_extract_from_disk(&ansid);
     SBC_RET_VALIDATE_ERRCODEMSG((ret == SBCOK),ret, "Disk read fail");
 
-    ctx.key = ansid.key;
-    ctx.keylen = SBC_KEY_STRENGTH_256;
-    SBC_AESInit(&ctx);
 
-    enclv.value = ansid.encmsg;
-    enclv.length = ansid.msglen;
+    ctx.key.value = ansid.key;
+    ctx.key.length = BASE_ANS_KEY_STR;
+    ctx.iv.value = ansid.iv;
+    ctx.iv.length = BASE_ANS_IV_KEY_STR; 
+    ctx.aad.value = NULL;
+    ctx.aad.length = 0;
+    ctx.msg.value = ansid.encmsg;
+    ctx.msg.length = ansid.msglen;
+    ctx.tag.value = ansid.tag;
+    ctx.tag.length = BASE_ANS_TAG_LEN;
 
-    declv.value = decbuf;
-    declv.length = 0;
+    ctx.out.value = decbuf;
+    ctx.out.length = BASE_ANS_STREAM_LEN;
 
-    ctx.cbc = &cbcctx;
-    ctx.key = ansid.key;
-    ctx.keylen = SBC_KEY_STRENGTH_256 >> 3;
-    ctx.algoid = SBC_CIPHER_AES_CBC;
-    ctx.in = &enclv;
-    ctx.out = &declv;
-    ctx.iv = ansid.iv;
+    aesctx.gcm = &ctx;
+    aesctx.algoid = SBC_CIPHER_AES_GCM;
 
-    if (SBC_AESDecrypt(&ctx) != SBCOK) {
+    if (SBC_AESDecrypt(&aesctx) != SBCOK) {
       Print(L"Base Answer Decrypt fail \n");
       ret = SBCFAIL;
       goto errdone;
     }
 
     SBC_mem_print_bin("decrypt msg", answer, answerl);
-    SBC_mem_print_bin("decrypt msg", declv.value, answerl);
+    SBC_mem_print_bin("decrypt msg", decbuf, ctx.out.length);
 
-    if (CompareMem((const void *)declv.value, (const void *)answer, answerl) != 0) {
+    if (CompareMem((const void *)decbuf, (const void *)answer, answerl) != 0) {
       Print(L"Base Answer validate Fail \n");
       ret = SBCFAIL;
       goto errdone;
