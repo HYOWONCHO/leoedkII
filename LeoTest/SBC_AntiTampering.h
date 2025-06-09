@@ -4,6 +4,27 @@
 #define STR_FSBL_F_NAME             L"FS1:\\EFI\\BOOT\\FSBL.efi"
 #define SBC_AT_HASH_LEN             32
 
+/*!
+    \defgroup DigestSystem
+    \{
+*/
+/*!
+    \brief Anti-tampering DICE key strength 
+*/
+#define ATP_IDENT_KEY_STG          32
+#pragma pack(1)
+/*!
+ * Anti-tampering Identify for DICE key
+ * 
+ * \author leoc (6/9/25)
+ */
+typedef struct {
+    UINT8           devid[ATP_IDENT_KEY_STG];   //! Device ID 
+    UINT8           fwid[ATP_IDENT_KEY_STG];    //! Firmware ID
+    UINT8           osid[ATP_IDENT_KEY_STG];    //! OS ID 
+}atp_ident_t;
+#pragma pack()
+
 
 #pragma pack(1)
 typedef struct _hw_unique_info_t {
@@ -24,6 +45,7 @@ typedef struct _fhnd_img_t {
 
 }fhnd_img_t;
 #pragma pack()
+/*! \}*/
 
 /*!
     \defgroup BaseAnswer In terms of the Base Answer behavior
@@ -89,7 +111,7 @@ SBCStatus SBC_GenDeviceID(UINT8 *devid);
  * @return On Success, return the SBCOK, otherwise, return the apporiate error
  *         value. 
  */
-SBCStatus SBC_BaseAnswerEncryptStore(UINT8 *out, UINTN *outl);
+SBCStatus SBC_BaseAnswerEncryptStore(UINT8 *msg, UINT32 msglen);
 
 
 /**
@@ -118,5 +140,7 @@ SBCStatus  SBC_BaseAnswerValidate(UINT8 *answer, UINTN answerl);
  *         value.
  */
 SBCStatus SBC_GenFWID(EFI_HANDLE *h_image, UINT8 *devid, UINT8 *fwid);
+
+SBCStatus SBC_GenOSID(EFI_HANDLE *h_image, UINT8 *fwid, UINT8 *osid);
 
 #endif

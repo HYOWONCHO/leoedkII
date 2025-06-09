@@ -38,7 +38,205 @@ typedef struct {
 } NVME_CONTROLLER_DATA;
 #pragma pack()
 
+static SBCStatus _kernel_image_load(EFI_HANDLE ImageHandle, LV_t *lv)
+{
+  SBCStatus                       ret = SBCFAIL;
+  EFI_STATUS                      Status;
+  EFI_SIMPLE_FILE_SYSTEM_PROTOCOL *SimpleFileSystem;
+  EFI_FILE_PROTOCOL               *Root;
+  EFI_FILE_PROTOCOL               *FileHandle;
+  UINTN                           BufferSize;
+  VOID                            *Buffer;
+  EFI_DEVICE_PATH_PROTOCOL        *DevicePath;
+  EFI_LOADED_IMAGE_PROTOCOL       *LoadedImage;
+  EFI_HANDLE                      *HandleBuffer;
+  UINTN                           NumberOfHandles;
+  UINTN                           Index;
+  CHAR16                          FilePath[] = L"\\EFI\\rocky\\vmlinuz_test"; // Path relative to the root of the file system
+  BOOLEAN                         FoundFs1 = FALSE;
+  EFI_DEVICE_PATH_TO_TEXT_PROTOCOL *DevicePathToText = NULL;
+  CHAR16                          *DevicePathStr = NULL;
+  CONST CHAR16                     *deviceidnetiifer = L"NVMe";
 
+
+  // 1. Get the Loaded Image Protocol to determine the current device
+  //    This is one way to find the file system where your current image is located.
+  //    You could also iterate all SimpleFileSystem protocols to find FS1 explicitly.
+  Status = gBS->OpenProtocol (
+                  ImageHandle,
+                  &gEfiLoadedImageProtocolGuid,
+                  (VOID **)&LoadedImage,
+                  ImageHandle,
+                  NULL,
+                  EFI_OPEN_PROTOCOL_GET_PROTOCOL
+                  );
+  if (EFI_ERROR (Status)) {
+    Print(L"Failed to open LoadedImageProtocol: %r\n", Status);
+    goto errdone;
+  }
+
+  // 2. Locate all Simple File System Protocols
+  Status = gBS->LocateHandleBuffer (
+                  ByProtocol,
+                  &gEfiSimpleFileSystemProtocolGuid,
+                  NULL,
+                  &NumberOfHandles,
+                  &HandleBuffer
+                  );
+  if (EFI_ERROR (Status)) {
+    Print(L"Failed to locate SimpleFileSystemProtocol handles: %r\n", Status);
+    goto errdone;
+  }
+
+  Print(L"Number of HandleBuffre : %d \n", NumberOfHandles);
+
+  for (Index = 0; Index < NumberOfHandles; Index++) {
+    Status = gBS->OpenProtocol (
+                    HandleBuffer[Index],
+                    &gEfiSimpleFileSystemProtocolGuid,
+                    (VOID **)&SimpleFileSystem,
+                    ImageHandle,
+                    NULL,
+                    EFI_OPEN_PROTOCOL_GET_PROTOCOL
+                    );
+    if (EFI_ERROR (Status)) {
+      continue; // Skip if we can't open this instance
+    }
+
+    gBS->HandleProtocol(HandleBuffer[Index], &gEfiDevicePathProtocolGuid, (VOID**)&DevicePath);
+    gBS->LocateProtocol(&gEfiDevicePathToTextProtocolGuid, NULL, (VOID**)&DevicePathToText);
+    DevicePathStr = DevicePathToText->ConvertDevicePathToText(DevicePath, FALSE, FALSE);
+
+    Print(L"Device path str : %s \n", DevicePathStr);
+    if (StrStr((CONST CHAR16 *)DevicePathStr, deviceidnetiifer) == NULL) {
+      Print(L"NVMe path NOT find \n");
+      continue;
+    }
+
+    Status = SimpleFileSystem->OpenVolume (SimpleFileSystem, &Root);
+    if (EFI_ERROR (Status)) {
+      Print(L"Failed to open volume: %r\n", Status);
+      continue;
+    }
+
+    FoundFs1 = TRUE; // Assuming we found the correct file system
+    Print(L"Found a file system, attempting to open: %s\n", FilePath);
+    break; // Found the file system, exit loop
+  }
+
+  gBS->FreePool(HandleBuffer);
+
+  if (!FoundFs1) {
+    Print(L"Could not locate the desired file system (FS1:).\n");
+    ret = SBCNOTFND;
+    goto errdone;
+  }
+
+  // 3. Open the X64.efi file
+  Status = Root->Open (
+                    Root,
+                    &FileHandle,
+                    FilePath,
+                    EFI_FILE_MODE_READ,
+                    0 // Attributes: no special attributes for reading
+                    );
+  if (EFI_ERROR (Status)) {
+    Print(L"Failed to open file %s: %r\n", FilePath, Status);
+    Root->Close(Root);
+    goto errdone;
+  }
+
+  // 4. Get the file size
+  EFI_FILE_INFO *FileInfo;
+  BufferSize = 0;
+  // First call to GetInfo with BufferSize = 0 to get the required buffer size
+  Status = FileHandle->GetInfo (
+                         FileHandle,
+                         &gEfiFileInfoGuid,
+                         &BufferSize,
+                         NULL
+                         );
+  if (Status != EFI_BUFFER_TOO_SMALL) {
+    Print(L"Failed to get file info (first call): %r\n", Status);
+    FileHandle->Close(FileHandle);
+    Root->Close(Root);
+    goto errdone;
+  }
+
+  Status = gBS->AllocatePool (EfiBootServicesData, BufferSize, (VOID **)&FileInfo);
+  if (EFI_ERROR (Status)) {
+    Print(L"Failed to allocate memory for file info: %r\n", Status);
+    FileHandle->Close(FileHandle);
+    Root->Close(Root);
+    goto errdone;
+  }
+
+  Status = FileHandle->GetInfo (
+                         FileHandle,
+                         &gEfiFileInfoGuid,
+                         &BufferSize,
+                         FileInfo
+                         );
+  if (EFI_ERROR (Status)) {
+    Print(L"Failed to get file info (second call): %r\n", Status);
+    gBS->FreePool(FileInfo);
+    FileHandle->Close(FileHandle);
+    Root->Close(Root);
+    goto errdone;
+  }
+
+  UINT64 FileSize = FileInfo->FileSize;
+  Print(L"File size of %s: %llu bytes\n", FilePath, FileSize);
+  gBS->FreePool(FileInfo);
+
+  // 5. Allocate buffer to read the file content
+  Buffer = NULL;
+  Status = gBS->AllocatePool (EfiBootServicesData, FileSize, &lv->value);
+  if (EFI_ERROR (Status)) {
+    Print(L"Failed to allocate memory for file content: %r\n", Status);
+    FileHandle->Close(FileHandle);
+    Root->Close(Root);
+    goto errdone;
+  }
+
+  // 6. Read the file content
+  BufferSize = (UINTN)FileSize; // BufferSize must be UINTN for Read()
+  Status = FileHandle->Read (
+                         FileHandle,
+                         &BufferSize,
+                         lv->value
+                         );
+  if (EFI_ERROR (Status)) {
+    Print(L"Failed to read file: %r\n", Status);
+    gBS->FreePool(Buffer);
+    FileHandle->Close(FileHandle);
+    Root->Close(Root);
+    goto errdone;
+  }
+
+  lv->length = (UINT32)BufferSize;
+  Print(L"Successfully read %u bytes from %s.\n", (UINT32)BufferSize, FilePath);
+
+  // Now 'Buffer' contains the content of X64.efi.
+  // You can process this content (e.g., parse it as an EFI executable)
+
+  // Example: print a few bytes (assuming it's a binary file)
+  // Be careful printing raw binary data to the console, it might not be readable.
+  // For demonstration, let's print the first 16 bytes in hex.
+
+  SBC_mem_print_bin("First 16 byte", (UINT8 *)lv->value, 16);
+
+  ret = SBCOK;
+errdone:
+  // 7. Close the file and volume handles
+  FileHandle->Close(FileHandle);
+  Root->Close(Root);
+  gBS->FreePool(Buffer);
+
+  return ret;
+  
+
+}
 
 SBCStatus _ssbl_image_load(EFI_HANDLE ImageHandle, LV_t *lv)
 {
@@ -749,6 +947,34 @@ errdone:
 }
 
 
+SBCStatus  _baseanswer_store(UINT8 *msg, UINT32 msglen)
+{
+    SBCStatus ret = SBCOK;
+
+    VOID *blkio = NULL;
+
+    //SBC_RET_VALIDATE_ERRCODEMSG((p != NULL), SBCNULLP, "Invalid parameter");
+
+    // Find the Block device handlef for SBC Raw Partition
+    ret = SBC_FindBlkIoHandle(&blkio);
+    if (ret != SBCOK || blkio == NULL) {
+      Print(L"SBC_FindBlockIoHandle fail (%p)\n", blkio);
+      goto errdone;
+    }
+
+    ret = SBC_RawPrtBlockWrite(blkio, msg, msglen, BASE_ANS_BLK_LBA);
+    if (ret != SBCOK) {
+      //Print(L"SBC Raw Partition Base Answer write fail \n");
+      goto errdone;
+    }
+
+    ret = SBCOK;
+
+errdone:
+    return ret;
+
+}
+
 static SBCStatus _baseanswer_extract_from_disk(base_ansid_t *p)
 {
   SBCStatus ret = SBCOK;
@@ -806,46 +1032,17 @@ errdone:
     return ret;
 }
 
-SBCStatus SBC_BaseAnswerEncryptStore(UINT8 *out, UINTN *outl)
+SBCStatus SBC_BaseAnswerEncryptStore(UINT8 *msg, UINT32 msglen)
 {
     SBCStatus ret = SBCOK;
-#if 0
-#ifdef  SBC_BASEANSWER_TEST
-    CHAR8 *base_answer = "anti-tampering!?";
-    //CHAR8 *key = "33ac9eccc4cc75e2711618f80b1548e8";
-    //CHAR8 *iv = "00000000000000000000000000000000";
-    // need to convert from str to hex;
-    //UINT8 *answer = "E06B9DBDB345C774B545FFC65333307C732B5C524D384B32DA7E5C8646B26A";  
-    //UINT8 *answer = "\xE0\x6B\x9D\xBD\xB3\x45\xC7\x74\xB5\x45\xFF\xC6\x53\x33\x30\x7C\x73\x2B\x5C\x52\x4D\x38\x4B\x32\xDA\x7E\x5C\x86\x46\xB2\x6A"; 
 
-#else    
-    UINT8 *base_answer = NULL;
-    UINT8 *key = NULL;
-    UINT8 *tag = NULL;
-#endif
-
-    //UINT8 *tagbase;
-    //UINT8 *encbase;
-    //UINT8 *ivbase;
+    
+    // A. Compute the FWID 
 
 
+    //_baseanswer_store()
+//errdone:
 
-    LV_t lv;
-
-    SBC_RET_VALIDATE_ERRCODE((out != NULL), SBCNULLP);
-    SBC_RET_VALIDATE_ERRCODE((outl <= 0), SBCZEROL);
-
-    lv.value = out;
-
-    lv.length = *outl;
-
-    ret = _baseanswer_extract_from_disk(&lv);
-    SBC_RET_VALIDATE_ERRCODEMSG((ret != SBCOK), SBCIO, "Baseanswer read fail");
-
-   
-errdone:
-    *outl = lv.length;
-#endif
     return ret;
 
 }
@@ -917,46 +1114,30 @@ errdone:
 
 }
 
+
+
+
 SBCStatus SBC_GenDeviceID(UINT8 *devid)
 {
     SBCStatus ret = SBCOK;
-    at_key_t key;
+    //at_key_t key;
     LV_t    rdlv = {
         .value = NULL,
         .length = 0
     };
     
-#ifndef  SBC_BASEANSWER_TEST
     hw_uniqueinfo_t info;
+    UINT8 *computebuf = NULL;
+    UINTN cnt = 0;
 
-#else
-   hw_uniqueinfo_t info = {
-       .mbsn = { 0x51, 0x43, 0x51, 0x34, 0x53, 0x31, 0x32, 0x34, 0x34, 0x34, 0x30, 0x30, 0x4b, 0x52},
-       .mbsnl = 14,
-       .mmsn = {0x30, 0x30, 0x30, 0x30, 0x30, 0x30, 0x30, 0x30},
-       .mmsnl = 8,
-       .nvmesn = {0x36, 0x34, 0x37, 0x39, 0x5f, 0x41, 0x37, 0x39, 0x36, 0x5f, 0x34, 0x41,0x33, 0x30, 0x5f, 0x35, 0x43, 0x37, 0x36 },
-       .nvmesnl = 20
-   };
-
-    CHAR8 *pemkey_priv;
-    CHAR8 *pemkey_pub;
-    UINTN pemsize;
-    CONST CHAR8 *pemheader_priv="-----BEGIN PRIVATE KEY-----";
-    CONST CHAR8 *pemoffter_priv="-----END PRIVATE KEY-----";
-    CONST CHAR8 *pemheader_pub="-----BEGIN PUBLIC KEY-----";
-    CONST CHAR8 *pemoffter_pub="-----END PUBLIC KEY-----";
-   UINT8 *computebuf = NULL;
-   UINTN cnt = 0;
-#endif
     SBC_RET_VALIDATE_ERRCODEMSG((devid != NULL),SBCNULLP, "Out buffer Nill");
 
    
 
-#ifndef  SBC_BASEANSWER_TEST
+
     // TODO : read the device information 
     ZeroMem((void *)&info, sizeof info);
-#else
+
 
     _baseboard_sn(&info);
     SBC_external_mem_print_bin("BaseBoard SN", info.mbsn,info.mbsnl);
@@ -1008,29 +1189,6 @@ SBCStatus SBC_GenDeviceID(UINT8 *devid)
 
     SBC_mem_print_bin("Device ID", devid, 32);
 
-#endif
-
-
-    SBC_RET_VALIDATE_ERRCODEMSG((ret == SBCOK), ret, "Hash compute fail");
-
-    SBC_DICESeedKeyPair(devid, &key);
-
-    SBC_external_mem_print_bin("Devid Private", key.d, key.dl);
-    SBC_external_mem_print_bin("Pub", key.q.value, key.ql);
-
-    SBC_ConvertRawKeyPem(
-                    key.d, key.dl,
-                    pemheader_priv, pemoffter_priv,
-                    &pemkey_priv,&pemsize
-            );
-    SBC_external_mem_print_bin("PRIV pem", (UINT8 *)pemkey_priv, (UINT32)pemsize);
-
-    SBC_ConvertRawKeyPem(
-                    key.q.value, key.ql,
-                    pemheader_pub, pemoffter_pub,
-                    &pemkey_pub,&pemsize
-            );
-    SBC_external_mem_print_bin("PUBLIC pem", (UINT8 *)pemkey_pub, (UINT32)pemsize);
 
     
 errdone:
@@ -1041,7 +1199,6 @@ errdone:
     return ret;
 
 }
-
 
 SBCStatus SBC_GenFWID(EFI_HANDLE *h_image, UINT8 *devid, UINT8 *fwid)
 {
@@ -1085,3 +1242,176 @@ errdone:
 
 
 }
+
+
+SBCStatus SBC_GenOSID(EFI_HANDLE *h_image, UINT8 *fwid, UINT8 *osid)
+{
+  SBCStatus ret       = SBCOK;
+  UINT8 *temp = NULL;
+  UINT8 *rdbuf = NULL;
+  LV_t lv;
+
+
+  lv.value = rdbuf;
+  lv.length = 0;
+
+  // OS Kernel Image read 
+  ret = _kernel_image_load(h_image, &lv);
+  if (ret != SBCOK) {
+    Print(L"Kernel Image load fail \n");
+    goto errdone;
+  }
+
+  temp = AllocateZeroPool(SBC_AT_HASH_LEN + lv.length);
+  SBC_RET_VALIDATE_ERRCODEMSG((temp != NULL), SBCNULLP, "memeory creation fail");
+
+  CopyMem((void *)&temp[0], fwid, SBC_AT_HASH_LEN);
+  CopyMem((void *)&temp[SBC_AT_HASH_LEN], lv.value, lv.length);
+
+  ret = SBC_HashCompute(
+                             NULL, /* Not yet used */
+                             temp,
+                             lv.length + SBC_AT_HASH_LEN,
+                             osid
+                          ) ;
+
+  SBC_mem_print_bin("OS ID", osid, 32);
+errdone:
+
+  if (temp != NULL) {
+    FreePool(temp);
+  }
+
+  if (lv.value != NULL) {
+    FreePool(lv.value);
+  }
+  return ret;
+
+
+}
+
+//SBCStatus SBC_GenDeviceID(UINT8 *devid)
+//{
+//    SBCStatus ret = SBCOK;
+//    at_key_t key;
+//    LV_t    rdlv = {
+//        .value = NULL,
+//        .length = 0
+//    };
+//
+//#ifndef  SBC_BASEANSWER_TEST
+//    hw_uniqueinfo_t info;
+//
+//#else
+//   hw_uniqueinfo_t info = {
+//       .mbsn = { 0x51, 0x43, 0x51, 0x34, 0x53, 0x31, 0x32, 0x34, 0x34, 0x34, 0x30, 0x30, 0x4b, 0x52},
+//       .mbsnl = 14,
+//       .mmsn = {0x30, 0x30, 0x30, 0x30, 0x30, 0x30, 0x30, 0x30},
+//       .mmsnl = 8,
+//       .nvmesn = {0x36, 0x34, 0x37, 0x39, 0x5f, 0x41, 0x37, 0x39, 0x36, 0x5f, 0x34, 0x41,0x33, 0x30, 0x5f, 0x35, 0x43, 0x37, 0x36 },
+//       .nvmesnl = 20
+//   };
+//
+//    CHAR8 *pemkey_priv;
+//    CHAR8 *pemkey_pub;
+//    UINTN pemsize;
+//    CONST CHAR8 *pemheader_priv="-----BEGIN PRIVATE KEY-----";
+//    CONST CHAR8 *pemoffter_priv="-----END PRIVATE KEY-----";
+//    CONST CHAR8 *pemheader_pub="-----BEGIN PUBLIC KEY-----";
+//    CONST CHAR8 *pemoffter_pub="-----END PUBLIC KEY-----";
+//   UINT8 *computebuf = NULL;
+//   UINTN cnt = 0;
+//#endif
+//    SBC_RET_VALIDATE_ERRCODEMSG((devid != NULL),SBCNULLP, "Out buffer Nill");
+//
+//
+//
+//#ifndef  SBC_BASEANSWER_TEST
+//    // TODO : read the device information
+//    ZeroMem((void *)&info, sizeof info);
+//#else
+//
+//    _baseboard_sn(&info);
+//    SBC_external_mem_print_bin("BaseBoard SN", info.mbsn,info.mbsnl);
+//    SBC_mem_print_bin("BaseBoard SN", info.mbsn,info.mbsnl);
+//
+//    _memorydevice_sn(&info);
+//    SBC_external_mem_print_bin("MemoryDevice SN", info.mmsn, info.mmsnl);
+//    SBC_mem_print_bin("MemoryDevice SN", info.mmsn, info.mmsnl);
+//
+//    _nvme_get_serial(&info);
+//    SBC_external_mem_print_bin("NVME SN", info.nvmesn,info.nvmesnl);
+//    SBC_mem_print_bin("NVME SN", info.nvmesn,info.nvmesnl);
+//
+//    //_read_fsbl_image(&rdlv);
+//    efi_boot_fsbl_load(&rdlv);
+//    SBC_RET_VALIDATE_ERRCODEMSG((rdlv.value != NULL), SBCNULLP, "FSBL read fail");
+//
+//    computebuf = AllocatePool(info.mbsnl + info.mmsnl + info.nvmesnl + rdlv.length);
+//    SBC_RET_VALIDATE_ERRCODEMSG((computebuf != NULL),SBCNULLP, "Compute buffer Nill");
+//
+//    cnt = 0;
+//    //Print(L" cnt : %d \n", cnt);
+//    CopyMem((void *)&computebuf[0], info.mbsn, info.mbsnl);
+//    cnt = info.mbsnl;
+//
+//    //Print(L"Next cnt : %d \n", cnt);
+//    CopyMem((void *)&computebuf[cnt], info.mmsn, info.mmsnl);
+//    cnt += info.mmsnl;
+//
+//    //Print(L"Next Next cnt : %d \n", cnt);
+//    CopyMem((void *)&computebuf[cnt], info.nvmesn, info.nvmesnl);
+//    cnt += info.nvmesnl;
+//
+//        //Print(L"Next Next cnt : %d \n", cnt);
+//    CopyMem((void *)&computebuf[cnt], rdlv.value, rdlv.length);
+//    cnt += rdlv.length;
+//
+//    dprint("DICE message length  : %d", cnt);
+//    Print(L"DICE message length  : %d \n", cnt);
+//    //SBC_mem_print_bin("Device ID Raw Fmt", computebuf, cnt);
+//    ret = SBC_HashCompute(
+//                             NULL, /* Not yet used */
+//                             computebuf,
+//                             cnt,
+//                             devid
+//                          ) ;
+//
+//
+//
+//    SBC_mem_print_bin("Device ID", devid, 32);
+//
+//#endif
+//
+//
+//    SBC_RET_VALIDATE_ERRCODEMSG((ret == SBCOK), ret, "Hash compute fail");
+//
+//    SBC_DICESeedKeyPair(devid, &key);
+//
+//    SBC_external_mem_print_bin("Devid Private", key.d, key.dl);
+//    SBC_external_mem_print_bin("Pub", key.q.value, key.ql);
+//
+//    SBC_ConvertRawKeyPem(
+//                    key.d, key.dl,
+//                    pemheader_priv, pemoffter_priv,
+//                    &pemkey_priv,&pemsize
+//            );
+//    SBC_external_mem_print_bin("PRIV pem", (UINT8 *)pemkey_priv, (UINT32)pemsize);
+//
+//    SBC_ConvertRawKeyPem(
+//                    key.q.value, key.ql,
+//                    pemheader_pub, pemoffter_pub,
+//                    &pemkey_pub,&pemsize
+//            );
+//    SBC_external_mem_print_bin("PUBLIC pem", (UINT8 *)pemkey_pub, (UINT32)pemsize);
+//
+//
+//errdone:
+//
+//    if(computebuf) {
+//        FreePool(computebuf);
+//    }
+//    return ret;
+//
+//}
+

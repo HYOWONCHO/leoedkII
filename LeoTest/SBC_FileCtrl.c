@@ -379,64 +379,7 @@ SBCStatus  SBC_CheckAvailableBlkIODev(VOID)
 }
 
 
-VOID SBC_FileCtrlTestMain(VOID)
-{
-    SBCStatus ret = SBCOK;
 
-    EFI_HANDLE ImageHandle = NULL;
-    CHAR8 *wrmsg = "Hi, I am Leo, It is an pleasure, to meet you here xxxxx";
-    UINTN wrmsgl = strlen(wrmsg);
-    CHAR16 *fname = L"baseanswer.txt";
-    //UINTN filesize = 0;
-
-    UINT8 rdmsg[64] = {0, };
-    LV_t rdlv;
-    LV_t wrlv;
-
-    // Length/Value structure initialize
-    _lv_set_data(&wrlv, wrmsg, wrmsgl);
-    _lv_set_data(&rdlv, rdmsg, 0);
-
-    // Must step) Find the File handle protocol for gEfiSimpleFileSystemProtocolGuid
-    if(SBC_FileSysFindHndl(&ImageHandle) <= 0) {
-
-        eprint("SBC_FileSysFindHndl fail");
-        return ;
-    }
-
-    ret =  SBC_CreateFile(ImageHandle, fname);
-    if (ret != SBCOK) {
-        eprint("%a file create fail", fname);
-        return;
-    }
-
-     ret = SBC_WriteFile(ImageHandle, fname, &wrlv);
-     if (ret != SBCOK) {
-         eprint("%a frile write fail", fname);
-         return;
-     }
-
-
-     SBC_GetFileSize(fname, (UINTN *)&rdlv.length);
-     dprint("File size of %a : %d", fname, rdlv.length);
-
-
-
-     ret = SBC_ReadFile(ImageHandle, fname, &rdlv);
-     if (ret != SBCOK) {
-         eprint("%a frile read fail", fname);
-         return;
-     }
-
-     SBC_external_mem_print_bin("Read data", rdlv.value, rdlv.length);
-
-
-     SBC_CheckAvailableBlkIODev();
-     return;
-
-
-
-}
 
 
 
@@ -589,61 +532,60 @@ errdone:
 }
  
 
-SBCStatus  SBC_RawPrtBlockWrite(VOID *blkio, UINT8 *wrbuf, UINT32 wrlen)
+SBCStatus  SBC_RawPrtBlockWrite(VOID *blkio, UINT8 *wrbuf, UINT32 wrlen, UINT32 wrlba)
 {
     SBCStatus ret = SBCOK;
     EFI_STATUS retval = EFI_SUCCESS;
     //int idx;
-    int leftcnt = 0;
-    int leftcpy = 0;
+//  int leftcnt = 0;
+//  int leftcpy = 0;
     UINT8 *wrp = NULL;
     EFI_BLOCK_IO_PROTOCOL           *p = NULL;
-    UINT32 wrlba = 0;
-    
+
     SBC_RET_VALIDATE_ERRCODEMSG(((p != NULL) || (wrbuf != NULL)), SBCNULLP, "Invalid Parameter");
     SBC_RET_VALIDATE_ERRCODEMSG((wrlen != 0), SBCZEROL, "Invalid Parameter");
 
     p = (EFI_BLOCK_IO_PROTOCOL *)blkio;
     wrp = wrbuf;
 
-    leftcnt = wrlen / p->Media->BlockSize;
-    leftcpy = wrlen % p->Media->BlockSize;
-
-    while( leftcnt > 0) {
-        retval = p->WriteBlocks(
-                        p,
-                        p->Media->MediaId,
-                        wrlba,
-                        p->Media->BlockSize ,
-                        //(wrlen % p->Media->BlockSize == 0) ? wrlen : p->Media->BlockSize ,
-                        wrp
-            );
-
-        if(EFI_ERROR(retval)) {
-            Print(L"Write Block I/O fail : %r", retval);
-            ret = SBCIO;
-            goto errdone;
-        }
-        wrp += p->Media->BlockSize;
-        wrlba++;
-        leftcnt--;
-    };
+//  leftcnt = wrlen / p->Media->BlockSize;
+//  leftcpy = wrlen % p->Media->BlockSize;
 
 
     retval = p->WriteBlocks(
                     p,
                     p->Media->MediaId,
                     wrlba,
-                    leftcpy,
+                    p->Media->BlockSize ,
                     //(wrlen % p->Media->BlockSize == 0) ? wrlen : p->Media->BlockSize ,
                     wrp
         );
 
     if(EFI_ERROR(retval)) {
-        Print(L"Last Write Block I/O fail : %r", retval);
+        Print(L"Write Block I/O fail : %r", retval);
         ret = SBCIO;
         goto errdone;
     }
+//      wrp += p->Media->BlockSize;
+//      wrlba++;
+//      leftcnt--;
+//
+//
+//
+//  retval = p->WriteBlocks(
+//                  p,
+//                  p->Media->MediaId,
+//                  wrlba,
+//                  leftcpy,
+//                  //(wrlen % p->Media->BlockSize == 0) ? wrlen : p->Media->BlockSize ,
+//                  wrp
+//      );
+//
+//  if(EFI_ERROR(retval)) {
+//      Print(L"Last Write Block I/O fail : %r", retval);
+//      ret = SBCIO;
+//      goto errdone;
+//  }
 
 errdone:
     return ret;
@@ -884,3 +826,62 @@ SBCStatus  SBC_FindBlkIoHandle(OUT VOID **hblk)
 //  return EFI_SUCCESS;
 //}
 
+
+VOID SBC_FileCtrlTestMain(VOID)
+{
+    SBCStatus ret = SBCOK;
+
+    EFI_HANDLE ImageHandle = NULL;
+    CHAR8 *wrmsg = "Hi, I am Leo, It is an pleasure, to meet you here xxxxx";
+    UINTN wrmsgl = strlen(wrmsg);
+    CHAR16 *fname = L"baseanswer.txt";
+    //UINTN filesize = 0;
+
+    UINT8 rdmsg[64] = {0, };
+    LV_t rdlv;
+    LV_t wrlv;
+
+    // Length/Value structure initialize
+    _lv_set_data(&wrlv, wrmsg, wrmsgl);
+    _lv_set_data(&rdlv, rdmsg, 0);
+
+    // Must step) Find the File handle protocol for gEfiSimpleFileSystemProtocolGuid
+    if(SBC_FileSysFindHndl(&ImageHandle) <= 0) {
+
+        eprint("SBC_FileSysFindHndl fail");
+        return ;
+    }
+
+    ret =  SBC_CreateFile(ImageHandle, fname);
+    if (ret != SBCOK) {
+        eprint("%a file create fail", fname);
+        return;
+    }
+
+     ret = SBC_WriteFile(ImageHandle, fname, &wrlv);
+     if (ret != SBCOK) {
+         eprint("%a frile write fail", fname);
+         return;
+     }
+
+
+     SBC_GetFileSize(fname, (UINTN *)&rdlv.length);
+     dprint("File size of %a : %d", fname, rdlv.length);
+
+
+
+     ret = SBC_ReadFile(ImageHandle, fname, &rdlv);
+     if (ret != SBCOK) {
+         eprint("%a frile read fail", fname);
+         return;
+     }
+
+     SBC_external_mem_print_bin("Read data", rdlv.value, rdlv.length);
+
+
+     SBC_CheckAvailableBlkIODev();
+     return;
+
+
+
+}
