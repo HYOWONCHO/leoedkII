@@ -627,7 +627,7 @@ SBCStatus  SBC_FindBlkIoHandle(OUT VOID **hblk)
 
     for (int idx = 0; idx < NumberOfHandles; idx++) {
 
-        // Get the Block I/O protocol interfcae
+        // Get the Block I/O protocol interfcae!cp
         Status = gBS->HandleProtocol(
                         HandleBuffer[idx],
                         &gEfiBlockIoProtocolGuid,

@@ -1403,10 +1403,24 @@ SBCStatus  SBC_FSBLIntgCheck(EFI_HANDLE *h_image)
       goto errdone;
     }
 
+    rdlen = SBC_BLKDEV_BLKSZ;
+    ret = SBC_RawPrtReadBlock(blkio, &rdbuf[rdlen], &rdlen, SBC_INTG_BLOCK_LAB + 1);
+    if (ret != SBCOK) {
+      Print(L"Raw Partition Read behavior fail \n");
+      goto errdone;
+    }
+
+    rdlen = SBC_BLKDEV_BLKSZ;
+    ret = SBC_RawPrtReadBlock(blkio, &rdbuf[rdlen*2], &rdlen, SBC_INTG_BLOCK_LAB + 2);
+    if (ret != SBCOK) {
+      Print(L"Raw Partition Read behavior fail \n");
+      goto errdone;
+    }
     // TO DO : certificatoin lengt read, and than, SHOULD be check  whether read more the data from device 
-    // At the June 10,  fixed it ( as follows : ROOT CA -> 532 , Intermidnate CA -> 529 
+    // At the June 10,  fixed it ( as follows : ROOT CA -c> 532 , Intermidnate CA -> 529 
 
 
+    SBC_mem_print_bin("cRT", &rdbuf[SBC_INTG_CRET_SKIP], 532 + 529);
     certlen = calen = 532;
     ret = SBC_X509VerifyCert(
                       (CONST UINT8 *)&rdbuf[SBC_INTG_CRET_SKIP],
@@ -1427,15 +1441,17 @@ SBCStatus  SBC_FSBLIntgCheck(EFI_HANDLE *h_image)
     calen = 532;
     certlen =  529;
 
-    SBC_mem_print_bin("Intermniate CRT", &rdbuf[SBC_INTG_CRET_SKIP + calen], certlen);
+   
+    SBC_mem_print_bin("Int cRT", &rdbuf[SBC_INTG_CRET_SKIP + calen], 529);
     ret = SBC_X509VerifyCert(
-                      (CONST UINT8 *)&rdbuf[SBC_INTG_CRET_SKIP],
-                      calen,
                       (CONST UINT8 *)&rdbuf[SBC_INTG_CRET_SKIP + calen],
-                      certlen
+                      certlen,
+                      (CONST UINT8 *)&rdbuf[SBC_INTG_CRET_SKIP],
+                      calen
 
         );
 
+    
     if (ret != SBCOK) {
       int_eprint("SSBL Verify fail ^^ \n");
       goto errdone;
