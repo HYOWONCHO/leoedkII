@@ -89,7 +89,7 @@ static SBCStatus _kernel_image_load(EFI_HANDLE ImageHandle, LV_t *lv)
     goto errdone;
   }
 
-  Print(L"Number of HandleBuffre : %d \n", NumberOfHandles);
+  //Print(L"Number of HandleBuffre : %d \n", NumberOfHandles);
 
   for (Index = 0; Index < NumberOfHandles; Index++) {
     Status = gBS->OpenProtocol (
@@ -108,7 +108,7 @@ static SBCStatus _kernel_image_load(EFI_HANDLE ImageHandle, LV_t *lv)
     gBS->LocateProtocol(&gEfiDevicePathToTextProtocolGuid, NULL, (VOID**)&DevicePathToText);
     DevicePathStr = DevicePathToText->ConvertDevicePathToText(DevicePath, FALSE, FALSE);
 
-    Print(L"Device path str : %s \n", DevicePathStr);
+    //Print(L"Device path str : %s \n", DevicePathStr);
     if (StrStr((CONST CHAR16 *)DevicePathStr, deviceidnetiifer) == NULL) {
       Print(L"NVMe path NOT find \n");
       continue;
@@ -121,7 +121,7 @@ static SBCStatus _kernel_image_load(EFI_HANDLE ImageHandle, LV_t *lv)
     }
 
     FoundFs1 = TRUE; // Assuming we found the correct file system
-    Print(L"Found a file system, attempting to open: %s\n", FilePath);
+    //Print(L"Found a file system, attempting to open: %s\n", FilePath);
     break; // Found the file system, exit loop
   }
 
@@ -187,7 +187,7 @@ static SBCStatus _kernel_image_load(EFI_HANDLE ImageHandle, LV_t *lv)
   }
 
   UINT64 FileSize = FileInfo->FileSize;
-  Print(L"File size of %s: %llu bytes\n", FilePath, FileSize);
+  //Print(L"File size of %s: %llu bytes\n", FilePath, FileSize);
   gBS->FreePool(FileInfo);
 
   // 5. Allocate buffer to read the file content
@@ -225,7 +225,7 @@ static SBCStatus _kernel_image_load(EFI_HANDLE ImageHandle, LV_t *lv)
   // Be careful printing raw binary data to the console, it might not be readable.
   // For demonstration, let's print the first 16 bytes in hex.
 
-  SBC_mem_print_bin("First 16 byte", (UINT8 *)lv->value, 16);
+  //SBC_mem_print_bin("First 16 byte", (UINT8 *)lv->value, 16);
 
   ret = SBCOK;
 errdone:
@@ -289,7 +289,7 @@ SBCStatus _ssbl_image_load(EFI_HANDLE ImageHandle, LV_t *lv)
     goto errdone;
   }
 
-  Print(L"Number of HandleBuffre : %d \n", NumberOfHandles);
+  //Print(L"Number of HandleBuffre : %d \n", NumberOfHandles);
 
   for (Index = 0; Index < NumberOfHandles; Index++) {
     Status = gBS->OpenProtocol (
@@ -308,7 +308,7 @@ SBCStatus _ssbl_image_load(EFI_HANDLE ImageHandle, LV_t *lv)
     gBS->LocateProtocol(&gEfiDevicePathToTextProtocolGuid, NULL, (VOID**)&DevicePathToText);
     DevicePathStr = DevicePathToText->ConvertDevicePathToText(DevicePath, FALSE, FALSE);
 
-    Print(L"Device path str : %s \n", DevicePathStr);
+    //Print(L"Device path str : %s \n", DevicePathStr);
     if (StrStr((CONST CHAR16 *)DevicePathStr, deviceidnetiifer) == NULL) {
       Print(L"NVMe path NOT find \n");
       continue;
@@ -321,7 +321,7 @@ SBCStatus _ssbl_image_load(EFI_HANDLE ImageHandle, LV_t *lv)
     }
 
     FoundFs1 = TRUE; // Assuming we found the correct file system
-    Print(L"Found a file system, attempting to open: %s\n", FilePath);
+    //Print(L"Found a file system, attempting to open: %s\n", FilePath);
     break; // Found the file system, exit loop
   }
 
@@ -387,7 +387,7 @@ SBCStatus _ssbl_image_load(EFI_HANDLE ImageHandle, LV_t *lv)
   }
 
   UINT64 FileSize = FileInfo->FileSize;
-  Print(L"File size of %s: %llu bytes\n", FilePath, FileSize);
+  //Print(L"File size of %s: %llu bytes\n", FilePath, FileSize);
   gBS->FreePool(FileInfo);
 
   // 5. Allocate buffer to read the file content
@@ -425,7 +425,7 @@ SBCStatus _ssbl_image_load(EFI_HANDLE ImageHandle, LV_t *lv)
   // Be careful printing raw binary data to the console, it might not be readable.
   // For demonstration, let's print the first 16 bytes in hex.
 
-  SBC_mem_print_bin("First 16 byte", (UINT8 *)lv->value, 16);
+  //SBC_mem_print_bin("First 16 byte", (UINT8 *)lv->value, 16);
 
   ret = SBCOK;
 errdone:
@@ -468,7 +468,7 @@ EFI_STATUS efi_boot_fsbl_load(LV_t *lv)
   }
 
 
-  Print(L"Number of Handles %d \n", NumberOfHandles);
+  //Print(L"Number of Handles %d \n", NumberOfHandles);
   // Iterate through found file systems to find the one containing /EFI/BOOT/X64.efi
   // In a real scenario, you might have logic to identify the correct ESP.
   // For simplicity, we'll try the first one here.
@@ -491,7 +491,7 @@ EFI_STATUS efi_boot_fsbl_load(LV_t *lv)
     if (!EFI_ERROR (Status)) {
       // Found a file system, try to open the EFI directory
       //break; // Exit loop, we found a potential file system
-      Print(L"Could not find a Open the root volume file system.\n");
+      //Print(L"Could not find a Open the root volume file system.\n");
       //return EFI_NOT_FOUND;
       break;
     }
@@ -576,7 +576,7 @@ EFI_STATUS efi_boot_fsbl_load(LV_t *lv)
   }
 
   lv->length = FileInfo->FileSize;
-  Print(L"X64.efi file size: %lu bytes\n", lv->length);
+  //Print(L"X64.efi file size: %lu bytes\n", lv->length);
 
   // 6. Read the File Contents
   Status = gBS->AllocatePool (
@@ -599,7 +599,7 @@ EFI_STATUS efi_boot_fsbl_load(LV_t *lv)
     goto Exit;
   }
 
-  Print(L"Successfully read X64.efi into memory at address 0x%lx. Read %lu bytes.\n", (UINTN)lv->value, lv->length);
+  //Print(L"Successfully read X64.efi into memory at address 0x%lx. Read %lu bytes.\n", (UINTN)lv->value, lv->length);
 
   // At this point, FileBuffer contains the entire content of X64.efi
   // You can now process this buffer as needed (e.g., parse it, execute it, etc.)
@@ -699,7 +699,7 @@ SBCStatus _nvme_get_serial(hw_uniqueinfo_t *p)
         goto errdone;
     }
 
-    Print(L"Found %u NVMe device(s).\n", HandleCount);
+    //Print(L"Found %u NVMe device(s).\n", HandleCount);
 
     for (Index = 0; Index < HandleCount; Index++) {
         // Get the NVMe Pass Thru Protocol from the current handle.
@@ -1065,11 +1065,11 @@ static SBCStatus _baseanswer_extract_from_disk(base_ansid_t *p)
   CopyMem((void *)p->iv, (void *)&streams[offset], BASE_ANS_IV_KEY_STR);
   offset += BASE_ANS_IV_KEY_STR;
 
-  SBC_mem_print_bin("Enc Msg Len", (UINT8 *)&p->msglen, 4);
-  SBC_mem_print_bin("Enc Message", p->encmsg, p->msglen);
-  SBC_mem_print_bin("Tag Message", p->tag, BASE_ANS_TAG_LEN);
-  SBC_mem_print_bin("Enc Key", p->key, BASE_ANS_KEY_STR);
-  SBC_mem_print_bin("Enc IV", p->iv, BASE_ANS_IV_KEY_STR);
+//SBC_mem_print_bin("Enc Msg Len", (UINT8 *)&p->msglen, 4);
+//SBC_mem_print_bin("Enc Message", p->encmsg, p->msglen);
+//SBC_mem_print_bin("Tag Message", p->tag, BASE_ANS_TAG_LEN);
+//SBC_mem_print_bin("Enc Key", p->key, BASE_ANS_KEY_STR);
+//SBC_mem_print_bin("Enc IV", p->iv, BASE_ANS_IV_KEY_STR);
 
   
 
@@ -1184,7 +1184,7 @@ SBCStatus  SBC_BaseAnswerValidate(UINT8 *answer, UINTN answerl)
       goto errdone;
     }
 
-    SBC_mem_print_bin("decrypt msg", answer, answerl);
+    //SBC_mem_print_bin("decrypt msg", answer, answerl);
     SBC_mem_print_bin("decrypt msg", decbuf, ctx.out.length);
 
     if (CompareMem((const void *)decbuf, (const void *)answer, answerl) != 0) {
@@ -1419,8 +1419,7 @@ SBCStatus  SBC_FSBLIntgCheck(EFI_HANDLE *h_image)
     // TO DO : certificatoin lengt read, and than, SHOULD be check  whether read more the data from device 
     // At the June 10,  fixed it ( as follows : ROOT CA -c> 532 , Intermidnate CA -> 529 
 
-
-    SBC_mem_print_bin("cRT", &rdbuf[SBC_INTG_CRET_SKIP], 532 + 529);
+    //SBC_mem_print_bin("cRT", &rdbuf[SBC_INTG_CRET_SKIP], 532 + 529);
     certlen = calen = 532;
     ret = SBC_X509VerifyCert(
                       (CONST UINT8 *)&rdbuf[SBC_INTG_CRET_SKIP],
@@ -1442,7 +1441,7 @@ SBCStatus  SBC_FSBLIntgCheck(EFI_HANDLE *h_image)
     certlen =  529;
 
    
-    SBC_mem_print_bin("Int cRT", &rdbuf[SBC_INTG_CRET_SKIP + calen], 529);
+   // SBC_mem_print_bin("Int cRT", &rdbuf[SBC_INTG_CRET_SKIP + calen], 529);
     ret = SBC_X509VerifyCert(
                       (CONST UINT8 *)&rdbuf[SBC_INTG_CRET_SKIP + calen],
                       certlen,

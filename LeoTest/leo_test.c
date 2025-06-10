@@ -514,11 +514,11 @@ EFI_STATUS test_open_protocol(EFI_HANDLE ImageHandle)
   // Example: print a few bytes (assuming it's a binary file)
   // Be careful printing raw binary data to the console, it might not be readable.
   // For demonstration, let's print the first 16 bytes in hex.
-  Print(L"First 16 bytes of file:\n");
-  for (UINTN i = 0; i < MIN(16, BufferSize); i++) {
-    Print(L"%02x ", ((UINT8*)Buffer)[i]);
-  }
-  Print(L"\n");
+//Print(L"First 16 bytes of file:\n");
+//for (UINTN i = 0; i < MIN(16, BufferSize); i++) {
+//  Print(L"%02x ", ((UINT8*)Buffer)[i]);
+//}
+//Print(L"\n");
 
   // 7. Close the file and volume handles
   FileHandle->Close(FileHandle);
@@ -610,6 +610,8 @@ UefiMain (
     return EFI_LOAD_ERROR;
   }
 
+  Print(L"FSBL / SSBL Intefrity Checking !!! \n");
+
   ret = SBC_FSBLIntgCheck(ImageHandle);
   if (ret != SBCOK) {
     Print(L"FSBL / SSBL Validate  error \n");
@@ -628,7 +630,7 @@ UefiMain (
 
 
   // If base answer is not record in raw partition 
-//ret = SBC_BaseAnswerEncryptStore(
+//ret = SBC_BaseAnswerEncryptStore(Fv
 //                                    (UINT8 *)baseanswer,
 //                                    answlen,
 //                                    atpid.osid,
