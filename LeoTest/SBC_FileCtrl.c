@@ -101,8 +101,8 @@ EFI_STATUS SBC_ReadFile(EFI_HANDLE ImageHandle, CHAR16 *FileNames, LV_t *out)
 
   //TODO
   // out buffer nill check
-  DEBUG((DEBUG_INFO,"Image Handle : %p \r\n", ImageHandle));
-  DEBUG((DEBUG_INFO,"Read File : %s \r\n", (CHAR8 *)FileNames));
+//DEBUG((DEBUG_INFO,"Image Handle : %p \r\n", ImageHandle));
+//DEBUG((DEBUG_INFO,"Read File : %s \r\n", (CHAR8 *)FileNames));
 
   // Locate file system
   Status = gBS->HandleProtocol(ImageHandle,
@@ -346,9 +346,9 @@ SBCStatus  SBC_CheckAvailableBlkIODev(VOID)
         goto errdone;
 
     }
-    else {
-        Print(L"Found %d Block IO device \n" , HandleCount);
-    }
+//  else {
+//      Print(L"Found %d Block IO device \n" , HandleCount);
+//  }
 
     // Verify Block IO protocol binding
     Status = gBS->HandleProtocol(HandleBuffer[0], &gEfiBlockIoProtocolGuid, (VOID **)&BlockIo);
@@ -487,7 +487,7 @@ SBCStatus SBC_RawPrtReadBlock(VOID *blkhnd, VOID *rdbuf,  UINT32 *rdlen, UINTN r
     blkio  = (EFI_BLOCK_IO_PROTOCOL *)blkhnd;
 
     blklen = ALIGN_VALUE(*rdlen, blkio->Media->BlockSize);
-    Print(L"BLK Len : %d \n", blklen);
+    //Print(L"BLK Len : %d \n", blklen);
     readbuf = AllocateZeroPool(blklen);
     if (readbuf == NULL) {
         Print(L"Allocate Pool fail \n");    
@@ -623,7 +623,7 @@ SBCStatus  SBC_FindBlkIoHandle(OUT VOID **hblk)
         SBC_RET_VALIDATE_ERRCODEMSG((Status != EFI_SUCCESS), SBCFAIL, "ERROR: Failed to locate BlockIoProtocol handles");
     }
 
-    Print(L"Found %d Block I/O Protocol handles.\n", NumberOfHandles);
+    //Print(L"Found %d Block I/O Protocol handles.\n", NumberOfHandles);
 
     for (int idx = 0; idx < NumberOfHandles; idx++) {
 
@@ -678,8 +678,8 @@ SBCStatus  SBC_FindBlkIoHandle(OUT VOID **hblk)
         }
 
         *hblk = (VOID *)BlockIo;
-        Print(L"Found %p Block I/O Protocol Address Magci ID : 0x%x.\n", BlockIo, magicid);
-        Print(L"0x%p SBC Raw Buffer MagicID found !!! \n", *hblk);
+        //Print(L"Found %p Block I/O Protocol Address Magci ID : 0x%x.\n", BlockIo, magicid);
+        //Print(L"0x%p SBC Raw Buffer MagicID found !!! \n", *hblk);
 
 
 
@@ -692,7 +692,7 @@ SBCStatus  SBC_FindBlkIoHandle(OUT VOID **hblk)
 
 }
 
-//EFI_STATUS
+//EFI_STATUSFv
 //EFIAPI
 //RawPrtAccessSample (
 //  IN EFI_HANDLE        ImageHandle,
