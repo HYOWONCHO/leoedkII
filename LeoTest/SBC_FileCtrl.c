@@ -487,6 +487,7 @@ SBCStatus SBC_RawPrtReadBlock(VOID *blkhnd, VOID *rdbuf,  UINT32 *rdlen, UINTN r
     blkio  = (EFI_BLOCK_IO_PROTOCOL *)blkhnd;
 
     blklen = ALIGN_VALUE(*rdlen, blkio->Media->BlockSize);
+    Print(L"BLK Len : %d \n", blklen);
     readbuf = AllocateZeroPool(blklen);
     if (readbuf == NULL) {
         Print(L"Allocate Pool fail \n");    
