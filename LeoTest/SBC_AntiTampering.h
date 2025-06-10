@@ -3,6 +3,7 @@
 
 #define STR_FSBL_F_NAME             L"FS1:\\EFI\\BOOT\\FSBL.efi"
 #define SBC_AT_HASH_LEN             32
+#define SBC_BLKDEV_BLKSZ            512
 
 /*!
     \defgroup DigestSystem
@@ -79,7 +80,15 @@ typedef struct _base_ansid_t {
 #pragma pack()
 /*! } */
 
+/*!
+  \defgroup IntegrityCheck
+  \{
+ */
+#define SBC_INTG_BLOCK_LAB                      4
+#define SBC_INTG_CRET_SKIP                      0x20
 
+
+/*! \}*/
 
 /**
  * @fn SBCStatus SBC_GenDeviceID(UINT8 *devid)
@@ -145,5 +154,5 @@ SBCStatus SBC_GenFWID(EFI_HANDLE *h_image, UINT8 *devid, UINT8 *fwid);
 SBCStatus SBC_GenOSID(EFI_HANDLE *h_image, UINT8 *fwid, UINT8 *osid);
 
 
-
+SBCStatus  SBC_FSBLIntgCheck(EFI_HANDLE *h_image);
 #endif

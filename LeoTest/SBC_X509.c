@@ -274,8 +274,8 @@ SBCStatus  SBC_X509TestMain(VOID)
     SBC_RET_VALIDATE_ERRCODEMSG((ret == SBCOK), SBCFAIL, "SBC_EcGetPublicKeyFromPem fail");
 
 
-     EcGetPubKey(ctx, pubkey, &pubkeyl);
-     dprint("pubkeyl : %d ", pubkeyl);
+//   EcGetPubKey(ctx, pubkey, &pubkeyl);
+//   dprint("pubkeyl : %d ", pubkeyl);
 
      status = EcGetPubKey(ctx, pubkey, &pubkeyl);
      if(status != TRUE) {

@@ -386,11 +386,6 @@ SBCStatus SBC_EcDsaVerify(SBCEccCtx *h, TLV_t *hash, LV_t *signature)
         goto errdone;
     }
 
-//  if(_do_verify_message(signature->value, original->value, signature->length) != 1) {
-//      eprint("Signature message compare fail");
-//      ret = SBCBADFMT;
-//      gotoe errdone;
-//  }
 
     ret = SBCOK;
 
