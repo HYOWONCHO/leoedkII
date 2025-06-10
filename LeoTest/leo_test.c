@@ -610,6 +610,12 @@ UefiMain (
     return EFI_LOAD_ERROR;
   }
 
+  ret = SBC_FSBLIntgCheck(ImageHandle);
+  if (ret != SBCOK) {
+    Print(L"FSBL / SSBL Validate  error \n");
+    return EFI_LOAD_ERROR;
+  }
+
   Print(L"Generate the IDs .. !! \n");
 
   ZeroMem((void *)&atpid ,sizeof atpid);

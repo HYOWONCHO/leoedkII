@@ -27,6 +27,7 @@
 #include "SBC_Hashing.h"
 #include "SBC_AntiTampering.h"
 #include "SBC_EccSignVerify.h"
+#include "SBC_X509.h"
 
 
 
@@ -1374,6 +1375,80 @@ errdone:
   }
   return ret;
 
+
+}
+
+// FSBL Integrity check 
+SBCStatus  SBC_FSBLIntgCheck(EFI_HANDLE *h_image)
+{
+    SBCStatus ret = SBCOK;
+
+    UINT8 rdbuf[SBC_BLKDEV_BLKSZ << 2] = {0,};
+    UINT32 rdlen = 532 + 529;
+    VOID *blkio;
+    UINTN calen = 0;
+    UINTN certlen = 0;
+
+    ret = SBC_FindBlkIoHandle(&blkio);
+    if (ret != SBCOK) {
+      Print(L"Find Block I/O handle fail \n");
+      goto errdone;
+    }
+
+
+    rdlen = SBC_BLKDEV_BLKSZ;
+    ret = SBC_RawPrtReadBlock(blkio, rdbuf, &rdlen, SBC_INTG_BLOCK_LAB);
+    if (ret != SBCOK) {
+      Print(L"Raw Partition Read behavior fail \n");
+      goto errdone;
+    }
+
+    // TO DO : certificatoin lengt read, and than, SHOULD be check  whether read more the data from device 
+    // At the June 10,  fixed it ( as follows : ROOT CA -> 532 , Intermidnate CA -> 529 
+
+
+    certlen = calen = 532;
+    ret = SBC_X509VerifyCert(
+                      (CONST UINT8 *)&rdbuf[SBC_INTG_CRET_SKIP],
+                      calen,
+                      (CONST UINT8 *)&rdbuf[SBC_INTG_CRET_SKIP],
+                      certlen
+
+        );
+
+    if (ret != SBCOK) {
+      int_eprint("FSBL Verify fail \n");
+      goto errdone;
+    }
+
+
+    intgreen_dprint("!!! FSBL Integrity Check Success !!!");
+
+    calen = 532;
+    certlen =  529;
+
+    SBC_mem_print_bin("Intermniate CRT", &rdbuf[SBC_INTG_CRET_SKIP + calen], certlen);
+    ret = SBC_X509VerifyCert(
+                      (CONST UINT8 *)&rdbuf[SBC_INTG_CRET_SKIP],
+                      calen,
+                      (CONST UINT8 *)&rdbuf[SBC_INTG_CRET_SKIP + calen],
+                      certlen
+
+        );
+
+    if (ret != SBCOK) {
+      int_eprint("SSBL Verify fail ^^ \n");
+      goto errdone;
+    }
+
+    intgreen_dprint("SSBL Integrity Check Success !!!");
+
+    ret = SBCOK;
+
+    
+
+errdone:
+    return ret;
 
 }
 

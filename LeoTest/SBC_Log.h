@@ -7,6 +7,13 @@
 #   define ARG_UNUSED   __attribute__ ((unused))
 #endif
 
+// ANSI escape code for red foreground, bold
+#define ANSI_COLOR_RED_BOLD "\x1b[1;31m"
+// ANSI escape code for green foreground
+#define ANSI_COLOR_GREEN    "\x1b[32m"
+// ANSI escape code to reset color and attributes
+#define ANSI_COLOR_RESET    "\x1b[0m"
+
 //#define LINE_LEN 16
 void SBC_mem_print_bin(
         CHAR8 *title /**< [in] display name strings */,
@@ -39,5 +46,14 @@ VOID SBC_LogMsg(CHAR8* logmsg, CONST CHAR8 *funcname, UINTN linenumber,
 #define eprint(fmt,...) \
     DEBUG((DEBUG_ERROR, "(ERROR %a:%d) : "fmt"\n",__FUNCTION__, __LINE__,##__VA_ARGS__))
 
+
+#define intgreen_dprint(fmt,...) \
+    Print(ANSI_COLOR_GREEN L"(%a:%d) : "fmt" \n"ANSI_COLOR_RESET,__FUNCTION__, __LINE__,##__VA_ARGS__)
+
+#define int_dprint(fmt,...) \
+    Print(L"(%a:%d) : "fmt" %a\n", __FUNCTION__, __LINE__,##__VA_ARGS__)
+
+#define int_eprint(fmt,...) \
+    Print(ANSI_COLOR_RED_BOLD L"(%a:%d) : "fmt" \n" ANSI_COLOR_RESET, __FUNCTION__, __LINE__,##__VA_ARGS__)
 
 #endif
