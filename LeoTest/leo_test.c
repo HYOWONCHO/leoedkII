@@ -588,6 +588,12 @@ VOID SBC_EcDsa_TestMain(VOID);
 #ifdef SBC_X509_TEST
 SBCStatus  SBC_X509TestMain(VOID);
 #endif
+
+extern EFI_STATUS LoadKernelImage (
+  IN EFI_HANDLE        ImageHandle,
+  IN EFI_SYSTEM_TABLE  *SystemTable
+  );
+
 EFI_STATUS
 EFIAPI
 UefiMain (
@@ -597,6 +603,7 @@ UefiMain (
 {
   atp_ident_t atpid;
   SBCStatus ret = SBCOK;
+  EFI_STATUS retval;
 
   CHAR8 *baseanswer = "SBCBaseAnswer";
   UINTN answlen =strlen(baseanswer);
@@ -642,7 +649,29 @@ UefiMain (
 //  return EFI_LOAD_ERROR;
 //}
 
-  
+  retval = LoadKernelImage(ImageHandle,SystemTable);
+  Print(L"LoadKernelImage : %r \n",retval);
+
+
+//  UINTN MapKey;
+//  VOID (*KernelEntry)(VOID) = (VOID *)0x100000; // Example kernel entry address
+//
+//  // Get memory map key
+//  retval  = gBS->GetMemoryMap(&MapKey, NULL, NULL, NULL, NULL);
+//  if (EFI_ERROR(retval)) {
+//      Print(L"GetMemoryMap : %r \n",retval);
+//      return retval;
+//  }
+//
+//  // Exit boot services
+//  retval = gBS->ExitBootServices(ImageHandle, MapKey);
+//  if (EFI_ERROR(retval)) {
+//    Print(L"ExitBootServices : %r \n",retval);
+//      return retval;
+//  }
+//
+//  // Jump to kernel
+//  KernelEntry();
    return EFI_SUCCESS;
 }
 
