@@ -110,7 +110,7 @@ static SBCStatus _kernel_image_load(EFI_HANDLE ImageHandle, LV_t *lv)
 
     //Print(L"Device path str : %s \n", DevicePathStr);
     if (StrStr((CONST CHAR16 *)DevicePathStr, deviceidnetiifer) == NULL) {
-      Print(L"NVMe path NOT find \n");
+      //Print(L"NVMe path NOT find \n");
       continue;
     }
 
@@ -310,7 +310,7 @@ SBCStatus _ssbl_image_load(EFI_HANDLE ImageHandle, LV_t *lv)
 
     //Print(L"Device path str : %s \n", DevicePathStr);
     if (StrStr((CONST CHAR16 *)DevicePathStr, deviceidnetiifer) == NULL) {
-      Print(L"NVMe path NOT find \n");
+      //Print(L"NVMe path NOT find \n");
       continue;
     }
 
