@@ -1422,9 +1422,9 @@ SBCStatus  SBC_FSBLIntgCheck(EFI_HANDLE *h_image)
     //SBC_mem_print_bin("cRT", &rdbuf[SBC_INTG_CRET_SKIP], 532 + 529);
     certlen = calen = 532;
     ret = SBC_X509VerifyCert(
-                      (CONST UINT8 *)&rdbuf[SBC_INTG_CRET_SKIP],
+                      (CONST UINT8 *)&rdbuf[SBC_INTG_CRET_SKIP],  // CA Cert
                       calen,
-                      (CONST UINT8 *)&rdbuf[SBC_INTG_CRET_SKIP],
+                      (CONST UINT8 *)&rdbuf[SBC_INTG_CRET_SKIP], // Signed Cert
                       certlen
 
         );

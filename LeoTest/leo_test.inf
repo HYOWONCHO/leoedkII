@@ -36,6 +36,7 @@
   SBC_Hashing.c
   SBC_AntiTampering.c
   SBC_X509.c
+  SBC_LoadKernelImage.c
 
 
 [Packages]
