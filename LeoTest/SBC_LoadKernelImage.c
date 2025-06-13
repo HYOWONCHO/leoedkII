@@ -290,6 +290,67 @@ VOID LoadFile(EFI_HANDLE        ImageHandle,VOID **rdout, UINTN *rdlen)
 }
 
 
+SBCStatus SBC_GRUB_LoadAndStart(EFI_HANDLE ImageHandle)
+{
+  EFI_HANDLE *Handles;
+  UINTN HandleCount;
+  //EFI_SIMPLE_FILE_SYSTEM_PROTOCOL *Fs;
+  EFI_DEVICE_PATH_PROTOCOL *DevicePath;
+  //EFI_HANDLE imghandle;
+  CHAR16 *PathStr;
+
+  gBS->LocateHandleBuffer(ByProtocol, &gEfiSimpleFileSystemProtocolGuid, NULL, &HandleCount, &Handles);
+
+  for (UINTN i = 0; i < HandleCount; i++) {
+    DevicePath = FileDevicePath(Handles[i], L"\\EFI\\rocky\\grubx64.efi");
+    PathStr = ConvertDevicePathToText(DevicePath, TRUE, TRUE);
+    if (PathStr != NULL) {
+      Print(L"Device Path: %s\n", PathStr);
+      FreePool(PathStr);
+    } else {
+      Print(L"Failed to convert device path to string.\n");
+      //return SBCFAIL;
+    }
+    EFI_STATUS Status = gBS->LoadImage(FALSE, ImageHandle, DevicePath, NULL, 0, &ImageHandle);
+    if (!EFI_ERROR(Status)) {
+      gBS->StartImage(ImageHandle, NULL, NULL);
+      break;
+    }
+  }
+
+  return SBCOK;
+}
+
+SBCStatus SBC_SSBL_LoadAndStart(EFI_HANDLE ImageHandle)
+{
+  EFI_HANDLE *Handles;
+  UINTN HandleCount;
+  //EFI_SIMPLE_FILE_SYSTEM_PROTOCOL *Fs;
+  EFI_DEVICE_PATH_PROTOCOL *DevicePath;
+  //EFI_HANDLE imghandle;
+  CHAR16 *PathStr;
+
+  gBS->LocateHandleBuffer(ByProtocol, &gEfiSimpleFileSystemProtocolGuid, NULL, &HandleCount, &Handles);
+
+  for (UINTN i = 0; i < HandleCount; i++) {
+    DevicePath = FileDevicePath(Handles[i], L"\\EFI\\BOOT\\SSBL.efi");
+    PathStr = ConvertDevicePathToText(DevicePath, TRUE, TRUE);
+    if (PathStr != NULL) {
+      Print(L"Device Path: %s\n", PathStr);
+      FreePool(PathStr);
+    } else {
+      Print(L"Failed to convert device path to string.\n");
+      //return SBCFAIL;
+    }
+    EFI_STATUS Status = gBS->LoadImage(FALSE, ImageHandle, DevicePath, NULL, 0, &ImageHandle);
+    if (!EFI_ERROR(Status)) {
+      gBS->StartImage(ImageHandle, NULL, NULL);
+      break;
+    }
+  }
+
+  return SBCOK;
+}
 
 EFI_STATUS
 SSBL_Load (

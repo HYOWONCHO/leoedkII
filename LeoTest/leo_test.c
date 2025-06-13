@@ -596,6 +596,8 @@ SSBL_Load (
   IN EFI_SYSTEM_TABLE  *SystemTable
   );
 
+extern SBCStatus SBC_SSBL_LoadAndStart(EFI_HANDLE ImageHandle);
+
 EFI_STATUS
 EFIAPI
 UefiMain (
@@ -638,6 +640,8 @@ UefiMain (
   }
 
 
+  SBC_SSBL_LoadAndStart(ImageHandle);
+
 
   // If base answer is not record in raw partition 
 //ret = SBC_BaseAnswerEncryptStore(Fv
@@ -662,31 +666,31 @@ UefiMain (
 //
 
 
-  EFI_HANDLE *Handles;
-  UINTN HandleCount;
-  //EFI_SIMPLE_FILE_SYSTEM_PROTOCOL *Fs;
-  EFI_DEVICE_PATH_PROTOCOL *DevicePath;
-  //EFI_HANDLE imghandle;
-  CHAR16 *PathStr;
-
-  gBS->LocateHandleBuffer(ByProtocol, &gEfiSimpleFileSystemProtocolGuid, NULL, &HandleCount, &Handles);
-
-  for (UINTN i = 0; i < HandleCount; i++) {
-    DevicePath = FileDevicePath(Handles[i], L"\\EFI\\rocky\\grubx64.efi");
-    PathStr = ConvertDevicePathToText(DevicePath, TRUE, TRUE);
-    if (PathStr != NULL) {
-      Print(L"Device Path: %s\n", PathStr);
-      FreePool(PathStr);
-    } else {
-      Print(L"Failed to convert device path to string.\n");
-    }
-    EFI_STATUS Status = gBS->LoadImage(FALSE, ImageHandle, DevicePath, NULL, 0, &ImageHandle);
-    if (!EFI_ERROR(Status)) {
-      gBS->StartImage(ImageHandle, NULL, NULL);
-      break;
-    }
-  }
-
+//EFI_HANDLE *Handles;
+//UINTN HandleCount;
+////EFI_SIMPLE_FILE_SYSTEM_PROTOCOL *Fs;
+//EFI_DEVICE_PATH_PROTOCOL *DevicePath;
+////EFI_HANDLE imghandle;
+//CHAR16 *PathStr;
+//
+//gBS->LocateHandleBuffer(ByProtocol, &gEfiSimpleFileSystemProtocolGuid, NULL, &HandleCount, &Handles);
+//
+//for (UINTN i = 0; i < HandleCount; i++) {
+//  DevicePath = FileDevicePath(Handles[i], L"\\EFI\\rocky\\grubx64.efi");
+//  PathStr = ConvertDevicePathToText(DevicePath, TRUE, TRUE);
+//  if (PathStr != NULL) {
+//    Print(L"Device Path: %s\n", PathStr);
+//    FreePool(PathStr);
+//  } else {
+//    Print(L"Failed to convert device path to string.\n");
+//  }
+//  EFI_STATUS Status = gBS->LoadImage(FALSE, ImageHandle, DevicePath, NULL, 0, &ImageHandle);
+//  if (!EFI_ERROR(Status)) {
+//    gBS->StartImage(ImageHandle, NULL, NULL);
+//    break;
+//  }
+//}
+//
 
 //EFI_STATUS Status;
 //EFI_LOADED_IMAGE_PROTOCOL *LoadedImage;
