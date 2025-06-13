@@ -84,5 +84,7 @@ VOID SBC_AESDeInit(SBC_AESContext *ctx);
 SBCStatus SBC_AESEncrypt(SBC_AESContext *ctxp);
 SBCStatus SBC_AESDecrypt(SBC_AESContext *ctx);
 
+SBCStatus SBC_AESGcmDecrypt(SBC_AESContext *ctx);
+SBCStatus SBC_AESGcmEncrypt(SBC_AESContext *ctx);
 
 #endif

@@ -46,6 +46,8 @@
 
 #include <Library/UnitTestLib.h>
 
+#include <Library/UefiBootManagerLib.h>
+
 
 #include <openssl/objects.h>
 #include <openssl/bn.h>
@@ -567,11 +569,6 @@ errdone:
 
 }
 
-#ifdef SBC_BASEANSWER_TEST
-SBCStatus  SBC_BaseAnswerValidate(UINT8 *answer, UINTN answerl);
-SBCStatus SBC_GenDeviceID(UINT8 *devid);
-#endif
-
 #ifdef SBC_HASH_UNITEST_ENABLE
 VOID SBC_HashMain(VOID);
 #endif
@@ -593,6 +590,11 @@ extern EFI_STATUS LoadKernelImage (
   IN EFI_HANDLE        ImageHandle,
   IN EFI_SYSTEM_TABLE  *SystemTable
   );
+extern EFI_STATUS
+SSBL_Load (
+  IN EFI_HANDLE        ImageHandle,
+  IN EFI_SYSTEM_TABLE  *SystemTable
+  );
 
 EFI_STATUS
 EFIAPI
@@ -601,9 +603,9 @@ UefiMain (
   IN EFI_SYSTEM_TABLE  *SystemTable
   )
 {
-  atp_ident_t atpid;
+//  atp_ident_t atpid;
   SBCStatus ret = SBCOK;
-  EFI_STATUS retval;
+
 
   CHAR8 *baseanswer = "SBCBaseAnswer";
   UINTN answlen =strlen(baseanswer);
@@ -617,23 +619,24 @@ UefiMain (
     return EFI_LOAD_ERROR;
   }
 
-  Print(L"FSBL / SSBL Intefrity Checking !!! \n");
+//Print(L"FSBL / SSBL Intefrity Checking !!! \n");
+//
+//ret = SBC_FSBLIntgCheck(ImageHandle);
+//if (ret != SBCOK) {
+//  Print(L"FSBL / SSBL Validate  error \n");
+//  return EFI_LOAD_ERROR;
+//}
+//
+//Print(L"Generate the IDs .. !! \n");
+//
+//ZeroMem((void *)&atpid ,sizeof atpid);
+//
+//ret = SBC_DiceKeysGen(ImageHandle, (VOID *)&atpid);
+//if (ret != SBCOK) {
+//  Print(L"Dice Key Gen fail \n");
+//  return EFI_LOAD_ERROR;
+//}
 
-  ret = SBC_FSBLIntgCheck(ImageHandle);
-  if (ret != SBCOK) {
-    Print(L"FSBL / SSBL Validate  error \n");
-    return EFI_LOAD_ERROR;
-  }
-
-  Print(L"Generate the IDs .. !! \n");
-
-  ZeroMem((void *)&atpid ,sizeof atpid);
-
-  ret = SBC_DiceKeysGen(ImageHandle, (VOID *)&atpid);
-  if (ret != SBCOK) {
-    Print(L"Dice Key Gen fail \n");
-    return EFI_LOAD_ERROR;
-  }
 
 
   // If base answer is not record in raw partition 
@@ -649,9 +652,12 @@ UefiMain (
 //  return EFI_LOAD_ERROR;
 //}
 
-  retval = LoadKernelImage(ImageHandle,SystemTable);
-  Print(L"LoadKernelImage : %r \n",retval);
+//EFI_STATUS retval;
+//retval = LoadKernelImage(ImageHandle, SystemTable);
+//Print(L"LoadKernelImage : %r \n", retval);
 
+
+  SSBL_Load(ImageHandle, SystemTable);
 
 //  UINTN MapKey;
 //  VOID (*KernelEntry)(VOID) = (VOID *)0x100000; // Example kernel entry address
@@ -675,3 +681,15 @@ UefiMain (
    return EFI_SUCCESS;
 }
 
+// Shell Reboot but do not jump to Grub 
+//EFI_BOOT_MANAGER_LOAD_OPTION *BootOptions;
+//UINTN BootOptionCount;
+//
+//
+//Print(L"Start BOOt .. !! \n");
+//BootOptions = NULL;
+//BootOptionCount = 0;
+//
+//BootOptions = EfiBootManagerGetLoadOptions(&BootOptionCount, LoadOptionTypeBoot);
+//
+//EfiBootManagerBoot(BootOptions);

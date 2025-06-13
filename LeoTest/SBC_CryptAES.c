@@ -103,7 +103,7 @@ ErrorDone:
 }
 
 
-static SBCStatus SBC_AESGcmEncrypt(SBC_AESContext *ctx)
+SBCStatus SBC_AESGcmEncrypt(SBC_AESContext *ctx)
 {
   SBC_AESGcmCtx *gcm = NULL;
 
@@ -131,7 +131,7 @@ static SBCStatus SBC_AESGcmEncrypt(SBC_AESContext *ctx)
 
 }
 
-static SBCStatus SBC_AESGcmDecrypt(SBC_AESContext *ctx)
+SBCStatus SBC_AESGcmDecrypt(SBC_AESContext *ctx)
 {
   SBC_AESGcmCtx *gcm = NULL;
 
@@ -142,7 +142,7 @@ static SBCStatus SBC_AESGcmDecrypt(SBC_AESContext *ctx)
                        gcm->aad.value, gcm->aad.length,
                        gcm->msg.value, gcm->msg.length,
                        gcm->tag.value, gcm->tag.length,
-                       gcm->out.value, &gcm->out.length)) {
+                       gcm->out.value, &gcm->out.length) == FALSE) {
     eprint("GCM Decrypt fail \r\n");
     return SBCENCFAIL;
   }
@@ -235,7 +235,9 @@ SBCStatus SBC_AESDecrypt(SBC_AESContext *ctx)
       }
       break;
     case SBC_CIPHER_AES_GCM:
-      SBC_AESGcmDecrypt(ctx);
+       if((ret = SBC_AESGcmDecrypt(ctx)) != SBCOK) {
+         goto ErrorDnoe;
+       }
       break;
     default:
       ret = SBCINVPARAM;

@@ -70,6 +70,7 @@
   PlatformHookLib
   PciLib
   IoLib
+  UefiBootManagerLib
 
   #UefiDriverEntryPoint
 
