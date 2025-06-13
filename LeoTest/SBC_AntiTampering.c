@@ -1178,13 +1178,13 @@ SBCStatus  SBC_BaseAnswerValidate(UINT8 *answer, UINTN answerl)
     aesctx.gcm = &ctx;
     aesctx.algoid = SBC_CIPHER_AES_GCM;
 
-    if (SBC_AESDecrypt(&aesctx) != SBCOK) {
+    if (SBC_AESGcmDecrypt(&aesctx) != SBCOK) {
       Print(L"Base Answer Decrypt fail \n");
       ret = SBCFAIL;
       goto errdone;
     }
 
-    //SBC_mem_print_bin("decrypt msg", answer, answerl);
+    SBC_mem_print_bin("plain msg", answer, answerl);
     SBC_mem_print_bin("decrypt msg", decbuf, ctx.out.length);
 
     if (CompareMem((const void *)decbuf, (const void *)answer, answerl) != 0) {
