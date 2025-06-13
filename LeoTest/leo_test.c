@@ -23,7 +23,7 @@
 #include <Library/MemoryAllocationLib.h>
 #include <Protocol/Smbios.h>
 
-
+#include <Library/DevicePathLib.h>
 #include <string.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -603,7 +603,7 @@ UefiMain (
   IN EFI_SYSTEM_TABLE  *SystemTable
   )
 {
-//  atp_ident_t atpid;
+  atp_ident_t atpid;
   SBCStatus ret = SBCOK;
 
 
@@ -619,23 +619,23 @@ UefiMain (
     return EFI_LOAD_ERROR;
   }
 
-//Print(L"FSBL / SSBL Intefrity Checking !!! \n");
-//
-//ret = SBC_FSBLIntgCheck(ImageHandle);
-//if (ret != SBCOK) {
-//  Print(L"FSBL / SSBL Validate  error \n");
-//  return EFI_LOAD_ERROR;
-//}
-//
-//Print(L"Generate the IDs .. !! \n");
-//
-//ZeroMem((void *)&atpid ,sizeof atpid);
-//
-//ret = SBC_DiceKeysGen(ImageHandle, (VOID *)&atpid);
-//if (ret != SBCOK) {
-//  Print(L"Dice Key Gen fail \n");
-//  return EFI_LOAD_ERROR;
-//}
+  Print(L"FSBL / SSBL Intefrity Checking !!! \n");
+
+  ret = SBC_FSBLIntgCheck(ImageHandle);
+  if (ret != SBCOK) {
+    Print(L"FSBL / SSBL Validate  error \n");
+    return EFI_LOAD_ERROR;
+  }
+
+  Print(L"Generate the IDs .. !! \n");
+
+  ZeroMem((void *)&atpid ,sizeof atpid);
+
+  ret = SBC_DiceKeysGen(ImageHandle, (VOID *)&atpid);
+  if (ret != SBCOK) {
+    Print(L"Dice Key Gen fail \n");
+    return EFI_LOAD_ERROR;
+  }
 
 
 
@@ -657,7 +657,84 @@ UefiMain (
 //Print(L"LoadKernelImage : %r \n", retval);
 
 
-  SSBL_Load(ImageHandle, SystemTable);
+//extern EFI_STATUS Load_Kernel(EFI_HANDLE ImageHandle, EFI_SYSTEM_TABLE *SystemTable) ;
+//Load_Kernel(ImageHandle, SystemTable);
+//
+
+
+  EFI_HANDLE *Handles;
+  UINTN HandleCount;
+  //EFI_SIMPLE_FILE_SYSTEM_PROTOCOL *Fs;
+  EFI_DEVICE_PATH_PROTOCOL *DevicePath;
+  //EFI_HANDLE imghandle;
+  CHAR16 *PathStr;
+
+  gBS->LocateHandleBuffer(ByProtocol, &gEfiSimpleFileSystemProtocolGuid, NULL, &HandleCount, &Handles);
+
+  for (UINTN i = 0; i < HandleCount; i++) {
+    DevicePath = FileDevicePath(Handles[i], L"\\EFI\\rocky\\grubx64.efi");
+    PathStr = ConvertDevicePathToText(DevicePath, TRUE, TRUE);
+    if (PathStr != NULL) {
+      Print(L"Device Path: %s\n", PathStr);
+      FreePool(PathStr);
+    } else {
+      Print(L"Failed to convert device path to string.\n");
+    }
+    EFI_STATUS Status = gBS->LoadImage(FALSE, ImageHandle, DevicePath, NULL, 0, &ImageHandle);
+    if (!EFI_ERROR(Status)) {
+      gBS->StartImage(ImageHandle, NULL, NULL);
+      break;
+    }
+  }
+
+
+//EFI_STATUS Status;
+//EFI_LOADED_IMAGE_PROTOCOL *LoadedImage;
+//EFI_DEVICE_PATH_PROTOCOL *DevicePath;
+//EFI_HANDLE NewImageHandle;
+//
+//// Step 1: Get the current image's loaded image protocol
+//Status = gBS->HandleProtocol(
+//  ImageHandle,
+//  &gEfiLoadedImageProtocolGuid,
+//  (VOID **)&LoadedImage
+//);
+//if (EFI_ERROR(Status)) {
+//  Print(L"Failed to get LoadedImage protocol: %r\n", Status);
+//  return Status;
+//}
+//
+//// Step 2: Build a device path to the target EFI application
+//DevicePath = FileDevicePath(
+//  LoadedImage->DeviceHandle,
+//  L"\\ssbl.efi"  // Adjust this path as needed
+//);
+//
+//// Step 3: Load the image into memory
+//Status = gBS->LoadImage(
+//  FALSE,
+//  ImageHandle,
+//  DevicePath,
+//  NULL,
+//  0,
+//  &NewImageHandle
+//);
+//if (EFI_ERROR(Status)) {
+//  Print(L"LoadImage failed: %r\n", Status);
+//  return Status;
+//}
+//
+//// Step 4: Start the loaded image
+//Status = gBS->StartImage(NewImageHandle, NULL, NULL);
+//if (EFI_ERROR(Status)) {
+//  Print(L"StartImage failed: %r\n", Status);
+//  return Status;
+//}
+//
+//return EFI_SUCCESS;
+
+  //test_open_protocol(ImageHandle);
+  //SSBL_Load(ImageHandle, SystemTable);
 
 //  UINTN MapKey;
 //  VOID (*KernelEntry)(VOID) = (VOID *)0x100000; // Example kernel entry address

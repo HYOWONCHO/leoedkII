@@ -36,7 +36,7 @@ SBCStatus  SBC_GetFileSize(CHAR16 *FileName, UINTN  *FileSize)
                                &gEfiSimpleFileSystemProtocolGuid,
                                (VOID **)&FileSystem);
   if(EFI_ERROR(Status)) {
-    DEBUG((DEBUG_INFO, " %a:%d Locate File Systam fail (%d) \r\n",
+    DEBUG((DEBUG_ERROR, " %a:%d Locate File Systam fail (%d) \r\n",
            __FUNCTION__, __LINE__, Status));
     return SBCFAIL;
   }
@@ -101,15 +101,15 @@ EFI_STATUS SBC_ReadFile(EFI_HANDLE ImageHandle, CHAR16 *FileNames, LV_t *out)
 
   //TODO
   // out buffer nill check
-//DEBUG((DEBUG_INFO,"Image Handle : %p \r\n", ImageHandle));
-//DEBUG((DEBUG_INFO,"Read File : %s \r\n", (CHAR8 *)FileNames));
+//DEBUG((DEBUG_ERROR,"Image Handle : %p \r\n", ImageHandle));
+//DEBUG((DEBUG_ERROR,"Read File : %s \r\n", (CHAR8 *)FileNames));
 
   // Locate file system
   Status = gBS->HandleProtocol(ImageHandle,
                                &gEfiSimpleFileSystemProtocolGuid,
                                (VOID **)&FileSystem);
   if(EFI_ERROR(Status)) {
-    DEBUG((DEBUG_INFO, " %a:%d Locate File Systam fail (%d) \r\n",
+    DEBUG((DEBUG_ERROR, " %a:%d Locate File Systam fail (%d) \r\n",
            __FUNCTION__, __LINE__, Status));
     return Status;
   }
@@ -117,7 +117,7 @@ EFI_STATUS SBC_ReadFile(EFI_HANDLE ImageHandle, CHAR16 *FileNames, LV_t *out)
   // Open the roor directory
   Status = FileSystem->OpenVolume(FileSystem, &RootDir);
   if (EFI_ERROR(Status)) {
-        DEBUG((DEBUG_INFO, " %a:%d OpenVolume File Systam fail (%d) \r\n",
+        DEBUG((DEBUG_ERROR, " %a:%d OpenVolume File Systam fail (%d) \r\n",
            __FUNCTION__, __LINE__, Status));
     return Status;
   }
@@ -125,7 +125,7 @@ EFI_STATUS SBC_ReadFile(EFI_HANDLE ImageHandle, CHAR16 *FileNames, LV_t *out)
   // Open the file
   Status = RootDir->Open(RootDir, &File, FileNames, EFI_FILE_MODE_READ, 0);
   if (EFI_ERROR(Status)) {
-      DEBUG((DEBUG_INFO, " %a:%d RootDir->Open fail (%d) \r\n",
+      DEBUG((DEBUG_ERROR, " %a:%d RootDir->Open fail (%d) \r\n",
      __FUNCTION__, __LINE__, Status));
     return Status;
   }
@@ -133,7 +133,7 @@ EFI_STATUS SBC_ReadFile(EFI_HANDLE ImageHandle, CHAR16 *FileNames, LV_t *out)
   // Read the file
   Status = File->Read(File, (UINTN *)&out->length, out->value);
   if (EFI_ERROR(Status)) {
-      DEBUG((DEBUG_INFO, " %a:%d File->Read fail (%d) \r\n",
+      DEBUG((DEBUG_ERROR, " %a:%d File->Read fail (%d) \r\n",
               __FUNCTION__, __LINE__, Status));
       //Print(L"File Content: %a\n", Buffer);
       return Status;
@@ -169,7 +169,7 @@ EFI_STATUS SBC_WriteFile(EFI_HANDLE ImageHandle, CHAR16 *FileNames, LV_t *out)
                                &gEfiSimpleFileSystemProtocolGuid,
                                (VOID **)&FileSystem);
   if(EFI_ERROR(Status)) {
-    DEBUG((DEBUG_INFO, " %a:%d Locate File Systam fail (%d) \r\n",
+    DEBUG((DEBUG_ERROR, " %a:%d Locate File Systam fail (%d) \r\n",
            __FUNCTION__, __LINE__, Status));
     return Status;
   }
@@ -177,7 +177,7 @@ EFI_STATUS SBC_WriteFile(EFI_HANDLE ImageHandle, CHAR16 *FileNames, LV_t *out)
   // Open the roor directory
   Status = FileSystem->OpenVolume(FileSystem, &RootDir);
   if (EFI_ERROR(Status)) {
-        DEBUG((DEBUG_INFO, " %a:%d OpenVolume File Systam fail (%d) \r\n",
+        DEBUG((DEBUG_ERROR, " %a:%d OpenVolume File Systam fail (%d) \r\n",
            __FUNCTION__, __LINE__, Status));
     return Status;
   }
@@ -185,7 +185,7 @@ EFI_STATUS SBC_WriteFile(EFI_HANDLE ImageHandle, CHAR16 *FileNames, LV_t *out)
   // Open the file
   Status = RootDir->Open(RootDir, &File, FileNames, EFI_FILE_MODE_READ | EFI_FILE_MODE_WRITE, 0);
   if (EFI_ERROR(Status)) {
-      DEBUG((DEBUG_INFO, " %a:%d RootDir->Open fail (%d) \r\n",
+      DEBUG((DEBUG_ERROR, " %a:%d RootDir->Open fail (%d) \r\n",
      __FUNCTION__, __LINE__, Status));
     return Status;
   }
@@ -193,7 +193,7 @@ EFI_STATUS SBC_WriteFile(EFI_HANDLE ImageHandle, CHAR16 *FileNames, LV_t *out)
   // Read the file
   Status = File->Write(File, (UINTN *)&out->length, out->value);
   if (EFI_ERROR(Status)) {
-      DEBUG((DEBUG_INFO, " %a:%d File->Read fail (%d) \r\n",
+      DEBUG((DEBUG_ERROR, " %a:%d File->Read fail (%d) \r\n",
               __FUNCTION__, __LINE__, Status));
       //Print(L"File Content: %a\n", Buffer);
       return Status;
@@ -256,7 +256,7 @@ SBCStatus  SBC_CreateFile(EFI_HANDLE h, CHAR16 *fname)
 
     Status = FileSystem->OpenVolume(FileSystem, &RootDir);
     if(EFI_ERROR(Status)) {
-        DEBUG((DEBUG_INFO, " %a:%d OpenVolume File Systam fail (%d) \r\n",
+        DEBUG((DEBUG_ERROR, " %a:%d OpenVolume File Systam fail (%d) \r\n",
            __FUNCTION__, __LINE__, Status));
         return SBCBADFMT;
     }
@@ -265,7 +265,7 @@ SBCStatus  SBC_CreateFile(EFI_HANDLE h, CHAR16 *fname)
                            EFI_FILE_MODE_READ |EFI_FILE_MODE_WRITE | EFI_FILE_MODE_CREATE,
                            0);
     if(EFI_ERROR(Status)) {
-        DEBUG((DEBUG_INFO, " %a:%d RootDir->Open fail (%d) \r\n",
+        DEBUG((DEBUG_ERROR, " %a:%d RootDir->Open fail (%d) \r\n",
            __FUNCTION__, __LINE__, Status));
         return SBCBADFMT;
     }
@@ -297,7 +297,7 @@ SBCStatus  SBC_CreateDirectory(EFI_HANDLE h, CHAR16 *fname)
 
     Status = FileSystem->OpenVolume(FileSystem, &RootDir);
     if(EFI_ERROR(Status)) {
-        DEBUG((DEBUG_INFO, " %a:%d OpenVolume File Systam fail (%d) \r\n",
+        DEBUG((DEBUG_ERROR, " %a:%d OpenVolume File Systam fail (%d) \r\n",
            __FUNCTION__, __LINE__, Status));
         return SBCBADFMT;
     }
@@ -306,7 +306,7 @@ SBCStatus  SBC_CreateDirectory(EFI_HANDLE h, CHAR16 *fname)
                            EFI_FILE_MODE_READ |EFI_FILE_MODE_WRITE | EFI_FILE_MODE_CREATE,
                            EFI_FILE_DIRECTORY);
     if(EFI_ERROR(Status)) {
-        DEBUG((DEBUG_INFO, " %a:%d RootDir->Open fail (%d) \r\n",
+        DEBUG((DEBUG_ERROR, " %a:%d RootDir->Open fail (%d) \r\n",
            __FUNCTION__, __LINE__, Status));
         return SBCBADFMT;
     }

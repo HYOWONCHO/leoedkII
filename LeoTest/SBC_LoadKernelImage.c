@@ -11,6 +11,9 @@
 #include <Protocol/LoadedImage.h>
 #include <Library/DevicePathLib.h>
 #include <Protocol/DevicePathFromText.h>
+#include <Guid/FileInfo.h>
+
+#include "SBC_FileCtrl.h"
 
 // Define the path to grubx64.efi relative to the root of the file system
 // Adjust this path if your grubx64.efi is located elsewhere (e.g., "\EFI\ubuntu\grubx64.efi")
@@ -256,6 +259,38 @@ LocateDevicePathForFile (
   OUT EFI_DEVICE_PATH_PROTOCOL   **DevicePath
   );
 
+VOID LoadFile(EFI_HANDLE        ImageHandle,VOID **rdout, UINTN *rdlen)
+{
+
+  EFI_STATUS retval;
+  EFI_HANDLE h_img =NULL;
+  CHAR16 *ssblpath = L"\\EFI\\boot\\SSBL.efi";
+  
+  UINTN len;
+  LV_t lvout;
+
+  SBC_FileSysFindHndl(&h_img);
+  if (SBC_GetFileSize(ssblpath, &len) != SBCOK) {
+    Print(L"File size unknowns \n");
+    return;
+  }
+
+  Print(L"File Size : %d \n", len);
+  *rdout = AllocateZeroPool(len);
+
+  lvout.value = rdout;
+  lvout.length = len;
+  retval = SBC_ReadFile(h_img, ssblpath, &lvout);
+  Print(L"Read Status : %r \n", retval);
+
+  *rdlen = lvout.length;
+
+
+  return;
+}
+
+
+
 EFI_STATUS
 SSBL_Load (
   IN EFI_HANDLE        ImageHandle,
@@ -272,13 +307,18 @@ SSBL_Load (
   UINTN                      ExitDataSize;
   CHAR16                     *ExitData;
 
+//VOID                        *rdbuf = NULL;
+//UINTN                       rdlen;
+//LoadFile(ImageHandle, &rdbuf, &rdlen);
   // 1. Get the device path to the target EFI executable
   // Assuming TargetApp.efi is in the same directory as MyLauncher.efi
   Status = LocateDevicePathForFile(ImageHandle, L"\\EFI\\boot\\SSBL.efi", &TargetAppDevicePath);
+  Print(L"Return code : %d \n", Status);
   if (EFI_ERROR(Status)) {
     Print(L"Failed to locate device path for TargetApp.efi: %r\n", Status);
     return Status;
   }
+
 
   // 2. Load the target image
   Print(L"Loading TargetApp.efi...\n");
@@ -290,6 +330,17 @@ SSBL_Load (
                   0,                     // Buffer size (ignored if Buffer is NULL)
                   &TargetAppImageHandle  // Output: Handle of the loaded image
                   );
+
+
+//Print(L"File Size : %d Buff addr : %p \n" , rdlen, rdbuf);
+//Status = gBS->LoadImage(
+//              FALSE,                 // Not a driver
+//              ImageHandle,           // Parent image handle (this application's handle)
+//              NULL,   // Device path to the target .efi file
+//              rdbuf,                  // Buffer (firmware allocates if NULL)
+//              rdlen,                     // Buffer size (ignored if Buffer is NULL)
+//              &TargetAppImageHandle  // Output: Handle of the loaded image
+//              );
   if (EFI_ERROR(Status)) {
     Print(L"Failed to load TargetApp.efi: %r\n", Status);
     FreePool(TargetAppDevicePath); // Free the device path
@@ -347,7 +398,7 @@ SSBL_Load (
 
   return EFI_SUCCESS;
 }
-
+#include <Protocol/DevicePathToText.h>
 // Helper function to create a device path for a file relative to the current image's location
 EFI_STATUS
 LocateDevicePathForFile (
@@ -362,10 +413,28 @@ LocateDevicePathForFile (
   EFI_DEVICE_PATH_PROTOCOL  *FileDevicePath;
   EFI_DEVICE_PATH_PROTOCOL  *Node;
 
-
+  //CHAR16                        FileFullPath[256];
+  CHAR16                          *DevicePathStr = NULL;
   EFI_DEVICE_PATH_FROM_TEXT_PROTOCOL *DevicePathFromText;
+  EFI_DEVICE_PATH_TO_TEXT_PROTOCOL *DevicePathToText = NULL;
 
-  gBS->LocateProtocol(&gEfiDevicePathFromTextProtocolGuid, NULL, (VOID **)&DevicePathFromText);
+  Status = gBS->LocateProtocol(&gEfiDevicePathFromTextProtocolGuid, NULL, (VOID **)&DevicePathFromText);
+  if (EFI_ERROR(Status)) {
+    Print(L"EFI_DEVICE_PATH_FROM_TEXT_PROTOCOL Locate Protocol :%r \n", Status);
+    return Status;
+
+  }
+
+  gBS->LocateProtocol(&gEfiDevicePathToTextProtocolGuid, NULL, (VOID**)&DevicePathToText);
+
+//Status = gBS->OpenProtocol(
+//                          ParentImageHandle,
+//                          &gEfiLoadedImageProtocolGuid,
+//                          (VOID **)&LoadedImage,
+//                          ParentImageHandle,
+//                          NULL,
+//                          EFI_OPEN_PROTOCOL_GET_PROTOCOL
+//    );
 
 
   Status = gBS->HandleProtocol(
@@ -374,12 +443,16 @@ LocateDevicePathForFile (
                   (VOID **)&LoadedImage
                   );
   if (EFI_ERROR(Status)) {
+    Print(L"OpenProtocol :%r \n", Status);
     return Status;
   }
 
   // Get the device path of the partition where this application is located
   FileSystemDevicePath = LoadedImage->FilePath;
+  //DevicePathStr = DevicePathToText->ConvertDevicePathToText(FileSystemDevicePath, FALSE, FALSE);
+  //Print(L"FileSystemDevicePathh str : %s \n" , DevicePathStr);
   if (FileSystemDevicePath == NULL) {
+    Print(L"Get the device path of the partition where this application is locate not found\n");
     return EFI_NOT_FOUND; // Should not happen for a loaded image
   }
 
@@ -390,19 +463,368 @@ LocateDevicePathForFile (
   }
   // Backtrack to the parent directory by removing the file node
   FileDevicePath = DuplicateDevicePath(FileSystemDevicePath);
+  //DevicePathStr = DevicePathToText->ConvertDevicePathToText(FileDevicePath, FALSE, FALSE);
+  //Print(L"FileDevicePath str : %s \n" , DevicePathStr);
   if (FileDevicePath == NULL) {
+    Print(L"Backtrack to the parent directory by removing the file node EFI_OUT_OF_RESOURCES\n");
     return EFI_OUT_OF_RESOURCES;
   }
   SetDevicePathEndNode(Node); // Effectively truncate to parent directory path
 
-  // Append the new file name
-  *DevicePath = AppendDevicePathNode(FileDevicePath, 
+
+//UnicodeSPrint(FileFullPath, sizeof(FileFullPath), L"%s%s%s",
+//    L"\\", // Assuming root is the base, GRUB_EFI_PATH starts with '\'
+//    L"PciRoot(0x0)/Pci(0x1D,0x3)/Pci(0x0,0x0)/NVMe(0x1,49-3B-A0-31-D8-38-25-00)/HD(1,GPT,AC396801-7980-4224-826F-21CBEC51728B,0x800,0x12C000)/",
+//    FileName + 1 // Skip the leading '\'
+//);
+//
+//
+//Print(L"File Full Path : %s \n", FileFullPath);
+//// Append the new file name
+
+    // Convert text path to device path
+  //*DevicePath = DevicePathFromText->ConvertTextToDevicePath(FileFullPath);
+//
+//DevicePathStr = DevicePathToText->ConvertDevicePathToText(*DevicePath, FALSE, FALSE);
+//Print(L"Test Device Path str : %s \n" , DevicePathStr);
+//  *DevicePath = (EFI_DEVICE_PATH_PROTOCOL *)DevicePathFromText->ConvertTextToDevicePath(FileName);
+  *DevicePath = AppendDevicePathNode(FileDevicePath,
                                      (EFI_DEVICE_PATH_PROTOCOL *)DevicePathFromText->ConvertTextToDevicePath(FileName));
   FreePool(FileDevicePath); // Free the temporary device path
 
+  DevicePathStr = DevicePathToText->ConvertDevicePathToText(*DevicePath, FALSE, FALSE);
+  Print(L"Device Path str : %s \n" , DevicePathStr);
   if (*DevicePath == NULL) {
+    Print(L"AppendDevicePathNode Nill\n");
     return EFI_OUT_OF_RESOURCES;
   }
 
   return EFI_SUCCESS;
 }
+
+// This is a conceptual C code snippet demonstrating how a UEFI application
+// (like a simplified bootloader) would hand off control to a kernel.
+// It is NOT runnable on its own and requires a UEFI development environment.
+
+
+// Forward declarations for conceptual functions
+EFI_STATUS LoadKernelIntoMemory(EFI_HANDLE ImageHandle, EFI_SYSTEM_TABLE *SystemTable, void **KernelEntryAddress, void **InitrdEntryAddress, UINTN *KernelSize, UINTN *InitrdSize);
+void JumpToKernel(void *KernelEntry, EFI_MEMORY_DESCRIPTOR *MemoryMap, UINTN MapSize, UINTN DescriptorSize, void *InitrdAddress, UINTN InitrdSize, CHAR16 *CommandLine);
+
+// Main entry point for the UEFI application
+EFI_STATUS Load_Kernel(EFI_HANDLE ImageHandle, EFI_SYSTEM_TABLE *SystemTable) 
+{
+    //
+    // 1. Initialize GNU-EFI library (for helper functions like Print)
+    //    In a real scenario, you'd use direct UEFI services or your own wrappers.
+    //
+    //InitializeLib(ImageHandle, SystemTable);
+
+    Print(L"UEFI Bootloader: Starting initialization...\n");
+
+    //
+    // 2. Obtain necessary UEFI services (already available via SystemTable here)
+    //    A real bootloader would interact with various protocols like
+    //    EFI_SIMPLE_FILE_SYSTEM_PROTOCOL to read the kernel from the ESP.
+    //
+    // EFI_GUID fsGuid = EFI_SIMPLE_FILE_SYSTEM_PROTOCOL_GUID;
+    // EFI_SIMPLE_FILE_SYSTEM_PROTOCOL *fs;
+    // SystemTable->BootServices->LocateProtocol(&fsGuid, NULL, (void**)&fs);
+    // (Conceptual: assume filesystem access is set up to find the kernel)
+
+    //
+    // 3. (Conceptual) Load Kernel and Initramfs into memory
+    //    In a real scenario, this involves:
+    //    - Opening files on the EFI System Partition (ESP)
+    //    - Reading file contents into allocated memory using BootServices->AllocatePages
+    //    - Parsing kernel headers to find its entry point and requirements
+    //
+    void *KernelEntry = NULL;
+    void *InitrdAddress = NULL;
+    UINTN KernelSize = 0;
+    UINTN InitrdSize = 0;
+
+    EFI_STATUS Status = LoadKernelIntoMemory(ImageHandle, SystemTable, &KernelEntry, &InitrdAddress, &KernelSize, &InitrdSize);
+
+    if (EFI_ERROR(Status)) {
+        Print(L"UEFI Bootloader: Failed to load kernel! Status: %r\n", Status);
+        // Loop indefinitely on error for debugging, or return.
+        while (1);
+    }
+
+    Print(L"UEFI Bootloader: Kernel loaded successfully at %p.\n", KernelEntry);
+
+    //
+    // 4. Get the Memory Map
+    //    This is crucial before calling ExitBootServices. The OS needs to know
+    //    how memory is laid out and what regions are available.
+    //
+    EFI_MEMORY_DESCRIPTOR *MemoryMap = NULL;
+    UINTN MapSize = 0;
+    UINTN MapKey = 0;
+    UINTN DescriptorSize = 0;
+    UINT32 DescriptorVersion = 0;
+
+    // First call to GetMemoryMap to get buffer size
+    Status = SystemTable->BootServices->GetMemoryMap(&MapSize, MemoryMap, &MapKey, &DescriptorSize, &DescriptorVersion);
+    if (Status == EFI_BUFFER_TOO_SMALL) {
+        // Allocate buffer (add some margin)
+        MapSize += EFI_PAGE_SIZE; // Add a page just in case for growth
+        Status = SystemTable->BootServices->AllocatePool(EfiLoaderData, MapSize, (void**)&MemoryMap);
+        if (EFI_ERROR(Status)) {
+            Print(L"UEFI Bootloader: Failed to allocate memory map buffer! Status: %r\n", Status);
+            while(1);
+        }
+        // Second call to GetMemoryMap to actually fill the buffer
+        Status = SystemTable->BootServices->GetMemoryMap(&MapSize, MemoryMap, &MapKey, &DescriptorSize, &DescriptorVersion);
+    }
+
+    if (EFI_ERROR(Status)) {
+        Print(L"UEFI Bootloader: Failed to get memory map! Status: %r\n", Status);
+        // Free pool if allocated
+        if (MemoryMap) SystemTable->BootServices->FreePool(MemoryMap);
+        while (1);
+    }
+
+    Print(L"UEFI Bootloader: Memory Map obtained. MapKey: %d\n", MapKey);
+
+    //
+    // 5. Exit Boot Services (CRUCIAL HANDOVER)
+    //    This tells the UEFI firmware that the OS is taking over. After this,
+    //    most UEFI services are no longer available.
+    //
+    Print(L"UEFI Bootloader: Calling ExitBootServices()...\n");
+    Status = SystemTable->BootServices->ExitBootServices(ImageHandle, MapKey);
+
+    if (EFI_ERROR(Status)) {
+        // If ExitBootServices fails, we are in a bad state.
+        // This usually means the memory map key is invalid (e.g., memory map changed).
+        // A robust bootloader would retry getting the memory map and calling ExitBootServices.
+        Print(L"UEFI Bootloader: ExitBootServices FAILED! Status: %r\n", Status);
+        // Cannot use Print after a failed ExitBootServices in a real scenario,
+        // as print services are usually boot services. This is for conceptual demo.
+        while (1);
+    }
+
+    Print(L"UEFI Bootloader: Successfully exited Boot Services. Jumping to kernel...\n");
+
+    //
+    // 6. Jump to Kernel Entry Point
+    //    This is the final step. The bootloader performs a direct jump
+    //    to the kernel's starting address.
+    //    The kernel will then use the provided memory map and parameters
+    //    to initialize itself.
+    //
+    CHAR16 *CommandLine = L"root=/dev/sdaX quiet splash"; // Example kernel command line
+    JumpToKernel(KernelEntry, MemoryMap, MapSize, DescriptorSize, InitrdAddress, InitrdSize, CommandLine);
+
+    // This part should never be reached if JumpToKernel is successful
+    return EFI_SUCCESS;
+}
+
+
+// --- Conceptual Helper Functions (Simplified, no actual implementation) ---
+
+// Helper function to load a file from the ESP into memory
+// This is a simplified version and lacks robust error handling and path discovery.
+EFI_STATUS LoadFileFromEsp(
+    EFI_SYSTEM_TABLE *SystemTable,
+    EFI_HANDLE ImageHandle,
+    CHAR16 *FileName,
+    void **FileData,
+    UINTN *FileSize) 
+{
+
+    EFI_STATUS Status;
+    EFI_LOADED_IMAGE_PROTOCOL *LoadedImage;
+    EFI_SIMPLE_FILE_SYSTEM_PROTOCOL *FileSystem;
+    EFI_FILE_PROTOCOL *Root, *FileHandle;
+    UINTN ReadSize;
+
+    Print(L"  Attempting to load file: %s\n", FileName);
+
+    // Get the EFI_LOADED_IMAGE_PROTOCOL for the current image
+    Status = SystemTable->BootServices->HandleProtocol(
+        ImageHandle,
+        &gEfiLoadedImageProtocolGuid,
+        (void**)&LoadedImage
+    );
+    if (EFI_ERROR(Status)) {
+        Print(L"  Failed to get LoadedImageProtocol: %r\n", Status);
+        return Status;
+    }
+
+    // Get the EFI_SIMPLE_FILE_SYSTEM_PROTOCOL from the device handle of the loaded image
+    Status = SystemTable->BootServices->HandleProtocol(
+        LoadedImage->DeviceHandle,
+        &gEfiSimpleFileSystemProtocolGuid,
+        (void**)&FileSystem
+    );
+    if (EFI_ERROR(Status)) {
+        Print(L"  Failed to get FileSystemProtocol: %r\n", Status);
+        return Status;
+    }
+
+    // Open the root directory of the file system
+    Status = FileSystem->OpenVolume(FileSystem, &Root);
+    if (EFI_ERROR(Status)) {
+        Print(L"  Failed to open volume: %r\n", Status);
+        return Status;
+    }
+
+    // Open the file
+    Status = Root->Open(Root, &FileHandle, FileName, EFI_FILE_MODE_READ, 0);
+    if (EFI_ERROR(Status)) {
+        Print(L"  Failed to open file %s: %r\n", FileName, Status);
+        Root->Close(Root); // Close root even if file open fails
+        return Status;
+    }
+
+    // Get file info to determine size
+    EFI_FILE_INFO *FileInfo;
+    UINTN FileInfoSize = 0;
+
+    Status = FileHandle->GetInfo(FileHandle, &gEfiFileInfoGuid, &FileInfoSize, NULL);
+    if (Status == EFI_BUFFER_TOO_SMALL) {
+        Status = SystemTable->BootServices->AllocatePool(EfiLoaderData, FileInfoSize, (void**)&FileInfo);
+        if (EFI_ERROR(Status)) {
+            Print(L"  Failed to allocate FileInfo buffer: %r\n", Status);
+            FileHandle->Close(FileHandle);
+            Root->Close(Root);
+            return Status;
+        }
+        Status = FileHandle->GetInfo(FileHandle, &gEfiFileInfoGuid, &FileInfoSize, FileInfo);
+    }
+
+    if (EFI_ERROR(Status)) {
+        Print(L"  Failed to get file info: %r\n", Status);
+        if (FileInfo) SystemTable->BootServices->FreePool(FileInfo);
+        FileHandle->Close(FileHandle);
+        Root->Close(Root);
+        return Status;
+    }
+
+    *FileSize = FileInfo->FileSize;
+    SystemTable->BootServices->FreePool(FileInfo); // Free FileInfo buffer
+
+    // Allocate memory for the file content
+    Status = SystemTable->BootServices->AllocatePages(AllocateAnyPages, EfiLoaderData, EFI_SIZE_TO_PAGES(*FileSize), (EFI_PHYSICAL_ADDRESS*)FileData);
+    if (EFI_ERROR(Status)) {
+        Print(L"  Failed to allocate pages for file data: %r\n", Status);
+        FileHandle->Close(FileHandle);
+        Root->Close(Root);
+        return Status;
+    }
+
+    // Read the file content
+    ReadSize = *FileSize;
+    Status = FileHandle->Read(FileHandle, &ReadSize, *FileData);
+    if (EFI_ERROR(Status)) {
+        Print(L"  Failed to read file data: %r\n", Status);
+        SystemTable->BootServices->FreePages((EFI_PHYSICAL_ADDRESS)*FileData, EFI_SIZE_TO_PAGES(*FileSize));
+        FileHandle->Close(FileHandle);
+        Root->Close(Root);
+        return Status;
+    }
+
+    Print(L"  File %s loaded successfully. Size: %ld bytes.\n", FileName, *FileSize);
+
+    FileHandle->Close(FileHandle);
+    Root->Close(Root);
+
+    return EFI_SUCCESS;
+}
+
+
+EFI_STATUS LoadKernelIntoMemory(
+    EFI_HANDLE ImageHandle,
+    EFI_SYSTEM_TABLE *SystemTable,
+    void **KernelEntryAddress,
+    void **InitrdEntryAddress,
+    UINTN *KernelSize,
+    UINTN *InitrdSize) {
+
+    EFI_STATUS Status;
+
+    Print(L"  Loading kernel and initramfs...\n");
+
+    // Load Kernel (example path, adjust as needed for your setup)
+    // Common paths: \EFI\LINUX\vmlinuz, \vmlinuz-linux, etc.
+    Status = LoadFileFromEsp(SystemTable, ImageHandle, L"\\efi\\rocky\vmlinuz", KernelEntryAddress, KernelSize);
+    if (EFI_ERROR(Status)) {
+        Print(L"  Failed to load kernel file!\n");
+        return Status;
+    }
+
+    // Load Initramfs (example path, adjust as needed)
+    // Common paths: \EFI\LINUX\initramfs-linux.img, \initrd.img, etc.
+    Status = LoadFileFromEsp(SystemTable, ImageHandle, L"\\SSBL.efi", InitrdEntryAddress, InitrdSize);
+    if (EFI_ERROR(Status)) {
+        Print(L"  Failed to load initramfs file!\n");
+        // Free kernel memory if initramfs fails to load
+        SystemTable->BootServices->FreePages((EFI_PHYSICAL_ADDRESS)*KernelEntryAddress, EFI_SIZE_TO_PAGES(*KernelSize));
+        return Status;
+    }
+
+    // For a Linux kernel with EFI stub, the entry point is typically the start of the loaded image.
+    // For other boot protocols, you might need to parse the file for the actual entry point.
+
+    return EFI_SUCCESS;
+}
+
+// Function to perform the jump to the kernel
+// This function would typically involve architecture-specific assembly code
+// to set up registers and then jump to the kernel's entry point.
+// In a real bootloader, this function would NOT return.
+void JumpToKernel(
+    void *KernelEntry,
+    EFI_MEMORY_DESCRIPTOR *MemoryMap,
+    UINTN MapSize,
+    UINTN DescriptorSize,
+    void *InitrdAddress,
+    UINTN InitrdSize,
+    CHAR16 *CommandLine) {
+
+    Print(L"  (Conceptual) Performing final jump to kernel at %p...\n", KernelEntry);
+    Print(L"  (Conceptual) Kernel Command Line: %s\n", CommandLine);
+    Print(L"  (Conceptual) Memory Map Address: %p, Size: %ld, Descriptor Size: %ld\n", MemoryMap, MapSize, DescriptorSize);
+    Print(L"  (Conceptual) Initrd Address: %p, Size: %ld\n", InitrdAddress, InitrdSize);
+
+    // --- REAL IMPLEMENTATION for x86-64 Linux kernel would involve: ---
+    // 1. Disable interrupts.
+    //    asm volatile ("cli");
+    // 2. Load the GDT (Global Descriptor Table) and IDT (Interrupt Descriptor Table)
+    //    for the kernel's execution environment.
+    // 3. Set up CPU registers according to the Linux x86_64 boot protocol:
+    //    - RDI: Address of the EFI System Table (or a custom boot info structure)
+    //    - RSI: Address of the memory map (EFI_MEMORY_DESCRIPTOR array)
+    //    - RDX: Size of the memory map in bytes (MapSize)
+    //    - RCX: Size of a single memory map descriptor in bytes (DescriptorSize)
+    //    - R8: Address of the initial RAM disk (initramfs)
+    //    - R9: Size of the initial RAM disk (initramfs)
+    //    - For the kernel command line, it's typically a pointer to the string.
+    //      The exact register for command line might vary or be passed via a boot info struct.
+    // 4. Perform a direct assembly jump to the kernel's entry point:
+    //    ((void (*)(void))KernelEntry)();
+    //    Or more explicitly with parameters (simplified, as C function calls handle this
+    //    differently than a direct jump to an OS kernel entry):
+    //    asm volatile (
+    //        "mov %0, %%rdi\n" // Pass SystemTable or custom boot info
+    //        "mov %1, %%rsi\n" // Pass MemoryMap
+    //        "mov %2, %%rdx\n" // Pass MapSize
+    //        "mov %3, %%rcx\n" // Pass DescriptorSize
+    //        "mov %4, %%r8\n"  // Pass InitrdAddress
+    //        "mov %5, %%r9\n"  // Pass InitrdSize
+    //        "jmp *%6\n"       // Jump to KernelEntry
+    //        : // No output operands
+    //        : "r" (SystemTable), "r" (MemoryMap), "r" (MapSize), "r" (DescriptorSize),
+    //          "r" (InitrdAddress), "r" (InitrdSize), "r" (KernelEntry)
+    //        : "rdi", "rsi", "rdx", "rcx", "r8", "r9" // Clobbered registers
+    //    );
+
+    // In a real scenario, execution would never return from here.
+    // We add an infinite loop here only for conceptual demonstration
+    // within an environment that doesn't execute actual low-level code.
+    while(1);
+}
+
