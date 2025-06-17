@@ -3,6 +3,23 @@
 
 #include "SBC_ErrorType.h"
 
+#define BOOT_MODE_FNAME         L"\\EFI\\BOOT\\bootmode"
+#define BOOT_MODE_STRNRORMAL    "normal"
+#define BOOT_MODE_STRUPDATE     "update"
+#define BOOT_MODE_STRFACTORY    "factory"
+
+typedef enum _t_boot_mode {
+    BOOT_MODE_NORMAL =  0,          /// Normal Boot Mode
+    BOOT_MODE_UPDATE,               /// Image update
+    BOOT_MODE_FACTORY,              /// Factory mode boot 
+    BOOT_MODE_UNKNOWN
+}boot_mode_t;
+
+typedef struct _t_bm_lookup_table {
+    CHAR8 *key;
+    UINT32 val;
+}bm_lookup_table_t;
+
 
 #define SBC_RAWPRT_DFLT_BLK_SZ                   512
 #define SBC_FILE_RW_BLK(len)                        \
@@ -36,7 +53,7 @@
 /*! Boot pres length */
 #define SBC_BOOT_PRES_LEN                   8
 
-#pragma push(1)
+#pragma pack(1)
 /*!
     \brief Raw Partition Header  structure
 */
@@ -47,7 +64,7 @@ typedef struct _rawprt_hdr_t {
     UINT8       bootpres[SBC_BOOT_PRES_LEN];    /**< Boot pres */
 }rawprt_hdr_t;
 
-#pragma push()
+#pragma pack()
 
 
 
@@ -89,7 +106,7 @@ typedef struct _rawprt_hdr_t {
 /**
  * \brief Boot Firmware storage information 
  */
-#pragma push(1)
+#pragma pack(1)
 typedef union _boot_fw_inf_t {
 
     struct {
@@ -107,7 +124,7 @@ typedef union _boot_fw_inf_t {
 
 }boot_fw_inf_t;
 
-#pragma push()
+#pragma pack()
 
 
 #define SYS_CONF_START_OFS              0x18000000
@@ -134,7 +151,7 @@ typedef union _boot_fw_inf_t {
 #define SYS_PRES_INFO_MAX               (SYS_PRES_LEN + SYS_PRES_RES_LEN + SYS_PRES_IV_LEN + SYS_PRES_TAG_LEN + SYS_PRES_RESERVED)
 
 #define SYS_CERT_LEN                    (2<<10)
-#pragma push(1)
+#pragma pack(1)
 typedef union _osid_key_t {
 
     struct {
@@ -160,9 +177,9 @@ typedef union _sys_pres_t  {
 
     UINT8 value[SYS_PRES_INFO_MAX];
 
-}
+}sys_pres_t;
 
-#pragma push()
+#pragma pack()
 
       
 /*! \} */                                                                                                       
@@ -325,4 +342,15 @@ SBCStatus  SBC_FindBlkIoHandle(OUT VOID **hblk);
  */
 SBCStatus  SBC_RawPrtBlockWrite(VOID *blkio, UINT8 *wrbuf, UINT32 wrlen, UINT32 wrlba);                    
 
+
+/*!
+ * \fn UINT32  SBC_ReadBootMode(VOID)
+ * 
+ * \author leoc (6/17/25)
+ * 
+ * \param void   
+ * 
+ * \return UINT32 
+ */
+UINT32  SBC_ReadBootMode(VOID);
 #endif

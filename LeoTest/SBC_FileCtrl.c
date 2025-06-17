@@ -104,6 +104,8 @@ EFI_STATUS SBC_ReadFile(EFI_HANDLE ImageHandle, CHAR16 *FileNames, LV_t *out)
 //DEBUG((DEBUG_ERROR,"Image Handle : %p \r\n", ImageHandle));
 //DEBUG((DEBUG_ERROR,"Read File : %s \r\n", (CHAR8 *)FileNames));
 
+  dprint("Read File : %s", FileNames);
+
   // Locate file system
   Status = gBS->HandleProtocol(ImageHandle,
                                &gEfiSimpleFileSystemProtocolGuid,
@@ -316,6 +318,76 @@ SBCStatus  SBC_CreateDirectory(EFI_HANDLE h, CHAR16 *fname)
     return SBCOK;
 
 
+
+}
+
+static UINT32 _sbc_bm_lookup_key(CHAR8* key)
+{
+    bm_lookup_table_t tb[] =  {
+        {BOOT_MODE_STRNRORMAL, BOOT_MODE_NORMAL},
+        {BOOT_MODE_STRUPDATE, BOOT_MODE_UPDATE},
+        {BOOT_MODE_STRFACTORY, BOOT_MODE_FACTORY}
+    };
+
+    UINT32 nkeys = (sizeof(tb) / sizeof(bm_lookup_table_t));
+
+    dprint("key : %a , keylen :%d", key, strlen(key));
+    for (INT32 x = 0; x < nkeys; x++) {
+        bm_lookup_table_t *sym = &tb[x];
+        dprint("sym key : %a , Len :%d", sym->key, strlen(sym->key));
+        if (strncmp(sym->key, key, strlen(sym->key) - 1) == 0) {
+            return sym->val;
+        }
+    }
+
+    return BOOT_MODE_UNKNOWN;
+}
+
+UINT32  SBC_ReadBootMode(VOID)
+{
+    UINT32 ret = BOOT_MODE_UNKNOWN;
+
+    EFI_HANDLE      fhnd = NULL;
+    UINT8           rdbuf[16] = {0,};
+    LV_t            rdlv;
+    
+
+    if (SBC_FileSysFindHndl(&fhnd) <= 0) {
+        eprint("SBC File Handle Protocol found fail");
+        ret = BOOT_MODE_UNKNOWN;
+        goto errdone;
+    }
+
+    SBC_RET_VALIDATE_ERRCODEMSG((fhnd != NULL), SBCNULLP, "File Handle Obj Nill");
+
+    _lv_set_data(&rdlv, rdbuf, 16);
+    ret = SBC_ReadFile(fhnd, BOOT_MODE_FNAME, &rdlv);
+    if (ret != SBCOK) {
+        eprint("Boot Mode file read fail");
+        ret = BOOT_MODE_UNKNOWN;
+        goto errdone;
+    }
+
+    SBC_external_mem_print_bin("Boot Mode", rdbuf, 16);
+    //Print(L"Read Boot Mode : %s \n", rdbuf);
+
+    switch (_sbc_bm_lookup_key((CHAR8 *)rdbuf)) {
+    case BOOT_MODE_NORMAL:
+        ret = BOOT_MODE_NORMAL;
+        break;
+    case BOOT_MODE_UPDATE:
+        ret = BOOT_MODE_UPDATE;
+        break;
+    case BOOT_MODE_FACTORY:
+        ret = BOOT_MODE_FACTORY;
+        break;
+    default:
+        ret = BOOT_MODE_UNKNOWN;
+        break;
+    }
+
+errdone:
+    return ret;
 
 }
 

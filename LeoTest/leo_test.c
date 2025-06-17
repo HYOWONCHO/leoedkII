@@ -598,6 +598,8 @@ SSBL_Load (
 
 extern SBCStatus SBC_SSBL_LoadAndStart(EFI_HANDLE ImageHandle);
 
+
+
 EFI_STATUS
 EFIAPI
 UefiMain (
@@ -611,6 +613,27 @@ UefiMain (
 
   CHAR8 *baseanswer = "SBCBaseAnswer";
   UINTN answlen =strlen(baseanswer);
+  UINT32 bootmode = BOOT_MODE_UNKNOWN;
+
+
+
+  bootmode = SBC_ReadBootMode();
+
+  switch (bootmode) {
+  case BOOT_MODE_NORMAL:
+    Print(L"BOOT_MODE_NORMAL \n");
+    break;
+  case BOOT_MODE_UPDATE:
+    Print(L"BOOT_MODE_UPDATE \n");
+    break;
+  case BOOT_MODE_FACTORY:
+    Print(L"BOOT_MODE_FACTORY \n");
+    break;
+  default:
+    Print(L"Unknown boot mode, go to Abort \n");
+    goto errdone;
+    break;
+  }
 
   Print(L"Validate the Base Answer !!! \n");
 
@@ -759,6 +782,7 @@ UefiMain (
 //
 //  // Jump to kernel
 //  KernelEntry();
+errdone:
    return EFI_SUCCESS;
 }
 
