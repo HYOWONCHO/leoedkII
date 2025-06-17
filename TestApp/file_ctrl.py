@@ -17,5 +17,21 @@ def file_is_exists(fname):
 def read_file(fname):
     with open(fname, "r") as file:
         content = file.read()
+        file.close()
 
     return content
+
+def write_file(fname, fdata, mode):
+    binary_f = open(fname, mode)
+    binary_f.write(fdata)
+    binary_f.close()
+
+
+def write_header_info(fname):
+    # Write the magic ID 
+    if file_is_exists(fname) != True:
+        print("write binary file create ")
+        write_file(fname, "AA55AA55", "wb")
+    else:
+        print("append binary file create ")
+        write_file(fname, "AA55AA55", "ab")
