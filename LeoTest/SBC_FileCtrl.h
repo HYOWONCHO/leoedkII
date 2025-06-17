@@ -3,7 +3,169 @@
 
 #include "SBC_ErrorType.h"
 
-                                                                                                             
+
+#define SBC_RAWPRT_DFLT_BLK_SZ                   512
+#define SBC_FILE_RW_BLK(len)                        \
+    ({                                              \
+        UINT32 _x = len;                            \
+        if(_x <= SBC_RAWPRT_DFLT_BLK_SZ) {          \
+            _x = 0;                                 \
+        }                                           \
+        else {                                      \
+            _x = len / SBC_RAWPRT_DFLT_BLK_SZ;      \
+        }                                           \
+        _x;                                         \
+    })     
+/*! 
+    \defgroup   RawPartition        Raw Partition related data structure and defines
+    \{
+*/
+
+
+
+
+/*! Raw Partition Identifier */
+#define SBC_RAWPRT_MAGIC_ID                 0xAA55AA55 
+
+/*! Partition Information Length */
+#define SBC_PRTNIFO_LEN                     64
+
+/*! Raw Partition Header skip bytes*/
+#define SBC_HDR_SKIP_LEN                    52
+
+/*! Boot pres length */
+#define SBC_BOOT_PRES_LEN                   8
+
+#pragma push(1)
+/*!
+    \brief Raw Partition Header  structure
+*/
+typedef struct _rawprt_hdr_t {
+    UINT32      magicid;                        /**< Identifier for SBC Raw-Partition */
+    UINT8       prtinfo[SBC_PRTNIFO_LEN];       /**< Partition information */
+    UINT8       reserv[SBC_HDR_SKIP_LEN];
+    UINT8       bootpres[SBC_BOOT_PRES_LEN];    /**< Boot pres */
+}rawprt_hdr_t;
+
+#pragma push()
+
+
+
+#define BOOT_FSBL_OFS                       0x00000000      /**< FSBL Offset */
+#define BOOT_SSB_OFS                        0x00400000      /**< SSB Offset */
+#define BOOT_OS_OFS                         0x00800000      /**< Operating System Offset */
+#define BOOT_SW_OFS                         0x01C00000      /**< Boot Software offset */
+
+
+#define BOOT_SECTOR1_OFS                    0x00000000
+#define BOOT_SECTOR2_OFS                    0x08000000
+#define BOOT_SECTOR3_OFS                    0x10000000
+
+#define BOOT_IMG_LENB                       0x00000004
+#define BOOT_FSBL_MAX                       0x00400000      /**< 4M */
+#define BOOT_FSBL_IMGMAX                    (BOOT_FSBL_MAX - BOOT_IMG_LENB)
+
+
+#define BOOT_SSBL_MAX                       0x00400000      /**< 4M */
+#define BOOT_SSBL_IMGMAX                    (BOOT_SSBL_MAX - BOOT_IMG_LENB)
+
+
+#define BOOT_OS_IMG_MB                      20
+#define BOOT_OS_MAX                         (BOOT_OS_IMG_MB << 20)      /**< 20 M */
+#define BOOT_OS_IMGMAX                      (BOOT_OS_MAX - BOOT_IMG_LENB)
+
+#define BOOT_SW_IMG_MB                      100
+#define BOOT_SW_MAX                         (BOOT_SW_IMG_MB << 20)      /**<  100 M */
+#define BOOT_SW_IMGMAX                      (BOOT_SW_MAX - BOOT_IMG_LENB)
+
+
+#define BOOT_FW_IMG_MB                      128
+#define BOOT_FW_IMGMAX                      (BOOT_FW_IMG_MB << 20)
+
+
+#define BOOT_FW_LBA_BLOCKS                  (BOOT_FW_IMGMAX / SBC_RAWPRT_BLK_SZ)
+
+
+/**
+ * \brief Boot Firmware storage information 
+ */
+#pragma push(1)
+typedef union _boot_fw_inf_t {
+
+    struct {
+        UINT32  fsbln;
+        UINT8   fsblimg[BOOT_FSBL_IMGMAX];
+        UINT32  ssbln;
+        UINT8   ssblimg[BOOT_SSBL_IMGMAX];
+        UINT32  osln;
+        UINT8   osimg[BOOT_OS_IMGMAX];
+        UINT32  swn;
+        UINT8   swimg[BOOT_OS_IMGMAX];
+    }mbr;
+
+    UINT8 value[BOOT_FW_IMGMAX];
+
+}boot_fw_inf_t;
+
+#pragma push()
+
+
+#define SYS_CONF_START_OFS              0x18000000
+#define SYS_CONF_OSID_OFS               0x00000000
+#define SYS_CONF_RES_OFS                0x00000040          /**< Reference offset */
+#define SYS_CONF_ROOT_CA_OFS            0x00000080
+#define SYS_CONF_DEVID_CRT_OFS          0x00000880
+#define SYS_CONF_SWID_CRT_OFS           0x00001080
+#define SYS_CONF_OSID_CRT_OFS           0x00001880
+#define SYS_CONF_SW_LIST_OFS            0x00002080
+
+
+#define SYS_OSID_LEN                    4
+#define SYS_OSID_KEY_LEN                32
+#define SYS_OSID_IV_LEN                 12
+#define SYS_OSID_TAG_LEN                16
+
+#define SYS_PRES_LEN                    4
+#define SYS_PRES_RES_LEN                16
+#define SYS_PRES_IV_LEN                 12
+#define SYS_PRES_TAG_LEN                16
+#define SYS_PRES_RESERVED               16
+
+#define SYS_PRES_INFO_MAX               (SYS_PRES_LEN + SYS_PRES_RES_LEN + SYS_PRES_IV_LEN + SYS_PRES_TAG_LEN + SYS_PRES_RESERVED)
+
+#define SYS_CERT_LEN                    (2<<10)
+#pragma push(1)
+typedef union _osid_key_t {
+
+    struct {
+        UINT32      len;
+        UINT8       key[SYS_OSID_KEY_LEN];
+        UINT8       iv[SYS_OSID_IV_LEN];
+        UINT8       tag[SYS_OSID_TAG_LEN];
+    }m;
+
+    UINT8 value[SYS_OSID_LEN + SYS_OSID_KEY_LEN + SYS_OSID_IV_LEN + SYS_OSID_TAG_LEN];
+}osid_key_t;
+
+typedef union _sys_pres_t  {
+
+    struct {
+        UINT32      len;
+        UINT8       res[SYS_PRES_RES_LEN];
+        UINT8       iv[SYS_PRES_IV_LEN];
+        UINT8       tag[SYS_PRES_TAG_LEN];
+        UINT8       reserved[SYS_PRES_RESERVED];
+    }m;
+
+
+    UINT8 value[SYS_PRES_INFO_MAX];
+
+}
+
+#pragma push()
+
+      
+/*! \} */                                                                                                       
                                                                                                                                                                                
 //SBCStatus SBC_CreateFile(EFI_HANDLE h, CHAR16 *fname);                                                     
                                                                                                              

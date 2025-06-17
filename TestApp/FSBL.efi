@@ -1,0 +1,32 @@
+import sys
+
+import hw_info
+import file_ctrl
+
+def hw_unique_info_print(baseboard, memory, ssd):
+    print("base board sn : " + baseboard);
+    print("memory sn : " + memory);
+    print("ssd sn : " + ssd);
+
+
+
+
+if __name__ == "__main__":
+    baseboard_sn = hw_info.get_baseboard_sn()
+    memory_sn = hw_info.get_memory_serial()
+    ssd_sn = hw_info.get_ssd_serial()
+
+    hw_unique_info_print(baseboard_sn, memory_sn, ssd_sn)
+
+    fname = "./aaa.txt"
+    if file_ctrl.file_is_exists(fname) != True:
+        print("File doee not exists")
+        sys.exit()
+    else:
+        print("File Exists")
+
+    flen = file_ctrl.get_file_length(fname)
+    print(flen)
+
+
+
