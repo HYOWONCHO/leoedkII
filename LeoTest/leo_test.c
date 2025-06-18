@@ -607,63 +607,68 @@ UefiMain (
   IN EFI_SYSTEM_TABLE  *SystemTable
   )
 {
-  atp_ident_t atpid;
-  SBCStatus ret = SBCOK;
 
-
-  CHAR8 *baseanswer = "SBCBaseAnswer";
-  UINTN answlen =strlen(baseanswer);
-  UINT32 bootmode = BOOT_MODE_UNKNOWN;
-
-
-
-  bootmode = SBC_ReadBootMode();
-
-  switch (bootmode) {
-  case BOOT_MODE_NORMAL:
-    Print(L"BOOT_MODE_NORMAL \n");
-    break;
-  case BOOT_MODE_UPDATE:
-    Print(L"BOOT_MODE_UPDATE \n");
-    break;
-  case BOOT_MODE_FACTORY:
-    Print(L"BOOT_MODE_FACTORY \n");
-    break;
-  default:
-    Print(L"Unknown boot mode, go to Abort \n");
-    goto errdone;
-    break;
-  }
-
-  Print(L"Validate the Base Answer !!! \n");
-
-
+  SBC_FSBL_Verify();
+  goto errdone;
+/*
+  atp_ident_t atpid;                                          
+  SBCStatus ret = SBCOK;                                      
+                                                              
+                                                              
+  CHAR8 *baseanswer = "SBCBaseAnswer";                        
+  UINTN answlen =strlen(baseanswer);                          
+  UINT32 bootmode = BOOT_MODE_UNKNOWN;                        
+                                                              
+                                                              
+                                                              
+  bootmode = SBC_ReadBootMode();                              
+                                                              
+  switch (bootmode) {                                         
+  case BOOT_MODE_NORMAL:                                      
+    Print(L"BOOT_MODE_NORMAL \n");                            
+    break;                                                    
+  case BOOT_MODE_UPDATE:                                      
+    Print(L"BOOT_MODE_UPDATE \n");                            
+    break;                                                    
+  case BOOT_MODE_FACTORY:                                     
+    Print(L"BOOT_MODE_FACTORY \n");                           
+    break;                                                    
+  default:                                                    
+    Print(L"Unknown boot mode, go to Abort \n");              
+    goto errdone;                                             
+    break;                                                    
+  }                                                           
+                                                              
+  Print(L"Validate the Base Answer !!! \n");                  
+                                                              
+                                                              
   ret = SBC_BaseAnswerValidate((UINT8 *)baseanswer , answlen);
-  if (ret != SBCOK) {
-    Print(L"Base Answer validate error \n");
-    return EFI_LOAD_ERROR;
-  }
-
-  Print(L"FSBL / SSBL Intefrity Checking !!! \n");
-
-  ret = SBC_FSBLIntgCheck(ImageHandle);
-  if (ret != SBCOK) {
-    Print(L"FSBL / SSBL Validate  error \n");
-    return EFI_LOAD_ERROR;
-  }
-
-  Print(L"Generate the IDs .. !! \n");
-
-  ZeroMem((void *)&atpid ,sizeof atpid);
-
-  ret = SBC_DiceKeysGen(ImageHandle, (VOID *)&atpid);
-  if (ret != SBCOK) {
-    Print(L"Dice Key Gen fail \n");
-    return EFI_LOAD_ERROR;
-  }
-
-
-  SBC_SSBL_LoadAndStart(ImageHandle);
+  if (ret != SBCOK) {                                         
+    Print(L"Base Answer validate error \n");                  
+    return EFI_LOAD_ERROR;                                    
+  }                                                           
+                                                              
+  Print(L"FSBL / SSBL Intefrity Checking !!! \n");            
+                                                              
+  ret = SBC_FSBLIntgCheck(ImageHandle);                       
+  if (ret != SBCOK) {                                         
+    Print(L"FSBL / SSBL Validate  error \n");                 
+    return EFI_LOAD_ERROR;                                    
+  }                                                           
+                                                              
+  Print(L"Generate the IDs .. !! \n");                        
+                                                              
+  ZeroMem((void *)&atpid ,sizeof atpid);                      
+                                                              
+  ret = SBC_DiceKeysGen(ImageHandle, (VOID *)&atpid);         
+  if (ret != SBCOK) {                                         
+    Print(L"Dice Key Gen fail \n");                           
+    return EFI_LOAD_ERROR;                                    
+  }                                                           
+                                                              
+                                                              
+  SBC_SSBL_LoadAndStart(ImageHandle);                         
+*/
 
 
   // If base answer is not record in raw partition 

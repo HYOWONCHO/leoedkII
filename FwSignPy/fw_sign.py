@@ -42,7 +42,7 @@ if __name__ == "__main__":
 
     pubkey = privkey.public_key()
 
-    print("Private key (raw object) :", privkey)
+    print("Private key (raw object) :", privkey.hex())
     print("Public key (raw object) :", pubkey)
 
     #certipem = fwcrypt.read_pem_file("root_ca_ecc.crt")
@@ -56,9 +56,11 @@ if __name__ == "__main__":
     print(f"Digest {digest.hex()}")
 
   
-    signature = fwcrypt.compute_ec_dsa(privkey, digest)
+    signature = fwcrypt.compute_ec_dsa_sign(privkey, digest)
     print(f"Signature len : {len(signature)}")
     print(f"Signature return : {signature.hex()}")
+
+    fwcrypt.compute_ec_dsa_verify(pubkey, signature,digest)
 
 
 
@@ -81,7 +83,7 @@ if __name__ == "__main__":
 
 
 
-
+    #fwcrypt.ecdsa_sign_verify_test()
 
 
 
