@@ -89,7 +89,6 @@ def compute_ec_dsa_sign(privkey, digest):
     r_bytes = r.to_bytes(32, byteorder='big')
     s_bytes = s.to_bytes(32, byteorder='big')
 
-
     raw_signature_64_byte = r_bytes + s_bytes
 
     print(f"\nRaw r (32-byte hex): {r_bytes.hex()}")
