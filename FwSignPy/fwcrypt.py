@@ -64,11 +64,90 @@ def pkcs12_pbes1(password: str, pkey, clcert, cacerts: list[x509.Certificate]) -
         encryption_algorithm=encryption_algorithm,
     )
 
-def compute_ec_dsa(privkey, digest):
+def compute_ec_dsa_sign(privkey, digest):
     signature = privkey.sign (
         digest,
         ec.ECDSA(utils.Prehashed(SHA256())) # Indicate that the input is already a SHA256 hash
     )
 
+    #return sha256_compute(signature)
     #print(f"Signature generated: {signature.hex()}")
     return signature
+
+
+def compute_ec_dsa_verify(pubkey, signature, digest):
+    try:
+        pubkey.verify (
+            signature,
+            digest,
+            ec.ECDSA(utils.Prehashed(SHA256())) # Indicate that the input is already a SHA256 hash
+        )
+
+        print("Signature is VALID")
+    except InvalidSignature:
+        print("Signature is INVALID")
+        
+
+
+def ecdsa_sign_verify_test():
+    # 1. Generate Key Pair
+
+    print("ECDSA testing start !!!! ")
+    private_key = ec.generate_private_key(ec.SECP256R1())
+    public_key = private_key.public_key()
+
+    # 2. Prepare Message (and its hash/digest)
+    message = b"My secret data to sign."
+    hasher = Hash(SHA256())
+    hasher.update(message)
+    digest = hasher.finalize()
+
+    print(f"Digest : {digest.hex()}")
+
+    # 3. Sign the Digest
+    signature = private_key.sign(
+        digest,
+        ec.ECDSA(utils.Prehashed(SHA256()))
+    )
+
+    print(f"Signature Len : {len(signature)}")
+    print(f"Signature Hex : {signature.hex()}")
+
+    # 4. Verify the Signature
+    try:
+        public_key.verify(
+            signature,
+            digest, # Use the same digest that was signed
+            ec.ECDSA(utils.Prehashed(SHA256()))
+        )
+        print("Signature is VALID.")
+    except InvalidSignature:
+        print("Signature is INVALID.")
+
+    # 1. Generate a private key (or load an existing one)
+    private_key = ec.generate_private_key(ec.SECP256R1())
+
+    # 2. Define your message
+    original_message = b"This is the important data for which I need a signature."
+
+    # 3. Compute the hash (digest) of the message
+    # This hash is the *input* to the signing function.
+    hasher = Hash(SHA256())
+    hasher.update(original_message)
+    message_digest = hasher.finalize() # This is the hash value
+
+    print(f"Original Message: {original_message.decode()}")
+    print(f"Computed Message Hash (Digest): {message_digest.hex()}")
+
+    # 4. Compute the digital signature using the private key and the message digest
+    # The variable 'digital_signature_value' will hold the result of private_key.sign()
+    digital_signature_value = private_key.sign(
+        message_digest,                      # Input: The hash (digest) you computed
+        ec.ECDSA(utils.Prehashed(SHA256()))  # Specifies the signing algorithm and that input is pre-hashed
+    )
+
+    # 5. You now have the digital signature value
+    print(f"\nObtained Digital Signature Value (bytes): {digital_signature_value}")
+    print(f"Obtained Digital Signature Value (hex): {digital_signature_value.hex()}")
+    print(f"Length of the Signature: {len(digital_signature_value)} bytes")
+

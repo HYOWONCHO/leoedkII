@@ -212,6 +212,7 @@ void SBC_external_mem_print_bin(
         )
 {
     UINT32 i, sz;
+    UINT32 offset = 0;
 
     if(title) {
         DEBUG((DEBUG_INFO,"%a (length of buffer: %d) \r\r\n", title, length)) ;
@@ -226,7 +227,7 @@ void SBC_external_mem_print_bin(
         if (sz > LINE_LEN)
             sz = LINE_LEN;
 
-        DEBUG((DEBUG_INFO,"\t"));
+        DEBUG((DEBUG_INFO," [0x%08X] :  ", offset));
         for (i = 0; i < LINE_LEN; i++) {
             if (i < length)
                 DEBUG((DEBUG_INFO,"%02x ", buffer[i]));
@@ -240,6 +241,7 @@ void SBC_external_mem_print_bin(
             else
                 DEBUG((DEBUG_INFO,"."));
         }
+        offset += LINE_LEN;
         DEBUG((DEBUG_INFO,"\r\r\n"));
 
 

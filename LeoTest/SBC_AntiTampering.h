@@ -90,6 +90,33 @@ typedef struct _base_ansid_t {
 
 /*! \}*/
 
+#define FSBL_BNIFO_SIZE                         8
+
+#pragma pack(1)
+typedef union _t_fsbl_bsifo {
+
+    struct {
+        UINT32 siglen:8;            /// Signature Length
+        UINT32 fwinfolen:8;         /// Firmware Info Length
+        UINT32 certlen:16;          /// Ceritiface length
+        UINT32 banswlen:8;          /// Base-answer length
+        UINT32 bsinfv:8;            /// Version of BSinfo
+        UINT32 reserv1:8;
+        UINT32 reserv2:8;
+    }m;
+
+    UINT8   value[FSBL_BNIFO_SIZE];
+}fsbl_bsinfo_t;
+
+typedef struct _t_fsbl_bsinfo_ptr {
+    VOID *baseansw;
+    VOID *fwinfo;
+    VOID *certi;
+    VOID *signature;
+}fsbl_bsinfo_ptr_t;
+#pragma pack()
+
+
 /**
  * @fn SBCStatus SBC_GenDeviceID(UINT8 *devid)
  * 
@@ -155,4 +182,6 @@ SBCStatus SBC_GenOSID(EFI_HANDLE *h_image, UINT8 *fwid, UINT8 *osid);
 
 
 SBCStatus  SBC_FSBLIntgCheck(EFI_HANDLE *h_image);
+
+SBCStatus  SBC_FSBL_Verify(VOID);
 #endif

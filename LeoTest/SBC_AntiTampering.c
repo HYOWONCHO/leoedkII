@@ -16,6 +16,7 @@
 #include <Guid/FileInfo.h>
 #include <Protocol/DevicePathToText.h>
 #include <Protocol/LoadedImage.h>
+#include <Library/BaseCryptLib.h>
 
 #include "SBC_CryptAES.h"
 #include "SBC_TypeDefs.h"
@@ -29,6 +30,8 @@
 #include "SBC_EccSignVerify.h"
 #include "SBC_X509.h"
 
+
+  
 
 
 #pragma pack(1)
@@ -1202,6 +1205,174 @@ errdone:
 
 }
 
+SBCStatus  SBC_FSBL_Verify(VOID)
+{
+    SBCStatus       ret = SBCOK;
+    EFI_STATUS      retval = EFI_SUCCESS;
+    EFI_HANDLE      hndl = NULL;
+    UINT16          *fblpath = L"\\EFI\\BOOT\\FSBL.efi";
+    UINT8           *infostart = NULL;
+    UINT32          last_of_fsbl = 0;
+    UINT32          bsinfolen = 0;
+    fsbl_bsinfo_t   bsinfo; 
+    UINT32          bsptrcnt = 0;
+    UINT8           HashValue[256];
+    UINT32          HashSize =0;
+    UINT32          fsbl_len =0;
+    VOID            *EcPubKey = NULL;
+    
+
+    //UINT8       *rdimg = NULL;
+    LV_t            rdlv = {
+            .length = 0,
+            .value = NULL
+      };
+
+    if (SBC_FileSysFindHndl(&hndl) <= 0) {
+      eprint("File System Find handle fail");
+      ret = SBCIO;
+      goto errdone;
+    }
+
+    ret = SBC_GetFileSize(fblpath, (UINTN *)&rdlv.length);
+    if (ret != SBCOK) {
+      goto errdone;
+    }
+
+    rdlv.value = AllocateZeroPool((UINTN)rdlv.length);
+    if (rdlv.value == NULL) {
+      eprint("FSBL Verify Allocate Pool fail");
+      ret = SBCNULLP;
+      goto errdone;
+    }
+
+    retval = SBC_ReadFile(hndl, fblpath, &rdlv);
+    if (EFI_ERROR(retval)) {
+      eprint("%s filr read fail : %r", fblpath, retval);
+      ret = SBCIO;
+      goto errdone;
+    }
+
+    last_of_fsbl = rdlv.length - FSBL_BNIFO_SIZE;
+    infostart = &((UINT8 *)rdlv.value)[last_of_fsbl];
+
+    ZeroMem((void *)&bsinfo, sizeof bsinfo);
+
+    CopyMem((void *)&bsinfo, (void *)infostart, sizeof bsinfo);
+
+    //SBC_external_mem_print_bin("BSINFO", (UINT8 *)&bsinfo, sizeof bsinfo);
+
+
+    dprint("Signature Len     : %d", bsinfo.m.siglen );
+    dprint("Firmware Info Len : %d", bsinfo.m.fwinfolen );
+    dprint("Certificate Len   : %d", bsinfo.m.certlen );
+    dprint("BaseAnswer Len    : %d", bsinfo.m.banswlen );
+    dprint("BSinfo verdion    : %d", bsinfo.m.bsinfv );
+    dprint("Spec.1 Value      : %d", bsinfo.m.reserv1 );
+    dprint("Spec.2 Value      : %d", bsinfo.m.reserv2 );
+
+    bsinfolen = bsinfo.m.siglen + bsinfo.m.fwinfolen + bsinfo.m.certlen  + bsinfo.m.banswlen;
+
+      
+    fsbl_len = last_of_fsbl = rdlv.length - FSBL_BNIFO_SIZE - bsinfolen;
+    infostart = &((UINT8 *)rdlv.value)[last_of_fsbl];
+
+    //dprint("FSBL Last : %d", last_of_fsbl);
+
+    //SBC_external_mem_print_bin("Addtional Information", infostart,bsinfolen  );
+
+    fsbl_bsinfo_ptr_t info = {NULL, NULL, NULL, NULL};
+
+    info.baseansw = (VOID *)&infostart[bsptrcnt];
+    bsptrcnt += bsinfo.m.banswlen;
+
+    SBC_external_mem_print_bin("Base Answer", (UINT8 *)info.baseansw,  bsinfo.m.banswlen );
+
+    info.fwinfo = (VOID *)&infostart[bsptrcnt];
+    bsptrcnt += bsinfo.m.fwinfolen;
+
+    SBC_external_mem_print_bin("FW Info", (UINT8 *)info.fwinfo,  bsinfo.m.fwinfolen );
+
+    info.certi = (VOID *)&infostart[bsptrcnt];
+    bsptrcnt += bsinfo.m.certlen;
+
+    SBC_external_mem_print_bin("Certificate", (UINT8 *)info.certi,  bsinfo.m.certlen );
+
+    info.signature = (VOID *)&infostart[bsptrcnt];
+    bsptrcnt += bsinfo.m.siglen;
+
+    SBC_external_mem_print_bin("Signature", (UINT8 *)info.signature,  bsinfo.m.siglen );
+
+
+    //ctx = AllocateZeroPool(sizeof *ctx);
+    //SBC_RET_VALIDATE_ERRCODEMSG((ctx != NULL), SBCNULLP, "ECC Context Allocate Fail");
+
+    //SBC_EcCtxHndlInit(&ctx, CRYPTO_NID_SECP256R1);
+
+    BOOLEAN retbool = TRUE;
+    retbool = EcGetPublicKeyFromX509((CONST UINT8  *)info.certi, (UINTN)bsinfo.m.certlen,  &EcPubKey);
+    if (retbool != TRUE) {
+      eprint("EcGetPublicKeyFromX509 fail");
+      ret = SBCFAIL;
+      goto errdone;
+    }
+
+    // Check Public Key
+    UINT8 pubkey[65*2];
+    UINTN pubkey_sz = sizeof pubkey;
+    retbool = EcGetPubKey(EcPubKey, pubkey, &pubkey_sz);
+    if (retbool  != TRUE) {
+      eprint("Pub key extrace fail \n");
+      ret = SBCFAIL;
+      goto errdone;
+    }
+
+    SBC_external_mem_print_bin("PUBEKY", pubkey, pubkey_sz);
+
+    dprint("FSBL image len : %d", fsbl_len);
+    ret = SBC_HashCompute(
+                         NULL, /* Not yet used */
+                         rdlv.value,
+                         fsbl_len - 1,
+                         HashValue
+                      ) ; 
+
+
+    HashSize = 32;
+
+    retbool = EcDsaVerify(
+        EcPubKey,
+        CRYPTO_NID_SHA256,
+        HashValue,
+        HashSize,
+        info.signature,
+        bsinfo.m.siglen
+        );
+
+    if (retbool != TRUE) {
+      eprint("FSBL Verify fail");
+      ret = SBCFAIL;
+      goto errdone;
+    }
+
+    Print(L"FSBL Verify Success !!!\n");
+
+    ret = SBCOK;
+
+errdone:
+
+    if (EcPubKey != NULL) {
+      EcFree(EcPubKey);
+    }
+    if (rdlv.value != NULL) {
+      FreePool(rdlv.value);
+      rdlv.value = NULL;
+
+    }
+    return ret;
+
+}
+
 
 
 
@@ -1218,6 +1389,8 @@ SBCStatus SBC_GenDeviceID(UINT8 *devid)
     UINT8 *computebuf = NULL;
     UINTN cnt = 0;
 
+    UINT8 devidhsah[SBC_AT_HASH_LEN] = {0,};
+
     SBC_RET_VALIDATE_ERRCODEMSG((devid != NULL),SBCNULLP, "Out buffer Nill");
 
    
@@ -1228,20 +1401,35 @@ SBCStatus SBC_GenDeviceID(UINT8 *devid)
 
 
     _baseboard_sn(&info);
-    SBC_external_mem_print_bin("BaseBoard SN", info.mbsn,info.mbsnl);
-    SBC_mem_print_bin("BaseBoard SN", info.mbsn,info.mbsnl);
+//  SBC_external_mem_print_bin("BaseBoard SN", info.mbsn,info.mbsnl);
+//  SBC_mem_print_bin("BaseBoard SN", info.mbsn,info.mbsnl);
 
     _memorydevice_sn(&info);
-    SBC_external_mem_print_bin("MemoryDevice SN", info.mmsn, info.mmsnl);
-    SBC_mem_print_bin("MemoryDevice SN", info.mmsn, info.mmsnl);
+//  SBC_external_mem_print_bin("MemoryDevice SN", info.mmsn, info.mmsnl);
+//  SBC_mem_print_bin("MemoryDevice SN", info.mmsn, info.mmsnl);
 
     _nvme_get_serial(&info);
-    SBC_external_mem_print_bin("NVME SN", info.nvmesn,info.nvmesnl);
-    SBC_mem_print_bin("NVME SN", info.nvmesn,info.nvmesnl);
+//  SBC_external_mem_print_bin("NVME SN", info.nvmesn,info.nvmesnl);
+//  SBC_mem_print_bin("NVME SN", info.nvmesn,info.nvmesnl);
 
     //_read_fsbl_image(&rdlv);
     efi_boot_fsbl_load(&rdlv);
     SBC_RET_VALIDATE_ERRCODEMSG((rdlv.value != NULL), SBCNULLP, "FSBL read fail");
+
+    ret = SBC_HashCompute(
+                         NULL, /* Not yet used */
+                         rdlv.value,
+                         rdlv.length,
+                         devidhsah
+                      ) ; 
+
+    if (ret != SBCOK) {
+      eprint("FSBL Hash compute fail \n");
+      goto errdone;
+    }
+
+
+    rdlv.length = SBC_AT_HASH_LEN;
 
     computebuf = AllocatePool(info.mbsnl + info.mmsnl + info.nvmesnl + rdlv.length);
     SBC_RET_VALIDATE_ERRCODEMSG((computebuf != NULL),SBCNULLP, "Compute buffer Nill");
@@ -1273,7 +1461,10 @@ SBCStatus SBC_GenDeviceID(UINT8 *devid)
                              devid
                           ) ;
 
-
+    if (ret != SBCOK) {
+      eprint("Device Dice Message Hash compute fail \n");
+      goto errdone;
+    }
 
     SBC_mem_print_bin("Device ID", devid, 32);
 

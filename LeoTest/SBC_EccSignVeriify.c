@@ -115,6 +115,7 @@ SBCStatus SBC_EcCtxSetPubKey(VOID *handle, UINT8 *key, UINTN keylen, UINT32 curv
         return SBCNULLP;
     }
 
+
     bn_y = BN_bin2bn(key + halfsz, (INT32)halfsz, NULL);
     if(bn_y != NULL) {
         eprint("Bignum  Y coordinate or ecpoint point to Nill");
