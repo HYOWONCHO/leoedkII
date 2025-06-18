@@ -1220,9 +1220,7 @@ SBCStatus  SBC_FSBL_Verify(VOID)
     UINT32          HashSize =0;
     UINT32          fsbl_len =0;
     VOID            *EcPubKey = NULL;
-    
 
-    //UINT8       *rdimg = NULL;
     LV_t            rdlv = {
             .length = 0,
             .value = NULL
@@ -1278,7 +1276,6 @@ SBCStatus  SBC_FSBL_Verify(VOID)
     infostart = &((UINT8 *)rdlv.value)[last_of_fsbl];
 
     //dprint("FSBL Last : %d", last_of_fsbl);
-
     //SBC_external_mem_print_bin("Addtional Information", infostart,bsinfolen  );
 
     fsbl_bsinfo_ptr_t info = {NULL, NULL, NULL, NULL};
@@ -1303,12 +1300,6 @@ SBCStatus  SBC_FSBL_Verify(VOID)
 
     SBC_external_mem_print_bin("Signature", (UINT8 *)info.signature,  bsinfo.m.siglen );
 
-
-    //ctx = AllocateZeroPool(sizeof *ctx);
-    //SBC_RET_VALIDATE_ERRCODEMSG((ctx != NULL), SBCNULLP, "ECC Context Allocate Fail");
-
-    //SBC_EcCtxHndlInit(&ctx, CRYPTO_NID_SECP256R1);
-
     BOOLEAN retbool = TRUE;
     retbool = EcGetPublicKeyFromX509((CONST UINT8  *)info.certi, (UINTN)bsinfo.m.certlen,  &EcPubKey);
     if (retbool != TRUE) {
@@ -1316,18 +1307,6 @@ SBCStatus  SBC_FSBL_Verify(VOID)
       ret = SBCFAIL;
       goto errdone;
     }
-
-    // Check Public Key
-//  UINT8 pubkey[65*2];
-//  UINTN pubkey_sz = sizeof pubkey;
-//  retbool = EcGetPubKey(EcPubKey, pubkey, &pubkey_sz);
-//  if (retbool  != TRUE) {
-//    eprint("Pub key extrace fail \n");
-//    ret = SBCFAIL;
-//    goto errdone;
-//  }
-
-//  SBC_external_mem_print_bin("PUBEKY", pubkey, pubkey_sz);
 
     dprint("FSBL image len : %d", fsbl_len);
     ret = SBC_HashCompute(
@@ -1372,9 +1351,6 @@ errdone:
     return ret;
 
 }
-
-
-
 
 SBCStatus SBC_GenDeviceID(UINT8 *devid)
 {
