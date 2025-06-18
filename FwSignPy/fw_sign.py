@@ -35,14 +35,14 @@ if __name__ == "__main__":
 
     content = filectrl.read_image(fwfname)
     certibytes = filectrl.read_image(rootcaf)
-    
+
 
     privkey = fwcrypt.load_ec_private_key_from_pem(rootkeyf)
 
 
     pubkey = privkey.public_key()
 
-    print("Private key (raw object) :", privkey.hex())
+    print("Private key (raw object) :", privkey)
     print("Public key (raw object) :", pubkey)
 
     #certipem = fwcrypt.read_pem_file("root_ca_ecc.crt")
@@ -50,22 +50,22 @@ if __name__ == "__main__":
     #print(certipem)
 
 
- 
+
 
     digest  = fwcrypt.sha256_compute(content)
     print(f"Digest {digest.hex()}")
 
-  
+
     signature = fwcrypt.compute_ec_dsa_sign(privkey, digest)
     print(f"Signature len : {len(signature)}")
-    print(f"Signature return : {signature.hex()}")
+    print(f"Signature return : {signature}")
 
     fwcrypt.compute_ec_dsa_verify(pubkey, signature,digest)
 
 
 
-    
-    content = content + baseanswers + fwinfos + certibytes 
+
+    content = content + baseanswers + fwinfos + certibytes
 
     filectrl.write_image(fwfname + ".bin", content, "wb")
     filectrl.write_image(fwfname + ".bin", signature , "ab")
@@ -74,7 +74,7 @@ if __name__ == "__main__":
     # "i" means signed integer, typically 2 or 4 bytes
     binfo = array.array('b',[len(signature),len(fw_info)])
     filectrl.write_image(fwfname + ".bin", binfo , "ab")
-    binfo = array.array('h',[certilen]) 
+    binfo = array.array('h',[certilen])
     filectrl.write_image(fwfname + ".bin", binfo , "ab")
 
     binfo = array.array('b', [len(base_answer), 1,  35,  36])

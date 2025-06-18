@@ -1318,22 +1318,22 @@ SBCStatus  SBC_FSBL_Verify(VOID)
     }
 
     // Check Public Key
-    UINT8 pubkey[65*2];
-    UINTN pubkey_sz = sizeof pubkey;
-    retbool = EcGetPubKey(EcPubKey, pubkey, &pubkey_sz);
-    if (retbool  != TRUE) {
-      eprint("Pub key extrace fail \n");
-      ret = SBCFAIL;
-      goto errdone;
-    }
+//  UINT8 pubkey[65*2];
+//  UINTN pubkey_sz = sizeof pubkey;
+//  retbool = EcGetPubKey(EcPubKey, pubkey, &pubkey_sz);
+//  if (retbool  != TRUE) {
+//    eprint("Pub key extrace fail \n");
+//    ret = SBCFAIL;
+//    goto errdone;
+//  }
 
-    SBC_external_mem_print_bin("PUBEKY", pubkey, pubkey_sz);
+//  SBC_external_mem_print_bin("PUBEKY", pubkey, pubkey_sz);
 
     dprint("FSBL image len : %d", fsbl_len);
     ret = SBC_HashCompute(
                          NULL, /* Not yet used */
                          rdlv.value,
-                         fsbl_len - 1,
+                         fsbl_len,
                          HashValue
                       ) ; 
 

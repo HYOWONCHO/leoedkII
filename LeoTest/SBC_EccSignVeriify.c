@@ -623,7 +623,7 @@ errdone:
 
 }
 
-#ifdef SBC_ECDSA_TEST_ENABLE
+//#ifdef SBC_ECDSA_TEST_ENABLE
 VOID SBC_EcDsa_TestMain(VOID)
 {
     SBCEccCtx *ctx;
@@ -699,7 +699,7 @@ errdone:
     return;
 
 }
-#endif
+//#endif
  
 
 

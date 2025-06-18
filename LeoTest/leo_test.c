@@ -609,6 +609,8 @@ UefiMain (
 {
 
   SBC_FSBL_Verify();
+//VOID SBC_EcDsa_TestMain(VOID);
+//SBC_EcDsa_TestMain();
   goto errdone;
 /*
   atp_ident_t atpid;                                          
