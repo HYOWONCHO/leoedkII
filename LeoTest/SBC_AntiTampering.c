@@ -951,11 +951,11 @@ errdone:
 }
 
 
-SBCStatus  _baseanswer_store(VOID *p)
+SBCStatus  _baseanswer_store(VOID *blkio, VOID *p)
 {
     SBCStatus ret = SBCOK;
 
-    VOID *blkio = NULL;
+    //VOID *blkio = NULL;
     base_ansid_t *h = NULL;
     UINT8 loadbuf[BASE_ANS_BLK_LEN] = {0, };
     UINT8 *cpy = NULL;
@@ -966,11 +966,11 @@ SBCStatus  _baseanswer_store(VOID *p)
     //SBC_RET_VALIDATE_ERRCODEMSG((p != NULL), SBCNULLP, "Invalid parameter");
 
     // Find the Block device handlef for SBC Raw Partition
-    ret = SBC_FindBlkIoHandle(&blkio);
-    if (ret != SBCOK || blkio == NULL) {
-      Print(L"SBC_FindBlockIoHandle fail (%p)\n", blkio);
-      goto errdone;
-    }
+//  ret = SBC_FindBlkIoHandle(&blkio);
+//  if (ret != SBCOK || blkio == NULL) {
+//    Print(L"SBC_FindBlockIoHandle fail (%p)\n", blkio);
+//    goto errdone;
+//  }
 
     ret = SBC_RawPrtReadBlock(blkio, 
                               (VOID *)loadbuf, 
@@ -1021,11 +1021,11 @@ errdone:
 
 }
 
-static SBCStatus _baseanswer_extract_from_disk(base_ansid_t *p)
+static SBCStatus _baseanswer_extract_from_disk(VOID *blkio, base_ansid_t *p)
 {
   SBCStatus ret = SBCOK;
-  VOID *blkio = NULL;
-  
+//VOID *blkio = NULL;
+//
   UINT32  anslen = 0U;
   UINT8   streams[512] = {0,};
   UINT32  offset = 0;
@@ -1033,11 +1033,11 @@ static SBCStatus _baseanswer_extract_from_disk(base_ansid_t *p)
   SBC_RET_VALIDATE_ERRCODEMSG((p != NULL), SBCNULLP, "Invalid parameter");
 
   // Find the Block device handlef for SBC Raw Partition
-  ret = SBC_FindBlkIoHandle(&blkio);
-  if (ret != SBCOK || blkio == NULL) {
-    Print(L"SBC_FindBlockIoHandle fail (%p)\n", blkio);
-    goto errdone;
-  }
+//ret = SBC_FindBlkIoHandle(&blkio);
+//if (ret != SBCOK || blkio == NULL) {
+//  Print(L"SBC_FindBlockIoHandle fail (%p)\n", blkio);
+//  goto errdone;
+//}
 
   anslen = BASE_ANS_BLK_LEN;
   // NOTES : It SHOLUD be consider for TAG size if Message is encrypt to  AES-GCM mode
@@ -1053,7 +1053,14 @@ static SBCStatus _baseanswer_extract_from_disk(base_ansid_t *p)
   offset = BASE_ANS_SAT_OFFSET;
   //SBC_mem_print_bin("Load Buf", (UINT8 *)&streams[offset], 256);
   CopyMem((void *)&p->msglen, (void *)&streams[offset], 4);
-  //p->msglen = 16; // later remove 
+  SBC_RET_VALIDATE_ERRCODEMSG((p->msglen > 0), SBCBSANSWNOTFND, "Base Answer Not Foudn");
+
+  if (p->msglen <= 0x0) {
+    
+    ret = SBCBSANSWNOTFND;
+    goto errdone;
+  }
+  //p->msglen = 16; // later remove
   offset += 4;
 
   CopyMem((void *)p->encmsg, (void *)&streams[offset], p->msglen);
@@ -1083,7 +1090,7 @@ errdone:
     return ret;
 }
 
-SBCStatus SBC_BaseAnswerEncryptStore(UINT8* msg, UINT32 msgl, UINT8 *key, UINT32 keyl)
+SBCStatus SBC_BaseAnswerEncryptStore(VOID *blkhnd, UINT8* msg, UINT32 msgl, UINT8 *key, UINT32 keyl)
 {
     SBCStatus ret = SBCOK;
     base_ansid_t ansid;
@@ -1127,7 +1134,7 @@ SBCStatus SBC_BaseAnswerEncryptStore(UINT8* msg, UINT32 msgl, UINT8 *key, UINT32
 
     ansid.msglen = ctx.out.length;
 
-    ret = _baseanswer_store((VOID *)&ansid);
+    ret = _baseanswer_store(blkhnd, (VOID *)&ansid);
     if (ret != SBCOK) {
       Print(L"Base Answer storing fail \n");
       goto errdone;
@@ -1143,7 +1150,7 @@ errdone:
 
 
 
-SBCStatus  SBC_BaseAnswerValidate(UINT8 *answer, UINTN answerl)
+SBCStatus  SBC_BaseAnswerValidate(VOID *blkhnd,UINT8 *answer, UINTN answerl)
 {
     SBCStatus ret = SBCOK;
     //UINT8 rdbuf[256];
@@ -1156,12 +1163,16 @@ SBCStatus  SBC_BaseAnswerValidate(UINT8 *answer, UINTN answerl)
 
     SBC_RET_VALIDATE_ERRCODEMSG((answer != NULL), SBCNULLP, "Answer is Nill");
 
+
+    // Read the Base Answer from Disk 
+
     ZeroMem((void *)&ctx, sizeof ctx);
     ZeroMem((void *)&aesctx, sizeof aesctx);
     ZeroMem(&ansid, sizeof ansid);
 
-    ret = _baseanswer_extract_from_disk(&ansid);
+    ret = _baseanswer_extract_from_disk(blkhnd, &ansid);
     SBC_RET_VALIDATE_ERRCODEMSG((ret == SBCOK),ret, "Disk read fail");
+
 
 
     ctx.key.value = ansid.key;
@@ -1205,7 +1216,7 @@ errdone:
 
 }
 
-SBCStatus  SBC_FSBL_Verify(VOID)
+SBCStatus  SBC_FSBL_Verify(VOID *blkhnd, VOID *ansr)
 {
     SBCStatus       ret = SBCOK;
     EFI_STATUS      retval = EFI_SUCCESS;
@@ -1336,7 +1347,28 @@ SBCStatus  SBC_FSBL_Verify(VOID)
 
     Print(L"FSBL Verify Success !!!\n");
 
-    ret = SBCOK;
+    // Base Answer Validate 
+    ret = SBC_BaseAnswerValidate(blkhnd, (UINT8 *)info.baseansw, bsinfo.m.banswlen );
+    switch (ret) {
+    case SBCBSANSWNOTFND:
+      ((LV_t *)ansr)->value = AllocateZeroPool(bsinfo.m.banswlen);
+      if (((LV_t *)ansr)->value == NULL) {
+        ret = SBCNULLP;
+        Print(L"Base Answer object create fail \n");
+        goto errdone;
+      }
+      CopyMem(((LV_t *)ansr)->value, info.baseansw, bsinfo.m.banswlen);
+      //goto errdone;
+      break;
+    case SBCOK:
+      break;
+    default:
+      goto errdone;
+      break;
+    }
+
+
+    //ret = SBCOK;
 
 errdone:
 
@@ -1546,21 +1578,21 @@ errdone:
 }
 
 // FSBL Integrity check 
-SBCStatus  SBC_FSBLIntgCheck(EFI_HANDLE *h_image)
+SBCStatus  SBC_FSBLIntgCheck(EFI_HANDLE *h_image , VOID *blkio)
 {
     SBCStatus ret = SBCOK;
 
     UINT8 rdbuf[SBC_BLKDEV_BLKSZ << 2] = {0,};
     UINT32 rdlen = 532 + 529;
-    VOID *blkio;
+//  VOID *blkio;
     UINTN calen = 0;
     UINTN certlen = 0;
 
-    ret = SBC_FindBlkIoHandle(&blkio);
-    if (ret != SBCOK) {
-      Print(L"Find Block I/O handle fail \n");
-      goto errdone;
-    }
+//  ret = SBC_FindBlkIoHandle(&blkio);
+//  if (ret != SBCOK) {
+//    Print(L"Find Block I/O handle fail \n");
+//    goto errdone;
+//  }
 
 
     rdlen = SBC_BLKDEV_BLKSZ;

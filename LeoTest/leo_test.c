@@ -607,11 +607,71 @@ UefiMain (
   IN EFI_SYSTEM_TABLE  *SystemTable
   )
 {
+  SBCStatus  ret = SBCOK;
+  rawprt_hdr_t h_rawptrheader;    // Raw Partition Header handle
+  VOID *h_blkio;               // Block I/O handle
+  LV_t baseansr;
+  LV_t keylv;
 
-  SBC_FSBL_Verify();
+  ZeroMem(&h_rawptrheader, sizeof h_rawptrheader);
+  // Get the NVMe SSD Raw Partiton handle and Header information 
+  ret = SBC_BlkIoHandleInit(&h_blkio, &h_rawptrheader);
+  if (ret != SBCOK) {
+    Print(L"Raw Partitino find fail !!! \n");
+    ASSERT((ret != SBCOK));
+    goto errdone;
+  }
+
+  Print(L"Found the SBC Raw-partiton !! \n");
+
+  ret = SBC_FSBL_Verify(h_blkio, &baseansr);
+  switch(ret) {
+    case SBCBSANSWNOTFND:
+      // Base-answer storing
+      ret = SBC_BaseAnswerEncryptStore(h_blkio, baseansr.value, baseansr.length, keylv.value, keylv.length);
+      if (baseansr.value != NULL) {
+        FreePool(baseansr.value);
+        baseansr.value = NULL;
+      }
+
+      if (ret != SBCOK) {
+        Print(L"Base Answer Encrypt and Storing fail \n");
+        ret = SBCFAIL;
+        goto errdone;
+      }
+    case SBCOK:
+        Print(L"FSBL Verify Success !!! \n");
+        break;
+    default:
+      Print(L"FSBL Verify Fail \n");
+      goto errdone;s
+      //ASSERT((ret == SBCOK));
+      break;
+  }
+
+  //  Device ID create and store 
+
+
+
+
+
+  // Jump To SSBL
+  Print(L"Run to SSBL.efi ... \n");
+  ret = SBC_SSBL_LoadAndStart(ImageHandle);
+  if (ret != SBCOK) {
+    Print(L"SSBL Image running fail ... \n");
+    ASSERT((ret != SBCOK));
+    goto errdone;
+  }
+
+
+ 
+
+
+  // Verify the Base Answer.
+
 //VOID SBC_EcDsa_TestMain(VOID);
 //SBC_EcDsa_TestMain();
-  goto errdone;
 /*
   atp_ident_t atpid;                                          
   SBCStatus ret = SBCOK;                                      

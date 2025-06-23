@@ -345,11 +345,11 @@ SBCStatus SBC_SSBL_LoadAndStart(EFI_HANDLE ImageHandle)
     EFI_STATUS Status = gBS->LoadImage(FALSE, ImageHandle, DevicePath, NULL, 0, &ImageHandle);
     if (!EFI_ERROR(Status)) {
       gBS->StartImage(ImageHandle, NULL, NULL);
-      break;
+      return SBCOK;
     }
   }
 
-  return SBCOK;
+  return SBCFAIL;
 }
 
 EFI_STATUS

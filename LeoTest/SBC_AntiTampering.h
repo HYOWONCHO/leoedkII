@@ -53,6 +53,7 @@ typedef struct _fhnd_img_t {
     \{
 */
 
+#define BASE_ANSW_DEFLEN            16
 #define BASE_ANS_MAX_LEN            256
 #define BASE_ANS_KEY_STR            32      /**< Base Answer Encrypt/Decrypt Key Strength */
 #define BASE_ANS_IV_KEY_STR         12      /**< Base Answer IV size */
@@ -148,7 +149,7 @@ SBCStatus SBC_GenDeviceID(UINT8 *devid);
  * @return On Success, return the SBCOK, otherwise, return the apporiate error
  *         value. 
  */
-SBCStatus SBC_BaseAnswerEncryptStore(UINT8* msg, UINT32 msgl, UINT8 *key, UINT32 keyl);
+SBCStatus SBC_BaseAnswerEncryptStore(VOID *blkhnd, UINT8* msg, UINT32 msgl, UINT8 *key, UINT32 keyl);
 
 
 /**
@@ -162,7 +163,7 @@ SBCStatus SBC_BaseAnswerEncryptStore(UINT8* msg, UINT32 msgl, UINT8 *key, UINT32
  * @return On Success, return the SBCOK, otherwise, return the apporiate error
  *         value. 
  */
-SBCStatus  SBC_BaseAnswerValidate(UINT8 *answer, UINTN answerl);
+SBCStatus  SBC_BaseAnswerValidate(VOID *blkhnd, UINT8 *answer, UINTN answerl);
 
 /**
  * @fn SBCStatus SBC_GenFWID(EFI_HANDLE *h_image, UINT8 *devid, UINT8 *fwid)
@@ -181,7 +182,9 @@ SBCStatus SBC_GenFWID(EFI_HANDLE *h_image, UINT8 *devid, UINT8 *fwid);
 SBCStatus SBC_GenOSID(EFI_HANDLE *h_image, UINT8 *fwid, UINT8 *osid);
 
 
-SBCStatus  SBC_FSBLIntgCheck(EFI_HANDLE *h_image);
+SBCStatus  SBC_FSBLIntgCheck(EFI_HANDLE *h_image , VOID *blkio);
 
-SBCStatus  SBC_FSBL_Verify(VOID);
+SBCStatus  SBC_FSBL_Verify(VOID *blkhnd, VOID *ansr);
+
+SBCStatus  SBC_BlkIoHandleInit(OUT VOID **hblk, OUT VOID *hdr);
 #endif
