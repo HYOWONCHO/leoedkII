@@ -40,7 +40,7 @@ typedef struct _t_bm_lookup_table {
 
 
 
-
+#define SBC_RAW_PRTHDR_LBA                  0
 /*! Raw Partition Identifier */
 #define SBC_RAWPRT_MAGIC_ID                 0xAA55AA55 
 

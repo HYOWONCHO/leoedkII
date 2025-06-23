@@ -24,6 +24,7 @@ typedef enum {
    SBCNOTSUP            = 314,  /*<! Not Support*/
    SBCENCFAIL           = 315,
    SBCDECFAIL           = 316,
+   SBCBSANSWNOTFND      = 317,
    SBCUNKNOWN
 }SBCStatus;
 

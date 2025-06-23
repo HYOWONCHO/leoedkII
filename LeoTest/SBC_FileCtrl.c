@@ -12,6 +12,50 @@
 
 #include "SBC_FileCtrl.h"
 
+//static UINT32 _get_rw_blkcnt(UINT32 bytes)
+//{
+////  UINTN       division;
+////  UINTN       quotient;
+////
+////  //quteint = bytes % SBC_RAWPTR_DFLT_BLK_SZ;
+////
+////  division =
+//
+//    return ALIGN_VALUE(bytes, SBC_RAWPRT_DFLT_BLK_SZ);
+//
+//}
+
+SBCStatus  SBC_RawPrtHeadRead(VOID *h, VOID *out)
+{
+    SBCStatus ret = SBCOK;
+    //rawrpt_hdr_t *rawptr = (rawrpt_hdr_t *)out;
+    //VOID *hblk = NULL;
+    UINT32 bloblen = 0;
+    UINT8 *blob = NULL;
+
+
+    SBC_RET_VALIDATE_ERRCODEMSG((h != NULL), SBCNULLP, "Invalid Handle parametre");
+    SBC_RET_VALIDATE_ERRCODEMSG((out != NULL), SBCNULLP, "Invalid parametre");
+
+    bloblen = ALIGN_VALUE(sizeof(rawprt_hdr_t), SBC_RAWPRT_DFLT_BLK_SZ);
+    blob = AllocateZeroPool(bloblen);
+    SBC_RET_VALIDATE_ERRCODEMSG((blob != NULL), SBCNULLP, "Allocate fail for Blob");
+    // Read the Raw Partition header form LBA 0 of NVMe ssd
+    ret = SBC_RawPrtReadBlock(h, blob, &bloblen, SBC_RAW_PRTHDR_LBA);
+    SBC_RET_VALIDATE_ERRCODEMSG((ret != SBCOK), ret, "Read raw partiton headr fail");
+
+    CopyMem(out, (void *)blob, sizeof(rawprt_hdr_t));
+
+    ret = SBCOK;
+
+errdone:
+    if (blob != NULL) {
+        FreePool(blob);
+    }
+    return ret;
+
+}
+
 
 
 //SBCStatus  SBC_GetFileSize(IN CHAR16 *FileName, OUT *FileSize)
@@ -665,7 +709,7 @@ errdone:
 
 }
 
-SBCStatus  SBC_FindBlkIoHandle(OUT VOID **hblk)
+SBCStatus  SBC_BlkIoHandleInit(OUT VOID **hblk, OUT VOID *hdr)
 {
 #define     SBC_MAGIC_LEN           0x04
 #define     SBC_MAGIC_ID            0x50574152
@@ -745,7 +789,7 @@ SBCStatus  SBC_FindBlkIoHandle(OUT VOID **hblk)
         FreePool(ReadBuffer);
 
         
-        if (magicid != SBC_MAGIC_ID) {
+        if (magicid != SBC_RAWPRT_MAGIC_ID) {
             continue;
         }
 
@@ -753,13 +797,14 @@ SBCStatus  SBC_FindBlkIoHandle(OUT VOID **hblk)
         //Print(L"Found %p Block I/O Protocol Address Magci ID : 0x%x.\n", BlockIo, magicid);
         //Print(L"0x%p SBC Raw Buffer MagicID found !!! \n", *hblk);
 
+        CopyMem(hdr, ReadBuffer, sizeof(rawprt_hdr_t));
 
 
         ret = SBCOK;
         goto errdone;
     }
 
-  errdone:
+errdone:
     return ret;
 
 }
