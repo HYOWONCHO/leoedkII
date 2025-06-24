@@ -607,6 +607,7 @@ UefiMain (
   IN EFI_SYSTEM_TABLE  *SystemTable
   )
 {
+#if 0
   SBCStatus  ret = SBCOK;
   rawprt_hdr_t h_rawptrheader;    // Raw Partition Header handle
   VOID *h_blkio;               // Block I/O handle
@@ -663,8 +664,14 @@ UefiMain (
     ASSERT((ret != SBCOK));
     goto errdone;
   }
+#endif
+extern SBCStatus SBC_GRUB_LoadAndStart(EFI_HANDLE ImageHandle);
+
+    SBC_GRUB_LoadAndStart(ImageHandle);
 
 
+
+//errdone:
  
 
 
@@ -681,7 +688,7 @@ UefiMain (
   UINTN answlen =strlen(baseanswer);                          
   UINT32 bootmode = BOOT_MODE_UNKNOWN;                        
                                                               
-                                                              
+                                                              ;
                                                               
   bootmode = SBC_ReadBootMode();                              
                                                               
@@ -849,7 +856,6 @@ UefiMain (
 //
 //  // Jump to kernel
 //  KernelEntry();
-errdone:
    return EFI_SUCCESS;
 }
 

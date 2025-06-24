@@ -19,11 +19,7 @@ def compute_dsa(certibytes, content):
 
     return signval
 
-
-
-if __name__ == "__main__":
-
-    
+def make_fsbl_image():
     baseanswers = base_answer.encode()
     fwinfos = fw_info.encode()
     flen = filectrl.get_image_size(fwfname)
@@ -79,6 +75,10 @@ if __name__ == "__main__":
 
     binfo = array.array('b', [len(base_answer), 1,  35,  36])
     filectrl.write_image(fwfname + ".bin", binfo , "ab")
+
+
+if __name__ == "__main__":
+
 
 
 

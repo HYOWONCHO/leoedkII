@@ -16,6 +16,14 @@ def read_image(fname):
 
     return content
 
+def write_image_xcnt(fname , wrdata, fmode, xcnt):
+    try:
+        with open(fname, fmode) as file:
+            for item  in range(xcnt):
+                file.write(wrdata[item].to_bytes(1, byteorder='little', signed=False))
+            file.close()
+    except FileNotFoundError:
+        print(f"\n Write file '{fname}' not found")
 
 def write_image(fname , wrdata, fmode):
     try:
