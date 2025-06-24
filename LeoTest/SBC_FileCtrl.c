@@ -10,6 +10,7 @@
 
 #include <string.h>
 
+#include "SBC_Util.h"
 #include "SBC_FileCtrl.h"
 
 //static UINT32 _get_rw_blkcnt(UINT32 bytes)
@@ -712,7 +713,7 @@ errdone:
 SBCStatus  SBC_BlkIoHandleInit(OUT VOID **hblk, OUT VOID *hdr)
 {
 #define     SBC_MAGIC_LEN           0x04
-#define     SBC_MAGIC_ID            0x50574152
+#define     SBC_MAGIC_ID            0xAA55AA55
 
     SBCStatus                       ret;
     EFI_STATUS                      Status;
@@ -785,23 +786,30 @@ SBCStatus  SBC_BlkIoHandleInit(OUT VOID **hblk, OUT VOID *hdr)
         }
 
         //SBC_mem_print_bin("Read Block", (UINT8 *)ReadBuffer, SBC_MAGIC_LEN);
-        CopyMem((void *)&magicid, (VOID *)&((UINT8 *)ReadBuffer)[0],SBC_MAGIC_LEN);
-        FreePool(ReadBuffer);
+        //CopyMem((void *)&magicid, (VOID *)&((UINT8 *)ReadBuffer)[0],SBC_MAGIC_LEN);
+        CopyMem((void *)hdr, (VOID *)&((UINT8 *)ReadBuffer)[0], sizeof(rawprt_hdr_t));
+
+
+        //SBC_mem_print_bin("Header buf", (UINT8 *)hdr, 16);
+
+        FreePool(ReadBuffer);      
+
+        ((rawprt_hdr_t *)hdr)->magicid  = SBC_SWAP_ENDIAN_32(((rawprt_hdr_t *)hdr)->magicid);
+        //Print(L"%d Magic ID : 0x%x \n", idx, ((rawprt_hdr_t *)hdr)->magicid);
 
         
-        if (magicid != SBC_RAWPRT_MAGIC_ID) {
+        
+        if (((rawprt_hdr_t *)hdr)->magicid != SBC_RAWPRT_MAGIC_ID) {
             continue;
         }
 
         *hblk = (VOID *)BlockIo;
-        //Print(L"Found %p Block I/O Protocol Address Magci ID : 0x%x.\n", BlockIo, magicid);
+        Print(L"Found %p Block I/O Protocol Address Magci ID : 0x%x.\n", BlockIo, magicid);
         //Print(L"0x%p SBC Raw Buffer MagicID found !!! \n", *hblk);
-
-        CopyMem(hdr, ReadBuffer, sizeof(rawprt_hdr_t));
 
 
         ret = SBCOK;
-        goto errdone;
+        break;
     }
 
 errdone:
