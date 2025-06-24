@@ -3,6 +3,31 @@
 #include <string.h>
 #include "SBC_Log.h"
 
+
+#define SBC_SWAP_ENDIAN_16(val) \
+    (((UINT16)(val) & 0xFF00) >> 8) | \
+    (((UINT16)(val) & 0x00FF) << 8)
+
+
+#define SBC_SWAP_ENDIAN_32(val) \
+    (((UINT32)(val) & 0xFF000000UL) >> 24) | \
+    (((UINT32)(val) & 0x00FF0000UL) >> 8)  | \
+    (((UINT32)(val) & 0x0000FF00UL) << 8)  | \
+    (((UINT32)(val) & 0x000000FFUL) << 24)
+
+
+#define SBC_SWAP_ENDIAN_64(val) \
+    (((UINTN)(val) & 0xFF00000000000000ULL) >> 56) | \
+    (((UINTN)(val) & 0x00FF000000000000ULL) >> 40) | \
+    (((UINTN)(val) & 0x0000FF0000000000ULL) >> 24) | \
+    (((UINTN)(val) & 0x000000FF00000000ULL) >> 8)  | \
+    (((UINTN)(val) & 0x00000000FF000000ULL) << 8)  | \
+    (((UINTN)(val) & 0x0000000000FF0000ULL) << 24) | \
+    (((UINTN)(val) & 0x000000000000FF00ULL) << 40) | \
+    (((UINTN)(val) & 0x00000000000000FFULL) << 56)
+
+
+
 /**
  * Convert the ASCII value to Hex value
  * 

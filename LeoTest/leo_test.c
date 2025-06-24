@@ -607,12 +607,15 @@ UefiMain (
   IN EFI_SYSTEM_TABLE  *SystemTable
   )
 {
-#if 0
+
   SBCStatus  ret = SBCOK;
   rawprt_hdr_t h_rawptrheader;    // Raw Partition Header handle
   VOID *h_blkio;               // Block I/O handle
-  LV_t baseansr;
-  LV_t keylv;
+  UINT32 pres_hi = 0;
+  UINT32 pres_low = 0;
+  UINT32 readbnk_id = 0;
+//LV_t baseansr;
+//LV_t keylv;
 
   ZeroMem(&h_rawptrheader, sizeof h_rawptrheader);
   // Get the NVMe SSD Raw Partiton handle and Header information 
@@ -623,6 +626,30 @@ UefiMain (
     goto errdone;
   }
 
+  Print(L"Find Raw Partition (0x%x)...\n", h_rawptrheader.magicid);
+  Print(L"Partition Info (%a) \n", h_rawptrheader.prtinfo);
+ 
+
+  // Check the Preference SSBL bank 
+  CopyMem((void *)&pres_low, (void *)&h_rawptrheader.bootpres[0], 4);
+  CopyMem((void *)&pres_hi, (void *)&h_rawptrheader.bootpres[4], 4);
+
+  SBC_mem_print_bin("Pres Low", (UINT8 *)&pres_low, 4);
+  SBC_mem_print_bin("Pres Hi", (UINT8 *)&pres_hi, 4);
+
+  if ((CHAR8)(pres_low & 0x0000FFFF) == 'C') {
+    readbnk_id = (pres_low & 0xFFFF0000) >> 16;
+  }
+  else if ((CHAR8)(pres_hi & 0x0000FFFF) == 'C') {
+    readbnk_id = (pres_hi & 0xFFFF0000) >> 16;
+  }
+
+  // Access bank addr ( (0x200 + (128 << 20)) * readbnk_id )
+
+  
+
+  
+#if 0
   Print(L"Found the SBC Raw-partiton !! \n");
 
   ret = SBC_FSBL_Verify(h_blkio, &baseansr);
@@ -665,13 +692,12 @@ UefiMain (
     goto errdone;
   }
 #endif
-extern SBCStatus SBC_GRUB_LoadAndStart(EFI_HANDLE ImageHandle);
+//extern SBCStatus SBC_GRUB_LoadAndStart(EFI_HANDLE ImageHandle);
 
-    SBC_GRUB_LoadAndStart(ImageHandle);
+    //SBC_GRUB_LoadAndStart(ImageHandle);
 
 
-
-//errdone:
+errdone:
  
 
 
