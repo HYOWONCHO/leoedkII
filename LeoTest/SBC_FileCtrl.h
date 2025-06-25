@@ -21,7 +21,10 @@ typedef struct _t_bm_lookup_table {
 }bm_lookup_table_t;
 
 
-#define SBC_RAWPRT_DFLT_BLK_SZ                   512
+
+#define SBC_RAWPRT_DFLT_SHIFT                       0x9
+#define SBC_RAWPRT_DFLT_BLK_SZ                      (1 << SBC_RAWPRT_DFLT_SHIFT)
+
 #define SBC_FILE_RW_BLK(len)                        \
     ({                                              \
         UINT32 _x = len;                            \
@@ -66,7 +69,7 @@ typedef struct _rawprt_hdr_t {
 
 #pragma pack()
 
-
+#define BOOT_FW_SRTOFS                      0x00000200
 
 #define BOOT_FSBL_OFS                       0x00000000      /**< FSBL Offset */
 #define BOOT_SSB_OFS                        0x00400000      /**< SSB Offset */
@@ -74,9 +77,9 @@ typedef struct _rawprt_hdr_t {
 #define BOOT_SW_OFS                         0x01C00000      /**< Boot Software offset */
 
 
-#define BOOT_SECTOR1_OFS                    0x00000000
-#define BOOT_SECTOR2_OFS                    0x08000000
-#define BOOT_SECTOR3_OFS                    0x10000000
+#define BOOT_SECTOR1_OFS                    (0x00000000 | BOOT_FW_SRTOFS)
+#define BOOT_SECTOR2_OFS                    (0x08000000 | BOOT_FW_SRTOFS)
+#define BOOT_SECTOR3_OFS                    (0x10000000 | BOOT_FW_SRTOFS)
 
 #define BOOT_IMG_LENB                       0x00000004
 #define BOOT_FSBL_MAX                       0x00400000      /**< 4M */
@@ -353,4 +356,6 @@ SBCStatus  SBC_RawPrtBlockWrite(VOID *blkio, UINT8 *wrbuf, UINT32 wrlen, UINT32 
  * \return UINT32 
  */
 UINT32  SBC_ReadBootMode(VOID);
+
+EFI_STATUS SBC_WriteFile(EFI_HANDLE ImageHandle, CHAR16 *FileNames, LV_t *out);
 #endif

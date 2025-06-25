@@ -594,8 +594,8 @@ SBCStatus SBC_RawPrtReadBlock(VOID *blkhnd, VOID *rdbuf,  UINT32 *rdlen, UINTN r
     SBCStatus       ret = SBCOK;
     EFI_STATUS      retval;
     EFI_BLOCK_IO_PROTOCOL           *blkio = NULL;
-    VOID *readbuf = NULL;
-    UINTN   blklen = 0LU;
+//    VOID *readbuf = NULL;
+//    UINTN   blklen = 0LU;
 
     //Print(L"%a:%d \n",__FUNCTION__, __LINE__);
     SBC_RET_VALIDATE_ERRCODEMSG(((rdbuf != NULL) || (rdlen != NULL)), SBCNULLP, "Invalid parameter");
@@ -603,22 +603,22 @@ SBCStatus SBC_RawPrtReadBlock(VOID *blkhnd, VOID *rdbuf,  UINT32 *rdlen, UINTN r
 
     blkio  = (EFI_BLOCK_IO_PROTOCOL *)blkhnd;
 
-    blklen = ALIGN_VALUE(*rdlen, blkio->Media->BlockSize);
-    //Print(L"BLK Len : %d \n", blklen);
-    readbuf = AllocateZeroPool(blklen);
-    if (readbuf == NULL) {
-        Print(L"Allocate Pool fail \n");    
-        ret = SBCNULLP;
-        goto errdone;
-    }
+//  blklen = ALIGN_VALUE(*rdlen, blkio->Media->BlockSize);
+//  //Print(L"BLK Len : %d \n", blklen);
+//  readbuf = AllocateZeroPool(blklen);
+//  if (readbuf == NULL) {
+//      Print(L"Allocate Pool fail \n");
+//      ret = SBCNULLP;
+//      goto errdone;
+//  }
 
 
     retval = blkio->ReadBlocks(
                 blkio,
                 blkio->Media->MediaId,
                 rlba,
-                blklen,
-                readbuf
+                *rdlen,
+                rdbuf
         );
 
     if (EFI_ERROR(retval)) {
@@ -627,7 +627,7 @@ SBCStatus SBC_RawPrtReadBlock(VOID *blkhnd, VOID *rdbuf,  UINT32 *rdlen, UINTN r
         goto errdone;
     }
     //SBC_mem_print_bin("Read Buf", readbuf, *rdlen);
-    CopyMem(rdbuf, readbuf, *rdlen);
+    //CopyMem(rdbuf, readbuf, *rdlen);
     
     //SBC_mem_print_bin("Rd Bud", rdbuf, SBC_RPTN_INFO_LEN << 1);
     //Print(L"Read info result %r (Block Size : %d)\n" , retval, blkio->Media->BlockSize);
@@ -640,10 +640,10 @@ SBCStatus SBC_RawPrtReadBlock(VOID *blkhnd, VOID *rdbuf,  UINT32 *rdlen, UINTN r
     
 
 errdone:
-    if (readbuf != NULL) {
-        FreePool(readbuf);
-        readbuf = NULL;
-    }
+//  if (readbuf != NULL) {
+//      FreePool(readbuf);
+//      readbuf = NULL;
+//  }
     return ret;
 
 
