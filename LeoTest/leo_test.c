@@ -61,6 +61,7 @@
 #include "SBC_EccSignVerify.h"
 #include "SBC_Config.h"
 #include "SBC_AntiTampering.h"
+#include "SBC_Util.h"
 
 
 #ifdef LEO_EMUPKG
@@ -569,22 +570,7 @@ errdone:
 
 }
 
-#ifdef SBC_HASH_UNITEST_ENABLE
-VOID SBC_HashMain(VOID);
-#endif
 
-#ifdef SBC_AES_UNITEST_ENABLE
-VOID SBC_AES_TestMain(VOID);
-VOID SBC_AesGcmTestMain(VOID);
-#endif
-
-#ifdef SBC_ECDSA_TEST_ENABLE
-VOID SBC_EcDsa_TestMain(VOID);
-#endif
-
-#ifdef SBC_X509_TEST
-SBCStatus  SBC_X509TestMain(VOID);
-#endif
 
 extern EFI_STATUS LoadKernelImage (
   IN EFI_HANDLE        ImageHandle,
@@ -598,6 +584,123 @@ SSBL_Load (
 
 extern SBCStatus SBC_SSBL_LoadAndStart(EFI_HANDLE ImageHandle);
 
+SBCStatus SBC_BootModeNormal(UINT32 bank)
+{
+  SBCStatus ret = SBCOK;
+  UINTN bankaddr = 0;
+
+  SBC_RET_VALIDATE_ERRCODEMSG(((bank >= 1) && (bank <= 2)), SBCFAIL, "Invalid FW Bank ID");
+
+  //bank--;
+  bankaddr = ((--bank * BOOT_FW_IMG_MB)<< 20) | BOOT_FW_SRTOFS;
+  Print(L"Bank Address : 0x%x \n", bankaddr);
+
+
+errdone:
+
+  return ret;
+}
+
+SBCStatus SBC_BootModeFactory(VOID *blkhnd, VOID *ImageHandle)
+{
+  SBCStatus ret = SBCOK;
+  EFI_STATUS retval;
+  UINTN startlba = 0;
+  UINTN endlba = 0;
+
+  UINT32  imglen = SBC_RAWPRT_DFLT_BLK_SZ;
+  UINT8   imghdr[SBC_RAWPRT_DFLT_BLK_SZ] = {0, };
+  UINT8   *loadimg = NULL;
+
+  EFI_HANDLE  ssbl_img_hndl;
+  UINTN       hndlcnt = 0;
+  CHAR16 *fname = L"\\EFI\\BOOT\\SSBL.efi";
+
+
+  LV_t wrlv;
+  //UINT8 *imgssbl = NULL;
+
+  SBC_RET_VALIDATE_ERRCODEMSG((blkhnd != NULL), SBCNULLP, "Block I/O Handle Nill");
+
+  startlba = BOOT_SECTOR3_OFS >> SBC_RAWPRT_DFLT_SHIFT;
+  //endlba = (BOOT_SSBL_MAX >>  SBC_RAWPRT_DFLT_SHIFT) - startlba;
+
+  Print(L"Start Addr : 0x%lx , End addr : 0x%lx \n", startlba, endlba);
+
+  ret = SBC_RawPrtReadBlock(blkhnd, (void *)imghdr, &imglen, startlba);
+  if (ret != SBCOK) {
+    Print(L"SSBL Factory Block Read Fail \n");
+    goto errdone;
+  }
+  //SBC_RET_VALIDATE_ERRCODEMSG((ret != SBCOK), SBCIO, "SSBL Factory Block Read Fail");
+
+
+  CopyMem((void *)&imglen, &imghdr[0], sizeof imglen);
+  // Temp code, at later, should be need to remove 
+  //imglen = SBC_SWAP_ENDIAN_32(imglen);
+
+  Print(L"SSBL Image Len : %d \n", imglen);
+ 
+  imglen = ALIGN_VALUE(imglen, SBC_RAWPRT_DFLT_BLK_SZ);
+  Print(L"Align Image Len : %d \n", imglen);
+
+  loadimg = AllocateZeroPool(imglen);
+  if (ret != SBCOK) {
+    Print(L"Allocate Image pool fail \n");
+    ret = SBCNULLP;
+    goto errdone;
+  }
+
+  ret = SBC_RawPrtReadBlock(blkhnd, (void *)loadimg, &imglen, startlba);
+  if (ret != SBCOK) {
+    Print(L"SSBL Factory Block Read Fail \n");
+    goto errdone;
+  }
+
+  if ((hndlcnt = SBC_FileSysFindHndl(&ssbl_img_hndl)) <= 0) {
+    Print(L"File SYstem Handle Found fail \n");
+    ret = SBCIO;
+    goto errdone;
+  }
+
+  Print(L"File System Handle Found (Handle Count : %d) \n", hndlcnt);
+
+  _lv_set_data(&wrlv,&loadimg[4], imglen - 4);
+
+  retval = SBC_WriteFile(ssbl_img_hndl, fname, &wrlv );
+  if (EFI_ERROR(retval)) {
+      eprint("%a file write fail %r", fname, retval);
+      Print(L"%a file write fail %r \n", fname, retval);
+      ret = SBCIO;
+      goto errdone;
+  }
+  
+
+
+  Print(L"SSBL Write is Done \n");
+  //SBC_mem_print_bin("SSBL Header", imghdr, imglen);
+  
+  ret = SBC_SSBL_LoadAndStart(ImageHandle);
+  if (ret != SBCOK) {
+    Print(L"SSBL Factory Running Fail \n");
+    goto errdone;
+  }
+
+errdone:
+
+  if (loadimg != NULL) {
+    FreePool(loadimg);
+  }
+
+  return ret;
+
+
+
+
+}
+
+
+
 
 
 EFI_STATUS
@@ -607,18 +710,20 @@ UefiMain (
   IN EFI_SYSTEM_TABLE  *SystemTable
   )
 {
-
+//extern VOID SBC_EcKeyGen_Test(VOID);
+//SBC_EcKeyGen_Test();
   SBCStatus  ret = SBCOK;
   rawprt_hdr_t h_rawptrheader;    // Raw Partition Header handle
   VOID *h_blkio;               // Block I/O handle
   UINT32 pres_hi = 0;
   UINT32 pres_low = 0;
   UINT32 readbnk_id = 0;
+  UINT32 bootmd = 0; // Boot Mode
 //LV_t baseansr;
 //LV_t keylv;
 
   ZeroMem(&h_rawptrheader, sizeof h_rawptrheader);
-  // Get the NVMe SSD Raw Partiton handle and Header information 
+  // Get the NVMe SSD Raw Partiton handle and Header information
   ret = SBC_BlkIoHandleInit(&h_blkio, &h_rawptrheader);
   if (ret != SBCOK) {
     Print(L"Raw Partitino find fail !!! \n");
@@ -628,14 +733,19 @@ UefiMain (
 
   Print(L"Find Raw Partition (0x%x)...\n", h_rawptrheader.magicid);
   Print(L"Partition Info (%a) \n", h_rawptrheader.prtinfo);
- 
 
-  // Check the Preference SSBL bank 
+
+  // Check the Preference SSBL bank
   CopyMem((void *)&pres_low, (void *)&h_rawptrheader.bootpres[0], 4);
   CopyMem((void *)&pres_hi, (void *)&h_rawptrheader.bootpres[4], 4);
 
-  SBC_mem_print_bin("Pres Low", (UINT8 *)&pres_low, 4);
-  SBC_mem_print_bin("Pres Hi", (UINT8 *)&pres_hi, 4);
+  pres_low = SBC_SWAP_ENDIAN_32(pres_low);
+  pres_hi = SBC_SWAP_ENDIAN_32(pres_hi);
+
+  Print(L"Pres HI : 0x%x , Pres Low: 0x%x \n", pres_low, pres_hi);
+
+  //SBC_mem_print_bin("Pres Low", (UINT8 *)&pres_low, 4);
+  //SBC_mem_print_bin("Pres Hi", (UINT8 *)&pres_hi, 4);
 
   if ((CHAR8)(pres_low & 0x0000FFFF) == 'C') {
     readbnk_id = (pres_low & 0xFFFF0000) >> 16;
@@ -643,6 +753,30 @@ UefiMain (
   else if ((CHAR8)(pres_hi & 0x0000FFFF) == 'C') {
     readbnk_id = (pres_hi & 0xFFFF0000) >> 16;
   }
+
+  Print(L"Currently Valid FW Bank ID : %d \n", readbnk_id);
+  
+  // Check boot mode 
+  bootmd = SBC_ReadBootMode();
+  switch (bootmd) {
+  case BOOT_MODE_NORMAL:
+    break;
+  case BOOT_MODE_FACTORY:
+    Print(L"Factory Boot Mode !!! \n");
+    SBC_BootModeFactory(h_blkio, ImageHandle);
+    Print(L"Factory BOot Mode end !!! \n");
+    break;
+  case BOOT_MODE_UPDATE:
+    break;
+  default:
+    Print(L"Unknown Boot Mode ... SHOULD go to Abort\n");
+    break;
+  }
+
+
+  // Read SSBL from 
+
+
 
   // Access bank addr ( (0x200 + (128 << 20)) * readbnk_id )
 
