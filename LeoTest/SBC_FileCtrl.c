@@ -64,20 +64,22 @@ SBCStatus  SBC_GetFileSize(CHAR16 *FileName, UINTN  *FileSize)
 {
     EFI_STATUS Status;
 
-    EFI_HANDLE ImageHandle;
+    EFI_HANDLE *ImageHandle;
     EFI_SIMPLE_FILE_SYSTEM_PROTOCOL *FileSystem;
     EFI_FILE_PROTOCOL *Root;
     EFI_FILE_PROTOCOL *File;
     UINTN              InfoSize = 0;
     EFI_FILE_INFO     *FileInfo;
+    UINTN           hndlcnt;
 
-    if(SBC_FileSysFindHndl(&ImageHandle) <= 0) {
-
-        eprint("SBC_FileSysFindHndl fail");
-        return SBCFAIL;
+    hndlcnt = SBC_FindEfiFileSystemProtocol(&ImageHandle);
+    Print(L"Hndl Count :%d \n", hndlcnt);
+    if (hndlcnt <= 0) {
+        Print(L"File Sys handle find fail : %d \n", hndlcnt);
+        //sbc_err_sysprn()
     }
 
-  Status = gBS->HandleProtocol(ImageHandle,
+  Status = gBS->HandleProtocol(ImageHandle[--hndlcnt],
                                &gEfiSimpleFileSystemProtocolGuid,
                                (VOID **)&FileSystem);
   if(EFI_ERROR(Status)) {
