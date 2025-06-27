@@ -257,6 +257,22 @@ EFI_STATUS SBC_WriteFile(EFI_HANDLE ImageHandle, CHAR16 *FileNames, LV_t *out)
 
 }
 
+UINTN SBC_FindEfiFileSystemProtocol(EFI_HANDLE **handle)
+{
+    //EFI_HANDLE *Handles = *handle;
+
+    EFI_STATUS  retval;
+    UINTN HandleCount;
+
+    retval = gBS->LocateHandleBuffer(ByProtocol, &gEfiSimpleFileSystemProtocolGuid, NULL, &HandleCount, handle);
+    if (EFI_ERROR(retval)) {
+        Print(L"gEfiSimpleFileSystemProtocolGuid foud fail (%r) \n", retval);
+        return 0;
+    }
+
+    return HandleCount;
+}
+
 UINTN  SBC_FileSysFindHndl(EFI_HANDLE *handle)
 {
 
