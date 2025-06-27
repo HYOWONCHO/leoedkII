@@ -722,6 +722,21 @@ UefiMain (
 //LV_t baseansr;
 //LV_t keylv;
 
+  dprint("FSBL starting !!!!");
+//
+//SBC_LogPrint((CONST CHAR16*)__FUNCTION__,
+//             __LINE__,
+//             SBC_LOG_CMN_PRIO_INFO,
+//             2,
+//             L"SBC",
+//             L"FSBL",
+//             L"xxx",
+//             233,
+//             L"EVT",
+//             L"Raw Partition Header size");
+
+  sbc_err_sysprn(SBC_LOG_CMN_PRIO_INFO, 2, L"SBC", L"FSBL", L"xxx", 233, L"EVT", L"Raw Partition Header size");
+
   ZeroMem(&h_rawptrheader, sizeof h_rawptrheader);
   // Get the NVMe SSD Raw Partiton handle and Header information
   ret = SBC_BlkIoHandleInit(&h_blkio, &h_rawptrheader);
