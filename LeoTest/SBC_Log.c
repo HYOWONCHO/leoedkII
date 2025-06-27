@@ -170,13 +170,13 @@ VOID SBC_LogMsg(CHAR8* logmsg , CONST CHAR8 *funcname, UINTN linenumber, CONST C
 //extern EFI_HANDLE sbcImgHandle;
 void _sbc_write_log_file(CHAR16 *message, UINT32 msglen)
 {
-    EFI_HANDLE      hndl = NULL;
+    EFI_HANDLE      *hndl = NULL;
     UINTN           hndlcnt;
     LV_t            wrlv;
 
     EFI_STATUS retval = EFI_SUCCESS;
 
-    hndlcnt = SBC_FileSysFindHndl(&hndl);
+    hndlcnt = SBC_FindEfiFileSystemProtocol(&hndl);
     Print(L"Hndl Count :%d \n", hndlcnt);
     if (hndlcnt <= 0) {
         Print(L"File Sys handle find fail : %d \n", hndlcnt);
@@ -185,7 +185,7 @@ void _sbc_write_log_file(CHAR16 *message, UINT32 msglen)
 
     wrlv.value = message;
     wrlv.length = msglen;
-    retval = SBC_WriteFile(hndl, L"\\EFI\\rocky\\sbc_fsbl_sys_log", &wrlv);
+    retval = SBC_WriteFile(hndl[--hndlcnt], L"\\EFI\\rocky\\sbc_fsbl_sys_log", &wrlv);
     if (EFI_ERROR(retval)) {
         Print(L"\"%s\" log write fail (%r) \n", message, retval);
     }
