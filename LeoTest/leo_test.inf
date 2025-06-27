@@ -101,6 +101,7 @@
 
 [Pcd]
 	gEfiMdeModulePkgTokenSpaceGuid.PcdSerialRegisterBase
+	gEfiMdePkgTokenSpaceGuid.PcdUefiLibMaxPrintBufferSize
 	
 
 [FixedPcd]

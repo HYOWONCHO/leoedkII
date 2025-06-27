@@ -14,12 +14,14 @@
 //#include <Library/UefiRuntimeServceisTableLib.h>
 
 #include <Library/UefiLib/UefiLibInternal.h>
+#include <Library/PcdLib.h>
 
 #include <stdio.h>
 #include <stdlib.h>
 #include <stdarg.h>
 
 #include "SBC_Log.h"
+#include "SBC_FileCtrl.h"
 
 #define UNIT_TEST_MAX_LOG_BUFFER  SIZE_16KB
 
@@ -165,70 +167,111 @@ VOID SBC_LogMsg(CHAR8* logmsg , CONST CHAR8 *funcname, UINTN linenumber, CONST C
 
 }
 
-void _sbc_write_log_file(CHAR16 *message)
+//extern EFI_HANDLE sbcImgHandle;
+void _sbc_write_log_file(CHAR16 *message, UINT32 msglen)
 {
-    EFI_SIMPLE_FILE_SYSTEM_PROTOCOL *fs;
-    EFI_FILE_PROTOCOL *root, *log;
+    EFI_HANDLE      hndl = NULL;
+    UINTN           hndlcnt;
+    LV_t            wrlv;
 
     EFI_STATUS retval = EFI_SUCCESS;
 
-    retval = gBS->HandleProtocol(
-                gImageHandle,
-                &gEfiSimpleFileSystemProtocolGuid,
-                (VOID **)&fs
-        );
-
-    if (EFI_ERROR(retval)) {
-        Print(L"Log Handle Protocol found fail \n");
-        return;
+    hndlcnt = SBC_FileSysFindHndl(&hndl);
+    Print(L"Hndl Count :%d \n", hndlcnt);
+    if (hndlcnt <= 0) {
+        Print(L"File Sys handle find fail : %d \n", hndlcnt);
+        //sbc_err_sysprn()
     }
 
-    retval = fs->OpenVolume(fs, &root);
+    wrlv.value = message;
+    wrlv.length = msglen;
+    retval = SBC_WriteFile(hndl, L"\\EFI\\rocky\\sbc_fsbl_sys_log", &wrlv);
     if (EFI_ERROR(retval)) {
-        Print(L"Log OpenVolume fail \n");
-        return;
+        Print(L"\"%s\" log write fail (%r) \n", message, retval);
     }
+}
 
 
-    retval = root->Open(
-                root,
-                &log,
-                L"\\EFI\\rocky\\log.txt",
-                EFI_FILE_MODE_READ | EFI_FILE_MODE_WRITE | EFI_FILE_MODE_CREATE,
-                0
-        );
+UINTN
+AsciiPrintToBuffer (
+  IN  CONST CHAR16 *Format,
+  ...
+  )
+{
+  VA_LIST Marker;
+  UINTN   Result =0;
 
-    if (EFI_ERROR(retval)) {
-        Print(L"Log Open fail \n");
-        return;
-    }
+  CHAR16      *xBuffer;
+  UINTN       xBufferSize;
 
-    // Go to the end of the file
-    retval = log->SetPosition(log, (UINT64)-1);
+  VA_START(Marker, Format);
+  xBufferSize = (PcdGet32 (PcdUefiLibMaxPrintBufferSize) + 1) * sizeof (CHAR16);
+  dprint("Buffer size : %d", xBufferSize);
 
-    UINTN bufsz = StrLen(message) * sizeof(CHAR16);
 
-    retval = log->Write(log, &bufsz, message);
-    log->Close(log);
+  xBuffer = (CHAR16 *)AllocatePool (xBufferSize);
+ 
+  dprint("Buffer Addr : %p, Format addr  : %p", xBuffer, Format);
 
+  //AsciiVSPrint(Buffer, sizeof(Buffer), Format, Marker);
+  Result = UnicodeVSPrint (xBuffer, xBufferSize, Format, Marker);
+
+
+  dprint("xbuferf : %s \n", xBuffer);
+
+  FreePool(xBuffer);
+  VA_END (Marker);
+  return Result;
+}
+
+VOID SBC_LogInternalX(IN CHAR8 *fmt,...)
+{
+    va_list args;
+    UINTN fmtlen = 0;
+    //VA_LIST marker;
+    CHAR8 buf[512];
+
+    //VA_START(marker, format);
+    va_start(args, fmt);
+    dprint();
+    fmtlen = AsciiVSPrint(buf, sizeof buf, fmt, args);
+    dprint("Fmt (%d) : %a", fmtlen, buf);
+    va_end(args);
+
+    //VA_END(marker);
+}
+
+
+VOID SBC_LogInternal(IN CHAR8 *fmt, IN va_list marker)
+{
+    UINTN fmtlen = 0;
+    //VA_LIST marker;
+    CHAR8 buf[512];
+
+    //VA_START(marker, format);
+    dprint();
+    fmtlen = AsciiVSPrint(buf, sizeof buf, fmt, marker);
+    dprint("Fmt (%d) : %s", fmtlen, buf);
+    //VA_END(marker);
 }
 
 VOID  SBC_LogPrint(CONST CHAR16* func, UINT32 funcline, UINT32 prio, UINT32 ver, CHAR16 *host, 
                         CHAR16 *appname, CHAR16 *csc,
                         UINT32 sfrid, CHAR16 *evtype,
-                        CONST CHAR16 *format, ...)
+                        CHAR16 *format, ...)
 {
 
-    VA_LIST marker;
+
     //CHAR16 buf[512];
     //AR16 logtime[64];
+    va_list args;
     EFI_TIME logtime;
     CHAR16 full_log_msg[8<<10] = {0, };
     //CHAR16 sfr_id_buf[16] = {0, };
     //CHAR16 time_buf[128] = {0, };
 
     UINTN nxtofs = 0;
-    UINTN fmtlen = 0;
+    
     UINTN endofs = sizeof full_log_msg;
 
  
@@ -236,7 +279,7 @@ VOID  SBC_LogPrint(CONST CHAR16* func, UINT32 funcline, UINT32 prio, UINT32 ver,
     ZeroMem(&logtime, sizeof(EFI_TIME));
     gRT->GetTime(&logtime, NULL);
 
-    nxtofs=  UnicodeSPrint(full_log_msg, endofs, L"[%s:%d]", func, funcline);
+    nxtofs=  UnicodeSPrint(full_log_msg, endofs, L"[%a:%d]", func, funcline);
     dprint("F1 : %s", full_log_msg);
 
     endofs -= nxtofs;
@@ -248,27 +291,30 @@ VOID  SBC_LogPrint(CONST CHAR16* func, UINT32 funcline, UINT32 prio, UINT32 ver,
     dprint("F2 : %s", full_log_msg);
 
     endofs -= nxtofs;
-    nxtofs +=  UnicodeSPrint(&full_log_msg[nxtofs], endofs , L" SFR-%d %s", 
+    nxtofs +=  UnicodeSPrint(&full_log_msg[nxtofs], endofs , L" SFR-%d %s ", 
                              sfrid, evtype);
 
     dprint("F3 : %s", full_log_msg);
 
     endofs -= nxtofs;
  
-    VA_START(marker, format);
-    fmtlen = UnicodeVSPrint(&full_log_msg[nxtofs], endofs, format, marker);
-    dprint("Fmt (%d) : %s", fmtlen, full_log_msg);
-    VA_END(marker);
 
+    dprint();
+    va_start(args, format);
+    dprint();
+    nxtofs += UnicodeVSPrint(&full_log_msg[nxtofs] , endofs, format, args);
+    dprint();
+    va_end(args);
+    dprint();
    
     SBC_external_mem_print_bin("Log", (UINT8 *)full_log_msg, nxtofs);
 //
-//    nxtofs = AsciiSPrint(sfr_id_buf, sizeof sfr_id_buf , "SFR-%ld", sfrid);
+//    nxtofs = UnicodeSPrint(sfr_id_buf, sizeof sfr_id_buf , "SFR-%ld", sfrid);
 //
 //    //Print(L"Sfr id: %a \n", sfr_id_buf);
 //
 //    dprint("Offset : %d - SFR ID %a", nxtofs, sfr_id_buf);
-//    nxtofs = AsciiSPrint(time_buf, sizeof  time_buf,
+//    nxtofs = UnicodeSPrint(time_buf, sizeof  time_buf,
 //                         "%d-%d-%dT%d:%d.%d",
 //                         logtime.Year, logtime.Month, logtime.Day,
 //                         logtime.Hour, logtime.Minute, logtime.Second);
@@ -280,12 +326,12 @@ VOID  SBC_LogPrint(CONST CHAR16* func, UINT32 funcline, UINT32 prio, UINT32 ver,
 //    dprint("Offset : %d - time %a", nxtofs, time_buf);
 //
 //
-////  nxtofs = AsciiSPrint(full_log_msg, sizeof full_log_msg,
+////  nxtofs = UnicodeSPrint(full_log_msg, sizeof full_log_msg,
 ////                 "[%s:%d] <%d> %d %d %s %s %s %s %s %s",
 ////                 func, funcline,prio, ver, time_buf,
 ////                 host, appname, csc, sfr_id_buf,evtype
 ////  );
-//    nxtofs = AsciiSPrint(full_log_msg, sizeof full_log_msg,
+//    nxtofs = UnicodeSPrint(full_log_msg, sizeof full_log_msg,
 //                   "[%s:%d] <%d> %d %d %s %s %s %s %s %s",
 //                   func, funcline,prio, ver, time_buf,
 //                   host, appname, csc, sfr_id_buf,evtype
@@ -294,14 +340,15 @@ VOID  SBC_LogPrint(CONST CHAR16* func, UINT32 funcline, UINT32 prio, UINT32 ver,
 //    dprint("log header : %a", full_log_msg);
 //
 //    dprint("x2 offset : %d  %d\n", nxtofs, sizeof full_log_msg - nxtofs);
-//    nxtofs += AsciiSPrint(&full_log_msg[nxtofs] , sizeof full_log_msg - nxtofs, format);
+//    nxtofs += UnicodeSPrint(&full_log_msg[nxtofs] , sizeof full_log_msg - nxtofs, format);
 //
 //    SBC_external_mem_print_bin("Log", (UINT8 *)full_log_msg, nxtofs);
 //
 
     //VA_END(marker);
 
-    Print(L"Full Log msg : %a \n", full_log_msg);
+    _sbc_write_log_file(full_log_msg,nxtofs);
+    Print(L"Full Log msg : %s \n", full_log_msg);
 
 }
 

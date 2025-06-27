@@ -230,7 +230,7 @@ EFI_STATUS SBC_WriteFile(EFI_HANDLE ImageHandle, CHAR16 *FileNames, LV_t *out)
   }
 
   // Open the file
-  Status = RootDir->Open(RootDir, &File, FileNames, EFI_FILE_MODE_READ | EFI_FILE_MODE_WRITE, 0);
+  Status = RootDir->Open(RootDir, &File, FileNames, EFI_FILE_MODE_READ | EFI_FILE_MODE_WRITE | EFI_FILE_MODE_CREATE, 0);
   if (EFI_ERROR(Status)) {
       DEBUG((DEBUG_ERROR, " %a:%d RootDir->Open fail (%d) \r\n",
      __FUNCTION__, __LINE__, Status));
