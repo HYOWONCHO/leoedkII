@@ -52,6 +52,7 @@
 #include <openssl/objects.h>
 #include <openssl/bn.h>
 #include <openssl/ec.h>
+#include <stdarg.h>
 
 #include "SBC_Log.h"
 #include "SBC_ErrorType.h"
@@ -700,8 +701,8 @@ errdone:
 }
 
 
-
-
+extern  VOID SBC_LogInternalX(IN CHAR8 *fmt,...);
+EFI_HANDLE sbcImgHandle;
 
 EFI_STATUS
 EFIAPI
@@ -722,20 +723,11 @@ UefiMain (
 //LV_t baseansr;
 //LV_t keylv;
 
-  dprint("FSBL starting !!!!");
-//
-//SBC_LogPrint((CONST CHAR16*)__FUNCTION__,
-//             __LINE__,
-//             SBC_LOG_CMN_PRIO_INFO,
-//             2,
-//             L"SBC",
-//             L"FSBL",
-//             L"xxx",
-//             233,
-//             L"EVT",
-//             L"Raw Partition Header size");
+  //Print(L"xxxxxxxxxxxx FSBL starting ccccccccc !!!! %d\n", 0x33);
+  sbcImgHandle = ImageHandle;
+  sbc_err_sysprn(SBC_LOG_CMN_PRIO_INFO, 2, L"SBC", L"FSBL", L"xxx", 233, L"EVT", L"FSBL Starting !!!! \n");
 
-  sbc_err_sysprn(SBC_LOG_CMN_PRIO_INFO, 2, L"SBC", L"FSBL", L"xxx", 233, L"EVT", L"Raw Partition Header size");
+
 
   ZeroMem(&h_rawptrheader, sizeof h_rawptrheader);
   // Get the NVMe SSD Raw Partiton handle and Header information

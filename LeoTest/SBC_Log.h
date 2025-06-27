@@ -83,10 +83,16 @@ extern VOID  SBC_LogWrite(UINT32 prio, CHAR16 *ver, CHAR16 *host,
     SBC_LogWrite(prio, ver, host, appnmae, csc, sfrid, evtype, fmt, ##__VA_ARGS__)                               
 */
 
+UINTN
+AsciiPrintToBuffer (
+  IN  CONST CHAR16 *Format,
+  ...
+  );
+
 VOID  SBC_LogPrint(CONST CHAR16* func, UINT32 funcline, UINT32 prio, UINT32 ver, CHAR16 *host, 
                         CHAR16 *appname, CHAR16 *csc,
                         UINT32 sfrid, CHAR16 *evtype,
-                        CONST CHAR16 *format, ...);
+                        CHAR16 *format, ...);
 #define sbc_err_sysprn(prio, ver, host, appname, csc, sfrid, evtype, fmt,...)                                  \
     SBC_LogPrint((CONST CHAR16 *)__FUNCTION__, (UINT32)__LINE__, prio, ver, host, appname, csc, sfrid, evtype, fmt, ##__VA_ARGS__)
 #endif
