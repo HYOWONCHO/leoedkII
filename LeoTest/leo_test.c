@@ -65,6 +65,8 @@
 #include "SBC_Util.h"
 
 
+extern SBCStatus SBC_SSBL_LoadAndStart(EFI_HANDLE ImageHandle);
+
 #ifdef LEO_EMUPKG
 RETURN_STATUS EFIAPI SerialPortInitialize(VOID)
 {
@@ -94,12 +96,7 @@ RETURN_STATUS EFIAPI SerialPortInitialize(VOID)
 }
 #endif
 
-#include <Library/HandleParsingLib.h>
 
-
-
-
-#include <Protocol/DevicePathToText.h>
 
 SBCStatus  SBC_DiceKeysGen(EFI_HANDLE ImageHandle, VOID *p)
 {
