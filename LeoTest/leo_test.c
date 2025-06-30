@@ -669,7 +669,7 @@ SBCStatus SBC_BootModeFactory(VOID *blkhnd, VOID *ImageHandle)
 
   _lv_set_data(&wrlv,&loadimg[4], imglen - 4);
 
-  SBC_mem_print_bin("SSBL Load Image", wrlv.value, 512);
+  //SBC_mem_print_bin("SSBL Load Image", wrlv.value, 512);
 
   for (int idx = 0; idx < hndlcnt; idx++) {
     retval = SBC_WriteFile(ssbl_img_hndl[idx], fname, &wrlv);
