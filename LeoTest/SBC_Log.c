@@ -168,7 +168,7 @@ VOID SBC_LogMsg(CHAR8* logmsg , CONST CHAR8 *funcname, UINTN linenumber, CONST C
 }
 
 //extern EFI_HANDLE sbcImgHandle;
-void _sbc_write_log_file(CHAR16 *message, UINT32 msglen)
+void _sbc_write_log_file(CHAR8 *message, UINT32 msglen)
 {
     EFI_HANDLE      *hndl = NULL;
     UINTN           hndlcnt;
@@ -185,9 +185,14 @@ void _sbc_write_log_file(CHAR16 *message, UINT32 msglen)
 
     wrlv.value = message;
     wrlv.length = msglen;
-    retval = SBC_WriteFile(hndl[--hndlcnt], L"\\EFI\\rocky\\sbc_fsbl_sys_log", &wrlv);
-    if (EFI_ERROR(retval)) {
-        Print(L"\"%s\" log write fail (%r) \n", message, retval);
+    for (int idx  = 0; idx < hndlcnt; idx++) {
+        retval = SBC_WriteFile(hndl[idx], L"\\EFI\\rocky\\sbc_fsbl_sys_log", &wrlv);
+        if (EFI_ERROR(retval)) {
+            Print(L"\"%s\" log write fail (%r) \n", message, retval);
+            continue;
+        }
+
+        break;
     }
 }
 
@@ -255,6 +260,22 @@ VOID SBC_LogInternal(IN CHAR8 *fmt, IN va_list marker)
     //VA_END(marker);
 }
 
+UINTN remove_all_space(CHAR8* str, UINTN cnt) {
+    UINTN write_index = 0; 
+    UINTN read_index = 0;  
+
+    while (read_index != cnt) {
+        if (str[read_index] != 0x00) {
+            str[write_index] = str[read_index];
+            write_index++;
+        }
+        read_index++;
+    }
+    str[write_index] = '\0';
+
+    return write_index;
+}
+
 VOID  SBC_LogPrint(CONST CHAR16* func, UINT32 funcline, UINT32 prio, UINT32 ver, CHAR16 *host, 
                         CHAR16 *appname, CHAR16 *csc,
                         UINT32 sfrid, CHAR16 *evtype,
@@ -266,6 +287,7 @@ VOID  SBC_LogPrint(CONST CHAR16* func, UINT32 funcline, UINT32 prio, UINT32 ver,
     //AR16 logtime[64];
     va_list args;
     EFI_TIME logtime;
+    CHAR8 *wrlog = NULL;
     CHAR16 full_log_msg[8<<10] = {0, };
     //CHAR16 sfr_id_buf[16] = {0, };
     //CHAR16 time_buf[128] = {0, };
@@ -280,7 +302,6 @@ VOID  SBC_LogPrint(CONST CHAR16* func, UINT32 funcline, UINT32 prio, UINT32 ver,
     gRT->GetTime(&logtime, NULL);
 
     nxtofs=  UnicodeSPrint(full_log_msg, endofs, L"[%a:%d]", func, funcline);
-    dprint("F1 : %s", full_log_msg);
 
     endofs -= nxtofs;
     nxtofs +=  UnicodeSPrint(&full_log_msg[nxtofs], endofs , L"%d %d %d-%d-%dT%d:%d.%d %s %s %s", 
@@ -288,67 +309,32 @@ VOID  SBC_LogPrint(CONST CHAR16* func, UINT32 funcline, UINT32 prio, UINT32 ver,
                              logtime.Year, logtime.Month, logtime.Day,
                              logtime.Hour, logtime.Minute, logtime.Second,
                              host, appname, csc);
-    dprint("F2 : %s", full_log_msg);
 
     endofs -= nxtofs;
     nxtofs +=  UnicodeSPrint(&full_log_msg[nxtofs], endofs , L" SFR-%d %s ", 
                              sfrid, evtype);
 
-    dprint("F3 : %s", full_log_msg);
 
+    Print(L"Unicode Sprint final index : %d \n", nxtofs);
     endofs -= nxtofs;
  
 
-    dprint();
     va_start(args, format);
-    dprint();
     nxtofs += UnicodeVSPrint(&full_log_msg[nxtofs] , endofs, format, args);
-    dprint();
+    Print(L"Unicode Sprint final index : %d \n", nxtofs);
     va_end(args);
-    dprint();
-   
-    SBC_external_mem_print_bin("Log", (UINT8 *)full_log_msg, nxtofs);
-//
-//    nxtofs = UnicodeSPrint(sfr_id_buf, sizeof sfr_id_buf , "SFR-%ld", sfrid);
-//
-//    //Print(L"Sfr id: %a \n", sfr_id_buf);
-//
-//    dprint("Offset : %d - SFR ID %a", nxtofs, sfr_id_buf);
-//    nxtofs = UnicodeSPrint(time_buf, sizeof  time_buf,
-//                         "%d-%d-%dT%d:%d.%d",
-//                         logtime.Year, logtime.Month, logtime.Day,
-//                         logtime.Hour, logtime.Minute, logtime.Second);
-//
-//
-//
-//
-//
-//    dprint("Offset : %d - time %a", nxtofs, time_buf);
-//
-//
-////  nxtofs = UnicodeSPrint(full_log_msg, sizeof full_log_msg,
-////                 "[%s:%d] <%d> %d %d %s %s %s %s %s %s",
-////                 func, funcline,prio, ver, time_buf,
-////                 host, appname, csc, sfr_id_buf,evtype
-////  );
-//    nxtofs = UnicodeSPrint(full_log_msg, sizeof full_log_msg,
-//                   "[%s:%d] <%d> %d %d %s %s %s %s %s %s",
-//                   func, funcline,prio, ver, time_buf,
-//                   host, appname, csc, sfr_id_buf,evtype
-//    );
-//
-//    dprint("log header : %a", full_log_msg);
-//
-//    dprint("x2 offset : %d  %d\n", nxtofs, sizeof full_log_msg - nxtofs);
-//    nxtofs += UnicodeSPrint(&full_log_msg[nxtofs] , sizeof full_log_msg - nxtofs, format);
-//
-//    SBC_external_mem_print_bin("Log", (UINT8 *)full_log_msg, nxtofs);
-//
 
-    //VA_END(marker);
 
-    _sbc_write_log_file(full_log_msg,nxtofs);
-    Print(L"Full Log msg : %s \n", full_log_msg);
+
+    Print(L"Mesage buf length : %d  , size : %d\n", StrnLenS(full_log_msg,8192), StrnSizeS(full_log_msg,8192));
+
+    wrlog = (CHAR8 *)full_log_msg;
+    nxtofs = remove_all_space(wrlog,StrnSizeS(full_log_msg,8192));
+    SBC_mem_print_bin("Log", (UINT8 *)wrlog, nxtofs);
+    Print(L"Full Log msg : %a \n", wrlog);
+    _sbc_write_log_file(wrlog,strlen(wrlog));
+    
+    
 
 }
 
