@@ -260,7 +260,7 @@ VOID SBC_LogInternal(IN CHAR8 *fmt, IN va_list marker)
     //VA_END(marker);
 }
 
-UINTN remove_all_space(CHAR8* str, UINTN cnt) {
+static UINTN remove_all_space(CHAR8* str, UINTN cnt) {
     UINTN write_index = 0; 
     UINTN read_index = 0;  
 
