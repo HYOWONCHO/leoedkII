@@ -970,6 +970,139 @@ errdone:
 //  return EFI_SUCCESS;
 //}
 
+VOID  SBCGetBlkIoHandleParse(VOID)
+{
+  EFI_HANDLE    *HandleList;
+  EFI_HANDLE    *HandleListWalker;
+  CHAR16        *Name;
+  CONST CHAR16  *Lang = L"EN";
+  CHAR8         *Language;
+  CHAR8         DeviceName[512];
+
+  HandleList = GetHandleListByProtocol(&gEfiBlockIoProtocolGuid);
+  if(HandleList == NULL) {
+    Print(L"GetHandleListByProtocol Nill \n" );
+    goto errdone;
+
+  }
+
+  Language = AllocateZeroPool(StrSize(Lang));
+  AsciiSPrint(Language, StrSize(Lang), "%S", Lang);
+  for(HandleListWalker = HandleList
+      ; HandleListWalker != NULL && *HandleListWalker != NULL
+      ; HandleListWalker++) {
+    Name = NULL;
+    gEfiShellProtocol->GetDeviceName(*HandleListWalker
+                                     ,EFI_DEVICE_NAME_USE_COMPONENT_NAME|EFI_DEVICE_NAME_USE_DEVICE_PATH
+                                     ,(CHAR8 *)Language, &Name);
+
+
+    ZeroMem(DeviceName, sizeof DeviceName);
+    AsciiSPrint(DeviceName, StrSize(Name), "%S", Name);
+
+    SBC_mem_print_bin("Deviec Name", (UINT8 *)DeviceName, 16);
+
+    
+
+
+  }
+
+
+errdone:
+
+}
+
+
+
+EFI_STATUS SBCGetDirFile(VOID)
+{
+  
+  EFI_STATUS                          Status;
+  EFI_HANDLE                          *HandleBuffer;
+  UINTN                               NumberOfHandles;
+  EFI_SIMPLE_FILE_SYSTEM_PROTOCOL     *SimpleFileSystem;
+  EFI_FILE_PROTOCOL                   *Root;
+  EFI_FILE_INFO                       *FileInfo;
+  UINTN                               FileInfoSize;
+
+  // Locate all Simple File System Protocol instances
+  Status = gBS->LocateHandleBuffer (
+                  ByProtocol,
+                  &gEfiSimpleFileSystemProtocolGuid,
+                  NULL,
+                  &NumberOfHandles,
+                  &HandleBuffer
+                  );
+  if (EFI_ERROR (Status)) {
+    Print(L"Failed to locate Simple File System Protocol: %r\n", Status);
+    return Status;
+  }
+
+  // Iterate through found file systems
+  for (UINTN Index = 0; Index < NumberOfHandles; Index++) {
+    Status = gBS->HandleProtocol (
+                    HandleBuffer[Index],
+                    &gEfiSimpleFileSystemProtocolGuid,
+                    (VOID **)&SimpleFileSystem
+                    );
+    if (EFI_ERROR (Status)) {
+      Print(L"Failed to get Simple File System Protocol from handle: %r\n", Status);
+      continue;
+    }
+
+    // Open the root volume
+    Status = SimpleFileSystem->OpenVolume (
+                                 SimpleFileSystem,
+                                 &Root
+                                 );
+    if (EFI_ERROR (Status)) {
+      Print(L"Failed to open file system volume: %r\n", Status);
+      continue;
+    }
+
+    Print(L"\n--- Listing contents of a file system ---\n");
+
+    // Allocate a buffer for file info (adjust size as needed)
+    FileInfoSize = sizeof(EFI_FILE_INFO) + 256; // Max path length + struct size
+    Status = gBS->AllocatePool (
+                    EfiBootServicesData,
+                    FileInfoSize,
+                    (VOID **)&FileInfo
+                    );
+    if (EFI_ERROR (Status)) {
+      Print(L"Failed to allocate memory for file info: %r\n", Status);
+      Root->Close(Root);
+      continue;
+    }
+
+    // Read directory entries
+    while (TRUE) {
+      UINTN   ReadSize = FileInfoSize;
+      Status = Root->Read (
+                       Root,
+                       &ReadSize,
+                       FileInfo
+                       );
+
+      if (EFI_ERROR (Status) || ReadSize == 0) {
+        break; // End of directory or error
+      }
+
+      // Print file/directory name and attributes
+      Print(L"%s %s\n",
+            (FileInfo->Attribute & EFI_FILE_DIRECTORY) ? L"<DIR>" : L"     ",
+            FileInfo->FileName
+            );
+    }
+
+    gBS->FreePool (FileInfo);
+    Root->Close(Root); // Close the root directory handle
+  }
+
+  gBS->FreePool (HandleBuffer);
+  return EFI_SUCCESS;
+
+}
 
 VOID SBC_FileCtrlTestMain(VOID)
 {
