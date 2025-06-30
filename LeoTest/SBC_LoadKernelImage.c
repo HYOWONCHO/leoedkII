@@ -333,8 +333,8 @@ SBCStatus SBC_SSBL_LoadAndStart(EFI_HANDLE ImageHandle)
 
   gBS->LocateHandleBuffer(ByProtocol, &gEfiSimpleFileSystemProtocolGuid, NULL, &HandleCount, &Handles);
 
-  //for (UINTN i = 0; i < HandleCount; i++) {
-    DevicePath = FileDevicePath(Handles[HandleCount - 1], L"\\EFI\\BOOT\\SSBL.efi");
+  for (UINTN i = 0; i < HandleCount; i++) {
+    DevicePath = FileDevicePath(Handles[i], L"\\EFI\\rocky\\SSBL.efi");
     PathStr = ConvertDevicePathToText(DevicePath, TRUE, TRUE);
     if (PathStr != NULL) {
       Print(L"Device Path: %s\n", PathStr);
@@ -348,7 +348,7 @@ SBCStatus SBC_SSBL_LoadAndStart(EFI_HANDLE ImageHandle)
       gBS->StartImage(ImageHandle, NULL, NULL);
       return SBCOK;
     }
-  //}
+  }
 
   return SBCFAIL;
 }

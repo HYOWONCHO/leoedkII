@@ -72,7 +72,7 @@ typedef struct _rawprt_hdr_t {
 #define BOOT_FW_SRTOFS                      0x00000200
 
 #define BOOT_FSBL_OFS                       0x00000000      /**< FSBL Offset */
-#define BOOT_SSB_OFS                        0x00400000      /**< SSB Offset */
+#define BOOT_SSBL_OFS                       0x00400000      /**< SSB Offset */
 #define BOOT_OS_OFS                         0x00800000      /**< Operating System Offset */
 #define BOOT_SW_OFS                         0x01C00000      /**< Boot Software offset */
 

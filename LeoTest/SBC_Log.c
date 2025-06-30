@@ -177,10 +177,10 @@ void _sbc_write_log_file(CHAR8 *message, UINT32 msglen)
     EFI_STATUS retval = EFI_SUCCESS;
 
     hndlcnt = SBC_FindEfiFileSystemProtocol(&hndl);
-    Print(L"Hndl Count :%d \n", hndlcnt);
+    //Print(L"Hndl Count :%d \n", hndlcnt);
     if (hndlcnt <= 0) {
         Print(L"File Sys handle find fail : %d \n", hndlcnt);
-        //sbc_err_sysprn()
+        return;
     }
 
     wrlv.value = message;
@@ -188,12 +188,15 @@ void _sbc_write_log_file(CHAR8 *message, UINT32 msglen)
     for (int idx  = 0; idx < hndlcnt; idx++) {
         retval = SBC_WriteFile(hndl[idx], L"\\EFI\\rocky\\sbc_fsbl_sys_log", &wrlv);
         if (EFI_ERROR(retval)) {
-            Print(L"\"%s\" log write fail (%r) \n", message, retval);
+            //Print(L" Index %d log  write fail (%r) \n", idx , message, retval);
             continue;
         }
 
         break;
     }
+
+    return;
+
 }
 
 
@@ -288,7 +291,7 @@ VOID  SBC_LogPrint(CONST CHAR16* func, UINT32 funcline, UINT32 prio, UINT32 ver,
     va_list args;
     EFI_TIME logtime;
     CHAR8 *wrlog = NULL;
-    CHAR16 full_log_msg[8<<10] = {0, };
+    CHAR16 full_log_msg[512] = {0, };
     //CHAR16 sfr_id_buf[16] = {0, };
     //CHAR16 time_buf[128] = {0, };
 
@@ -330,7 +333,7 @@ VOID  SBC_LogPrint(CONST CHAR16* func, UINT32 funcline, UINT32 prio, UINT32 ver,
 
     wrlog = (CHAR8 *)full_log_msg;
     nxtofs = remove_all_space(wrlog,StrnSizeS(full_log_msg,8192));
-    SBC_mem_print_bin("Log", (UINT8 *)wrlog, nxtofs);
+    //SBC_mem_print_bin("Log", (UINT8 *)wrlog, nxtofs);
     Print(L"Full Log msg : %a \n", wrlog);
     _sbc_write_log_file(wrlog,strlen(wrlog));
     
