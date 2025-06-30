@@ -7,7 +7,9 @@
 #include <Guid/FileInfo.h>
 #include <Protocol/BlockIo.h>
 #include <Protocol/DevicePathToText.h>
-
+#include <Library/HandleParsingLib.h>
+#include <Library/ShellLib.h>
+//#include <Protocol/DevicePathToText.h>
 #include <string.h>
 
 #include "SBC_Util.h"
