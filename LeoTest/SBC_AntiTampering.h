@@ -184,7 +184,7 @@ SBCStatus SBC_GenOSID(EFI_HANDLE *h_image, UINT8 *fwid, UINT8 *osid);
 
 SBCStatus  SBC_FSBLIntgCheck(EFI_HANDLE *h_image , VOID *blkio);
 
-SBCStatus  SBC_FSBL_Verify(VOID *blkhnd, VOID *ansr);
+SBCStatus  SBC_FSBL_Verify(VOID *blkhnd, VOID *ansr, UINT32 bootmode);
 
 SBCStatus  SBC_BlkIoHandleInit(OUT VOID **hblk, OUT VOID *hdr);
 #endif

@@ -1216,7 +1216,7 @@ errdone:
 
 }
 
-SBCStatus  SBC_FSBL_Verify(VOID *blkhnd, VOID *ansr)
+SBCStatus  SBC_FSBL_Verify(VOID *blkhnd, VOID *ansr, UINT32 bootmode)
 {
     SBCStatus       ret = SBCOK;
     EFI_STATUS      retval = EFI_SUCCESS;
@@ -1347,7 +1347,12 @@ SBCStatus  SBC_FSBL_Verify(VOID *blkhnd, VOID *ansr)
 
     Print(L"FSBL Verify Success !!!\n");
 
-    // Base Answer Validate 
+    if (bootmode != BOOT_MODE_FACTORY) {
+      ret = SBCBSANSWNOTFND;
+      goto errdone;
+    }
+
+    // Base Answer Validate
     ret = SBC_BaseAnswerValidate(blkhnd, (UINT8 *)info.baseansw, bsinfo.m.banswlen );
     switch (ret) {
     case SBCBSANSWNOTFND:
@@ -1366,6 +1371,7 @@ SBCStatus  SBC_FSBL_Verify(VOID *blkhnd, VOID *ansr)
       goto errdone;
       break;
     }
+
 
 
     //ret = SBCOK;
