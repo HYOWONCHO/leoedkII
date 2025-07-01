@@ -91,11 +91,11 @@
   gEfiMdePkgTokenSpaceGuid.PcdDebugPropertyMask|0x1F
   gEfiMdePkgTokenSpaceGuid.PcdUefiLibMaxPrintBufferSize|16000
 	#  0-PCANSI, 1-VT100, 2-VT00+, 3-UTF8, 4-TTYTERM
-  #gEfiMdePkgTokenSpaceGuid.PcdDefaultTerminalType|4
+  gEfiMdePkgTokenSpaceGuid.PcdDefaultTerminalType|1
   # For COM2 (standard I/O base address)
-  gEfiMdeModulePkgTokenSpaceGuid.PcdSerialRegisterBase|0x2F8
-  gEfiMdeModulePkgTokenSpaceGuid.PcdSerialBaudRate|115200         # Or your desired baud rate
-  gEfiMdeModulePkgTokenSpaceGuid.PcdSerialClockRate|1843200        # Common for 16550 UARTs
+  #gEfiMdeModulePkgTokenSpaceGuid.PcdSerialRegisterBase|0x2F8
+  #gEfiMdeModulePkgTokenSpaceGuid.PcdSerialBaudRate|115200         # Or your desired baud rate
+  #gEfiMdeModulePkgTokenSpaceGuid.PcdSerialClockRate|1843200        # Common for 16550 UARTs
 
 
 #Added by Leon
@@ -172,6 +172,10 @@
 		OpensslLib|CryptoPkg/Library/OpensslLib/OpensslLibFull.inf
 
   }
+
+  FtdiUsbSerialDxe/FtdiUsbSerialDxe.inf
+
+  #MdeModulePkg/Universal/Usb/UsbSerialDxe/UsbSerialDxe.inf
 
   MdeModulePkg/Universal/Console/TerminalDxe/TerminalDxe.inf
   MdeModulePkg/Universal/SerialDxe/SerialDxe.inf {
