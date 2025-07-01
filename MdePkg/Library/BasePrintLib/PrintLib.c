@@ -68,8 +68,12 @@ UnicodeVSPrint (
   IN  VA_LIST       Marker
   )
 {
+
+  //DEBUG((DEBUG_ERROR, "%s:%d\n", __FUNCTION__, __LINE__));
   ASSERT_UNICODE_BUFFER (StartOfBuffer);
+  //DEBUG((DEBUG_ERROR, "%s:%d\n", __FUNCTION__, __LINE__));
   ASSERT_UNICODE_BUFFER (FormatString);
+  //DEBUG((DEBUG_ERROR, "%s:%d\n", __FUNCTION__, __LINE__));
   return BasePrintLibSPrintMarker ((CHAR8 *)StartOfBuffer, BufferSize >> 1, FORMAT_UNICODE | OUTPUT_UNICODE, (CHAR8 *)FormatString, Marker, NULL);
 }
 

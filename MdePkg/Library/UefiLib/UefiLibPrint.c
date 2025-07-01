@@ -63,7 +63,7 @@ InternalPrint (
   ASSERT (Console != NULL);
 
   BufferSize = (PcdGet32 (PcdUefiLibMaxPrintBufferSize) + 1) * sizeof (CHAR16);
-
+  //DEBUG((DEBUG_INFO,"Buffer Size : %d \n", BufferSize));
   Buffer = (CHAR16 *)AllocatePool (BufferSize);
 
   if (Buffer == NULL) {
