@@ -26,6 +26,8 @@
   
 
 !include MdePkg/MdeLibs.dsc.inc
+#!include MdePkg/MdePkg.dsc.inc
+#!include MdeModulePkg/MdeModulePkg.dsc.inc
 
 [LibraryClasses]
   IntrinsicLib|CryptoPkg/Library/IntrinsicLib/IntrinsicLib.inf
@@ -89,14 +91,19 @@
   gEfiMdePkgTokenSpaceGuid.PcdDebugPropertyMask|0x1F
   gEfiMdePkgTokenSpaceGuid.PcdUefiLibMaxPrintBufferSize|16000
 	#  0-PCANSI, 1-VT100, 2-VT00+, 3-UTF8, 4-TTYTERM
-  gEfiMdePkgTokenSpaceGuid.PcdDefaultTerminalType|4
-
+  #gEfiMdePkgTokenSpaceGuid.PcdDefaultTerminalType|4
+  # For COM2 (standard I/O base address)
+  gEfiMdeModulePkgTokenSpaceGuid.PcdSerialRegisterBase|0x2F8
+  gEfiMdeModulePkgTokenSpaceGuid.PcdSerialBaudRate|115200         # Or your desired baud rate
+  gEfiMdeModulePkgTokenSpaceGuid.PcdSerialClockRate|1843200        # Common for 16550 UARTs
 
 
 #Added by Leon
 
   # Base address of the UART controller (e.g., COM1)
   #gEfiMdeModulePkgTokenSpaceGuid.PcdSerialPortBaseAddress|0x3F8
+
+
 
   # Baud rate for the serial port
   #gEfiMdeModulePkgTokenSpaceGuid.PcdSerialPortBaudRate|115200
@@ -169,7 +176,8 @@
   MdeModulePkg/Universal/Console/TerminalDxe/TerminalDxe.inf
   MdeModulePkg/Universal/SerialDxe/SerialDxe.inf {
 	<LibraryClasses>
-		DebugLib|MdePkg/Library/BaseDebugLibNull/BaseDebugLibNull.inf
+		DebugLib|MdePkg/Library/BaseDebugLibSerialPort/BaseDebugLibSerialPort.inf
+		#DebugLib|MdePkg/Library/BaseDebugLibNull/BaseDebugLibNull.inf
 		SerialPortLib|MdeModulePkg/Library/BaseSerialPortLib16550/BaseSerialPortLib16550.inf
 		PlatformHookLib|MdeModulePkg/Library/PlatformHookLibSerialPortPpi/PlatformHookLibSerialPortPpi.inf
 		PciLib|MdePkg/Library/BasePciLibCf8/BasePciLibCf8.inf	
