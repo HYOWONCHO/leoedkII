@@ -275,7 +275,7 @@ DebugPortStart (
 
   Status = gBS->OpenProtocol (
                   ControllerHandle,
-                  &gEfiSerialIoProtocolGuid,
+                  &gEfiSerialIoPrhotocolGuid,
                   (VOID **)&mDebugPortDevice.SerialIoBinding,
                   This->DriverBindingHandle,
                   ControllerHandle,

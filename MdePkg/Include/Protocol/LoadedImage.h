@@ -69,6 +69,8 @@ typedef struct {
   EFI_MEMORY_TYPE             ImageCodeType; ///< The memory type that the code sections were loaded as.
   EFI_MEMORY_TYPE             ImageDataType; ///< The memory type that the data sections were loaded as.
   EFI_IMAGE_UNLOAD            Unload;
+
+  EFI_PHYSICAL_ADDRESS      EntryPoint; // <--- This is the one!
 } EFI_LOADED_IMAGE_PROTOCOL;
 
 //

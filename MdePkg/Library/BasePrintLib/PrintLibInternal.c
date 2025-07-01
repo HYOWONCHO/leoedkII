@@ -588,6 +588,7 @@ BasePrintLibSPrintMarker (
   //    COUNT_ONLY_NO_PRINT is not set in Flags.
   //
   if ((BufferSize > 0) && ((Flags & COUNT_ONLY_NO_PRINT) == 0)) {
+    //DEBUG((DEBUG_ERROR, "%s:%d\n", __FUNCTION__, __LINE__));
     SAFE_PRINT_CONSTRAINT_CHECK ((Buffer != NULL), 0);
   }
 
@@ -596,6 +597,7 @@ BasePrintLibSPrintMarker (
   //    COUNT_ONLY_NO_PRINT is set in Flags.
   //
   if ((BufferSize > 0) || ((Flags & COUNT_ONLY_NO_PRINT) != 0)) {
+    //DEBUG((DEBUG_ERROR, "%s:%d\n", __FUNCTION__, __LINE__));
     SAFE_PRINT_CONSTRAINT_CHECK ((Format != NULL), 0);
   }
 
@@ -605,12 +607,14 @@ BasePrintLibSPrintMarker (
   //
   if ((Flags & OUTPUT_UNICODE) != 0) {
     if (RSIZE_MAX != 0) {
+      //DEBUG((DEBUG_ERROR, "%s:%d\n", __FUNCTION__, __LINE__));
       SAFE_PRINT_CONSTRAINT_CHECK ((BufferSize <= RSIZE_MAX), 0);
     }
 
     BytesPerOutputCharacter = 2;
   } else {
     if (ASCII_RSIZE_MAX != 0) {
+      //DEBUG((DEBUG_ERROR, "%s:%d\n", __FUNCTION__, __LINE__));
       SAFE_PRINT_CONSTRAINT_CHECK ((BufferSize <= ASCII_RSIZE_MAX), 0);
     }
 
@@ -623,22 +627,32 @@ BasePrintLibSPrintMarker (
   //
   if ((Flags & FORMAT_UNICODE) != 0) {
     if (RSIZE_MAX != 0) {
+      //DEBUG((DEBUG_ERROR, "%s:%d RSIZE MAX : %d Format Len : %d  condition : %d\n", 
+//           __FUNCTION__, __LINE__,
+//           RSIZE_MAX+1,
+//           StrnLenS((CHAR16 *)Format, RSIZE_MAX + 1) ,
+//           (StrnLenS ((CHAR16 *)Format, RSIZE_MAX + 1) <= RSIZE_MAX)));
+
       SAFE_PRINT_CONSTRAINT_CHECK ((StrnLenS ((CHAR16 *)Format, RSIZE_MAX + 1) <= RSIZE_MAX), 0);
     }
 
+    //DEBUG((DEBUG_ERROR, "%s:%d\n", __FUNCTION__, __LINE__));
     BytesPerFormatCharacter = 2;
     FormatMask              = 0xffff;
+    //DEBUG((DEBUG_ERROR, "%s:%d\n", __FUNCTION__, __LINE__));
   } else {
     if (ASCII_RSIZE_MAX != 0) {
+      //DEBUG((DEBUG_ERROR, "%s:%d\n", __FUNCTION__, __LINE__));
       SAFE_PRINT_CONSTRAINT_CHECK ((AsciiStrnLenS (Format, ASCII_RSIZE_MAX + 1) <= ASCII_RSIZE_MAX), 0);
     }
 
     BytesPerFormatCharacter = 1;
     FormatMask              = 0xff;
   }
-
+  //DEBUG((DEBUG_ERROR, "%s:%d\n", __FUNCTION__, __LINE__));
   if ((Flags & COUNT_ONLY_NO_PRINT) != 0) {
     if (BufferSize == 0) {
+      //DEBUG((DEBUG_ERROR, "%s:%d\n", __FUNCTION__, __LINE__));
       Buffer = NULL;
     }
   } else {
@@ -646,14 +660,15 @@ BasePrintLibSPrintMarker (
     // We can run without a Buffer for counting only.
     //
     if (BufferSize == 0) {
+      //DEBUG((DEBUG_ERROR, "%s:%d\n", __FUNCTION__, __LINE__));
       return 0;
     }
   }
-
+  //DEBUG((DEBUG_ERROR, "%s:%d\n", __FUNCTION__, __LINE__));
   LengthToReturn = 0;
   EndBuffer      = NULL;
   OriginalBuffer = NULL;
-
+  //DEBUG((DEBUG_ERROR, "%s:%d\n", __FUNCTION__, __LINE__));
   //
   // Reserve space for the Null terminator.
   //
@@ -666,7 +681,7 @@ BasePrintLibSPrintMarker (
     //
     EndBuffer = Buffer + BufferSize * BytesPerOutputCharacter;
   }
-
+  //DEBUG((DEBUG_ERROR, "%s:%d\n", __FUNCTION__, __LINE__));
   //
   // Get the first character from the format string
   //
@@ -675,8 +690,10 @@ BasePrintLibSPrintMarker (
   //
   // Loop until the end of the format string is reached or the output buffer is full
   //
+  //DEBUG((DEBUG_ERROR, "%s:%d\n", __FUNCTION__, __LINE__));
   while (FormatCharacter != 0) {
     if ((Buffer != NULL) && (Buffer >= EndBuffer)) {
+      //DEBUG((DEBUG_ERROR, "%s:%d\n", __FUNCTION__, __LINE__));
       break;
     }
 
@@ -701,6 +718,7 @@ BasePrintLibSPrintMarker (
         //
         // Parse Flags and Width
         //
+        //DEBUG((DEBUG_ERROR, "%s:%d\n", __FUNCTION__, __LINE__));
         for (Done = FALSE; !Done; ) {
           Format         += BytesPerFormatCharacter;
           FormatCharacter = ((*Format & 0xff) | ((BytesPerFormatCharacter == 1) ? 0 : (*(Format + 1) << 8))) & FormatMask;
@@ -823,6 +841,7 @@ BasePrintLibSPrintMarker (
           // break skipped on purpose
           //
           case 'd':
+            //DEBUG((DEBUG_ERROR, "%s:%d\n", __FUNCTION__, __LINE__));
             if ((Flags & LONG_TYPE) == 0) {
               //
               // 'd', 'u', 'x', and 'X' that are not preceded by 'l' or 'L' are assumed to be type "int".
@@ -832,12 +851,17 @@ BasePrintLibSPrintMarker (
               // provides an implementation that is compatible with that largest possible set of CPU
               // architectures.  This is why the type "int" is used in this one case.
               //
+              //DEBUG((DEBUG_ERROR, "%s:%d\n", __FUNCTION__, __LINE__));
               if (BaseListMarker == NULL) {
+                //DEBUG((DEBUG_ERROR, "%s:%d\n", __FUNCTION__, __LINE__));
                 Value = VA_ARG (VaListMarker, int);
               } else {
+                //DEBUG((DEBUG_ERROR, "%s:%d\n", __FUNCTION__, __LINE__));
                 Value = BASE_ARG (BaseListMarker, int);
               }
+              //DEBUG((DEBUG_ERROR, "%s:%d\n", __FUNCTION__, __LINE__));
             } else {
+              //DEBUG((DEBUG_ERROR, "%s:%d\n", __FUNCTION__, __LINE__));
               if (BaseListMarker == NULL) {
                 Value = VA_ARG (VaListMarker, INT64);
               } else {
@@ -845,19 +869,24 @@ BasePrintLibSPrintMarker (
               }
             }
 
+            //DEBUG((DEBUG_ERROR, "%s:%d\n", __FUNCTION__, __LINE__));
             if ((Flags & PREFIX_BLANK) != 0) {
               Prefix = ' ';
             }
 
+            //DEBUG((DEBUG_ERROR, "%s:%d\n", __FUNCTION__, __LINE__));
             if ((Flags & PREFIX_SIGN) != 0) {
               Prefix = '+';
             }
 
+            //DEBUG((DEBUG_ERROR, "%s:%d\n", __FUNCTION__, __LINE__));
             if ((Flags & COMMA_TYPE) != 0) {
               Comma = TRUE;
             }
 
+            //DEBUG((DEBUG_ERROR, "%s:%d\n", __FUNCTION__, __LINE__));
             if ((Flags & RADIX_HEX) == 0) {
+              //DEBUG((DEBUG_ERROR, "%s:%d\n", __FUNCTION__, __LINE__));
               Radix = 10;
               if (Comma) {
                 Flags    &= ~((UINTN)PREFIX_ZERO);
@@ -880,6 +909,7 @@ BasePrintLibSPrintMarker (
                 Value = (unsigned int)Value;
               }
             } else {
+              //DEBUG((DEBUG_ERROR, "%s:%d\n", __FUNCTION__, __LINE__));
               Radix = 16;
               Comma = FALSE;
               if (((Flags & LONG_TYPE) == 0) && (Value < 0)) {
@@ -895,6 +925,7 @@ BasePrintLibSPrintMarker (
               }
             }
 
+            //DEBUG((DEBUG_ERROR, "%s:%d\n", __FUNCTION__, __LINE__));
             //
             // Convert Value to a reversed string
             //
@@ -903,8 +934,11 @@ BasePrintLibSPrintMarker (
               Count = 0;
             }
 
+            //DEBUG((DEBUG_ERROR, "%s:%d\n", __FUNCTION__, __LINE__));
+
             ArgumentString = (CHAR8 *)ValueBuffer + Count;
 
+            //DEBUG((DEBUG_ERROR, "%s:%d\n", __FUNCTION__, __LINE__));
             Digits = Count % 3;
             if (Digits != 0) {
               Digits = 3 - Digits;
@@ -930,6 +964,7 @@ BasePrintLibSPrintMarker (
                 }
               }
             }
+            //DEBUG((DEBUG_ERROR, "%s:%d\n", __FUNCTION__, __LINE__));
 
             break;
 
@@ -1276,8 +1311,9 @@ BasePrintLibSPrintMarker (
   if ((Flags & COUNT_ONLY_NO_PRINT) != 0) {
     return (LengthToReturn / BytesPerOutputCharacter);
   }
-
+//DEBUG((DEBUG_ERROR, "%s:%d\n", __FUNCTION__, __LINE__));
   ASSERT (Buffer != NULL);
+  //DEBUG((DEBUG_ERROR, "%s:%d\n", __FUNCTION__, __LINE__));
   //
   // Null terminate the Unicode or ASCII string
   //
