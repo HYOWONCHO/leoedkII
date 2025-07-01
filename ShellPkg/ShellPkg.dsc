@@ -23,6 +23,7 @@
 
   DEFINE TPM2_CONFIG_ENABLE      = FALSE
   DEFINE DEBUG_ON_SERIAL_PORT    = TRUE
+  
 
 !include MdePkg/MdeLibs.dsc.inc
 
@@ -85,8 +86,49 @@
 
 
 [PcdsFixedAtBuild]
-  gEfiMdePkgTokenSpaceGuid.PcdDebugPropertyMask|0xFF
+  gEfiMdePkgTokenSpaceGuid.PcdDebugPropertyMask|0x1F
   gEfiMdePkgTokenSpaceGuid.PcdUefiLibMaxPrintBufferSize|16000
+	#  0-PCANSI, 1-VT100, 2-VT00+, 3-UTF8, 4-TTYTERM
+  gEfiMdePkgTokenSpaceGuid.PcdDefaultTerminalType|4
+
+
+
+#Added by Leon
+
+  # Base address of the UART controller (e.g., COM1)
+  #gEfiMdeModulePkgTokenSpaceGuid.PcdSerialPortBaseAddress|0x3F8
+
+  # Baud rate for the serial port
+  #gEfiMdeModulePkgTokenSpaceGuid.PcdSerialPortBaudRate|115200
+
+  # Number of data bits (typically 8)
+  #gEfiMdeModulePkgTokenSpaceGuid.PcdSerialPortDataBits|8
+
+  # Parity (N=None, O=Odd, E=Even)
+  #gEfiMdeModulePkgTokenSpaceGuid.PcdSerialPortParity|1
+
+  # Number of stop bits (typically 1)
+  #gEfiMdeModulePkgTokenSpaceGuid.PcdSerialPortStopBits|1
+
+  # Stride between UART registers (1 for byte-addressed, 4 for DWORD-addressed, etc.)
+  #gEfiMdeModulePkgTokenSpaceGuid.PcdSerialPortRegisterStride|1
+
+  # Clock rate of the UART controller in Hz (e.g., 1.8432 MHz for 16550)
+  #gEfiMdeModulePkgTokenSpaceGuid.PcdSerialClockRate|1843200
+
+  # Enable/Disable hardware flow control (RTS/CTS)
+  #gEfiMdeModulePkgTokenSpaceGuid.PcdSerialUseHardwareFlowControl|FALSE
+
+  # Debug Print Error Level: controls what DEBUG() messages are printed.
+  # For verbose output during boot, use a higher value.
+  # 0x8000004F includes DEBUG_ERROR | DEBUG_WARN | DEBUG_INFO | DEBUG_LOAD
+  # 0xFFFFFFFF for DEBUG_ALL (very verbose)
+  #gEfiMdeModulePkgTokenSpaceGuid.PcdDebugPrintErrorLevel|0x8000004F
+
+  #gEfiMdeModulePkgTokenSpaceGuid.PcdDefaultConInDevicePath|L"VenHw(D3987D4B-971A-435F-8CAF-4967EB627241)/Uart(115200,8,N,1)/"
+  #gEfiMdeModulePkgTokenSpaceGuid.PcdDefaultConOutDevicePath|L"VenHw(D3987D4B-971A-435F-8CAF-4967EB627241)/Uart(115200,8,N,1)/"
+  #gEfiMdeModulePkgTokenSpaceGuid.PcdDefaultErrOutDevicePath|L"VenHw(D3987D4B-971A-435F-8CAF-4967EB627241)/Uart(115200,8,N,1)/"
+#Added Close
 
 !ifdef $(NO_SHELL_PROFILES)
   gEfiShellPkgTokenSpaceGuid.PcdShellProfileMask|0x00
@@ -114,21 +156,26 @@
 
   LeoTest/leo_test.inf {
 	<PcdsFixedAtBuild>
-		gEfiMdePkgTokenSpaceGuid.PcdDebugPropertyMask|0xff
+		gEfiMdePkgTokenSpaceGuid.PcdDebugPropertyMask|0x1f
 		gEfiMedPkgTokenSpaceGuid.PcdDebugPrintErrorLevel|0xffffffff
-		gEfiMdePkgTokenSpaceGuid.PcdDebugPintErrorLevel|0x80000000
 	<LibraryClasses>
 		TimerLib|MdePkg/Library/SecPeiDxeTimerLibCpu/SecPeiDxeTimerLibCpu.inf
 		RngLib|MdeModulePkg/Library/BaseRngLibTimerLib/BaseRngLibTimerLib.inf
 		BaseCryptLib|CryptoPkg/Library/BaseCryptLib/BaseCryptLib.inf
 		OpensslLib|CryptoPkg/Library/OpensslLib/OpensslLibFull.inf
+
+  }
+
+  MdeModulePkg/Universal/Console/TerminalDxe/TerminalDxe.inf
+  MdeModulePkg/Universal/SerialDxe/SerialDxe.inf {
+	<LibraryClasses>
+		DebugLib|MdePkg/Library/BaseDebugLibNull/BaseDebugLibNull.inf
 		SerialPortLib|MdeModulePkg/Library/BaseSerialPortLib16550/BaseSerialPortLib16550.inf
 		PlatformHookLib|MdeModulePkg/Library/PlatformHookLibSerialPortPpi/PlatformHookLibSerialPortPpi.inf
 		PciLib|MdePkg/Library/BasePciLibCf8/BasePciLibCf8.inf	
 		IoLib|MdePkg/Library/BaseIoLibIntrinsic/BaseIoLibIntrinsic.inf
 		PciCf8Lib|MdePkg/Library/BasePciCf8Lib/BasePciCf8Lib.inf
   }
-
 
 
   ShellPkg/Application/Shell/Shell.inf {

@@ -249,6 +249,50 @@ errdone:
 
 }
 
+SBCStatus CheckFirmwareValidate(VOID *h_blkio, UINT32 bootmode)
+{
+  SBCStatus ret = SBCOK;
+  LV_t      baseansrlv;
+  LV_t      keylv;
+
+  ZeroMem((void *)&baseansrlv, sizeof baseansrlv);
+
+  ret = SBC_FSBL_Verify(h_blkio, &baseansrlv, bootmode);
+
+
+  switch(ret) {
+    case SBCBSANSWNOTFND:
+
+      if (bootmode != BOOT_MODE_FACTORY) {
+        ret = SBCFAIL;
+        sbc_err_sysprn(SBC_LOG_CMN_PRIO_WRN, 2, L"SBC", L"FSBL", L"xxx", 233, L"WRN", L"Invalid Boot Operation for Base  Answere");
+        goto errdone;
+      }
+    // Base-answer storing
+      ret = SBC_BaseAnswerEncryptStore(h_blkio, baseansrlv.value, baseansrlv.length, keylv.value, keylv.length);
+      if (baseansrlv.value != NULL) {
+        FreePool(baseansrlv.value);
+        baseansrlv.value = NULL;
+      }
+
+      if (ret != SBCOK) {
+        Print(L"Base Answer Encrypt and Storing fail \n");
+        ret = SBCFAIL;
+        goto errdone;
+      }
+    case SBCOK:
+        Print(L"FSBL Verify Success !!! \n");
+        break;
+    default:
+      Print(L"FSBL Verify Fail \n");
+      goto errdone;
+      //ASSERT((ret == SBCOK));
+      break;
+  }
+errdone:
+
+  return ret;
+}
 
 extern  VOID SBC_LogInternalX(IN CHAR8 *fmt,...);
 EFI_HANDLE sbcImgHandle;

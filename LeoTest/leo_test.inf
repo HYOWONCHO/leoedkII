@@ -18,6 +18,8 @@
   VERSION_STRING                 = 1.0
   ENTRY_POINT                    = UefiMain
 
+  DEFINE DEBUG_ON_SERIAL_PORT = TRUE
+
 #
 # The following information is for reference only and not required by the build tools.
 #
@@ -66,13 +68,14 @@
   ShellCommandLib
   PcdLib
   DevicePathLib
-  SerialPortLib
-  PlatformHookLib
-  PciLib
   IoLib
   UefiBootManagerLib
-
-  #UefiDriverEntryPoint
+  #SerialPortLib
+  #PlatformHookLib
+  #PciLib
+ 
+    ##SerialPortLib
+    ##UefiDriverEntryPoint
 
 
 
