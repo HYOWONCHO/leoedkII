@@ -17,6 +17,8 @@
 
 [Includes]
   Include
+  #../MdeModulePkg/MdeModulePkg.dec
+
 
 [LibraryClasses]
   ##  @libraryclass  Provides most Shell APIs. Only available for Shell applications
@@ -106,6 +108,9 @@
 
   ## This determines the max count of history commands
   gEfiShellPkgTokenSpaceGuid.PcdShellMaxHistoryCommandCount|0x0020|UINT16|0x00000014
+
+  # Base address of the UART controller (e.g., COM2)
+  #gEfiMdeModulePkgTokenSpaceGuid.PcdSerialPortBaseAddress|0x2F8
 
 [PcdsFixedAtBuild, PcdsPatchableInModule, PcdsDynamic, PcdsDynamicEx]
   ## This flag is used to control the protocols produced by the shell
