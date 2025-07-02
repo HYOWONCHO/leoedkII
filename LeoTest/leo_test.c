@@ -316,6 +316,8 @@ UefiMain (
   //LV_t baseansr;
   //LV_t keylv;
 
+    eprint("A ------------- FSBL START -------------\n");
+    dprint("B ------------- FSBL START -------------\n");
     //Print(L"xxxxxxxxxxxx FSBL starting ccccccccc !!!! %d\n", 0x33);
     sbcImgHandle = ImageHandle;
     sbc_err_sysprn(SBC_LOG_CMN_PRIO_INFO, 2, L"SBC", L"FSBL", L"xxx", 233, L"EVT", L"FSBL Starting %x \n", 0xAA55AA55);
@@ -374,6 +376,8 @@ UefiMain (
       break;
     }
 
+
+    //ret = SBC_FSBL_Verify(h_blkio, &baseansr);
 
   // Read SSBL from 
 

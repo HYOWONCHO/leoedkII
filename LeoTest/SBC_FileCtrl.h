@@ -130,7 +130,7 @@ typedef union _boot_fw_inf_t {
 #pragma pack()
 
 
-#define SYS_CONF_START_OFS              0x18000000
+#define SYS_CONF_START_OFS              (0x18000000 | BOOT_FW_SRTOFS)
 #define SYS_CONF_OSID_OFS               0x00000000
 #define SYS_CONF_RES_OFS                0x00000040          /**< Reference offset */
 #define SYS_CONF_ROOT_CA_OFS            0x00000080
@@ -144,16 +144,22 @@ typedef union _boot_fw_inf_t {
 #define SYS_OSID_KEY_LEN                32
 #define SYS_OSID_IV_LEN                 12
 #define SYS_OSID_TAG_LEN                16
+#define SYS_OSID_MAX_LEN                64
 
 #define SYS_PRES_LEN                    4
 #define SYS_PRES_RES_LEN                16
 #define SYS_PRES_IV_LEN                 12
 #define SYS_PRES_TAG_LEN                16
 #define SYS_PRES_RESERVED               16
+#define SYS_PRES_MAX_LEN                64
 
 #define SYS_PRES_INFO_MAX               (SYS_PRES_LEN + SYS_PRES_RES_LEN + SYS_PRES_IV_LEN + SYS_PRES_TAG_LEN + SYS_PRES_RESERVED)
 
 #define SYS_CERT_LEN                    (2<<10)
+#define SYS_SWLIST_OFS_LEN              (8<<10)
+
+#define SYS_SETTING_STORAGE_LEN         (SYS_OSID_MAX_LEN + SYS_PRES_MAX_LEN + SYS_CERT_LEN + SYS_CERT_LEN + SYS_CERT_LEN + SYS_CERT_LEN + SYS_SWLIST_OFS_LEN)
+
 #pragma pack(1)
 typedef union _osid_key_t {
 
