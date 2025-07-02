@@ -261,6 +261,147 @@ EFI_STATUS SBC_WriteFile(EFI_HANDLE ImageHandle, CHAR16 *FileNames, LV_t *out)
 
 }
 
+//extern EFI_HANDLE sbcImgHandle;
+EFI_STATUS SBC_IsFlieAccess(EFI_HANDLE ImageHandle, CHAR16 *FileNames)
+{
+    EFI_STATUS  retval = EFI_SUCCESS;
+    EFI_SIMPLE_FILE_SYSTEM_PROTOCOL *FileSystem;
+    EFI_FILE_PROTOCOL *RootDir = NULL;
+    EFI_FILE_PROTOCOL *File = NULL;
+
+    //gImageHandle = NULL:
+
+    retval = gBS->HandleProtocol(ImageHandle,
+                                 &gEfiSimpleFileSystemProtocolGuid,
+                                 (VOID **)&FileSystem);
+    
+    if (EFI_ERROR(retval)) {
+        eprint("Locate file system handle fail (%r)", retval);
+        goto errdone;
+    }
+
+    retval = FileSystem->OpenVolume(FileSystem, &RootDir);
+    if (EFI_ERROR(retval)) {
+        eprint("OpenVolume fail (%r)", retval);
+        goto errdone;
+    }
+
+    retval = RootDir->Open(RootDir, &File, FileNames, EFI_FILE_MODE_READ,  0);
+
+
+
+errdone:
+    if (File != NULL) {
+        File->Close(File);
+    }
+    return retval; 
+    
+}
+
+EFI_STATUS SBC_IsDirExist(EFI_HANDLE ImageHandle, CHAR16 *DirName)
+{
+    EFI_STATUS  retval = EFI_SUCCESS;
+    EFI_SIMPLE_FILE_SYSTEM_PROTOCOL *FileSystem;
+    EFI_FILE_PROTOCOL *RootDir = NULL;
+    EFI_FILE_PROTOCOL *DirHandle = NULL;
+
+    //gImageHandle = NULL:
+
+    retval = gBS->HandleProtocol(ImageHandle,
+                                 &gEfiSimpleFileSystemProtocolGuid,
+                                 (VOID **)&FileSystem);
+    
+    if (EFI_ERROR(retval)) {
+        eprint("Locate file system handle fail (%r)", retval);
+        goto errdone;
+    }
+
+    retval = FileSystem->OpenVolume(FileSystem, &RootDir);
+    if (EFI_ERROR(retval)) {
+        eprint("OpenVolume fail (%r)", retval);
+        goto errdone;
+    }
+
+    retval = RootDir->Open(RootDir, &DirHandle, DirName, EFI_FILE_MODE_READ,  0);
+
+
+
+errdone:
+    dprint();
+    if (DirHandle != NULL) {
+        DirHandle->Close(DirHandle);
+    }
+    return retval; 
+    
+}
+
+EFI_STATUS SBC_LogWriteFile(EFI_HANDLE ImageHandle, CHAR16 *FileNames, LV_t *out)
+{
+  EFI_STATUS Status;
+  //SBCStatus ret = SBCOK;
+  EFI_SIMPLE_FILE_SYSTEM_PROTOCOL *FileSystem;
+  EFI_FILE_PROTOCOL *RootDir, *File;
+  //UINTN BufferSize = 128;
+  //CHAR8 Buffer[128];
+
+
+  //TODO
+  // out buffer nill check
+
+ 
+
+
+  // Locate file system
+  Status = gBS->HandleProtocol(ImageHandle,
+                               &gEfiSimpleFileSystemProtocolGuid,
+                               (VOID **)&FileSystem);
+  if(EFI_ERROR(Status)) {
+    DEBUG((DEBUG_ERROR, " %a:%d Locate File Systam fail (%r) \r\n",
+           __FUNCTION__, __LINE__, Status));
+    return Status;
+  }
+
+  // Open the roor directory
+  Status = FileSystem->OpenVolume(FileSystem, &RootDir);
+  if (EFI_ERROR(Status)) {
+        DEBUG((DEBUG_ERROR, " %a:%d OpenVolume File Systam fail (%r) \r\n",
+           __FUNCTION__, __LINE__, Status));
+    return Status;
+  }
+
+
+
+
+  // Open the file
+  Status = RootDir->Open(RootDir, &File, FileNames, EFI_FILE_MODE_READ | EFI_FILE_MODE_WRITE , 0);
+  if (EFI_ERROR(Status)) {
+      DEBUG((DEBUG_ERROR, " %a:%d RootDir->Open fail (%r) \r\n",
+     __FUNCTION__, __LINE__, Status));
+    return Status;
+  }
+
+  // Set to End position
+  File->SetPosition(File, (UINT64)-1);
+  // Read the file
+  Status = File->Write(File, (UINTN *)&out->length, out->value);
+  if (EFI_ERROR(Status)) {
+      DEBUG((DEBUG_ERROR, " %a:%d File->Read fail (%r) \r\n",
+              __FUNCTION__, __LINE__, Status));
+      //Print(L"File Content: %a\n", Buffer);
+      return Status;
+  }
+
+
+
+  // Close the file
+  File->Close(File);
+  RootDir->Close(RootDir);
+
+  return Status;
+
+
+}
+
 UINTN SBC_FindEfiFileSystemProtocol(EFI_HANDLE **handle)
 {
     //EFI_HANDLE *Handles = *handle;

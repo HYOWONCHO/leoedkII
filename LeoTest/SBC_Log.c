@@ -167,34 +167,87 @@ VOID SBC_LogMsg(CHAR8* logmsg , CONST CHAR8 *funcname, UINTN linenumber, CONST C
 
 }
 
-//extern EFI_HANDLE sbcImgHandle;
+extern EFI_STATUS SBC_LogWriteFile(EFI_HANDLE ImageHandle, CHAR16 *FileNames, LV_t *out);
+extern EFI_STATUS SBC_IsFlieAccess(EFI_HANDLE ImageHandle, CHAR16 *FileNames);
+extern EFI_STATUS SBC_IsDirExist(EFI_HANDLE ImageHandle, CHAR16 *DirName);
+
+
 void _sbc_write_log_file(CHAR8 *message, UINT32 msglen)
 {
+    EFI_STATUS Status;
+    SBCStatus ret = SBCOK;
     EFI_HANDLE      *hndl = NULL;
+    EFI_HANDLE      loghnd = NULL;
     UINTN           hndlcnt;
     LV_t            wrlv;
+
+    CHAR16         *rocky_dir_name = L"\\EFI\\rocky";
+    CHAR16         *sbc_log_fname = L"\\EFI\\rocky\\sbc_fsbl_sys_log";
 
     EFI_STATUS retval = EFI_SUCCESS;
 
     hndlcnt = SBC_FindEfiFileSystemProtocol(&hndl);
-    //Print(L"Hndl Count :%d \n", hndlcnt);
-    if (hndlcnt <= 0) {
-        Print(L"File Sys handle find fail : %d \n", hndlcnt);
+
+    dprint("Log gEfiSimpleFileSystemProtocolGuid Handle Count :%d ", hndlcnt);
+
+    for (int idx = 0; idx < hndlcnt; idx++) {
+        dprint("[idx:%d] handle addr : 0x%x", idx, hndl[idx]);
+        Status = SBC_IsDirExist(hndl[idx], rocky_dir_name);
+        switch (Status) {
+        case EFI_SUCCESS:
+          loghnd=  hndl[idx];
+          dprint("%s dir exists \n", rocky_dir_name);
+          break;
+        case EFI_NOT_FOUND:
+          dprint("%s dir not found \n", rocky_dir_name);
+          //dprint();
+          //goto errdone;
+          break;
+        default:
+          dprint("Unknown error (%s) \n", Status);
+          break;
+        }
+
+    }
+
+    if (loghnd == NULL) {
+        goto errdone;
+    }
+
+    Status = SBC_IsFlieAccess(loghnd, sbc_log_fname);
+    switch (Status) {
+    case EFI_SUCCESS:
+      dprint("%s dir exists \n", sbc_log_fname);
+      break;
+    case EFI_NOT_FOUND:
+      dprint("%s dir not found \n", sbc_log_fname);
+      // Create File 
+      ret = SBC_CreateFile(loghnd, sbc_log_fname);
+      break;
+      
+    default:
+      dprint("Unknown error (%s) \n", Status);
+      goto errdone;
+      
+    }
+
+    if (ret != SBCOK) {
+        eprint("log file create fail \n");
         return;
     }
 
+
     wrlv.value = message;
     wrlv.length = msglen;
-    for (int idx  = 0; idx < hndlcnt; idx++) {
-        retval = SBC_WriteFile(hndl[idx], L"\\EFI\\rocky\\sbc_fsbl_sys_log", &wrlv);
-        if (EFI_ERROR(retval)) {
-            //Print(L" Index %d log  write fail (%r) \n", idx , message, retval);
-            continue;
-        }
 
-        break;
+    retval = SBC_LogWriteFile(loghnd, sbc_log_fname, &wrlv);
+    if (EFI_ERROR(retval)) {
+        dprint(" og  write fail (%r) \n",  retval);
+        
     }
 
+ 
+errdone:
     return;
 
 }

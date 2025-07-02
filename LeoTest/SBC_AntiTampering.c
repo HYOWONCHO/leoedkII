@@ -1221,7 +1221,7 @@ errdone:
 
 }
 
-SBCStatus  SBC_FSBL_Verify(VOID *blkhnd, VOID *ansr, UINT32 bootmode)
+SBCStatus  SBC_FSBL_Verify(VOID *blkhnd, VOID *ansr)
 {
     SBCStatus       ret = SBCOK;
     EFI_STATUS      retval = EFI_SUCCESS;
@@ -1271,7 +1271,7 @@ SBCStatus  SBC_FSBL_Verify(VOID *blkhnd, VOID *ansr, UINT32 bootmode)
 
     CopyMem((void *)&bsinfo, (void *)infostart, sizeof bsinfo);
 
-    //SBC_external_mem_print_bin("BSINFO", (UINT8 *)&bsinfo, sizeof bsinfo);
+    ////SBC_external_mem_print_bin("BSINFO", (UINT8 *)&bsinfo, sizeof bsinfo);
 
 
     dprint("Signature Len     : %d", bsinfo.m.siglen );
@@ -1289,29 +1289,29 @@ SBCStatus  SBC_FSBL_Verify(VOID *blkhnd, VOID *ansr, UINT32 bootmode)
     infostart = &((UINT8 *)rdlv.value)[last_of_fsbl];
 
     //dprint("FSBL Last : %d", last_of_fsbl);
-    //SBC_external_mem_print_bin("Addtional Information", infostart,bsinfolen  );
+    ////SBC_external_mem_print_bin("Addtional Information", infostart,bsinfolen  );
 
     fsbl_bsinfo_ptr_t info = {NULL, NULL, NULL, NULL};
 
     info.baseansw = (VOID *)&infostart[bsptrcnt];
     bsptrcnt += bsinfo.m.banswlen;
 
-    SBC_external_mem_print_bin("Base Answer", (UINT8 *)info.baseansw,  bsinfo.m.banswlen );
+    //SBC_external_mem_print_bin("Base Answer", (UINT8 *)info.baseansw,  bsinfo.m.banswlen );
 
     info.fwinfo = (VOID *)&infostart[bsptrcnt];
     bsptrcnt += bsinfo.m.fwinfolen;
 
-    SBC_external_mem_print_bin("FW Info", (UINT8 *)info.fwinfo,  bsinfo.m.fwinfolen );
+    //SBC_external_mem_print_bin("FW Info", (UINT8 *)info.fwinfo,  bsinfo.m.fwinfolen );
 
     info.certi = (VOID *)&infostart[bsptrcnt];
     bsptrcnt += bsinfo.m.certlen;
 
-    SBC_external_mem_print_bin("Certificate", (UINT8 *)info.certi,  bsinfo.m.certlen );
+    //SBC_external_mem_print_bin("Certificate", (UINT8 *)info.certi,  bsinfo.m.certlen );
 
     info.signature = (VOID *)&infostart[bsptrcnt];
     bsptrcnt += bsinfo.m.siglen;
 
-    SBC_external_mem_print_bin("Signature", (UINT8 *)info.signature,  bsinfo.m.siglen );
+    //SBC_external_mem_print_bin("Signature", (UINT8 *)info.signature,  bsinfo.m.siglen );
 
     BOOLEAN retbool = TRUE;
     retbool = EcGetPublicKeyFromX509((CONST UINT8  *)info.certi, (UINTN)bsinfo.m.certlen,  &EcPubKey);
