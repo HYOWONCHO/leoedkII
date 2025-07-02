@@ -89,7 +89,7 @@
 
 [PcdsFixedAtBuild]
   gEfiMdePkgTokenSpaceGuid.PcdDebugPropertyMask|0x1F
-  #gEfiMdeModulePkgTokenSpaceGuid.PcdDebugPrintErrorLevel|0x80000045
+  gEfiMdePkgTokenSpaceGuid.PcdDebugPrintErrorLevel|0x80000045
   gEfiMdePkgTokenSpaceGuid.PcdUefiLibMaxPrintBufferSize|16000
 	#  0-PCANSI, 1-VT100, 2-VT00+, 3-UTF8, 4-TTYTERM
   gEfiMdePkgTokenSpaceGuid.PcdDefaultTerminalType|1
@@ -163,9 +163,9 @@
   ShellPkg/Library/UefiShellNetwork2CommandsLib/UefiShellNetwork2CommandsLib.inf
 
   LeoTest/leo_test.inf {
-	<PcdsFixedAtBuild>
-		gEfiMdePkgTokenSpaceGuid.PcdDebugPropertyMask|0x1F
-		gEfiMedPkgTokenSpaceGuid.PcdDebugPrintErrorLevel|0x80000045
+#	<PcdsFixedAtBuild>
+#		gEfiMdePkgTokenSpaceGuid.PcdDebugPropertyMask|0x1F
+#		gEfiMedPkgTokenSpaceGuid.PcdDebugPrintErrorLevel|0x80000045
 	<LibraryClasses>
 		TimerLib|MdePkg/Library/SecPeiDxeTimerLibCpu/SecPeiDxeTimerLibCpu.inf
 		RngLib|MdeModulePkg/Library/BaseRngLibTimerLib/BaseRngLibTimerLib.inf
