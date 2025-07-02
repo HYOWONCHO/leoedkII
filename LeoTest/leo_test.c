@@ -316,11 +316,9 @@ UefiMain (
   //LV_t baseansr;
   //LV_t keylv;
 
-    eprint("A ------------- FSBL START -------------\n");
-    dprint("B ------------- FSBL START -------------\n");
+    dprint("------------- FSBL START -------------\n");
     //Print(L"xxxxxxxxxxxx FSBL starting ccccccccc !!!! %d\n", 0x33);
     sbcImgHandle = ImageHandle;
-    sbc_err_sysprn(SBC_LOG_CMN_PRIO_INFO, 2, L"SBC", L"FSBL", L"xxx", 233, L"EVT", L"FSBL Starting %x \n", 0xAA55AA55);
 
 
 
@@ -332,9 +330,8 @@ UefiMain (
       ASSERT((ret != SBCOK));
     }
 
-    sbc_err_sysprn(SBC_LOG_CMN_PRIO_INFO, 2, L"SBC", L"FSBL", L"xxx", 233, L"EVT", L"Find Raw Partition (0x%x)...\n", h_rawptrheader.magicid);
     //Print(L"Find Raw Partition (0x%x)...\n", h_rawptrheader.magicid);
-    Print(L"Partition Info (%a) \n", h_rawptrheader.prtinfo);
+    dprint("Partition Info (%a) \n", h_rawptrheader.prtinfo);
 
 
     // Check the Preference SSBL bank
@@ -344,7 +341,7 @@ UefiMain (
     pres_low = SBC_SWAP_ENDIAN_32(pres_low);
     pres_hi = SBC_SWAP_ENDIAN_32(pres_hi);
 
-    sbc_err_sysprn(SBC_LOG_CMN_PRIO_INFO, 2, L"SBC", L"FSBL", L"xxx", 233, L"EVT", L"Pres HI : 0x%x , Pres Low: 0x%x \n", pres_low, pres_hi);
+    //sbc_err_sysprn(SBC_LOG_CMN_PRIO_INFO, 2, L"SBC", L"FSBL", L"xxx", 233, L"EVT", L"Pres HI : 0x%x , Pres Low: %a \n", "holla oops");
     Print(L"Pres HI : 0x%x , Pres Low: 0x%x \n", pres_low, pres_hi);
 
     //SBC_mem_print_bin("Pres Low", (UINT8 *)&pres_low, 4);

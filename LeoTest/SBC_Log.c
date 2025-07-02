@@ -318,18 +318,16 @@ VOID  SBC_LogPrint(CONST CHAR16* func, UINT32 funcline, UINT32 prio, UINT32 ver,
                              sfrid, evtype);
 
 
-    Print(L"Unicode Sprint final index : %d \n", nxtofs);
     endofs -= nxtofs;
  
 
     va_start(args, format);
     nxtofs += UnicodeVSPrint(&full_log_msg[nxtofs] , endofs, format, args);
-    Print(L"Unicode Sprint final index : %d \n", nxtofs);
     va_end(args);
 
 
 
-    Print(L"Mesage buf length : %d  , size : %d\n", StrnLenS(full_log_msg,8192), StrnSizeS(full_log_msg,8192));
+    //Print(L"Mesage buf length : %d  , size : %d\n", StrnLenS(full_log_msg,8192), StrnSizeS(full_log_msg,8192));
 
     wrlog = (CHAR8 *)full_log_msg;
     nxtofs = remove_all_space(wrlog,StrnSizeS(full_log_msg,8192));
