@@ -17,6 +17,7 @@
 #include <Protocol/DevicePathToText.h>
 #include <Protocol/LoadedImage.h>
 #include <Library/BaseCryptLib.h>
+#include <Protocol/BlockIo.h>
 
 #include "SBC_CryptAES.h"
 #include "SBC_TypeDefs.h"
@@ -957,25 +958,26 @@ SBCStatus  _baseanswer_store(VOID *blkio, VOID *p)
 
     //VOID *blkio = NULL;
     base_ansid_t *h = NULL;
-    UINT8 loadbuf[BASE_ANS_BLK_LEN] = {0, };
+    UINT8 *loadbuf;
     UINT8 *cpy = NULL;
     UINT32 ldlen = BASE_ANS_BLK_LEN;
+    UINTN baseansr_lba = 0;
 
     h = (base_ansid_t *)p;
     
-    //SBC_RET_VALIDATE_ERRCODEMSG((p != NULL), SBCNULLP, "Invalid parameter");
+    SBC_RET_VALIDATE_ERRCODEMSG((p != NULL), SBCNULLP, "Base-answer Invalid object");
+    SBC_RET_VALIDATE_ERRCODEMSG((blkio != NULL), SBCNULLP, "Block I/O Invalid object");
 
-    // Find the Block device handlef for SBC Raw Partition
-//  ret = SBC_FindBlkIoHandle(&blkio);
-//  if (ret != SBCOK || blkio == NULL) {
-//    Print(L"SBC_FindBlockIoHandle fail (%p)\n", blkio);
-//    goto errdone;
-//  }
+
+    baseansr_lba = (SYS_CONF_START_OFS >> SBC_RAWPRT_DFLT_SHIFT);
+    ldlen = ALIGN_VALUE(SYS_SETTING_STORAGE_LEN, ((EFI_BLOCK_IO_PROTOCOL *)blkio)->Media->BlockSize);
+    loadbuf = AllocateZeroPool(ldlen);
+    SBC_RET_VALIDATE_ERRCODEMSG((loadbuf != NULL), SBCNULLP, "Buffer invalid object");
 
     ret = SBC_RawPrtReadBlock(blkio, 
                               (VOID *)loadbuf, 
                               &ldlen, 
-                              BASE_ANS_BLK_LBA);
+                              baseansr_lba);
     if (ret != SBCOK) {
         Print(L"SBC_RawPrtReadBlock fail (%p)\n", blkio);
         goto errdone;
@@ -1017,6 +1019,9 @@ SBCStatus  _baseanswer_store(VOID *blkio, VOID *p)
     ret = SBCOK;
 
 errdone:
+    if (loadbuf != NULL) {
+      FreePool(loadbuf);
+    }
     return ret;
 
 }
@@ -1220,8 +1225,8 @@ SBCStatus  SBC_FSBL_Verify(VOID *blkhnd, VOID *ansr, UINT32 bootmode)
 {
     SBCStatus       ret = SBCOK;
     EFI_STATUS      retval = EFI_SUCCESS;
-    EFI_HANDLE      hndl = NULL;
-    UINT16          *fblpath = L"\\EFI\\BOOT\\FSBL.efi";
+    EFI_HANDLE      *hndl = NULL;
+    UINT16          *fblpath = L"\\EFI\\rocky\\FSBL.efi";
     UINT8           *infostart = NULL;
     UINT32          last_of_fsbl = 0;
     UINT32          bsinfolen = 0;
@@ -1231,17 +1236,14 @@ SBCStatus  SBC_FSBL_Verify(VOID *blkhnd, VOID *ansr, UINT32 bootmode)
     UINT32          HashSize =0;
     UINT32          fsbl_len =0;
     VOID            *EcPubKey = NULL;
+    UINTN           HandleCount;
 
     LV_t            rdlv = {
             .length = 0,
             .value = NULL
       };
 
-    if (SBC_FileSysFindHndl(&hndl) <= 0) {
-      eprint("File System Find handle fail");
-      ret = SBCIO;
-      goto errdone;
-    }
+    HandleCount  = SBC_FindEfiFileSystemProtocol(&hndl);
 
     ret = SBC_GetFileSize(fblpath, (UINTN *)&rdlv.length);
     if (ret != SBCOK) {
@@ -1255,7 +1257,7 @@ SBCStatus  SBC_FSBL_Verify(VOID *blkhnd, VOID *ansr, UINT32 bootmode)
       goto errdone;
     }
 
-    retval = SBC_ReadFile(hndl, fblpath, &rdlv);
+    retval = SBC_ReadFile(hndl[HandleCount - 1], fblpath, &rdlv);
     if (EFI_ERROR(retval)) {
       eprint("%s filr read fail : %r", fblpath, retval);
       ret = SBCIO;
@@ -1345,32 +1347,45 @@ SBCStatus  SBC_FSBL_Verify(VOID *blkhnd, VOID *ansr, UINT32 bootmode)
       goto errdone;
     }
 
+    sbc_err_sysprn(SBC_LOG_CMN_PRIO_INFO, 2, L"SBC", L"FSBL", L"CSC-01", 23, L"VERIFY", L"FSBL Integrate check is Done\n");
     Print(L"FSBL Verify Success !!!\n");
 
-    if (bootmode != BOOT_MODE_FACTORY) {
-      ret = SBCBSANSWNOTFND;
+    ((LV_t *)ansr)->value = AllocateZeroPool(bsinfo.m.banswlen);
+    if (((LV_t *)ansr)->value == NULL) {
+      //sbc_err_sysprn(SBC_LOG_CMN_PRIO_INFO, 2, L"SBC", L"FSBL", L"CSC-01", 23, L"VERIFY", L"FSBL Integrate check is Done\n");
+      eprint("Base Answer buffer allocate fail");
+      ret = SBCNULLP;
       goto errdone;
     }
 
-    // Base Answer Validate
-    ret = SBC_BaseAnswerValidate(blkhnd, (UINT8 *)info.baseansw, bsinfo.m.banswlen );
-    switch (ret) {
-    case SBCBSANSWNOTFND:
-      ((LV_t *)ansr)->value = AllocateZeroPool(bsinfo.m.banswlen);
-      if (((LV_t *)ansr)->value == NULL) {
-        ret = SBCNULLP;
-        Print(L"Base Answer object create fail \n");
-        goto errdone;
-      }
-      CopyMem(((LV_t *)ansr)->value, info.baseansw, bsinfo.m.banswlen);
-      //goto errdone;
-      break;
-    case SBCOK:
-      break;
-    default:
-      goto errdone;
-      break;
-    }
+//    switch (bootmode) {
+//    case BOOT_MODE_FACTORY:
+//      break;
+//    default:
+//      // Base Answer Validate
+//      ret = SBC_BaseAnswerValidate(blkhnd, (UINT8 *)info.baseansw, bsinfo.m.banswlen );
+////    switch (ret) {
+////    case SBCBSANSWNOTFND:
+////      ((LV_t *)ansr)->value = AllocateZeroPool(bsinfo.m.banswlen);
+////      if (((LV_t *)ansr)->value == NULL) {
+////        ret = SBCNULLP;
+////        Print(L"Base Answer object create fail \n");
+////        goto errdone;
+////      }
+////      CopyMem(((LV_t *)ansr)->value, info.baseansw, bsinfo.m.banswlen);
+////      //goto errdone;
+////      break;
+////    case SBCOK:
+////      break;
+////    default:
+////      goto errdone;
+////      break;
+////    }
+//      break;
+//    }
+
+
+
 
 
 
@@ -1580,6 +1595,35 @@ errdone:
   }
   return ret;
 
+
+}
+
+SBCStatus  SBC_GenMigrationKey(VOID *priv)
+{
+  //Migration Key = H(H(Unique HW ID)||H(Current FSBL)||H(Current SSBL)||H(Current KERNEL)||H(Newer SSBL)||H(Newer KERNEL))
+    SBCStatus ret = SBCOK;
+//  mig_key_t *key = NULL;
+
+    SBC_RET_VALIDATE_ERRCODEMSG((priv != NULL), SBCNULLP, "Invalid Parameter");
+
+//  key = (mig_key_t *)priv;
+
+    // Compute SHA256_HASH(
+
+    // Read Current FSBL
+
+
+    // Read Current FSBL
+
+
+
+
+
+
+    
+
+errdone:
+    return ret;
 
 }
 

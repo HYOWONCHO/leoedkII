@@ -89,6 +89,7 @@
 
 [PcdsFixedAtBuild]
   gEfiMdePkgTokenSpaceGuid.PcdDebugPropertyMask|0x1F
+  #gEfiMdeModulePkgTokenSpaceGuid.PcdDebugPrintErrorLevel|0x80000045
   gEfiMdePkgTokenSpaceGuid.PcdUefiLibMaxPrintBufferSize|16000
 	#  0-PCANSI, 1-VT100, 2-VT00+, 3-UTF8, 4-TTYTERM
   gEfiMdePkgTokenSpaceGuid.PcdDefaultTerminalType|1
@@ -130,7 +131,7 @@
   # For verbose output during boot, use a higher value.
   # 0x8000004F includes DEBUG_ERROR | DEBUG_WARN | DEBUG_INFO | DEBUG_LOAD
   # 0xFFFFFFFF for DEBUG_ALL (very verbose)
-  #gEfiMdeModulePkgTokenSpaceGuid.PcdDebugPrintErrorLevel|0x8000004F
+  #gEfiMdeModulePkgTokenSpaceGuid.PcdDebugPrintErrorLevel|0x80000045
 
   #gEfiMdeModulePkgTokenSpaceGuid.PcdDefaultConInDevicePath|L"VenHw(D3987D4B-971A-435F-8CAF-4967EB627241)/Uart(115200,8,N,1)/"
   #gEfiMdeModulePkgTokenSpaceGuid.PcdDefaultConOutDevicePath|L"VenHw(D3987D4B-971A-435F-8CAF-4967EB627241)/Uart(115200,8,N,1)/"
@@ -163,8 +164,8 @@
 
   LeoTest/leo_test.inf {
 	<PcdsFixedAtBuild>
-		gEfiMdePkgTokenSpaceGuid.PcdDebugPropertyMask|0x1f
-		gEfiMedPkgTokenSpaceGuid.PcdDebugPrintErrorLevel|0xffffffff
+		gEfiMdePkgTokenSpaceGuid.PcdDebugPropertyMask|0x1F
+		gEfiMedPkgTokenSpaceGuid.PcdDebugPrintErrorLevel|0x80000045
 	<LibraryClasses>
 		TimerLib|MdePkg/Library/SecPeiDxeTimerLibCpu/SecPeiDxeTimerLibCpu.inf
 		RngLib|MdeModulePkg/Library/BaseRngLibTimerLib/BaseRngLibTimerLib.inf

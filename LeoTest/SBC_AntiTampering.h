@@ -115,6 +115,22 @@ typedef struct _t_fsbl_bsinfo_ptr {
     VOID *certi;
     VOID *signature;
 }fsbl_bsinfo_ptr_t;
+
+typedef struct _t_mig_key {
+    UINT8 key[SBC_AT_HASH_LEN];
+    UINT32 fsbl_pres_bank;
+    UINT32 ssbl_pres_bank;
+    UINT32 os_pres_bank;
+}mig_key_t;
+
+typedef struct _t_baseansr {
+    //UINT32  len;
+    //VOID    *key;
+    VOID    *iv;
+    VOID    *tag;
+    VOID    *msg;           /*! Encrypted message */
+    UINTN   msglen;
+}baseansr_t;
 #pragma pack()
 
 
