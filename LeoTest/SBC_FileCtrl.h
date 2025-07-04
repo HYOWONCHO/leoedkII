@@ -120,7 +120,7 @@ typedef union _boot_fw_inf_t {
         UINT32  osln;
         UINT8   osimg[BOOT_OS_IMGMAX];
         UINT32  swn;
-        UINT8   swimg[BOOT_OS_IMGMAX];
+        UINT8   swimg[BOOT_SW_IMGMAX];
     }mbr;
 
     UINT8 value[BOOT_FW_IMGMAX];
