@@ -139,7 +139,7 @@ errdone:
 SBCStatus SBC_BootModeFactory(VOID *blkhnd, VOID *ImageHandle)
 {
   SBCStatus ret = SBCOK;
-  EFI_STATUS retval;
+  
   UINTN startlba = 0;
   UINTN endlba = 0;
 
@@ -149,8 +149,9 @@ SBCStatus SBC_BootModeFactory(VOID *blkhnd, VOID *ImageHandle)
   
 
   EFI_HANDLE  *ssbl_img_hndl;
-  UINTN       hndlcnt = 0;
-  CHAR16 *fname = L"\\EFI\\rocky\\SSBL.efi";
+  [[maybe_unused]]INTN       hndlcnt = 0;
+  __attribute__((unused))EFI_STATUS retval;
+  [[gnu::unused]]CHAR16 *fname = L"\\EFI\\rocky\\SSBL.efi";
 
 
   LV_t wrlv;
@@ -238,8 +239,7 @@ SBCStatus SBC_BootModeFactory(VOID *blkhnd, VOID *ImageHandle)
   }
 #else
 extern SBCStatus  LoadAndStartMemoryImage(VOID *handle, VOID *imgbuf, UINTN imglen);
-    (VOID)fname;
-    (VOID)retval;
+
     ret = LoadAndStartMemoryImage(ImageHandle, wrlv.value, wrlv.length);
 
 #endif
