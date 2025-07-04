@@ -1711,6 +1711,8 @@ SBCStatus  SBC_GenMigrationKey(VOID *priv, UINT32 currbankid, UINT32 prevbankid,
 
     ret = SBC_HashCompute(NULL, migkey_hash, migkeycnt,  (UINT8 *)out);
     SBC_RET_VALIDATE_ERRCODEMSG((ret == SBCOK), ret, "Hash Compue fail");
+
+    
     
 
 errdone:

@@ -363,6 +363,8 @@ UefiMain (
         goto errdone;
     }
 
+    SBC_external_mem_print_bin("Migraiotn Key", diceid.migid, 32);
+
     sbc_err_sysprn(SBC_LOG_CMN_PRIO_INFO, 2, L"SBC", L"FSBL", L"Weapon System", 4, L"EVT", L"Migration Key creation Success\n");
 
     // Check boot mode
