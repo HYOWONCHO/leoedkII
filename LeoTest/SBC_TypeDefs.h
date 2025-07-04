@@ -57,6 +57,9 @@ typedef struct _kdf_t {
 }kdf_t;
 
 
+#define SBCUNUSED       [[maybe_unused]]
+//#define SBCUNUSED       [[gnu::unused]]
+//#define SBCUNUSED       __attribute__((unused))
 
 static inline void _lv_set_data(LV_t *lv, void *buf, int bufl)
 {
