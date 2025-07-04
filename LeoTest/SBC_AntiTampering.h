@@ -23,6 +23,7 @@ typedef struct {
     UINT8           devid[ATP_IDENT_KEY_STG];   //! Device ID 
     UINT8           fwid[ATP_IDENT_KEY_STG];    //! Firmware ID
     UINT8           osid[ATP_IDENT_KEY_STG];    //! OS ID 
+    UINT8           migid[ATP_IDENT_KEY_STG];    //! Migration key ID
 }atp_ident_t;
 #pragma pack()
 
@@ -126,6 +127,7 @@ typedef struct _t_mig_key {
 typedef struct _t_baseansr {
     //UINT32  len;
     //VOID    *key;
+    VOID    *iohndl;
     VOID    *iv;
     VOID    *tag;
     VOID    *msg;           /*! Encrypted message */
@@ -203,4 +205,6 @@ SBCStatus  SBC_FSBLIntgCheck(EFI_HANDLE *h_image , VOID *blkio);
 SBCStatus  SBC_FSBL_Verify(VOID *blkhnd, VOID *ansr);
 
 SBCStatus  SBC_BlkIoHandleInit(OUT VOID **hblk, OUT VOID *hdr);
+
+SBCStatus  SBC_GenMigrationKey(VOID *priv, UINT32 currbankid, UINT32 prevbankid, VOID *out);
 #endif

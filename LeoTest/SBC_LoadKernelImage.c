@@ -49,7 +49,7 @@ LoadKernelImage (
   CHAR16                        GrubFullPath[256]; // Buffer for the full path
 
   Print(L"GrubLauncherApp: Starting to search for %s...\n", GRUB_EFI_PATH);
-  DEBUG ((DEBUG_INFO, "GrubLauncherApp: EntryPoint.\n"));
+  dprint( "GrubLauncherApp: EntryPoint.\n");
 
   ControllerHandleBuffer = NULL;
   GrubImageHandle        = NULL;
@@ -71,7 +71,7 @@ LoadKernelImage (
 
   if (EFI_ERROR (Status)) {
     Print(L"GrubLauncherApp: No Simple File System Protocol instances found (%r).\n", Status);
-    DEBUG ((DEBUG_ERROR, "GrubLauncherApp: LocateHandleBuffer failed: %r\n", Status));
+    eprint("GrubLauncherApp: LocateHandleBuffer failed: %r\n", Status);
     return Status;
   }
 
@@ -80,7 +80,7 @@ LoadKernelImage (
   //
   for (Index = 0; Index < NumHandles; Index++) {
     Print(L"GrubLauncherApp: Checking FS%d...\n", Index);
-    DEBUG ((DEBUG_INFO, "GrubLauncherApp: Checking handle %p.\n", ControllerHandleBuffer[Index]));
+    dprint( "GrubLauncherApp: Checking handle %p.\n", ControllerHandleBuffer[Index]);
 
     //
     // Open the Simple File System Protocol on the current handle.
@@ -95,7 +95,7 @@ LoadKernelImage (
                     );
 
     if (EFI_ERROR (Status)) {
-      DEBUG ((DEBUG_ERROR, "GrubLauncherApp: Failed to open Simple File System Protocol on handle %p: %r\n", ControllerHandleBuffer[Index], Status));
+      eprint("GrubLauncherApp: Failed to open Simple File System Protocol on handle %p: %r\n", ControllerHandleBuffer[Index], Status);
       continue; // Skip to the next handle
     }
 
@@ -107,7 +107,7 @@ LoadKernelImage (
                            &Root
                            );
     if (EFI_ERROR (Status)) {
-      DEBUG ((DEBUG_ERROR, "GrubLauncherApp: Failed to open volume on handle %p: %r\n", ControllerHandleBuffer[Index], Status));
+      eprint("GrubLauncherApp: Failed to open volume on handle %p: %r\n", ControllerHandleBuffer[Index], Status);
       // Root might be NULL if OpenVolume failed, so ensure to not close it.
       Root = NULL;
       continue;
@@ -125,7 +125,7 @@ LoadKernelImage (
                      );
 
     if (EFI_ERROR (Status)) {
-      DEBUG ((DEBUG_INFO, "GrubLauncherApp: %s not found on FS%d: %r\n", GRUB_EFI_PATH, Index, Status));
+      dprint( "GrubLauncherApp: %s not found on FS%d: %r\n", GRUB_EFI_PATH, Index, Status);
       // Close the root directory before continuing to the next file system.
       if (Root != NULL) {
         Root->Close(Root);
@@ -144,7 +144,7 @@ LoadKernelImage (
                     (VOID **) &GrubDevicePath
                     );
     if (EFI_ERROR (Status)) {
-      DEBUG ((DEBUG_ERROR, "GrubLauncherApp: Failed to get device path protocol for handle %p: %r\n", ControllerHandleBuffer[Index], Status));
+      eprint("GrubLauncherApp: Failed to get device path protocol for handle %p: %r\n", ControllerHandleBuffer[Index], Status);
       // Close resources before failing
       GrubFile->Close(GrubFile);
       Root->Close(Root);
@@ -172,7 +172,7 @@ LoadKernelImage (
 
 
     Print(L"a GrubLauncherApp: Found %s on FS%d. Attempting to load...\n", GrubFullPath, Index);
-    DEBUG ((DEBUG_INFO, "GrubLauncherApp: Calling LoadImage with %s.\n", GRUB_EFI_PATH));
+    dprint( "GrubLauncherApp: Calling LoadImage with %s.\n", GRUB_EFI_PATH);
 
     //
     // Load the GRUB EFI image into memory.
@@ -191,7 +191,7 @@ LoadKernelImage (
 
     if (EFI_ERROR (Status)) {
       Print(L"GrubLauncherApp: Failed to load %s: %r\n", GRUB_EFI_PATH, Status);
-      DEBUG ((DEBUG_ERROR, "GrubLauncherApp: LoadImage failed for %s: %r\n", GRUB_EFI_PATH, Status));
+      eprint("GrubLauncherApp: LoadImage failed for %s: %r\n", GRUB_EFI_PATH, Status);
       // Close resources and try next FS if LoadImage fails
       GrubFile->Close(GrubFile);
       Root->Close(Root);
@@ -199,7 +199,7 @@ LoadKernelImage (
     }
 
     Print(L"GrubLauncherApp: %s loaded successfully. Starting...\n", GRUB_EFI_PATH);
-    DEBUG ((DEBUG_INFO, "GrubLauncherApp: Starting loaded GRUB image.\n"));
+    dprint( "GrubLauncherApp: Starting loaded GRUB image.\n");
 
     //
     // 4. Start the loaded GRUB image.
@@ -213,7 +213,7 @@ LoadKernelImage (
 
     if (EFI_ERROR (Status)) {
       Print(L"GrubLauncherApp: Failed to start %s: %r\n", GRUB_EFI_PATH, Status);
-      DEBUG ((DEBUG_ERROR, "GrubLauncherApp: StartImage failed for %s: %r\n", GRUB_EFI_PATH, Status));
+      eprint("GrubLauncherApp: StartImage failed for %s: %r\n", GRUB_EFI_PATH, Status);
       // If StartImage fails, you might want to unload the image.
       gBS->UnloadImage(GrubImageHandle);
       // Close resources and continue searching or exit.
@@ -240,7 +240,7 @@ LoadKernelImage (
 
   // If we reach here, grubx64.efi was not found on any file system.
   Print(L"GrubLauncherApp: ERROR - %s not found on any accessible file system.\n", GRUB_EFI_PATH);
-  DEBUG ((DEBUG_ERROR, "GrubLauncherApp: %s not found.\n", GRUB_EFI_PATH));
+  eprint("GrubLauncherApp: %s not found.\n", GRUB_EFI_PATH);
 
   // Clean up allocated buffer
   if (ControllerHandleBuffer != NULL) {
@@ -311,7 +311,7 @@ SBCStatus SBC_GRUB_LoadAndStart(EFI_HANDLE ImageHandle)
       Print(L"Failed to convert device path to string.\n");
       //return SBCFAIL;
     }
-    EFI_STATUS Status = gBS->LoadImage(FALSE, ImageHandle, DevicePath, NULL, 0, &ImageHandle);
+    EFI_STATUS Status = gBS->LoadImage(FALSE, gImageHandle, DevicePath, NULL, 0, &ImageHandle);
     if (!EFI_ERROR(Status)) {
       gBS->StartImage(ImageHandle, NULL, NULL);
       break;
@@ -343,7 +343,7 @@ SBCStatus SBC_SSBL_LoadAndStart(EFI_HANDLE ImageHandle)
       Print(L"Failed to convert device path to string.\n");
       //return SBCFAIL;
     }
-    EFI_STATUS Status = gBS->LoadImage(FALSE, ImageHandle, DevicePath, NULL, 0, &ImageHandle);
+    EFI_STATUS Status = gBS->LoadImage(FALSE, gImageHandle, DevicePath, NULL, 0, &ImageHandle);
     if (!EFI_ERROR(Status)) {
       gBS->StartImage(ImageHandle, NULL, NULL);
       return SBCOK;
@@ -888,5 +888,121 @@ void JumpToKernel(
     // We add an infinite loop here only for conceptual demonstration
     // within an environment that doesn't execute actual low-level code.
     while(1);
+}
+
+
+SBCStatus  LoadAndStartMemoryImage(VOID *handle, VOID *imgbuf, UINTN imglen)
+{
+    SBCStatus ret = SBCOK;
+
+    EFI_STATUS                 retval;
+    EFI_HANDLE                 LoadedImageHandle = NULL;
+    MEMMAP_DEVICE_PATH         MemoryDevicePath;
+    EFI_DEVICE_PATH_PROTOCOL   *EndOfDevicePath;
+    EFI_LOADED_IMAGE_PROTOCOL  *LoadedImage = NULL;
+
+    SBC_RET_VALIDATE_ERRCODEMSG((imgbuf != NULL), SBCNULLP, "Image Bufrfe Nill");
+
+    dprint( "Attempting to load image from memory at 0x%lx, size 0x%lx\n", (UINTN)imgbuf, imglen);
+
+
+    // Create the memory-mapped device path
+
+    MemoryDevicePath.Header.Type      = MEDIA_DEVICE_PATH;
+    MemoryDevicePath.Header.SubType   = MEDIA_HARDDRIVE_DP;
+
+    // + EOD
+    SetDevicePathNodeLength (&MemoryDevicePath.Header, 
+                             sizeof(MEMMAP_DEVICE_PATH) + sizeof(EFI_DEVICE_PATH_PROTOCOL)); 
+
+    MemoryDevicePath.MemoryType      = EfiLoaderCode; // Or EfiBootServicesCode, EfiRuntimeServicesCode, etc.
+                                                      // EfiLoaderCode is often appropriate for applications/drivers.
+
+    MemoryDevicePath.StartingAddress = (EFI_PHYSICAL_ADDRESS)(UINTN)imgbuf;
+    MemoryDevicePath.EndingAddress   = (EFI_PHYSICAL_ADDRESS)((UINTN)imgbuf + imglen - 1);
+
+    // Append the End-Of-Device-Path node
+    EndOfDevicePath = (EFI_DEVICE_PATH_PROTOCOL *)((UINTN)&MemoryDevicePath + sizeof(MEMMAP_DEVICE_PATH));
+    SetDevicePathEndNode (EndOfDevicePath);
+
+    retval = gBS->LoadImage(
+                  FALSE,                 // BootPolicy: FALSE for driver/application, TRUE for OS loader
+                  gImageHandle,           // ParentImageHandle: The handle of the image calling LoadImage
+                  (EFI_DEVICE_PATH_PROTOCOL *)&MemoryDevicePath, // FilePath (our memory device path)
+                  imgbuf, // SourceBuffer: Pointer to the in-memory image
+                  imglen,   // SourceSize: Size of the in-memory image
+                  &LoadedImageHandle     // Output: Handle for the newly loaded image
+                  );
+
+
+    if (EFI_ERROR(retval)) {
+      eprint("LoadImage from memory failed: %r\n", retval);
+      ret = SBCFAIL;
+      goto errdone;
+    }
+
+    dprint( "Image loaded successfully from memory. New handle: 0x%lx\n", (UINTN)LoadedImageHandle);
+
+    // Verify the EFI_LOADED_IMAGE_PROTOCOL on the new handle
+    retval = gBS->OpenProtocol(
+        LoadedImageHandle,
+        &gEfiLoadedImageProtocolGuid,
+        (VOID **)&LoadedImage,
+        gImageHandle,
+        NULL,
+        EFI_OPEN_PROTOCOL_GET_PROTOCOL
+        );
+
+    if (!EFI_ERROR(retval)) {
+        dprint( "Loaded Image Base Address: 0x%lx, Size: 0x%lx\n", (UINTN)LoadedImage->ImageBase, (UINTN)LoadedImage->ImageSize);
+        dprint( "Loaded Image Device Path Type: %d, SubType: %d\n", LoadedImage->FilePath->Type, LoadedImage->FilePath->SubType);
+        // Close the protocol handle if we only needed to peek
+        gBS->CloseProtocol (
+               LoadedImageHandle,
+               &gEfiLoadedImageProtocolGuid,
+               gImageHandle,
+               NULL
+               );
+    } else {
+        eprint("Failed to open EFI_LOADED_IMAGE_PROTOCOL on new handle: %r\n", retval);
+        ret = SBCFAIL;
+        goto errdone;
+    }
+   
+
+    // Start the loaded image
+    retval = gBS->StartImage (LoadedImageHandle, NULL, NULL);
+
+    if (EFI_ERROR(retval)) {
+      eprint( "StartImage failed: %r\n", retval);
+      // Unload the image if starting failed
+      gBS->UnloadImage (LoadedImageHandle);
+      ret = SBCFAIL;
+      goto errdone;
+    } else {
+      dprint( "Image started and returned successfully.\n");
+    }
+
+    //
+    // Unload the image when no longer needed (optional, depending on its purpose)
+    //
+    // If the started image is an application that returned, you might unload it.
+    // If it's a driver that installs protocols, you might keep it loaded.
+    //
+    
+
+    retval = gBS->UnloadImage (LoadedImageHandle);
+    if (EFI_ERROR(retval)) {
+      eprint( "UnloadImage failed: %r\n", retval);
+      ret = SBCFAIL;
+      goto errdone;
+    } else {
+      dprint( "Image unloaded successfully.\n");
+    }
+
+    //ret = SBCOK;
+errdone:
+    return ret;
+
 }
 

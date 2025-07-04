@@ -146,6 +146,7 @@ SBCStatus SBC_BootModeFactory(VOID *blkhnd, VOID *ImageHandle)
   UINT32  imglen = SBC_RAWPRT_DFLT_BLK_SZ;
   UINT8   imghdr[SBC_RAWPRT_DFLT_BLK_SZ] = {0, };
   UINT8   *loadimg = NULL;
+  
 
   EFI_HANDLE  *ssbl_img_hndl;
   UINTN       hndlcnt = 0;
@@ -204,7 +205,7 @@ SBCStatus SBC_BootModeFactory(VOID *blkhnd, VOID *ImageHandle)
   _lv_set_data(&wrlv,&loadimg[4], imglen - 4);
 
   //SBC_mem_print_bin("SSBL Load Image", wrlv.value, 512);
-
+#if 0
   for (int idx = 0; idx < hndlcnt; idx++) {
     retval = SBC_WriteFile(ssbl_img_hndl[idx], fname, &wrlv);
     if (EFI_ERROR(retval)) {
@@ -235,7 +236,13 @@ SBCStatus SBC_BootModeFactory(VOID *blkhnd, VOID *ImageHandle)
     Print(L"SSBL Factory Running Fail \n");
     goto errdone;
   }
+#else
+extern SBCStatus  LoadAndStartMemoryImage(VOID *handle, VOID *imgbuf, UINTN imglen);
+    (VOID)fname;
+    (VOID)retval;
+    ret = LoadAndStartMemoryImage(ImageHandle, wrlv.value, wrlv.length);
 
+#endif
 errdone:
 
   if (loadimg != NULL) {
@@ -247,6 +254,24 @@ errdone:
 
 
 
+}
+
+UINT32 FindPreviouslyBank(UINT32 bankid)
+{
+    UINT32 ret = 0;
+    switch (bankid) {
+    case 1:
+        ret = 2;
+        break;
+    case 2:
+        ret = 1;
+        break;
+    default:
+        ret = 0xFFFFFFFF;
+        break;
+    }
+
+    return ret;
 }
 
 
@@ -266,89 +291,113 @@ UefiMain (
 
 
 
-//  SBCStatus  ret = SBCOK;
-//  rawprt_hdr_t h_rawptrheader;    // Raw Partition Header handle
-//  VOID *h_blkio;               // Block I/O handle
-//  UINT32 pres_hi = 0;
-//  UINT32 pres_low = 0;
-//  UINT32 readbnk_id = 0;
-//  UINT32 bootmd = 0; // Boot Mode
-//  LV_t baseansr;
+    atp_ident_t diceid;
+    EFI_STATUS retval = EFI_SUCCESS;
+    SBCStatus  ret = SBCOK;
+    rawprt_hdr_t h_rawptrheader;    // Raw Partition Header handle
+    VOID *h_blkio;               // Block I/O handle
+    UINT32 pres_hi = 0;
+    UINT32 pres_low = 0;
+    UINT32 currbank_id = 0;
+    UINT32 prevbank_id = 0;
+    UINT32 bootmd = 0; // Boot Mode
+    LV_t baseansr;
  
 
-    dprint("------------- FSBL START -------------\n");
-    //Print(L"xxxxxxxxxxxx FSBL starting ccccccccc !!!! %d\n", 0x33);
-    sbcImgHandle = ImageHandle;
+    intgreen_dprint("------------- FSBL START -------------\n");
 
-    sbc_err_sysprn(SBC_LOG_CMN_PRIO_INFO, 2, L"SBC", L"FSBL", L"xxx", 233, L"EVT", L"FSBL BOOT ON\n");
+    ZeroMem(&h_rawptrheader, sizeof h_rawptrheader);
+    // Get the NVMe SSD Raw Partiton handle and Header information
+    ret = SBC_BlkIoHandleInit(&h_blkio, &h_rawptrheader);
+    if (ret != SBCOK) {
+      Print(L"Raw Partitino find fail !!! \n");
+      ASSERT((ret != SBCOK));
+    }
+
+    //Print(L"Find Raw Partition (0x%x)...\n", h_rawptrheader.magicid);
+    dprint("Partition Info (%a) \n", h_rawptrheader.prtinfo);
+
+    ret = SBC_FSBL_Verify(h_blkio, &baseansr);
+    SBC_RET_VALIDATE_ERRCODEMSG((ret == SBCOK), ret, "FSBL Verify Fail");
+
+
+    // Check the Preference SSBL bank
+    CopyMem((void *)&pres_low, (void *)&h_rawptrheader.bootpres[0], 4);
+    CopyMem((void *)&pres_hi, (void *)&h_rawptrheader.bootpres[4], 4);
+
+    pres_low = SBC_SWAP_ENDIAN_32(pres_low);
+    pres_hi = SBC_SWAP_ENDIAN_32(pres_hi);
+
+    //sbc_err_sysprn(SBC_LOG_CMN_PRIO_INFO, 2, L"SBC", L"FSBL", L"xxx", 233, L"EVT", L"Pres HI : 0x%x , Pres Low: %a \n", "holla oops");
+    Print(L"Pres HI : 0x%x , Pres Low: 0x%x \n", pres_low, pres_hi);
+
+    //SBC_mem_print_bin("Pres Low", (UINT8 *)&pres_low, 4);
+    //SBC_mem_print_bin("Pres Hi", (UINT8 *)&pres_hi, 4);
+
+    if ((CHAR8)(pres_low & 0x0000FFFF) == 'C') {
+      currbank_id = (pres_low & 0xFFFF0000) >> 16;
+    }
+    else if ((CHAR8)(pres_hi & 0x0000FFFF) == 'C') {
+      currbank_id = (pres_hi & 0xFFFF0000) >> 16;
+    }
+
+    prevbank_id = FindPreviouslyBank(currbank_id);
+    if (prevbank_id < 1) {
+        eprint("Currently Valid FW Bank ID : %d , Previously Bank ID : %d \n", currbank_id, prevbank_id);
+        retval = EFI_INVALID_PARAMETER;
+        goto errdone;
+    }
+    dprint("Currently Valid FW Bank ID : %d , Previously Bank ID : %d \n", currbank_id, prevbank_id);
+
+    ret = SBC_DiceKeysGen(ImageHandle, &diceid);
+    if (ret != SBCOK) {
+        sbc_err_sysprn(SBC_LOG_CMN_PRIO_ERR, 2, L"SBC", L"FSBL", L"Weapon System", 4, L"EVT", L"Dice Key creation fail\n");
+        retval = EFI_INVALID_PARAMETER;
+        goto errdone;
+    }
+
+    ret = SBC_GenMigrationKey(h_blkio, currbank_id, prevbank_id, diceid.migid);
+    if (ret != SBCOK) {
+        sbc_err_sysprn(SBC_LOG_CMN_PRIO_ERR, 2, L"SBC", L"FSBL", L"Weapon System", 4, L"EVT", L"Migration Key creation fail\n");
+        retval = EFI_INVALID_PARAMETER;
+        goto errdone;
+    }
+
+    sbc_err_sysprn(SBC_LOG_CMN_PRIO_INFO, 2, L"SBC", L"FSBL", L"Weapon System", 4, L"EVT", L"Migration Key creation Success\n");
+
+    // Check boot mode
+    bootmd = SBC_ReadBootMode();
+    switch (bootmd) {
+    case BOOT_MODE_NORMAL:
+      break;
+    case BOOT_MODE_FACTORY:
+      //Print(L"Factory Boot Mode !!! \n");
+      ret = SBC_BootModeFactory(h_blkio, ImageHandle);
+      if (ret != SBCOK) {
+          eprint("Factory Boot Fail");
+          retval = EFI_INVALID_PARAMETER;
+          goto errdone;
+      }
+      //Print(L"Factory BOot Mode end !!! \n");
+      break;
+    case BOOT_MODE_UPDATE:
+      break;
+    default:
+      Print(L"Unknown Boot Mode ... SHOULD go to Abort\n");
+      break;
+    }
+
+
+    //ret = SBC_FSBL_Verify(h_blkio, &baseansr);
+
+  // Read SSBL from
 
 
 
-//    ZeroMem(&h_rawptrheader, sizeof h_rawptrheader);
-//    // Get the NVMe SSD Raw Partiton handle and Header information
-//    ret = SBC_BlkIoHandleInit(&h_blkio, &h_rawptrheader);
-//    if (ret != SBCOK) {
-//      Print(L"Raw Partitino find fail !!! \n");
-//      ASSERT((ret != SBCOK));
-//    }
-//
-//    //Print(L"Find Raw Partition (0x%x)...\n", h_rawptrheader.magicid);
-//    dprint("Partition Info (%a) \n", h_rawptrheader.prtinfo);
-//
-//    ret = SBC_FSBL_Verify(h_blkio, &baseansr);
-//    SBC_RET_VALIDATE_ERRCODEMSG((ret == SBCOK), ret, "FSBL Verify Fail");
-//
-//
-//    // Check the Preference SSBL bank
-//    CopyMem((void *)&pres_low, (void *)&h_rawptrheader.bootpres[0], 4);
-//    CopyMem((void *)&pres_hi, (void *)&h_rawptrheader.bootpres[4], 4);
-//
-//    pres_low = SBC_SWAP_ENDIAN_32(pres_low);
-//    pres_hi = SBC_SWAP_ENDIAN_32(pres_hi);
-//
-//    //sbc_err_sysprn(SBC_LOG_CMN_PRIO_INFO, 2, L"SBC", L"FSBL", L"xxx", 233, L"EVT", L"Pres HI : 0x%x , Pres Low: %a \n", "holla oops");
-//    Print(L"Pres HI : 0x%x , Pres Low: 0x%x \n", pres_low, pres_hi);
-//
-//    //SBC_mem_print_bin("Pres Low", (UINT8 *)&pres_low, 4);
-//    //SBC_mem_print_bin("Pres Hi", (UINT8 *)&pres_hi, 4);
-//
-//    if ((CHAR8)(pres_low & 0x0000FFFF) == 'C') {
-//      readbnk_id = (pres_low & 0xFFFF0000) >> 16;
-//    }
-//    else if ((CHAR8)(pres_hi & 0x0000FFFF) == 'C') {
-//      readbnk_id = (pres_hi & 0xFFFF0000) >> 16;
-//    }
-//
-//    Print(L"Currently Valid FW Bank ID : %d \n", readbnk_id);
-//
-//    // Check boot mode
-//    bootmd = SBC_ReadBootMode();
-//    switch (bootmd) {
-//    case BOOT_MODE_NORMAL:
-//      break;
-//    case BOOT_MODE_FACTORY:
-//      Print(L"Factory Boot Mode !!! \n");
-//      SBC_BootModeFactory(h_blkio, ImageHandle);
-//      Print(L"Factory BOot Mode end !!! \n");
-//      break;
-//    case BOOT_MODE_UPDATE:
-//      break;
-//    default:
-//      Print(L"Unknown Boot Mode ... SHOULD go to Abort\n");
-//      break;
-//    }
-//
-//
-//    //ret = SBC_FSBL_Verify(h_blkio, &baseansr);
-//
-//  // Read SSBL from
-//
-//
-//
-//  // Access bank addr ( (0x200 + (128 << 20)) * readbnk_id )
-//
-//
-//errdone:
+  // Access bank addr ( (0x200 + (128 << 20)) * currbank_id )
+
+
+errdone:
   
 #if 0
   Print(L"Found the SBC Raw-partiton !! \n");
@@ -583,7 +632,7 @@ UefiMain (
 //
 //  // Jump to kernel
 //  KernelEntry();
-   return EFI_SUCCESS;
+   return retval;
 }
 
 // Shell Reboot but do not jump to Grub 

@@ -815,29 +815,20 @@ SBCStatus  SBC_RawPrtBlockWrite(VOID *blkio, UINT8 *wrbuf, UINT32 wrlen, UINT32 
 {
     SBCStatus ret = SBCOK;
     EFI_STATUS retval = EFI_SUCCESS;
-    //int idx;
-//  int leftcnt = 0;
-//  int leftcpy = 0;
-    UINT8 *wrp = NULL;
     EFI_BLOCK_IO_PROTOCOL           *p = NULL;
 
     SBC_RET_VALIDATE_ERRCODEMSG(((p != NULL) || (wrbuf != NULL)), SBCNULLP, "Invalid Parameter");
     SBC_RET_VALIDATE_ERRCODEMSG((wrlen != 0), SBCZEROL, "Invalid Parameter");
 
     p = (EFI_BLOCK_IO_PROTOCOL *)blkio;
-    wrp = wrbuf;
-
-//  leftcnt = wrlen / p->Media->BlockSize;
-//  leftcpy = wrlen % p->Media->BlockSize;
-
 
     retval = p->WriteBlocks(
                     p,
                     p->Media->MediaId,
                     wrlba,
-                    p->Media->BlockSize ,
+                    wrlen ,
                     //(wrlen % p->Media->BlockSize == 0) ? wrlen : p->Media->BlockSize ,
-                    wrp
+                    wrbuf
         );
 
     if(EFI_ERROR(retval)) {
@@ -845,26 +836,6 @@ SBCStatus  SBC_RawPrtBlockWrite(VOID *blkio, UINT8 *wrbuf, UINT32 wrlen, UINT32 
         ret = SBCIO;
         goto errdone;
     }
-//      wrp += p->Media->BlockSize;
-//      wrlba++;
-//      leftcnt--;
-//
-//
-//
-//  retval = p->WriteBlocks(
-//                  p,
-//                  p->Media->MediaId,
-//                  wrlba,
-//                  leftcpy,
-//                  //(wrlen % p->Media->BlockSize == 0) ? wrlen : p->Media->BlockSize ,
-//                  wrp
-//      );
-//
-//  if(EFI_ERROR(retval)) {
-//      Print(L"Last Write Block I/O fail : %r", retval);
-//      ret = SBCIO;
-//      goto errdone;
-//  }
 
 errdone:
     return ret;

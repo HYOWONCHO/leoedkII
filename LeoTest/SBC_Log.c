@@ -332,6 +332,11 @@ static UINTN remove_all_space(CHAR8* str, UINTN cnt) {
     return write_index;
 }
 
+VOID SBC_LogVarIntMrg(CHAR16 *msg, UINT32 val, CHAR16 *msgout)
+{
+    UnicodeSPrint(msgout, StrLen(msg) + 4, L"%s:%d", (char *)msg, val);
+}
+
 VOID  SBC_LogPrint(CONST CHAR16* func, UINT32 funcline, UINT32 prio, UINT32 ver, CHAR16 *host, 
                         CHAR16 *appname, CHAR16 *csc,
                         UINT32 sfrid, CHAR16 *evtype,
