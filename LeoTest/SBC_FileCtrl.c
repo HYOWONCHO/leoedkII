@@ -573,7 +573,7 @@ UINT32  SBC_ReadBootMode(VOID)
         goto errdone;
     }
 
-    SBC_external_mem_print_bin("Boot Mode", rdbuf, 16);
+    dprint("Boot Mode : %a", rdbuf);
     //Print(L"Read Boot Mode : %s \n", rdbuf);
 
     switch (_sbc_bm_lookup_key((CHAR8 *)rdbuf)) {

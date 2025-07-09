@@ -1082,6 +1082,123 @@ errdone:
   return ret;
 }
 
+
+SBCStatus  SBC_DeviceIdKyeVerify(VOID *blkio, UINT8 *devid, UINT8 *deckey)
+{
+    SBCStatus ret = SBCOK;
+    at_key_t key_pair;
+
+    VOID *ctx = NULL;
+    BOOLEAN retval;
+
+    UINT8 pubkey[64] = {0,};
+    UINTN pubkeyl = 0;
+    UINT8 *loadbuf;
+    UINT32 ldlen = BASE_ANS_BLK_LEN;
+    UINTN baseansr_lba = 0;
+    SBC_AESGcmCtx  decctx;
+    SBC_AESContext  aesctx;
+
+    UINTN offset = 0;
+    UINTN calen = 0;
+
+    UINT8 decbuf[2048] = {0,};
+
+
+    // Generate the Public Key
+    ret = SBC_DICESeedKeyPair(devid, &key_pair);
+    SBC_RET_VALIDATE_ERRCODEMSG((ret == SBCOK), SBCINVPARAM, "Device ID Key-pair gen fail");
+
+
+    // Device ID certificate Load 
+    baseansr_lba = (SYS_CONF_START_OFS >> SBC_RAWPRT_DFLT_SHIFT);
+    ldlen = ALIGN_VALUE(SYS_SETTING_STORAGE_LEN, ((EFI_BLOCK_IO_PROTOCOL *)blkio)->Media->BlockSize);
+    loadbuf = AllocateZeroPool(ldlen);
+    SBC_RET_VALIDATE_ERRCODEMSG((loadbuf != NULL), SBCNULLP, "Buffer invalid object");
+
+    ret = SBC_RawPrtReadBlock(blkio, 
+                              (VOID *)loadbuf, 
+                              &ldlen, 
+                              baseansr_lba);
+    if (ret != SBCOK) {
+        Print(L"SBC_RawPrtReadBlock fail (%p)\n", blkio);
+        goto errdone;
+    }
+
+    CopyMem((void *)&calen, (void *)&loadbuf[0], 4);
+    offset += 4;
+    // Decrypt 
+
+    decctx.msg.value = &loadbuf[offset];
+    decctx.msg.length = calen;
+
+    offset += calen;
+    decctx.iv.value = &loadbuf[offset];
+    decctx.iv.length = BASE_ANS_IV_KEY_STR; 
+    
+    offset += BASE_ANS_IV_KEY_STR;
+    decctx.tag.value = &loadbuf[offset];
+    decctx.tag.length = BASE_ANS_TAG_LEN;
+
+    decctx.key.value = deckey;
+    decctx.key.length = BASE_ANS_KEY_STR;
+
+    decctx.aad.value = NULL;
+    decctx.aad.length = 0;
+
+    decctx.out.value = decbuf;
+    decctx.out.length = calen;
+
+    aesctx.gcm = &decctx;
+    aesctx.algoid = SBC_CIPHER_AES_GCM;
+
+    if (SBC_AESGcmDecrypt(&aesctx) != SBCOK) {
+        eprint("DeviceID CA decrypt fail");
+        ret = SBCDECFAIL;
+        goto errdone;
+    }
+
+
+    // Get Public Key
+    ret = SBC_EcGetPublicKeyFromPem((CONST UINT8 *)decbuf, calen, &ctx);
+    SBC_RET_VALIDATE_ERRCODEMSG((ret == SBCOK), SBCINVPARAM, "Public key extract fail");
+
+    retval = EcGetPubKey(ctx, pubkey, &pubkeyl);
+    if(retval != TRUE) {
+        ret = SBCFAIL;
+        eprint("EcGetPubKey fail %r", retval);
+        goto errdone;
+    }
+
+    if(CompareMem(key_pair.q.value,  pubkey, pubkeyl) != 0) {
+        eprint("CA public key verify fail");
+        ret = SBCINVPARAM;
+        goto errdone;
+    }
+
+    sbc_err_sysprn(SBC_LOG_CMN_PRIO_ERR, 2, 
+           L"SBC", 
+           L"FSBL", 
+           L"Weapon System", 
+           1, 
+           L"EVT", 
+           L"Device ID Verify Done");    
+    
+
+errdone:
+    if (ret != SBCOK) {
+      sbc_err_sysprn(SBC_LOG_CMN_PRIO_ERR, 2, 
+             L"SBC", 
+             L"FSBL", 
+             L"Weapon System", 
+             1, 
+             L"EVT", 
+             L"Device ID Verify Fail");
+    }
+    return ret;
+
+}
+
 SBCStatus SBC_BaseAnswerEncryptStore(VOID *blkhnd, UINT8* msg, UINT32 msgl, UINT8 *key, UINT32 keyl)
 {
     SBCStatus ret = SBCOK;
