@@ -150,10 +150,10 @@ EFI_STATUS SBC_ReadFile(EFI_HANDLE ImageHandle, CHAR16 *FileNames, LV_t *out)
 
   //TODO
   // out buffer nill check
-//DEBUG((DEBUG_ERROR,"Image Handle : %p \r\n", ImageHandle));
-//DEBUG((DEBUG_ERROR,"Read File : %s \r\n", (CHAR8 *)FileNames));
+    //DEBUG((DEBUG_ERROR,"Image Handle : %p \r\n", ImageHandle));
+    //DEBUG((DEBUG_ERROR,"Read File : %s \r\n", (CHAR8 *)FileNames));
 
-  dprint("Read File : %s", FileNames);
+  //dprint("Read File : %s", FileNames);
 
   // Locate file system
   Status = gBS->HandleProtocol(ImageHandle,
@@ -327,7 +327,6 @@ EFI_STATUS SBC_IsDirExist(EFI_HANDLE ImageHandle, CHAR16 *DirName)
 
 
 errdone:
-    dprint();
     if (DirHandle != NULL) {
         DirHandle->Close(DirHandle);
     }
@@ -437,8 +436,8 @@ UINTN  SBC_FileSysFindHndl(EFI_HANDLE *handle)
       return 0;
     }
 
-    dprint("Protocol found (count : %d, Handle Buffer : 0x%p) \n",
-          hdlcnt, *h);
+    //dprint("Protocol found (count : %d, Handle Buffer : 0x%p) \n",
+    //      hdlcnt, *h);
 
     *handle = *h;
   return hdlcnt;
@@ -537,10 +536,10 @@ static UINT32 _sbc_bm_lookup_key(CHAR8* key)
 
     UINT32 nkeys = (sizeof(tb) / sizeof(bm_lookup_table_t));
 
-    dprint("key : %a , keylen :%d", key, strlen(key));
+    //dprint("key : %a , keylen :%d", key, strlen(key));
     for (INT32 x = 0; x < nkeys; x++) {
         bm_lookup_table_t *sym = &tb[x];
-        dprint("sym key : %a , Len :%d", sym->key, strlen(sym->key));
+        //dprint("sym key : %a , Len :%d", sym->key, strlen(sym->key));
         if (strncmp(sym->key, key, strlen(sym->key) - 1) == 0) {
             return sym->val;
         }

@@ -825,9 +825,9 @@ static SBCStatus _baseboard_sn(hw_uniqueinfo_t *p)
             //UINT8 SerialNumberIndex = Type2Record->Manufacturer;
             //CHAR8 *SerialNumberString = (CHAR8 *)(Record);
             CHAR8 *SerialNumberString = (((CHAR8 *)Record) + Record->Length);
-            SBC_external_mem_print_bin("_baseboard record", (UINT8 *)SerialNumberString, 0x79 - Record->Length);
-            dprint("serial number index : %d (Record Length : 0x%x)",
-                   SerialNumberIndex, Record->Length);
+            //SBC_external_mem_print_bin("_baseboard record", (UINT8 *)SerialNumberString, 0x79 - Record->Length);
+            //dprint("serial number index : %d (Record Length : 0x%x)",
+            //       SerialNumberIndex, Record->Length);
             if (SerialNumberIndex > 0) {
 #if 0
                 for (UINT8 i = 1; i < SerialNumberIndex; i++) {
@@ -903,9 +903,9 @@ static SBCStatus _memorydevice_sn(hw_uniqueinfo_t *p)
             Type2Record = (SMBIOS_TABLE_TYPE17 *)Record;
             // Extract Serial Number (this is an index into the string table)
             UINT8 SerialNumberIndex = Type2Record->SerialNumber;
-            dprint("serial number index : %d", SerialNumberIndex);
+            //dprint("serial number index : %d", SerialNumberIndex);
             CHAR8 *SerialNumberString = (((CHAR8 *)Record) + Record->Length);
-            SBC_external_mem_print_bin("_memorydevice_sn record", (UINT8 *)SerialNumberString, 0x8B -  Record->Length);
+            //SBC_external_mem_print_bin("_memorydevice_sn record", (UINT8 *)SerialNumberString, 0x8B -  Record->Length);
             if (SerialNumberIndex > 0) {
 #if 0
                 for (UINT8 i = 1; i < SerialNumberIndex; i++) {
@@ -984,11 +984,15 @@ SBCStatus  _baseanswer_store(VOID *blkio, VOID *p)
         Print(L"SBC_RawPrtReadBlock fail (%p)\n", blkio);
         goto errdone;
     }
-    
+
+//  SBC_external_mem_print_bin("Before Base Ans write",
+//                             (UINT8 *)&loadbuf[SYS_CONF_RES_OFS],
+//                             64);
 
     // TODO : Fill up the Base Answer in RAM buffer 
     cpy = (UINT8 *)&loadbuf[SYS_CONF_RES_OFS];
     CopyMem((void *)cpy, &h->msglen, sizeof h->msglen);
+    //dprint("Message Len : %d", h->msglen);
     cpy += sizeof h->msglen;
 
     CopyMem((void *)cpy, h->encmsg, h->msglen );
@@ -1001,9 +1005,9 @@ SBCStatus  _baseanswer_store(VOID *blkio, VOID *p)
     cpy += BASE_ANS_TAG_LEN;
 
     ZeroMem((void *)cpy, 16); // Reserved  bytes set to zero
-    SBC_external_mem_print_bin("Base Ans write", 
-                               (UINT8 *)&loadbuf[SYS_CONF_RES_OFS], 
-                               ldlen);
+//  SBC_external_mem_print_bin("After Base Ans write",
+//                             (UINT8 *)&loadbuf[SYS_CONF_RES_OFS],
+//                             64);
 
 
 
@@ -1026,24 +1030,23 @@ errdone:
 static SBCStatus _baseanswer_extract_from_disk(VOID *blkio, base_ansid_t *p)
 {
   SBCStatus ret = SBCOK;
-//VOID *blkio = NULL;
-//
-  UINT32  anslen = 0U;
-  UINT8   streams[512] = {0,};
-  UINT32  offset = 0;
+
+  UINT8 *loadbuf;
+  UINT32 ldlen = BASE_ANS_BLK_LEN;
+  UINTN baseansr_lba = 0;
+  UINTN offset = 0;
+
 
   SBC_RET_VALIDATE_ERRCODEMSG((p != NULL), SBCNULLP, "Invalid parameter");
 
-  // Find the Block device handlef for SBC Raw Partition
-//ret = SBC_FindBlkIoHandle(&blkio);
-//if (ret != SBCOK || blkio == NULL) {
-//  Print(L"SBC_FindBlockIoHandle fail (%p)\n", blkio);
-//  goto errdone;
-//}
 
-  anslen = BASE_ANS_BLK_LEN;
+  baseansr_lba = (SYS_CONF_START_OFS >> SBC_RAWPRT_DFLT_SHIFT);
+  ldlen = ALIGN_VALUE(SYS_SETTING_STORAGE_LEN, ((EFI_BLOCK_IO_PROTOCOL *)blkio)->Media->BlockSize);
+  loadbuf = AllocateZeroPool(ldlen);
+  SBC_RET_VALIDATE_ERRCODEMSG((loadbuf != NULL), SBCNULLP, "Buffer invalid object");
+
   // NOTES : It SHOLUD be consider for TAG size if Message is encrypt to  AES-GCM mode
-  ret = SBC_RawPrtReadBlock(blkio, (VOID *)streams,  &anslen , BASE_ANS_BLK_LBA);
+  ret = SBC_RawPrtReadBlock(blkio, (VOID *)loadbuf,  &ldlen , baseansr_lba);
   if (ret != SBCOK) {
     Print(L"SBC_RawPrtReadBlock fail (%p)\n", blkio);
     goto errdone;
@@ -1052,44 +1055,31 @@ static SBCStatus _baseanswer_extract_from_disk(VOID *blkio, base_ansid_t *p)
 
 
   // Copy Length
-  offset = BASE_ANS_SAT_OFFSET;
-  //SBC_mem_print_bin("Load Buf", (UINT8 *)&streams[offset], 256);
-  CopyMem((void *)&p->msglen, (void *)&streams[offset], 4);
-  SBC_RET_VALIDATE_ERRCODEMSG((p->msglen > 0), SBCBSANSWNOTFND, "Base Answer Not Foudn");
 
-  if (p->msglen <= 0x0) {
-    
-    ret = SBCBSANSWNOTFND;
-    goto errdone;
-  }
-  //p->msglen = 16; // later remove
+  offset = SYS_CONF_RES_OFS;
+  CopyMem((void *)&p->msglen, (void *)&loadbuf[offset], 4);
+  SBC_RET_VALIDATE_ERRCODEMSG((p->msglen > 0), SBCBSANSWNOTFND, "Base Answer Not Foudn");
   offset += 4;
 
-  CopyMem((void *)p->encmsg, (void *)&streams[offset], p->msglen);
+  CopyMem((void *)p->encmsg, (void *)&loadbuf[offset], p->msglen);
   offset += p->msglen;
 
-  CopyMem((void *)p->tag, (void *)&streams[offset], BASE_ANS_TAG_LEN);
-  offset += BASE_ANS_TAG_LEN;
-
-  CopyMem((void *)p->key, (void *)&streams[offset], BASE_ANS_KEY_STR);
-  offset += BASE_ANS_KEY_STR;
-
-  CopyMem((void *)p->iv, (void *)&streams[offset], BASE_ANS_IV_KEY_STR);
+  CopyMem((void *)p->iv, (void *)&loadbuf[offset], BASE_ANS_IV_KEY_STR);
   offset += BASE_ANS_IV_KEY_STR;
 
-//SBC_mem_print_bin("Enc Msg Len", (UINT8 *)&p->msglen, 4);
-//SBC_mem_print_bin("Enc Message", p->encmsg, p->msglen);
-//SBC_mem_print_bin("Tag Message", p->tag, BASE_ANS_TAG_LEN);
-//SBC_mem_print_bin("Enc Key", p->key, BASE_ANS_KEY_STR);
-//SBC_mem_print_bin("Enc IV", p->iv, BASE_ANS_IV_KEY_STR);
 
+  CopyMem((void *)p->tag, (void *)&loadbuf[offset], BASE_ANS_TAG_LEN);
+  offset += BASE_ANS_TAG_LEN;
+
+
+//dprint("Enc Msg Len : %d", p->msglen);
+//SBC_mem_print_bin("Enc Message", p->encmsg, p->msglen);
+//SBC_mem_print_bin("Enc IV", p->iv, BASE_ANS_IV_KEY_STR);
+//SBC_mem_print_bin("Tag Message", p->tag, BASE_ANS_TAG_LEN);
   
 
-
-
-
 errdone:
-    return ret;
+  return ret;
 }
 
 SBCStatus SBC_BaseAnswerEncryptStore(VOID *blkhnd, UINT8* msg, UINT32 msgl, UINT8 *key, UINT32 keyl)
@@ -1141,10 +1131,17 @@ SBCStatus SBC_BaseAnswerEncryptStore(VOID *blkhnd, UINT8* msg, UINT32 msgl, UINT
     }
 
     ansid.msglen = ctx.out.length;
+    
+//  dprint("B-Ansr Message Len : %d", ansid.msglen);
+//  SBC_external_mem_print_bin("B-Ansr Message", ansid.encmsg, ansid.msglen);
+//  SBC_external_mem_print_bin("B-Ansr IV", ansid.iv, BASE_ANS_IV_KEY_STR);
+//  SBC_external_mem_print_bin("B-Ansr Tag", ansid.tag, BASE_ANS_TAG_LEN);
+//  SBC_external_mem_print_bin("B-Ansr Key", ansid.key, BASE_ANS_KEY_STR);
+
+
 
     ret = _baseanswer_store(blkhnd, (VOID *)&ansid);
     if (ret != SBCOK) {
-      Print(L"Base Answer storing fail \n");
       sbc_err_sysprn(SBC_LOG_CMN_PRIO_ERR, 2, 
                      L"SBC", 
                      L"FSBL", 
@@ -1159,13 +1156,17 @@ SBCStatus SBC_BaseAnswerEncryptStore(VOID *blkhnd, UINT8* msg, UINT32 msgl, UINT
     ret = SBCOK;
 errdone:
 
+    if (msg != NULL) {
+      FreePool(msg);
+    }
+
     return ret;
 
 }
 
 
 
-SBCStatus  SBC_BaseAnswerValidate(VOID *blkhnd,UINT8 *answer, UINTN answerl)
+SBCStatus  SBC_BaseAnswerValidate(VOID *blkhnd, UINT8 *answer, UINTN answerl, UINT8 *key, UINTN keylen)
 {
     SBCStatus ret = SBCOK;
     //UINT8 rdbuf[256];
@@ -1190,7 +1191,7 @@ SBCStatus  SBC_BaseAnswerValidate(VOID *blkhnd,UINT8 *answer, UINTN answerl)
 
 
 
-    ctx.key.value = ansid.key;
+    ctx.key.value = key;
     ctx.key.length = BASE_ANS_KEY_STR;
     ctx.iv.value = ansid.iv;
     ctx.iv.length = BASE_ANS_IV_KEY_STR; 
@@ -1213,8 +1214,8 @@ SBCStatus  SBC_BaseAnswerValidate(VOID *blkhnd,UINT8 *answer, UINTN answerl)
       goto errdone;
     }
 
-    SBC_mem_print_bin("plain msg", answer, answerl);
-    SBC_mem_print_bin("decrypt msg", decbuf, ctx.out.length);
+//  SBC_mem_print_bin("plain msg", answer, answerl);
+//  SBC_mem_print_bin("decrypt msg", decbuf, ctx.out.length);
 
     if (CompareMem((const void *)decbuf, (const void *)answer, answerl) != 0) {
       Print(L"Base Answer validate Fail \n");
@@ -1367,6 +1368,9 @@ SBCStatus  SBC_FSBL_Verify(VOID *blkhnd, VOID *ansr)
       ret = SBCNULLP;
       goto errdone;
     }
+
+    ((LV_t *)ansr)->length = bsinfo.m.banswlen;
+    CopyMem(((LV_t *)ansr)->value, info.baseansw, bsinfo.m.banswlen);
 
 //    switch (bootmode) {
 //    case BOOT_MODE_FACTORY:
@@ -1623,7 +1627,9 @@ SBCStatus  SBC_GenMigrationKey(VOID *priv, UINT32 currbankid, UINT32 prevbankid,
     UINTN startaddr = 0;
     UINTN startlba = 0;
     UINTN imglen = 0;
-    boot_fw_inf_t fwinf;
+    boot_fw_inf_t *fwinf;
+
+    dprint("Migration Key creation startnig !!!");
 
     SBC_RET_VALIDATE_ERRCODEMSG((priv != NULL), SBCNULLP, "Invalid Parameter");
 
@@ -1633,6 +1639,9 @@ SBCStatus  SBC_GenMigrationKey(VOID *priv, UINT32 currbankid, UINT32 prevbankid,
     _baseboard_sn(&info);
     _memorydevice_sn(&info);
     _nvme_get_serial(&info);
+
+    fwinf = AllocatePool(sizeof(boot_fw_inf_t));
+    SBC_RET_VALIDATE_ERRCODEMSG((fwinf != NULL),SBCNULLP, "Firmware Info Memory allocate Nill");
 
     integbuf = AllocatePool(info.mbsnl + info.mmsnl + info.nvmesnl);
     SBC_RET_VALIDATE_ERRCODEMSG((integbuf != NULL),SBCNULLP, "HW Info Compute buffer Nill");
@@ -1670,41 +1679,41 @@ SBCStatus  SBC_GenMigrationKey(VOID *priv, UINT32 currbankid, UINT32 prevbankid,
     //Step 2. Read Current Image and Hash compute
     startaddr = (BOOT_SECTOR1_OFS | (BOOT_FW_IMGMAX *  (currbankid - 1)));
     startlba = (startaddr >> SBC_RAWPRT_DFLT_SHIFT);
-    imglen = ALIGN_VALUE(sizeof fwinf, SBC_RAWPRT_DFLT_BLK_SZ);
+    imglen = ALIGN_VALUE(sizeof *fwinf, SBC_RAWPRT_DFLT_BLK_SZ);
 
     
-    ret = SBC_RawPrtReadBlock(priv, (void *)fwinf.value, (UINT32 *)&imglen, startlba);
+    ret = SBC_RawPrtReadBlock(priv, (void *)fwinf->value, (UINT32 *)&imglen, startlba);
     SBC_RET_VALIDATE_ERRCODEMSG((ret == SBCOK), ret, "Raw Partition read fail");
 
     // Hash compute
     
-    ret = SBC_HashCompute(NULL, fwinf.mbr.fsblimg, fwinf.mbr.fsbln, &migkey_hash[migkeycnt]);
+    ret = SBC_HashCompute(NULL, fwinf->mbr.fsblimg, fwinf->mbr.fsbln, &migkey_hash[migkeycnt]);
     SBC_RET_VALIDATE_ERRCODEMSG((ret == SBCOK), ret, "Hash Compue fail");
     migkeycnt +=  SBC_AT_HASH_LEN;
 
-    ret = SBC_HashCompute(NULL, fwinf.mbr.ssblimg, fwinf.mbr.ssbln,  &migkey_hash[migkeycnt]);
+    ret = SBC_HashCompute(NULL, fwinf->mbr.ssblimg, fwinf->mbr.ssbln,  &migkey_hash[migkeycnt]);
     SBC_RET_VALIDATE_ERRCODEMSG((ret == SBCOK), ret, "Hash Compue fail");
     migkeycnt +=  SBC_AT_HASH_LEN;
 
-    ret = SBC_HashCompute(NULL, fwinf.mbr.osimg, fwinf.mbr.osln,  &migkey_hash[migkeycnt]);
+    ret = SBC_HashCompute(NULL, fwinf->mbr.osimg, fwinf->mbr.osln,  &migkey_hash[migkeycnt]);
     SBC_RET_VALIDATE_ERRCODEMSG((ret == SBCOK), ret, "Hash Compue fail");
     migkeycnt +=  SBC_AT_HASH_LEN;
 
     // Step 3. Read the New Image and hash compute
 
-    ZeroMem(fwinf.value, sizeof fwinf);
+    ZeroMem(fwinf->value, sizeof fwinf);
     startaddr = (BOOT_SECTOR1_OFS | (BOOT_FW_IMGMAX *  (prevbankid - 1)));
     startlba = (startaddr >> SBC_RAWPRT_DFLT_SHIFT);
     imglen = ALIGN_VALUE(sizeof fwinf, SBC_RAWPRT_DFLT_BLK_SZ);
 
-    ret = SBC_RawPrtReadBlock(priv, (void *)fwinf.value, (UINT32 *)&imglen, startlba);
+    ret = SBC_RawPrtReadBlock(priv, (void *)fwinf->value, (UINT32 *)&imglen, startlba);
     SBC_RET_VALIDATE_ERRCODEMSG((ret == SBCOK), ret, "Raw Partition read fail");
 
-    ret = SBC_HashCompute(NULL, fwinf.mbr.ssblimg, fwinf.mbr.ssbln,  &migkey_hash[migkeycnt]);
+    ret = SBC_HashCompute(NULL, fwinf->mbr.ssblimg, fwinf->mbr.ssbln,  &migkey_hash[migkeycnt]);
     SBC_RET_VALIDATE_ERRCODEMSG((ret == SBCOK), ret, "Hash Compue fail");
     migkeycnt +=  SBC_AT_HASH_LEN;
 
-    ret = SBC_HashCompute(NULL, fwinf.mbr.osimg, fwinf.mbr.osln,  &migkey_hash[migkeycnt]);
+    ret = SBC_HashCompute(NULL, fwinf->mbr.osimg, fwinf->mbr.osln,  &migkey_hash[migkeycnt]);
     SBC_RET_VALIDATE_ERRCODEMSG((ret == SBCOK), ret, "Hash Compue fail");
     migkeycnt +=  SBC_AT_HASH_LEN;
 
@@ -1722,6 +1731,10 @@ errdone:
 
     if (migkey_hash != NULL) {
         FreePool(migkey_hash);
+    }
+
+    if (fwinf != NULL) {
+      FreePool(fwinf);
     }
 
     return ret;

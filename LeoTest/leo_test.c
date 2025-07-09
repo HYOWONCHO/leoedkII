@@ -141,7 +141,7 @@ SBCStatus SBC_BootModeFactory(VOID *blkhnd, VOID *ImageHandle)
   SBCStatus ret = SBCOK;
   
   UINTN startlba = 0;
-  UINTN endlba = 0;
+  
 
   UINT32  imglen = SBC_RAWPRT_DFLT_BLK_SZ;
   UINT8   imghdr[SBC_RAWPRT_DFLT_BLK_SZ] = {0, };
@@ -149,6 +149,7 @@ SBCStatus SBC_BootModeFactory(VOID *blkhnd, VOID *ImageHandle)
   
 
   EFI_HANDLE  *ssbl_img_hndl;
+  [[maybe_unused]]UINTN endlba = 0;
   [[maybe_unused]]INTN       hndlcnt = 0;
   __attribute__((unused))EFI_STATUS retval;
   [[gnu::unused]]CHAR16 *fname = L"\\EFI\\rocky\\SSBL.efi";
@@ -163,7 +164,7 @@ SBCStatus SBC_BootModeFactory(VOID *blkhnd, VOID *ImageHandle)
   //Print("Start LBA Address : 0x%x  \n")
   //endlba = (BOOT_SSBL_MAX >>  SBC_RAWPRT_DFLT_SHIFT) - startlba;
 
-  Print(L"Start Addr : 0x%lx , End addr : 0x%lx \n", startlba, endlba);
+  //Print(L"Start Addr : 0x%lx , End addr : 0x%lx \n", startlba, endlba);
 
   ret = SBC_RawPrtReadBlock(blkhnd, (void *)imghdr, &imglen, startlba);
   if (ret != SBCOK) {
@@ -177,14 +178,21 @@ SBCStatus SBC_BootModeFactory(VOID *blkhnd, VOID *ImageHandle)
   // Temp code, at later, should be need to remove 
   //imglen = SBC_SWAP_ENDIAN_32(imglen);
 
-  Print(L"SSBL Image Len : %d \n", imglen);
+  //Print(L"SSBL Image Len : %d \n", imglen);
  
   imglen = ALIGN_VALUE(imglen, SBC_RAWPRT_DFLT_BLK_SZ);
-  Print(L"Align Image Len : %d \n", imglen);
+  //Print(L"Align Image Len : %d \n", imglen);
+  //loadimg = AllocateZeroPool(imglen);
+//if (loadimg == NULL) {
+//  Print(L"Allocate Image pool fail \n");
+//  ret = SBCNULLP;
+//  goto errdone;
+//}
 
-  loadimg = AllocateZeroPool(imglen);
-  if (ret != SBCOK) {
-    Print(L"Allocate Image pool fail \n");
+  dprint("Boot Service Allocate ");
+  retval = gBS->AllocatePool(EfiBootServicesData, imglen, (VOID **)&loadimg);
+  if (EFI_ERROR(retval)) {
+    eprint("Faile to allocate memrory : %r", retval);
     ret = SBCNULLP;
     goto errdone;
   }
@@ -201,12 +209,12 @@ SBCStatus SBC_BootModeFactory(VOID *blkhnd, VOID *ImageHandle)
     goto errdone;
   }
 
-  Print(L"File System Handle Found (Handle Count : %d) \n", hndlcnt);
+  //Print(L"File System Handle Found (Handle Count : %d) \n", hndlcnt);
 
   _lv_set_data(&wrlv,&loadimg[4], imglen - 4);
 
   //SBC_mem_print_bin("SSBL Load Image", wrlv.value, 512);
-#if 0
+#if 1
   for (int idx = 0; idx < hndlcnt; idx++) {
     retval = SBC_WriteFile(ssbl_img_hndl[idx], fname, &wrlv);
     if (EFI_ERROR(retval)) {
@@ -217,7 +225,7 @@ SBCStatus SBC_BootModeFactory(VOID *blkhnd, VOID *ImageHandle)
         //goto errdone;
     }
 
-    Print(L"Index %d Result : %d \n", idx, retval);
+    //Print(L"Index %d Result : %d \n", idx, retval);
     break;
   }
 
@@ -249,11 +257,139 @@ errdone:
     FreePool(loadimg);
   }
 
+
+
   return ret;
 
+}
+
+
+SBCStatus SBC_BootModeNormal(VOID *blkhnd, VOID *ImageHandle)
+{
+  SBCStatus ret = SBCOK;
+  
+  UINTN startlba = 0;
+  
+
+  UINT32  imglen = SBC_RAWPRT_DFLT_BLK_SZ;
+  UINT8   imghdr[SBC_RAWPRT_DFLT_BLK_SZ] = {0, };
+  UINT8   *loadimg = NULL;
+  
+
+  EFI_HANDLE  *ssbl_img_hndl;
+  [[maybe_unused]]UINTN endlba = 0;
+  [[maybe_unused]]INTN       hndlcnt = 0;
+  __attribute__((unused))EFI_STATUS retval;
+  [[gnu::unused]]CHAR16 *fname = L"\\EFI\\rocky\\SSBL.efi";
+
+
+  LV_t wrlv;
+  //UINT8 *imgssbl = NULL;
+
+  SBC_RET_VALIDATE_ERRCODEMSG((blkhnd != NULL), SBCNULLP, "Block I/O Handle Nill");
+
+  startlba = ((BOOT_SECTOR3_OFS | BOOT_SSBL_OFS) >> SBC_RAWPRT_DFLT_SHIFT);
+  //Print("Start LBA Address : 0x%x  \n")
+  //endlba = (BOOT_SSBL_MAX >>  SBC_RAWPRT_DFLT_SHIFT) - startlba;
+
+  //Print(L"Start Addr : 0x%lx , End addr : 0x%lx \n", startlba, endlba);
+
+  ret = SBC_RawPrtReadBlock(blkhnd, (void *)imghdr, &imglen, startlba);
+  if (ret != SBCOK) {
+    Print(L"SSBL Factory Block Read Fail \n");
+    goto errdone;
+  }
+  //SBC_RET_VALIDATE_ERRCODEMSG((ret != SBCOK), SBCIO, "SSBL Factory Block Read Fail");
+
+
+  CopyMem((void *)&imglen, &imghdr[0], sizeof imglen);
+  // Temp code, at later, should be need to remove 
+  //imglen = SBC_SWAP_ENDIAN_32(imglen);
+
+  //Print(L"SSBL Image Len : %d \n", imglen);
+ 
+  imglen = ALIGN_VALUE(imglen, SBC_RAWPRT_DFLT_BLK_SZ);
+  //Print(L"Align Image Len : %d \n", imglen);
+  //loadimg = AllocateZeroPool(imglen);
+//if (loadimg == NULL) {
+//  Print(L"Allocate Image pool fail \n");
+//  ret = SBCNULLP;
+//  goto errdone;
+//}
+
+  dprint("Boot Service Allocate ");
+  retval = gBS->AllocatePool(EfiBootServicesData, imglen, (VOID **)&loadimg);
+  if (EFI_ERROR(retval)) {
+    eprint("Faile to allocate memrory : %r", retval);
+    ret = SBCNULLP;
+    goto errdone;
+  }
+
+  ret = SBC_RawPrtReadBlock(blkhnd, (void *)loadimg, &imglen, startlba);
+  if (ret != SBCOK) {
+    Print(L"SSBL Factory Block Read Fail \n");
+    goto errdone;
+  }
+
+  if ((hndlcnt = SBC_FindEfiFileSystemProtocol(&ssbl_img_hndl)) <= 0) {
+    Print(L"File SYstem Handle Found fail \n");
+    ret = SBCIO;
+    goto errdone;
+  }
+
+  //Print(L"File System Handle Found (Handle Count : %d) \n", hndlcnt);
+
+  _lv_set_data(&wrlv,&loadimg[4], imglen - 4);
+
+  //SBC_mem_print_bin("SSBL Load Image", wrlv.value, 512);
+#if 1
+  for (int idx = 0; idx < hndlcnt; idx++) {
+    retval = SBC_WriteFile(ssbl_img_hndl[idx], fname, &wrlv);
+    if (EFI_ERROR(retval)) {
+        //eprint("%s file write fail %r", fname, retval);
+        //Print(L"%a file write fail %r \n", fname, retval);
+        ret = SBCIO;
+        continue;
+        //goto errdone;
+    }
+
+    //Print(L"Index %d Result : %d \n", idx, retval);
+    break;
+  }
+
+  if (EFI_ERROR(retval)) {
+    eprint("%s file write fail %r", fname, retval);
+    ret = SBCIO;
+    goto errdone;
+  }
 
 
 
+  Print(L"SSBL Write is Done \n");
+  //SBC_mem_print_bin("SSBL Header", imghdr, imglen);
+  
+  ret = SBC_SSBL_LoadAndStart(ImageHandle);
+  if (ret != SBCOK) {
+    Print(L"SSBL Factory Running Fail \n");
+    goto errdone;
+  }
+#else
+extern SBCStatus  LoadAndStartMemoryImage(VOID *handle, VOID *imgbuf, UINTN imglen);
+
+    ret = LoadAndStartMemoryImage(ImageHandle, wrlv.value, wrlv.length);
+
+#endif
+errdone:
+
+  if (loadimg != NULL) {
+    FreePool(loadimg);
+  }
+
+
+
+  return ret;
+
+  
 }
 
 UINT32 FindPreviouslyBank(UINT32 bankid)
@@ -371,9 +507,43 @@ UefiMain (
     bootmd = SBC_ReadBootMode();
     switch (bootmd) {
     case BOOT_MODE_NORMAL:
+      ret = SBC_BaseAnswerValidate(h_blkio, (UINT8 *)baseansr.value, baseansr.length, diceid.migid, BASE_ANS_KEY_STR);
+      if (ret != SBCOK) {
+              sbc_err_sysprn(SBC_LOG_CMN_PRIO_ERR, 2, 
+                     L"SBC", 
+                     L"FSBL", 
+                     L"Weapon System", 
+                     4, 
+                     L"EVT", 
+                     L"BaseAnswer Validate fail");
+              retval = EFI_INVALID_PARAMETER;
+              goto errdone;
+      }
+
+      ret = SBC_BootModeFactory(h_blkio, ImageHandle);
+      if (ret != SBCOK) {
+          eprint("Factory Boot Fail");
+          retval = EFI_INVALID_PARAMETER;
+          goto errdone;
+      }
       break;
     case BOOT_MODE_FACTORY:
       //Print(L"Factory Boot Mode !!! \n");
+
+        // Storing the Base answer
+      ret = SBC_BaseAnswerEncryptStore(h_blkio, baseansr.value, baseansr.length, diceid.migid, BASE_ANS_KEY_STR);
+      if (ret != SBCOK) {
+              sbc_err_sysprn(SBC_LOG_CMN_PRIO_ERR, 2, 
+                     L"SBC", 
+                     L"FSBL", 
+                     L"Weapon System", 
+                     4, 
+                     L"EVT", 
+                     L"BaseAnswerEncryptStore fail");
+              retval = EFI_INVALID_PARAMETER;
+              goto errdone;
+      }
+
       ret = SBC_BootModeFactory(h_blkio, ImageHandle);
       if (ret != SBCOK) {
           eprint("Factory Boot Fail");
