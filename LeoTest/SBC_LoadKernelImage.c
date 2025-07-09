@@ -921,6 +921,9 @@ SBCStatus  LoadAndStartMemoryImage(VOID *handle, VOID *imgbuf, UINTN imglen)
     MemoryDevicePath.StartingAddress = (EFI_PHYSICAL_ADDRESS)(UINTN)imgbuf;
     MemoryDevicePath.EndingAddress   = (EFI_PHYSICAL_ADDRESS)((UINTN)imgbuf + imglen - 1);
 
+    dprint("Starting Address original : 0x%lx , Assign : 0x%lx , Ending Addr  : 0x%lx", 
+           imgbuf, MemoryDevicePath.StartingAddress, MemoryDevicePath.EndingAddress);
+
     // Append the End-Of-Device-Path node
     EndOfDevicePath = (EFI_DEVICE_PATH_PROTOCOL *)((UINTN)&MemoryDevicePath + sizeof(MEMMAP_DEVICE_PATH));
     SetDevicePathEndNode (EndOfDevicePath);

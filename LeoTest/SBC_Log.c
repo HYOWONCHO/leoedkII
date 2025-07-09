@@ -188,18 +188,18 @@ void _sbc_write_log_file(CHAR8 *message, UINT32 msglen)
 
     hndlcnt = SBC_FindEfiFileSystemProtocol(&hndl);
 
-    dprint("Log gEfiSimpleFileSystemProtocolGuid Handle Count :%d ", hndlcnt);
+    //dprint("Log gEfiSimpleFileSystemProtocolGuid Handle Count :%d ", hndlcnt);
 
     for (int idx = 0; idx < hndlcnt; idx++) {
-        dprint("[idx:%d] handle addr : 0x%x", idx, hndl[idx]);
+        //dprint("[idx:%d] handle addr : 0x%x", idx, hndl[idx]);
         Status = SBC_IsDirExist(hndl[idx], rocky_dir_name);
         switch (Status) {
         case EFI_SUCCESS:
           loghnd=  hndl[idx];
-          dprint("%s dir exists \n", rocky_dir_name);
+          //dprint("%s dir exists \n", rocky_dir_name);
           break;
         case EFI_NOT_FOUND:
-          dprint("%s dir not found \n", rocky_dir_name);
+          //dprint("%s dir not found \n", rocky_dir_name);
           //dprint();
           //goto errdone;
           break;
@@ -217,10 +217,8 @@ void _sbc_write_log_file(CHAR8 *message, UINT32 msglen)
     Status = SBC_IsFlieAccess(loghnd, sbc_log_fname);
     switch (Status) {
     case EFI_SUCCESS:
-      dprint("%s dir exists \n", sbc_log_fname);
       break;
     case EFI_NOT_FOUND:
-      dprint("%s dir not found \n", sbc_log_fname);
       // Create File 
       ret = SBC_CreateFile(loghnd, sbc_log_fname);
       break;

@@ -57,7 +57,8 @@ typedef struct _kdf_t {
 }kdf_t;
 
 
-#define SBCUNUSED       [[maybe_unused]]
+#define SBCUNUSED           [[maybe_unused]]
+//#define SBCUNUSED_VAR(x)    UNUSED_VAR(x)
 //#define SBCUNUSED       [[gnu::unused]]
 //#define SBCUNUSED       __attribute__((unused))
 
