@@ -264,7 +264,7 @@ errdone:
 }
 
 
-SBCStatus SBC_BootModeNormal(VOID *blkhnd, VOID *ImageHandle)
+SBCStatus SBC_BootModeNormalAndpUdate(VOID *blkhnd, VOID *ImageHandle, UINTN nrombank)
 {
   SBCStatus ret = SBCOK;
   
@@ -274,6 +274,7 @@ SBCStatus SBC_BootModeNormal(VOID *blkhnd, VOID *ImageHandle)
   UINT32  imglen = SBC_RAWPRT_DFLT_BLK_SZ;
   UINT8   imghdr[SBC_RAWPRT_DFLT_BLK_SZ] = {0, };
   UINT8   *loadimg = NULL;
+  UINTN   bsofs = 0; // Boot Sector Offset
   
 
   EFI_HANDLE  *ssbl_img_hndl;
@@ -286,9 +287,14 @@ SBCStatus SBC_BootModeNormal(VOID *blkhnd, VOID *ImageHandle)
   LV_t wrlv;
   //UINT8 *imgssbl = NULL;
 
+  dprint("----- Normal Boot SSBL running ( Bank Id : 0x%x ) -----", nrombank);
+
+  SBC_RET_VALIDATE_ERRCODEMSG((nrombank > 0 && nrombank < 3), SBCINVPARAM, "Invalid Parameter for SSBL bank");
   SBC_RET_VALIDATE_ERRCODEMSG((blkhnd != NULL), SBCNULLP, "Block I/O Handle Nill");
 
-  startlba = ((BOOT_SECTOR3_OFS | BOOT_SSBL_OFS) >> SBC_RAWPRT_DFLT_SHIFT);
+  bsofs = (BOOT_SECTOR1_OFS | ((nrombank - 1) << 20));
+  startlba = ((bsofs | BOOT_SSBL_OFS) >> SBC_RAWPRT_DFLT_SHIFT);
+
   //Print("Start LBA Address : 0x%x  \n")
   //endlba = (BOOT_SSBL_MAX >>  SBC_RAWPRT_DFLT_SHIFT) - startlba;
 
@@ -317,7 +323,7 @@ SBCStatus SBC_BootModeNormal(VOID *blkhnd, VOID *ImageHandle)
 //  goto errdone;
 //}
 
-  dprint("Boot Service Allocate ");
+  //dprint("Boot Service Allocate ");
   retval = gBS->AllocatePool(EfiBootServicesData, imglen, (VOID **)&loadimg);
   if (EFI_ERROR(retval)) {
     eprint("Faile to allocate memrory : %r", retval);
@@ -507,7 +513,8 @@ UefiMain (
     bootmd = SBC_ReadBootMode();
     switch (bootmd) {
     case BOOT_MODE_NORMAL:
-      ret = SBC_BaseAnswerValidate(h_blkio, (UINT8 *)baseansr.value, baseansr.length, diceid.migid, BASE_ANS_KEY_STR);
+      dprint("Boot Mode is BOOT_MODE_NORMAL");
+      ret = SBC_BaseAnswerValidate(h_blkio, (UINT8 *)baseansr.value, baseansr.length, diceid.osid, BASE_ANS_KEY_STR);
       if (ret != SBCOK) {
               sbc_err_sysprn(SBC_LOG_CMN_PRIO_ERR, 2, 
                      L"SBC", 
@@ -520,7 +527,7 @@ UefiMain (
               goto errdone;
       }
 
-      ret = SBC_BootModeFactory(h_blkio, ImageHandle);
+      ret = SBC_BootModeNormalAndpUdate(h_blkio, ImageHandle, currbank_id);
       if (ret != SBCOK) {
           eprint("Factory Boot Fail");
           retval = EFI_INVALID_PARAMETER;
@@ -531,7 +538,7 @@ UefiMain (
       //Print(L"Factory Boot Mode !!! \n");
 
         // Storing the Base answer
-      ret = SBC_BaseAnswerEncryptStore(h_blkio, baseansr.value, baseansr.length, diceid.migid, BASE_ANS_KEY_STR);
+      ret = SBC_BaseAnswerEncryptStore(h_blkio, baseansr.value, baseansr.length, diceid.osid, BASE_ANS_KEY_STR);
       if (ret != SBCOK) {
               sbc_err_sysprn(SBC_LOG_CMN_PRIO_ERR, 2, 
                      L"SBC", 
