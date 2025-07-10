@@ -1354,9 +1354,9 @@ errdone:
 SBCStatus  SBC_SSBL_Verify(VOID *blkhnd, VOID *ansr, UINTN bank_id)
 {
     SBCStatus       ret = SBCOK;
-    EFI_STATUS      retval = EFI_SUCCESS;
-    EFI_HANDLE      *hndl = NULL;
-    UINT16          *fblpath = L"\\EFI\\rocky\\SSBL.efi";
+    [[maybe_unused]] EFI_STATUS      retval = EFI_SUCCESS;
+    [[gnu::unused]] EFI_HANDLE      *hndl = NULL;
+    [[gnu::unused]] UINT16          *fblpath = L"\\EFI\\rocky\\SSBL.efi";
     UINT8           *infostart = NULL;
     UINT32          last_of_fsbl = 0;
     UINT32          bsinfolen = 0;
@@ -1366,7 +1366,7 @@ SBCStatus  SBC_SSBL_Verify(VOID *blkhnd, VOID *ansr, UINTN bank_id)
     UINT32          HashSize =0;
     UINT32          fsbl_len =0;
     VOID            *EcPubKey = NULL;
-    UINTN           HandleCount;
+    [[maybe_unused]] UINTN           HandleCount;
 
     LV_t            rdlv = {
             .length = 0,
