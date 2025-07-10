@@ -427,11 +427,6 @@ UefiMain (
   IN EFI_SYSTEM_TABLE  *SystemTable
   )
 {
-    //extern VOID SBC_EcKeyGen_Test(VOID);
-    //SBC_EcKeyGen_Test();
-    //LV_t keylv;
-
-
 
     atp_ident_t diceid;
     EFI_STATUS retval = EFI_SUCCESS;
@@ -460,7 +455,17 @@ UefiMain (
     dprint("Partition Info (%a) \n", h_rawptrheader.prtinfo);
 
     ret = SBC_FSBL_Verify(h_blkio, &baseansr);
-    SBC_RET_VALIDATE_ERRCODEMSG((ret == SBCOK), ret, "FSBL Verify Fail");
+    if (ret != SBCOK) {
+          sbc_err_sysprn(SBC_LOG_CMN_PRIO_ERR, 2, 
+                 L"SBC", 
+                 L"FSBL", 
+                 L"Weapon System", 
+                 8, 
+                 L"Determine Firmare Tampering ", 
+                 L"FSBL tampering check fail");
+          retval = EFI_INVALID_PARAMETER;
+          goto errdone;
+      }
 
 
     // Check the Preference SSBL bank
@@ -509,18 +514,34 @@ UefiMain (
 
     sbc_err_sysprn(SBC_LOG_CMN_PRIO_INFO, 2, L"SBC", L"FSBL", L"Weapon System", 4, L"EVT", L"Migration Key creation Success\n");
 
+    
+           
     // Check boot mode
     bootmd = SBC_ReadBootMode();
     switch (bootmd) {
     case BOOT_MODE_NORMAL:
       dprint("Boot Mode is BOOT_MODE_NORMAL");
+#ifdef _SBC_DEVID_VERIFY_
+      ret =  SBC_DeviceIdKyeVerify(h_blkio, diceid.devid, diceid.osid);
+      if (ret != SBCOK) {
+              sbc_err_sysprn(SBC_LOG_CMN_PRIO_ERR, 2, 
+                     L"SBC", 
+                     L"FSBL", 
+                     L"Weapon System", 
+                     8, 
+                     L"EVT", 
+                     L"Device ID verify fail ");
+              retval = EFI_INVALID_PARAMETER;
+              goto errdone;
+      }
+#endif         
       ret = SBC_BaseAnswerValidate(h_blkio, (UINT8 *)baseansr.value, baseansr.length, diceid.osid, BASE_ANS_KEY_STR);
       if (ret != SBCOK) {
               sbc_err_sysprn(SBC_LOG_CMN_PRIO_ERR, 2, 
                      L"SBC", 
                      L"FSBL", 
                      L"Weapon System", 
-                     4, 
+                     3, 
                      L"EVT", 
                      L"BaseAnswer Validate fail");
               retval = EFI_INVALID_PARAMETER;
@@ -536,6 +557,21 @@ UefiMain (
       break;
     case BOOT_MODE_FACTORY:
       //Print(L"Factory Boot Mode !!! \n");
+
+#ifdef _SBC_DEVID_VERIFY_
+      ret =  SBC_DeviceIdKyeVerify(h_blkio, diceid.devid, diceid.osid);
+      if (ret != SBCOK) {
+              sbc_err_sysprn(SBC_LOG_CMN_PRIO_ERR, 2, 
+                     L"SBC", 
+                     L"FSBL", 
+                     L"Weapon System", 
+                     8, 
+                     L"EVT", 
+                     L"Device ID verify fail ");
+              retval = EFI_INVALID_PARAMETER;
+              goto errdone;
+      }
+#endif     
 
         // Storing the Base answer
       ret = SBC_BaseAnswerEncryptStore(h_blkio, baseansr.value, baseansr.length, diceid.osid, BASE_ANS_KEY_STR);
@@ -560,6 +596,20 @@ UefiMain (
       //Print(L"Factory BOot Mode end !!! \n");
       break;
     case BOOT_MODE_UPDATE:
+#ifdef _SBC_DEVID_VERIFY_
+      ret =  SBC_DeviceIdKyeVerify(h_blkio, diceid.devid, diceid.migid);
+      if (ret != SBCOK) {
+              sbc_err_sysprn(SBC_LOG_CMN_PRIO_ERR, 2, 
+                     L"SBC", 
+                     L"FSBL", 
+                     L"Weapon System", 
+                     8, 
+                     L"EVT", 
+                     L"Device ID verify fail ");
+              retval = EFI_INVALID_PARAMETER;
+              goto errdone;
+      }
+#endif     
       break;
     default:
       Print(L"Unknown Boot Mode ... SHOULD go to Abort\n");
@@ -577,240 +627,7 @@ UefiMain (
 
 
 errdone:
-  
-#if 0
-  Print(L"Found the SBC Raw-partiton !! \n");
-
-  ret = SBC_FSBL_Verify(h_blkio, &baseansr);
-  switch(ret) {
-    case SBCBSANSWNOTFND:
-      // Base-answer storing
-      ret = SBC_BaseAnswerEncryptStore(h_blkio, baseansr.value, baseansr.length, keylv.value, keylv.length);
-      if (baseansr.value != NULL) {
-        FreePool(baseansr.value);
-        baseansr.value = NULL;
-      }
-
-      if (ret != SBCOK) {
-        Print(L"Base Answer Encrypt and Storing fail \n");
-        ret = SBCFAIL;
-        goto errdone;
-      }
-    case SBCOK:
-        Print(L"FSBL Verify Success !!! \n");
-        break;
-    default:
-      Print(L"FSBL Verify Fail \n");
-      goto errdone;s
-      //ASSERT((ret == SBCOK));
-      break;
-  }
-
-  //  Device ID create and store 
-
-
-
-
-
-  // Jump To SSBL
-  Print(L"Run to SSBL.efi ... \n");
-  ret = SBC_SSBL_LoadAndStart(ImageHandle);
-  if (ret != SBCOK) {
-    Print(L"SSBL Image running fail ... \n");
-    ASSERT((ret != SBCOK));
-    goto errdone;
-  }
-#endif
-//extern SBCStatus SBC_GRUB_LoadAndStart(EFI_HANDLE ImageHandle);
-
-    //SBC_GRUB_LoadAndStart(ImageHandle);
-
-
-//errdone:
  
-
-
-  // Verify the Base Answer.
-
-//VOID SBC_EcDsa_TestMain(VOID);
-//SBC_EcDsa_TestMain();
-/*
-  atp_ident_t atpid;                                          
-  SBCStatus ret = SBCOK;                                      
-                                                              
-                                                              
-  CHAR8 *baseanswer = "SBCBaseAnswer";                        
-  UINTN answlen =strlen(baseanswer);                          
-  UINT32 bootmode = BOOT_MODE_UNKNOWN;                        
-                                                              
-                                                              ;
-                                                              
-  bootmode = SBC_ReadBootMode();                              
-                                                              
-  switch (bootmode) {                                         
-  case BOOT_MODE_NORMAL:                                      
-    Print(L"BOOT_MODE_NORMAL \n");                            
-    break;                                                    
-  case BOOT_MODE_UPDATE:                                      
-    Print(L"BOOT_MODE_UPDATE \n");                            
-    break;                                                    
-  case BOOT_MODE_FACTORY:                                     
-    Print(L"BOOT_MODE_FACTORY \n");                           
-    break;                                                    
-  default:                                                    
-    Print(L"Unknown boot mode, go to Abort \n");              
-    goto errdone;                                             
-    break;                                                    
-  }                                                           
-                                                              
-  Print(L"Validate the Base Answer !!! \n");                  
-                                                              
-                                                              
-  ret = SBC_BaseAnswerValidate((UINT8 *)baseanswer , answlen);
-  if (ret != SBCOK) {                                         
-    Print(L"Base Answer validate error \n");                  
-    return EFI_LOAD_ERROR;                                    
-  }                                                           
-                                                              
-  Print(L"FSBL / SSBL Intefrity Checking !!! \n");            
-                                                              
-  ret = SBC_FSBLIntgCheck(ImageHandle);                       
-  if (ret != SBCOK) {                                         
-    Print(L"FSBL / SSBL Validate  error \n");                 
-    return EFI_LOAD_ERROR;                                    
-  }                                                           
-                                                              
-  Print(L"Generate the IDs .. !! \n");                        
-                                                              
-  ZeroMem((void *)&atpid ,sizeof atpid);                      
-                                                              
-  ret = SBC_DiceKeysGen(ImageHandle, (VOID *)&atpid);         
-  if (ret != SBCOK) {                                         
-    Print(L"Dice Key Gen fail \n");                           
-    return EFI_LOAD_ERROR;                                    
-  }                                                           
-                                                              
-                                                              
-  SBC_SSBL_LoadAndStart(ImageHandle);                         
-*/
-
-
-  // If base answer is not record in raw partition 
-//ret = SBC_BaseAnswerEncryptStore(Fv
-//                                    (UINT8 *)baseanswer,
-//                                    answlen,
-//                                    atpid.osid,
-//                                    ATP_IDENT_KEY_STG
-//    );
-//
-//if (ret  != SBCOK) {
-//  Print(L"Base Answer Keyh store fail \n");
-//  return EFI_LOAD_ERROR;
-//}
-
-//EFI_STATUS retval;
-//retval = LoadKernelImage(ImageHandle, SystemTable);
-//Print(L"LoadKernelImage : %r \n", retval);
-
-
-//extern EFI_STATUS Load_Kernel(EFI_HANDLE ImageHandle, EFI_SYSTEM_TABLE *SystemTable) ;
-//Load_Kernel(ImageHandle, SystemTable);
-//
-
-
-//EFI_HANDLE *Handles;
-//UINTN HandleCount;
-////EFI_SIMPLE_FILE_SYSTEM_PROTOCOL *Fs;
-//EFI_DEVICE_PATH_PROTOCOL *DevicePath;
-////EFI_HANDLE imghandle;
-//CHAR16 *PathStr;
-//
-//gBS->LocateHandleBuffer(ByProtocol, &gEfiSimpleFileSystemProtocolGuid, NULL, &HandleCount, &Handles);
-//
-//for (UINTN i = 0; i < HandleCount; i++) {
-//  DevicePath = FileDevicePath(Handles[i], L"\\EFI\\rocky\\grubx64.efi");
-//  PathStr = ConvertDevicePathToText(DevicePath, TRUE, TRUE);
-//  if (PathStr != NULL) {
-//    Print(L"Device Path: %s\n", PathStr);
-//    FreePool(PathStr);
-//  } else {
-//    Print(L"Failed to convert device path to string.\n");
-//  }
-//  EFI_STATUS Status = gBS->LoadImage(FALSE, ImageHandle, DevicePath, NULL, 0, &ImageHandle);
-//  if (!EFI_ERROR(Status)) {
-//    gBS->StartImage(ImageHandle, NULL, NULL);
-//    break;
-//  }
-//}
-//
-
-//EFI_STATUS Status;
-//EFI_LOADED_IMAGE_PROTOCOL *LoadedImage;
-//EFI_DEVICE_PATH_PROTOCOL *DevicePath;
-//EFI_HANDLE NewImageHandle;
-//
-//// Step 1: Get the current image's loaded image protocol
-//Status = gBS->HandleProtocol(
-//  ImageHandle,
-//  &gEfiLoadedImageProtocolGuid,
-//  (VOID **)&LoadedImage
-//);
-//if (EFI_ERROR(Status)) {
-//  Print(L"Failed to get LoadedImage protocol: %r\n", Status);
-//  return Status;
-//}
-//
-//// Step 2: Build a device path to the target EFI application
-//DevicePath = FileDevicePath(
-//  LoadedImage->DeviceHandle,
-//  L"\\ssbl.efi"  // Adjust this path as needed
-//);
-//
-//// Step 3: Load the image into memory
-//Status = gBS->LoadImage(
-//  FALSE,
-//  ImageHandle,
-//  DevicePath,
-//  NULL,
-//  0,
-//  &NewImageHandle
-//);
-//if (EFI_ERROR(Status)) {
-//  Print(L"LoadImage failed: %r\n", Status);
-//  return Status;
-//}
-//
-//// Step 4: Start the loaded image
-//Status = gBS->StartImage(NewImageHandle, NULL, NULL);
-//if (EFI_ERROR(Status)) {
-//  Print(L"StartImage failed: %r\n", Status);
-//  return Status;
-//}
-//
-//return EFI_SUCCESS;
-
-  //test_open_protocol(ImageHandle);
-  //SSBL_Load(ImageHandle, SystemTable);
-
-//  UINTN MapKey;
-//  VOID (*KernelEntry)(VOID) = (VOID *)0x100000; // Example kernel entry address
-//
-//  // Get memory map key
-//  retval  = gBS->GetMemoryMap(&MapKey, NULL, NULL, NULL, NULL);
-//  if (EFI_ERROR(retval)) {
-//      Print(L"GetMemoryMap : %r \n",retval);
-//      return retval;
-//  }
-//
-//  // Exit boot services
-//  retval = gBS->ExitBootServices(ImageHandle, MapKey);
-//  if (EFI_ERROR(retval)) {
-//    Print(L"ExitBootServices : %r \n",retval);
-//      return retval;
-//  }
-//
-//  // Jump to kernel
-//  KernelEntry();
    return retval;
 }
 

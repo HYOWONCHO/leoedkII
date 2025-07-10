@@ -1170,6 +1170,8 @@ SBCStatus  SBC_DeviceIdKyeVerify(VOID *blkio, UINT8 *devid, UINT8 *deckey)
         goto errdone;
     }
 
+    SBC_external_mem_print_bin("Device ID Pubkey", key_pair.q.value, key_pair.ql);
+    SBC_external_mem_print_bin("Certificate Pubkey", pubkey, pubkeyl);
     if(CompareMem(key_pair.q.value,  pubkey, pubkeyl) != 0) {
         eprint("CA public key verify fail");
         ret = SBCINVPARAM;
