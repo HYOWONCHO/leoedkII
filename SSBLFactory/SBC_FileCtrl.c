@@ -1219,6 +1219,7 @@ EFI_STATUS SBCGetDirFile(VOID)
 
 SBCStatus SBC_LoadSSBLImage(VOID *h_blk, UINTN bnkid, VOID *ldbuf)
 {
+    SBCStatus ret = SBCOK;
     UINTN   startlba  = 0UL;
 
 
@@ -1227,7 +1228,7 @@ SBCStatus SBC_LoadSSBLImage(VOID *h_blk, UINTN bnkid, VOID *ldbuf)
     [[maybe_unused]] UINT8   *loadimg = NULL;
     UINTN   bsofs = 0;
 
-    SBC_RET_VALIDATE_ERRCODEMSG(((h_blk != NULL) || (ldbuf != NULL) || (ldlen != NULL)) , 
+    SBC_RET_VALIDATE_ERRCODEMSG(((h_blk != NULL) || (ldbuf != NULL)) , 
             SBCNULLP, 
             "Handle Object is pointing to NULL");
 
@@ -1243,19 +1244,19 @@ SBCStatus SBC_LoadSSBLImage(VOID *h_blk, UINTN bnkid, VOID *ldbuf)
 
     imglen = ALIGN_VALUE(imglen, SBC_RAWPRT_DFLT_BLK_SZ);
 
-    ((LV_t)ldbuf)->value = AllocateZeroPool(imglen);
+    ((LV_t *)ldbuf)->value = AllocateZeroPool(imglen);
     SBC_RET_VALIDATE_ERRCODEMSG(
-            (((LV_t)ldbuf)->value != NULL), 
+            (((LV_t *)ldbuf)->value != NULL), 
             SBCNULLP, 
             "Image Handle Object is pointing to NULL");
 
-    ret = SBC_RawPrtReadBlock(blkhnd, ((LV_t)ldbuf)->value, &imglen, startlba);
+    ret = SBC_RawPrtReadBlock(h_blk, ((LV_t *)ldbuf)->value, &imglen, startlba);
     SBC_RET_VALIDATE_ERRCODEMSG(
             (ret == SBCOK), 
             ret, 
             "SSBL Image load fail");
 
-    ((LV_t)ldbuf)->length = imglen;
+    ((LV_t *)ldbuf)->length = imglen;
 
 errdone:
 
