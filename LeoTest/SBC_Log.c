@@ -370,7 +370,7 @@ VOID  SBC_LogPrint(CONST CHAR16* func, UINT32 funcline, UINT32 prio, UINT32 ver,
                              host, appname, csc);
 
     endofs -= nxtofs;
-    nxtofs +=  UnicodeSPrint(&full_log_msg[nxtofs], endofs , L" SFR-%d %s ", 
+    nxtofs +=  UnicodeSPrint(&full_log_msg[nxtofs], endofs , L" R-SAT-PWT-SFR-%03d %s ", 
                              sfrid, evtype);
 
 

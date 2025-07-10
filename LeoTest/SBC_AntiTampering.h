@@ -207,4 +207,17 @@ SBCStatus  SBC_FSBL_Verify(VOID *blkhnd, VOID *ansr);
 SBCStatus  SBC_BlkIoHandleInit(OUT VOID **hblk, OUT VOID *hdr);
 
 SBCStatus  SBC_GenMigrationKey(VOID *priv, UINT32 currbankid, UINT32 prevbankid, VOID *out);
+
+/*!
+ * De
+ * 
+ * \author leoc (7/10/25)
+ * 
+ * \param blkio  
+ * \param devid  
+ * \param deckey 
+ * 
+ * \return SBCStatus 
+ */
+SBCStatus  SBC_DeviceIdKyeVerify(VOID *blkio, UINT8 *devid, UINT8 *deckey);
 #endif
