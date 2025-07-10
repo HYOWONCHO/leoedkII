@@ -174,6 +174,20 @@
 
   }
 
+  SSBLFactory/SSBLFactory.inf {
+#	<PcdsFixedAtBuild>
+#		gEfiMdePkgTokenSpaceGuid.PcdDebugPropertyMask|0x1F
+#		gEfiMedPkgTokenSpaceGuid.PcdDebugPrintErrorLevel|0x80000045
+	<LibraryClasses>
+		TimerLib|MdePkg/Library/SecPeiDxeTimerLibCpu/SecPeiDxeTimerLibCpu.inf
+		RngLib|MdeModulePkg/Library/BaseRngLibTimerLib/BaseRngLibTimerLib.inf
+		BaseCryptLib|CryptoPkg/Library/BaseCryptLib/BaseCryptLib.inf
+		OpensslLib|CryptoPkg/Library/OpensslLib/OpensslLibFull.inf
+
+  }
+
+
+
   FtdiUsbSerialDxe/FtdiUsbSerialDxe.inf
 
   #MdeModulePkg/Universal/Usb/UsbSerialDxe/UsbSerialDxe.inf
