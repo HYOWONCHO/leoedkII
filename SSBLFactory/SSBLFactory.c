@@ -441,7 +441,7 @@ UefiMain (
     LV_t baseansr;
  
 
-    intgreen_dprint("------------- FSBL START -------------\n");
+    intgreen_dprint("------------- SSBL Factory System START -------------\n");
 
     ZeroMem(&h_rawptrheader, sizeof h_rawptrheader);
     // Get the NVMe SSD Raw Partiton handle and Header information

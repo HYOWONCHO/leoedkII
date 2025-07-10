@@ -366,4 +366,6 @@ UINT32  SBC_ReadBootMode(VOID);
 EFI_STATUS SBC_WriteFile(EFI_HANDLE ImageHandle, CHAR16 *FileNames, LV_t *out);
 
 UINTN SBC_FindEfiFileSystemProtocol(EFI_HANDLE **handle);
+SBCStatus SBC_LoadSSBLImage(VOID *h_blk, UINTN bnkid, VOID *ldbuf);
+
 #endif

@@ -1351,6 +1351,178 @@ errdone:
 
 }
 
+SBCStatus  SBC_SSBL_Verify(VOID *blkhnd, VOID *ansr, UINTN bank_id)
+{
+    SBCStatus       ret = SBCOK;
+    EFI_STATUS      retval = EFI_SUCCESS;
+    EFI_HANDLE      *hndl = NULL;
+    UINT16          *fblpath = L"\\EFI\\rocky\\SSBL.efi";
+    UINT8           *infostart = NULL;
+    UINT32          last_of_fsbl = 0;
+    UINT32          bsinfolen = 0;
+    fsbl_bsinfo_t   bsinfo; 
+    UINT32          bsptrcnt = 0;
+    UINT8           HashValue[256];
+    UINT32          HashSize =0;
+    UINT32          fsbl_len =0;
+    VOID            *EcPubKey = NULL;
+    UINTN           HandleCount;
+
+    LV_t            rdlv = {
+            .length = 0,
+            .value = NULL
+      };
+
+
+
+    ret = SBC_LoadSSBLImage(blkhnd, bank_id, &rdlv);
+    SBC_RET_VALIDATE_ERRCODEMSG((ret == SBCOK), ret, "SSBL Image load fail");
+    
+    last_of_fsbl = rdlv.length - FSBL_BNIFO_SIZE;
+    infostart = &((UINT8 *)rdlv.value)[last_of_fsbl];
+
+    ZeroMem((void *)&bsinfo, sizeof bsinfo);
+    CopyMem((void *)&bsinfo, (void *)infostart, sizeof bsinfo);
+
+    ////SBC_external_mem_print_bin("BSINFO", (UINT8 *)&bsinfo, sizeof bsinfo);
+
+
+    dprint("Signature Len     : %d", bsinfo.m.siglen );
+    dprint("Firmware Info Len : %d", bsinfo.m.fwinfolen );
+    dprint("Certificate Len   : %d", bsinfo.m.certlen );
+    dprint("BaseAnswer Len    : %d", bsinfo.m.banswlen );
+    dprint("BSinfo verdion    : %d", bsinfo.m.bsinfv );
+    dprint("Spec.1 Value      : %d", bsinfo.m.reserv1 );
+    dprint("Spec.2 Value      : %d", bsinfo.m.reserv2 );
+
+    bsinfolen = bsinfo.m.siglen + bsinfo.m.fwinfolen + bsinfo.m.certlen  + bsinfo.m.banswlen;
+
+      
+    fsbl_len = last_of_fsbl = rdlv.length - FSBL_BNIFO_SIZE - bsinfolen;
+    infostart = &((UINT8 *)rdlv.value)[last_of_fsbl];
+
+    //dprint("FSBL Last : %d", last_of_fsbl);
+    ////SBC_external_mem_print_bin("Addtional Information", infostart,bsinfolen  );
+
+    fsbl_bsinfo_ptr_t info = {NULL, NULL, NULL, NULL};
+
+    info.baseansw = (VOID *)&infostart[bsptrcnt];
+    bsptrcnt += bsinfo.m.banswlen;
+
+    //SBC_external_mem_print_bin("Base Answer", (UINT8 *)info.baseansw,  bsinfo.m.banswlen );
+
+    info.fwinfo = (VOID *)&infostart[bsptrcnt];
+    bsptrcnt += bsinfo.m.fwinfolen;
+
+    //SBC_external_mem_print_bin("FW Info", (UINT8 *)info.fwinfo,  bsinfo.m.fwinfolen );
+
+    info.certi = (VOID *)&infostart[bsptrcnt];
+    bsptrcnt += bsinfo.m.certlen;
+
+    //SBC_external_mem_print_bin("Certificate", (UINT8 *)info.certi,  bsinfo.m.certlen );
+
+    info.signature = (VOID *)&infostart[bsptrcnt];
+    bsptrcnt += bsinfo.m.siglen;
+
+    //SBC_external_mem_print_bin("Signature", (UINT8 *)info.signature,  bsinfo.m.siglen );
+
+    BOOLEAN retbool = TRUE;
+    retbool = EcGetPublicKeyFromX509((CONST UINT8  *)info.certi, (UINTN)bsinfo.m.certlen,  &EcPubKey);
+    if (retbool != TRUE) {
+      eprint("EcGetPublicKeyFromX509 fail");
+      ret = SBCFAIL;
+      goto errdone;
+    }
+
+    dprint("FSBL image len : %d", fsbl_len);
+    ret = SBC_HashCompute(
+                         NULL, /* Not yet used */
+                         rdlv.value,
+                         fsbl_len,
+                         HashValue
+                      ) ; 
+
+
+    HashSize = 32;
+
+    retbool = EcDsaVerify(
+        EcPubKey,
+        CRYPTO_NID_SHA256,
+        HashValue,
+        HashSize,
+        info.signature,
+        bsinfo.m.siglen
+        );
+
+    if (retbool != TRUE) {
+      eprint("FSBL Verify fail");
+      ret = SBCFAIL;
+      goto errdone;
+    }
+
+    sbc_err_sysprn(SBC_LOG_CMN_PRIO_INFO, 2, L"SBC", L"FSBL", L"CSC-01", 23, L"VERIFY", L"FSBL Integrate check is Done\n");
+    Print(L"FSBL Verify Success !!!\n");
+
+    ((LV_t *)ansr)->value = AllocateZeroPool(bsinfo.m.banswlen);
+    if (((LV_t *)ansr)->value == NULL) {
+      //sbc_err_sysprn(SBC_LOG_CMN_PRIO_INFO, 2, L"SBC", L"FSBL", L"CSC-01", 23, L"VERIFY", L"FSBL Integrate check is Done\n");
+      eprint("Base Answer buffer allocate fail");
+      ret = SBCNULLP;
+      goto errdone;
+    }
+
+    ((LV_t *)ansr)->length = bsinfo.m.banswlen;
+    CopyMem(((LV_t *)ansr)->value, info.baseansw, bsinfo.m.banswlen);
+
+//    switch (bootmode) {
+//    case BOOT_MODE_FACTORY:
+//      break;
+//    default:
+//      // Base Answer Validate
+//      ret = SBC_BaseAnswerValidate(blkhnd, (UINT8 *)info.baseansw, bsinfo.m.banswlen );
+////    switch (ret) {
+////    case SBCBSANSWNOTFND:
+////      ((LV_t *)ansr)->value = AllocateZeroPool(bsinfo.m.banswlen);
+////      if (((LV_t *)ansr)->value == NULL) {
+////        ret = SBCNULLP;
+////        Print(L"Base Answer object create fail \n");
+////        goto errdone;
+////      }
+////      CopyMem(((LV_t *)ansr)->value, info.baseansw, bsinfo.m.banswlen);
+////      //goto errdone;
+////      break;
+////    case SBCOK:
+////      break;
+////    default:
+////      goto errdone;
+////      break;
+////    }
+//      break;
+//    }
+
+
+
+
+
+
+    //ret = SBCOK;
+
+errdone:
+
+    if (EcPubKey != NULL) {
+      EcFree(EcPubKey);
+    }
+    if (rdlv.value != NULL) {
+      FreePool(rdlv.value);
+      rdlv.value = NULL;
+
+    }
+    return ret;
+
+}
+
+
+
 SBCStatus  SBC_FSBL_Verify(VOID *blkhnd, VOID *ansr)
 {
     SBCStatus       ret = SBCOK;
