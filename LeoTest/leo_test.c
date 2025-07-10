@@ -467,6 +467,15 @@ UefiMain (
           goto errdone;
       }
 
+     sbc_err_sysprn(SBC_LOG_CMN_PRIO_ERR, 2, 
+       L"SBC", 
+       L"FSBL", 
+       L"Weapon System", 
+       8, 
+       L"Determine Firmare Tampering ", 
+       L"FSBL tampering check Done with %u",
+       (UINT32)ret);
+
 
     // Check the Preference SSBL bank
     CopyMem((void *)&pres_low, (void *)&h_rawptrheader.bootpres[0], 4);

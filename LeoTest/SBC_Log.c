@@ -519,7 +519,7 @@ void SBC_external_mem_print_bin(
                 DEBUG((DEBUG_INFO,"."));
         }
         offset += LINE_LEN;
-        DEBUG((DEBUG_INFO,"\r\r\n"));
+        DEBUG((DEBUG_INFO,"\r\n"));
 
 
         buffer += sz;

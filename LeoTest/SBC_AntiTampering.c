@@ -1327,6 +1327,12 @@ SBCStatus  SBC_BaseAnswerValidate(VOID *blkhnd, UINT8 *answer, UINTN answerl, UI
     aesctx.gcm = &ctx;
     aesctx.algoid = SBC_CIPHER_AES_GCM;
 
+//  SBC_external_mem_print_bin("Key", (UINT8 *)ctx.key.value, ctx.key.length);
+//  SBC_external_mem_print_bin("IV", (UINT8 *)ctx.iv.value , BASE_ANS_IV_KEY_STR);
+//  SBC_external_mem_print_bin("TAG", (UINT8 *)ctx.tag.value , BASE_ANS_TAG_LEN);
+//  SBC_external_mem_print_bin("Enc Message", (UINT8 *)ctx.msg.value, ctx.msg.length);
+
+
     if (SBC_AESGcmDecrypt(&aesctx) != SBCOK) {
       Print(L"Base Answer Decrypt fail \n");
       ret = SBCFAIL;
@@ -1334,7 +1340,7 @@ SBCStatus  SBC_BaseAnswerValidate(VOID *blkhnd, UINT8 *answer, UINTN answerl, UI
     }
 
 //  SBC_mem_print_bin("plain msg", answer, answerl);
-//  SBC_mem_print_bin("decrypt msg", decbuf, ctx.out.length);
+//    SBC_mem_print_bin("decrypt msg", decbuf, ctx.out.length);
 
     if (CompareMem((const void *)decbuf, (const void *)answer, answerl) != 0) {
       Print(L"Base Answer validate Fail \n");
