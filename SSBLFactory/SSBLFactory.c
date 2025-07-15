@@ -444,6 +444,10 @@ extern SBCStatus SBC_GRUB_LoadAndStart(EFI_HANDLE ImageHandle);
 
     intgreen_dprint("------------- SSBL Factory System START -------------\n");
 
+    SBC_GRUB_LoadAndStart(ImageHandle);
+    while (1) {
+    }
+
     ZeroMem(&h_rawptrheader, sizeof h_rawptrheader);
     // Get the NVMe SSD Raw Partiton handle and Header information
     ret = SBC_BlkIoHandleInit(&h_blkio, &h_rawptrheader);
@@ -463,7 +467,6 @@ extern SBCStatus SBC_GRUB_LoadAndStart(EFI_HANDLE ImageHandle);
     pres_hi = SBC_SWAP_ENDIAN_32(pres_hi);
 
     //sbc_err_sysprn(SBC_LOG_CMN_PRIO_INFO, 2, L"SBC", L"FSBL", L"xxx", 233, L"EVT", L"Pres HI : 0x%x , Pres Low: %a \n", "holla oops");
-    Print(L"Pres HI : 0x%x , Pres Low: 0x%x \n", pres_low, pres_hi);
 
     //SBC_mem_print_bin("Pres Low", (UINT8 *)&pres_low, 4);
     //SBC_mem_print_bin("Pres Hi", (UINT8 *)&pres_hi, 4);
@@ -481,6 +484,7 @@ extern SBCStatus SBC_GRUB_LoadAndStart(EFI_HANDLE ImageHandle);
         retval = EFI_INVALID_PARAMETER;
         goto errdone;
     }
+
     dprint("Currently Valid FW Bank ID : %d , Previously Bank ID : %d \n", currbank_id, prevbank_id);
 
     ret = SBC_SSBL_Verify(h_blkio, &baseansr, currbank_id);
@@ -494,7 +498,7 @@ extern SBCStatus SBC_GRUB_LoadAndStart(EFI_HANDLE ImageHandle);
                  L"FSBL tampering check fail");
           retval = EFI_INVALID_PARAMETER;
           goto errdone;
-      }
+    }
 
 
 
