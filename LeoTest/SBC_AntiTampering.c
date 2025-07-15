@@ -1651,27 +1651,35 @@ SBCStatus SBC_GenFWID(EFI_HANDLE *h_image, UINT8 *devid, UINT8 *fwid)
 {
   SBCStatus ret       = SBCOK;
   UINT8 *temp = NULL;
-  UINT8 *rdbuf = NULL;
+  //UINT8 *rdbuf = NULL;
   LV_t lv;
+  UINT8 hash_ssbl[SBC_AT_HASH_LEN] = {0, };
 
 
-  lv.value = rdbuf;
+  lv.value = NULL;
   lv.length = 0;
 
   ret = _ssbl_image_load(h_image, &lv);
   SBC_RET_VALIDATE_ERRCODEMSG((ret == SBCOK), ret, "SSB Image load fail");
   SBC_RET_VALIDATE_ERRCODEMSG((lv.length > 0), SBCZEROL, "SSB Image length 0");
 
-  temp = AllocateZeroPool(SBC_AT_HASH_LEN + lv.length);
+  // Added the Hash for SSBL
+  ret = SBC_HashCompute( NULL, 
+                         lv.value,
+                         lv.length,
+                         hash_ssbl );
+  SBC_RET_VALIDATE_ERRCODEMSG((ret == SBCOK), ret, "SSBL hash compute failed");
+
+  temp = AllocateZeroPool(SBC_AT_HASH_LEN << 1);
   SBC_RET_VALIDATE_ERRCODEMSG((temp != NULL), SBCNULLP, "memeory creation fail");
 
   CopyMem((void *)&temp[0], devid, SBC_AT_HASH_LEN);
-  CopyMem((void *)&temp[SBC_AT_HASH_LEN], lv.value, lv.length);
+  CopyMem((void *)&temp[SBC_AT_HASH_LEN], hash_ssbl, SBC_AT_HASH_LEN);
 
   ret = SBC_HashCompute(
                              NULL, /* Not yet used */
                              temp,
-                             lv.length + SBC_AT_HASH_LEN,
+                             SBC_AT_HASH_LEN << 1,
                              fwid
                           ) ;
 
@@ -1695,11 +1703,13 @@ SBCStatus SBC_GenOSID(EFI_HANDLE *h_image, UINT8 *fwid, UINT8 *osid)
 {
   SBCStatus ret       = SBCOK;
   UINT8 *temp = NULL;
-  UINT8 *rdbuf = NULL;
+  [[gnu::unused]]UINT8 *rdbuf = NULL;
   LV_t lv;
 
+  UINT8 os_hash[SBC_AT_HASH_LEN] = {0, };
 
-  lv.value = rdbuf;
+
+  lv.value = NULL;
   lv.length = 0;
 
   // OS Kernel Image read 
@@ -1709,16 +1719,23 @@ SBCStatus SBC_GenOSID(EFI_HANDLE *h_image, UINT8 *fwid, UINT8 *osid)
     goto errdone;
   }
 
-  temp = AllocateZeroPool(SBC_AT_HASH_LEN + lv.length);
+    // Added the Hash for SSBL
+  ret = SBC_HashCompute( NULL, 
+                         lv.value,
+                         lv.length,
+                         os_hash );
+  SBC_RET_VALIDATE_ERRCODEMSG((ret == SBCOK), ret, "SSBL hash compute failed");
+
+  temp = AllocateZeroPool(SBC_AT_HASH_LEN << 1);
   SBC_RET_VALIDATE_ERRCODEMSG((temp != NULL), SBCNULLP, "memeory creation fail");
 
   CopyMem((void *)&temp[0], fwid, SBC_AT_HASH_LEN);
-  CopyMem((void *)&temp[SBC_AT_HASH_LEN], lv.value, lv.length);
+  CopyMem((void *)&temp[SBC_AT_HASH_LEN], os_hash,  SBC_AT_HASH_LEN);
 
   ret = SBC_HashCompute(
                              NULL, /* Not yet used */
                              temp,
-                             lv.length + SBC_AT_HASH_LEN,
+                             SBC_AT_HASH_LEN << 1,
                              osid
                           ) ;
 

@@ -473,7 +473,7 @@ UefiMain (
        L"Weapon System", 
        8, 
        L"Determine Firmare Tampering ", 
-       L"FSBL tampering check Done with %u",
+       L"FSBL tampering check Done with %x",
        (UINT32)ret);
 
 
