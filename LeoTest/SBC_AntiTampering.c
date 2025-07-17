@@ -1125,7 +1125,8 @@ SBCStatus  SBC_DeviceIdKyeVerify(VOID *blkio, UINT8 *devid, UINT8 *deckey)
         goto errdone;
     }
 
-    CopyMem((void *)&calen, (void *)&loadbuf[0], 4);
+    offset = SYS_CONF_DEVID_CRT_OFS;
+    CopyMem((void *)&calen, (void *)&loadbuf[offset], 4);
     offset += 4;
     // Decrypt 
 
@@ -1172,6 +1173,8 @@ SBCStatus  SBC_DeviceIdKyeVerify(VOID *blkio, UINT8 *devid, UINT8 *deckey)
 
     SBC_external_mem_print_bin("Device ID Pubkey", key_pair.q.value, key_pair.ql);
     SBC_external_mem_print_bin("Certificate Pubkey", pubkey, pubkeyl);
+
+
     if(CompareMem(key_pair.q.value,  pubkey, pubkeyl) != 0) {
         eprint("CA public key verify fail");
         ret = SBCINVPARAM;
@@ -1339,8 +1342,8 @@ SBCStatus  SBC_BaseAnswerValidate(VOID *blkhnd, UINT8 *answer, UINTN answerl, UI
       goto errdone;
     }
 
-//  SBC_mem_print_bin("plain msg", answer, answerl);
-//    SBC_mem_print_bin("decrypt msg", decbuf, ctx.out.length);
+//  SBC_external_mem_print_bin("plain msg", answer, answerl);
+//  SBC_external_mem_print_bin("decrypt msg", decbuf, ctx.out.length);
 
     if (CompareMem((const void *)decbuf, (const void *)answer, answerl) != 0) {
       Print(L"Base Answer validate Fail \n");

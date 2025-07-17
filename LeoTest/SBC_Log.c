@@ -360,9 +360,69 @@ VOID  SBC_LogPrint(CONST CHAR16* func, UINT32 funcline, UINT32 prio, UINT32 ver,
     ZeroMem(&logtime, sizeof(EFI_TIME));
     gRT->GetTime(&logtime, NULL);
 
-    nxtofs=  UnicodeSPrint(full_log_msg, endofs, L"[%a:%d]", func, funcline);
+    //nxtofs=  UnicodeSPrint(full_log_msg, endofs, L"[%a:%d]", func, funcline);
+    //endofs -= nxtofs;
+
+    nxtofs +=  UnicodeSPrint(&full_log_msg[nxtofs], endofs , L"%d %d %d-%d-%dT%d:%d.%d %s %s %s", 
+                             prio, ver, 
+                             logtime.Year, logtime.Month, logtime.Day,
+                             logtime.Hour, logtime.Minute, logtime.Second,
+                             host, appname, csc);
 
     endofs -= nxtofs;
+    nxtofs +=  UnicodeSPrint(&full_log_msg[nxtofs], endofs , L" R-SAT-PWT-SFR-%03d %s ", 
+                             sfrid, evtype);
+
+
+    endofs -= nxtofs;
+ 
+
+    va_start(args, format);
+    nxtofs += UnicodeVSPrint(&full_log_msg[nxtofs] , endofs, format, args);
+    va_end(args);
+
+
+
+    //Print(L"Mesage buf length : %d  , size : %d\n", StrnLenS(full_log_msg,8192), StrnSizeS(full_log_msg,8192));
+
+    wrlog = (CHAR8 *)full_log_msg;
+    nxtofs = remove_all_space(wrlog,StrnSizeS(full_log_msg,8192));
+    //SBC_mem_print_bin("Log", (UINT8 *)wrlog, nxtofs);
+    Print(L"[%a:%d] %a \n", func, funcline, wrlog);
+    _sbc_write_log_file(wrlog,strlen(wrlog));
+    
+    
+
+}
+
+VOID  SBC_LogPrintX(UINT32 prio, UINT32 ver, CHAR16 *host, 
+                        CHAR16 *appname, CHAR16 *csc,
+                        UINT32 sfrid, CHAR16 *evtype,
+                        CHAR16 *format, ...)
+{
+
+
+    //CHAR16 buf[512];
+    //AR16 logtime[64];
+    va_list args;
+    EFI_TIME logtime;
+    CHAR8 *wrlog = NULL;
+    CHAR16 full_log_msg[512] = {0, };
+    //CHAR16 sfr_id_buf[16] = {0, };
+    //CHAR16 time_buf[128] = {0, };
+
+    UINTN nxtofs = 0;
+    
+    UINTN endofs = sizeof full_log_msg;
+
+ 
+
+    ZeroMem(&logtime, sizeof(EFI_TIME));
+    gRT->GetTime(&logtime, NULL);
+
+    //nxtofs=  UnicodeSPrint(full_log_msg, endofs, L"[%a:%d]", func, funcline);
+
+    //endofs -= nxtofs;
     nxtofs +=  UnicodeSPrint(&full_log_msg[nxtofs], endofs , L"%d %d %d-%d-%dT%d:%d.%d %s %s %s", 
                              prio, ver, 
                              logtime.Year, logtime.Month, logtime.Day,

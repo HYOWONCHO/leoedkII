@@ -1972,6 +1972,46 @@ errdone:
 
 }
 
+SBCStatus  SBC_ProtSWDec(VOID *blkio, VOID *priv)
+{
+    SBCStatus ret = SBCOK;
+
+    sw_info_t *p = (sw_info_t *)priv;
+    UINT8 nodechk[SBC_BLKDEV_BLKSZ] = {0, };
+    UINT32 cpycnt =  0;;
+
+    SBC_RET_VALIDATE_ERRCODEMSG((p != NULL), SBCNULLP, "Invalid argument");
+
+    // TO DO : Read the SW information for encypted data 
+
+    // Memory allocate for Ecnrypt
+    CopyMem((void *)&p->enclv.length, (void *)&nodechk[cpycnt], 4);
+    p->enclv.value = AllocateZeroPool(p->enclv.length);
+    SBC_RET_VALIDATE_ERRCODEMSG((p->enclv.value != NULL), SBCNULLP, "Allocate Fail");
+
+    cpycnt += 4;
+    CopyMem((void *)p->enclv.value, (void *)&nodechk[cpycnt], p->enclv.length);
+
+    cpycnt += p->enclv.length;
+    CopyMem((void *)p->iv, (void *)&nodechk[cpycnt],PROT_SW_IV_LEN);
+
+    cpycnt += PROT_SW_IV_LEN;
+    CopyMem((void *)p->tag, (void *)&nodechk[cpycnt],PROT_SW_TAG_LEN);
+
+    // TO DO : Decryptt the data 
+
+
+
+
+
+
+    
+
+errdone:
+    return ret;
+
+}
+
 //SBCStatus SBC_GenDeviceID(UINT8 *devid)
 //{
 //    SBCStatus ret = SBCOK;
