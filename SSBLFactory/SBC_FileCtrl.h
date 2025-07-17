@@ -129,6 +129,34 @@ typedef union _boot_fw_inf_t {
 
 #pragma pack()
 
+/*! \brief Protected SW Repository Data Structure */
+#pragma pack(1)
+
+#define PROT_SW_SLOT_LEN            32
+#define PROT_SW_NODE_INFO_LEN       (25 << 10)
+
+typedef union  _sw_slot_info_t {
+    struct {
+        UINT8       slotinfo[4];
+        UINT8       reserved[12];
+        UINT8       sw1_off[8];
+        UINT8       sw2_off[8];
+    }field;
+
+    UINT8 value[PROT_SW_SLOT_LEN];
+}sw_slot_info_t;
+
+
+#define PROT_SW_IV_LEN          12
+#define PROT_SW_TAG_LEN         16
+typedef struct _sw_info_t {
+    LV_t enclv;
+    UINT8 iv[PROT_SW_IV_LEN];
+    UINT8 tag[PROT_SW_TAG_LEN];
+}sw_info_t;
+
+
+#pragma pack()
 
 #define SYS_CONF_START_OFS              (0x18000000 | BOOT_FW_SRTOFS)
 #define SYS_CONF_OSID_OFS               0x00000000
@@ -139,6 +167,8 @@ typedef union _boot_fw_inf_t {
 #define SYS_CONF_OSID_CRT_OFS           0x00001880
 #define SYS_CONF_SW_LIST_OFS            0x00002080
 
+#define SYS_CONF_PROT_SW_SLOT_OFS            (0x18004400)
+#define SYS_CONF_PROT_SW_INFO_OFS            (0x1800AA00)
 
 #define SYS_OSID_LEN                    4
 #define SYS_OSID_KEY_LEN                32
