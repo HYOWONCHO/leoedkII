@@ -1974,42 +1974,91 @@ errdone:
 
 }
 
-SBCStatus  SBC_ProtSWDec(VOID *blkio, VOID *priv)
+SBCStatus  SBC_ProtSWDec(VOID *blkio, VOID *osid, VOID *outbuf, UINTN nrombank)
 {
     SBCStatus ret = SBCOK;
 
-    sw_info_t *p = (sw_info_t *)priv;
+    //sw_info_t *p = (sw_info_t *)priv;
     UINT8 nodechk[SBC_BLKDEV_BLKSZ] = {0, };
-    UINT32 cpycnt =  0;;
+    UINT8 deckey[BASE_ANS_KEY_STR] = {0, };
+    [[maybe_unused]] UINT32 cpycnt =  0;
+    protsw_repo_t repo;
+    UINT8 *decbuf = NULL;
+    SBC_AESContext aesctx;
+    SBC_AESGcmCtx  ctx;
 
-    SBC_RET_VALIDATE_ERRCODEMSG((p != NULL), SBCNULLP, "Invalid argument");
 
-    // TO DO : Read the SW information for encypted data 
+    ret = SBC_ReadProtecedSW(blkio, (VOID *)&repo, nrombank);
+    SBC_RET_VALIDATE_ERRCODEMSG((ret == SBCOK), ret, "Protected SW read fail");
+    SBC_RET_VALIDATE_ERRCODEMSG((repo.info.value != NULL), SBCNULLP, "Memory Allocation Fail");
+
 
     // Memory allocate for Ecnrypt
-    CopyMem((void *)&p->enclv.length, (void *)&nodechk[cpycnt], 4);
-    p->enclv.value = AllocateZeroPool(p->enclv.length);
-    SBC_RET_VALIDATE_ERRCODEMSG((p->enclv.value != NULL), SBCNULLP, "Allocate Fail");
+    decbuf = AllocateZeroPool(repo.info.length);
+    SBC_RET_VALIDATE_ERRCODEMSG((decbuf != NULL), SBCNULLP, "Memory Allocation Fail");
 
-    cpycnt += 4;
-    CopyMem((void *)p->enclv.value, (void *)&nodechk[cpycnt], p->enclv.length);
-
-    cpycnt += p->enclv.length;
-    CopyMem((void *)p->iv, (void *)&nodechk[cpycnt],PROT_SW_IV_LEN);
-
-    cpycnt += PROT_SW_IV_LEN;
-    CopyMem((void *)p->tag, (void *)&nodechk[cpycnt],PROT_SW_TAG_LEN);
+    CopyMem(nodechk, repo.info.value, repo.info.length);
 
     // TO DO : Decryptt the data 
 
+    ret  = SBC_HashCompute( NULL,
+                            osid,
+                            BASE_ANS_KEY_STR,
+                            deckey);
+    SBC_RET_VALIDATE_ERRCODEMSG((ret == SBCOK), ret, "Protect Decrpt key creation fail");
+
+    ctx.key.value = deckey;
+    ctx.key.length = BASE_ANS_KEY_STR;
+    ctx.iv.value = &nodechk[4+repo.info.length];
+    ctx.iv.length = BASE_ANS_IV_KEY_STR;
+    ctx.aad.value = NULL;
+    ctx.aad.length = 0;
+    ctx.msg.value = &nodechk[4];
+    ctx.msg.length = repo.info.length;
+    ctx.tag.value = &nodechk[4+repo.info.length+BASE_ANS_IV_KEY_STR];
+    ctx.tag.length = BASE_ANS_IV_KEY_STR;
+
+    ctx.out.value = decbuf;
+    ctx.out.length = repo.info.length;
+
+    aesctx.gcm = &ctx;
+    aesctx.algoid = SBC_CIPHER_AES_GCM;
 
 
+    ret = SBC_AESEncrypt(&aesctx);
+    if (ret != SBCOK) {
+            sbc_err_sysprn(SBC_LOG_CMN_PRIO_ERR, 2, 
+                     L"SBC", 
+                     L"FSBL", 
+                     L"Weapon System", 
+                     4, 
+                     L"EVT", 
+                     L"Protected SW Validate error");
+      goto errdone;
+    }
 
+    if (outbuf == NULL) {
+      goto errdone;
+    }
 
+    ((LV_t *)outbuf)->length = ctx.out.length;
+    ((LV_t *)outbuf)->value = AllocateZeroPool(ctx.out.length);
 
-    
+    CopyMem(((LV_t *)outbuf)->value, decbuf, ((LV_t *)outbuf)->length);
 
+    sbc_err_sysprn(SBC_LOG_CMN_PRIO_ERR, 2, 
+             L"SBC", 
+             L"FSBL", 
+             L"Weapon System", 
+             4, 
+             L"EVT", 
+             L"Protected SW Validate Done");
 errdone:
+
+    if (decbuf != NULL) {
+      FreePool(decbuf);
+      decbuf = NULL;
+    }
     return ret;
 
 }

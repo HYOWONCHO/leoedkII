@@ -1269,33 +1269,60 @@ errdone:
 SBCStatus SBC_ReadProtecedSW(VOID *blkio, VOID *rdbuf, UINTN nrombank)
 {
     SBCStatus   ret = SBCOK;
-    LV_t        *lv = NULL;
-    UINTN       bsofs = 0; // Boot Sector Offset
+    protsw_repo_t *repo;
+    [[maybe_unused]]LV_t        *lv = NULL;
+    LV_t        *info = NULL;
+    [[gnu::unused]]UINTN       bsofs = 0; // Boot Sector Offset
     UINTN       startlba = 0;
 
     UINT32          imglen = SBC_RAWPRT_DFLT_BLK_SZ;
     UINT8           imghdr[SBC_RAWPRT_DFLT_BLK_SZ] = {0, };
 
-    lv = (VOID *)rdbuf;
+    repo =(protsw_repo_t *)rdbuf;
+//  lv = &repo->img;
+//
+//  SBC_RET_VALIDATE_ERRCODEMSG((blkio != NULL), SBCNULLP, "Invalid Argument");
+//  SBC_RET_VALIDATE_ERRCODEMSG((lv != NULL), SBCNULLP, "Invalid Argument");
+//
+//  bsofs = (BOOT_SECTOR1_OFS | ((nrombank - 1) << 20));
+//  startlba = ((bsofs | BOOT_SSBL_OFS) >> SBC_RAWPRT_DFLT_SHIFT);
+//
+//  // Head read
+//  ret = SBC_RawPrtReadBlock(blkio, (void *)imghdr, &imglen, startlba);
+//  SBC_RET_VALIDATE_ERRCODEMSG((ret == SBCOK), ret, "SSBL Factory Block Read Failt");
+//
+//  CopyMem((void *)&imglen, &imghdr[0], sizeof imglen);
+//  lv->length = ALIGN_VALUE(imglen, SBC_RAWPRT_DFLT_BLK_SZ);
+//
+//  lv->value = AllocateZeroPool(imglen);
+//  SBC_RET_VALIDATE_ERRCODEMSG((lv->value != NULL), SBCNULLP, "Allocate Memory Fail");
+//
+//  ret = SBC_RawPrtReadBlock(blkio, lv->value, &lv->length, startlba);
+//  SBC_RET_VALIDATE_ERRCODEMSG((ret == SBCOK), ret, "SSBL  Image Read Fail ");
 
-    SBC_RET_VALIDATE_ERRCODEMSG((blkio != NULL), SBCNULLP, "Invalid Argument");
-    SBC_RET_VALIDATE_ERRCODEMSG((lv != NULL), SBCNULLP, "Invalid Argument");
+    // Read secure information
+    bsofs = startlba = 0;
+    ZeroMem(imghdr, SBC_RAWPRT_DFLT_BLK_SZ);
+    imglen = SBC_RAWPRT_DFLT_BLK_SZ;
+    info = &repo->info;
 
-    bsofs = (BOOT_SECTOR1_OFS | ((nrombank - 1) << 20));
-    startlba = ((bsofs | BOOT_SSBL_OFS) >> SBC_RAWPRT_DFLT_SHIFT);
-
+    startlba = PROT_SW_KEY_ADDR >> SBC_RAWPRT_DFLT_SHIFT;
     // Head read 
     ret = SBC_RawPrtReadBlock(blkio, (void *)imghdr, &imglen, startlba);
     SBC_RET_VALIDATE_ERRCODEMSG((ret == SBCOK), ret, "SSBL Factory Block Read Failt");
 
     CopyMem((void *)&imglen, &imghdr[0], sizeof imglen);
-    lv->length = ALIGN_VALUE(imglen, SBC_RAWPRT_DFLT_BLK_SZ);
+    info->length = imglen + SYS_OSID_IV_LEN + SYS_OSID_TAG_LEN;
 
-    lv->value = AllocateZeroPool(imglen);
-    SBC_RET_VALIDATE_ERRCODEMSG((lv->value != NULL), SBCNULLP, "Allocate Memory Fail");
-   
-    ret = SBC_RawPrtReadBlock(blkio, lv->value, &lv->length, startlba);
-    SBC_RET_VALIDATE_ERRCODEMSG((ret == SBCOK), ret, "SSBL  Image Read Fail ");
+    info->value = AllocateZeroPool( info->length);
+    SBC_RET_VALIDATE_ERRCODEMSG((info->value != NULL), SBCNULLP, "Allocate Memory Fail");
+
+    
+    // Length, Enc Message, IV and Tag copy
+    CopyMem(info->value, imghdr, info->length);
+    
+
+
 
 errdone:
 

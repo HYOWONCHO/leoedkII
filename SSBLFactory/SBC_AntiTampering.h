@@ -221,4 +221,6 @@ SBCStatus  SBC_GenMigrationKey(VOID *priv, UINT32 currbankid, UINT32 prevbankid,
  */
 SBCStatus  SBC_DeviceIdKyeVerify(VOID *blkio, UINT8 *devid, UINT8 *deckey);
 SBCStatus  SBC_SSBL_Verify(VOID *blkhnd, VOID *ansr, UINTN bank_id);
+
+SBCStatus  SBC_ProtSWDec(VOID *blkio, VOID *osid, VOID *outbuf, UINTN nrombank);
 #endif

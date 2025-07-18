@@ -190,6 +190,10 @@ typedef struct _sw_info_t {
 
 #define SYS_SETTING_STORAGE_LEN         (SYS_OSID_MAX_LEN + SYS_PRES_MAX_LEN + SYS_CERT_LEN + SYS_CERT_LEN + SYS_CERT_LEN + SYS_CERT_LEN + SYS_SWLIST_OFS_LEN)
 
+
+#define PROT_SW_BASE_ADDR               0x18004400
+#define PROT_SW_KEY_ADDR                0x1800AA00
+
 #pragma pack(1)
 typedef union _osid_key_t {
 
@@ -217,6 +221,12 @@ typedef union _sys_pres_t  {
     UINT8 value[SYS_PRES_INFO_MAX];
 
 }sys_pres_t;
+
+typedef struct _protsw_repo_t {
+    LV_t img;
+    LV_t info;
+
+}protsw_repo_t;
 
 #pragma pack()
 
