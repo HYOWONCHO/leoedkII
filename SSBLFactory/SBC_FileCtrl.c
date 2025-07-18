@@ -1266,6 +1266,42 @@ errdone:
      
 }
 
+SBCStatus SBC_ReadProtecedSW(VOID *blkio, VOID *rdbuf, UINTN nrombank)
+{
+    SBCStatus   ret = SBCOK;
+    LV_t        *lv = NULL;
+    UINTN       bsofs = 0; // Boot Sector Offset
+    UINTN       startlba = 0;
+
+    UINT32          imglen = SBC_RAWPRT_DFLT_BLK_SZ;
+    UINT8           imghdr[SBC_RAWPRT_DFLT_BLK_SZ] = {0, };
+
+    lv = (VOID *)rdbuf;
+
+    SBC_RET_VALIDATE_ERRCODEMSG((blkio != NULL), SBCNULLP, "Invalid Argument");
+    SBC_RET_VALIDATE_ERRCODEMSG((lv != NULL), SBCNULLP, "Invalid Argument");
+
+    bsofs = (BOOT_SECTOR1_OFS | ((nrombank - 1) << 20));
+    startlba = ((bsofs | BOOT_SSBL_OFS) >> SBC_RAWPRT_DFLT_SHIFT);
+
+    // Head read 
+    ret = SBC_RawPrtReadBlock(blkio, (void *)imghdr, &imglen, startlba);
+    SBC_RET_VALIDATE_ERRCODEMSG((ret == SBCOK), ret, "SSBL Factory Block Read Failt");
+
+    CopyMem((void *)&imglen, &imghdr[0], sizeof imglen);
+    lv->length = ALIGN_VALUE(imglen, SBC_RAWPRT_DFLT_BLK_SZ);
+
+    lv->value = AllocateZeroPool(imglen);
+    SBC_RET_VALIDATE_ERRCODEMSG((lv->value != NULL), SBCNULLP, "Allocate Memory Fail");
+   
+    ret = SBC_RawPrtReadBlock(blkio, lv->value, &lv->length, startlba);
+    SBC_RET_VALIDATE_ERRCODEMSG((ret == SBCOK), ret, "SSBL  Image Read Fail ");
+
+errdone:
+
+    return ret;
+}
+
 VOID SBC_FileCtrlTestMain(VOID)
 {
     SBCStatus ret = SBCOK;
