@@ -9,11 +9,21 @@
 #define BOOT_MODE_STRFACTORY    "factory"
 
 typedef enum _t_boot_mode {
-    BOOT_MODE_NORMAL =  0,          /// Normal Boot Mode
-    BOOT_MODE_UPDATE,               /// Image update
-    BOOT_MODE_FACTORY,              /// Factory mode boot 
-    BOOT_MODE_UNKNOWN
+    BOOT_MODE_NONE      = 0,
+    BOOT_MODE_NORMAL,                     /// Normal Boot Mode
+    BOOT_MODE_UPDATE,                     /// Image update
+    BOOT_MODE_RECOVERY,
+    BOOT_MODE_FACTORY,                    /// Factory mode boot 
+    BOOT_MODE_UNKNOWN 
 }boot_mode_t;
+
+typedef enum _t_key_mode {
+    KEY_MODE_NONE = 0,
+    KEY_MODE_NORMAL, 
+    KEY_MODE_BOOT,
+    KEY_MODE_UPDATE,
+    KEY_MODE_UNKNOWN
+}key_mode_t;
 
 typedef struct _t_bm_lookup_table {
     CHAR8 *key;
@@ -51,10 +61,15 @@ typedef struct _t_bm_lookup_table {
 #define SBC_PRTNIFO_LEN                     64
 
 /*! Raw Partition Header skip bytes*/
-#define SBC_HDR_SKIP_LEN                    52
+#define SBC_HDR_SKIP_LEN                    46
 
 /*! Boot pres length */
 #define SBC_BOOT_PRES_LEN                   8
+
+/*! Boot Mode */
+#define SBC_BOOT_MODE_LEN                   2
+#define SBC_KEY_MODE_LEN                    2
+#define SBC_RECOVERY_LEN                    2
 
 #pragma pack(1)
 /*!
@@ -64,6 +79,9 @@ typedef struct _rawprt_hdr_t {
     UINT32      magicid;                        /**< Identifier for SBC Raw-Partition */
     UINT8       prtinfo[SBC_PRTNIFO_LEN];       /**< Partition information */
     UINT8       reserv[SBC_HDR_SKIP_LEN];
+    UINT16      bootmode;                        /**< Boot Mode */   
+    UINT16      keymode;                        /*! Key Mode*/
+    UINT16      rcvmode;                        /*! Recover mode */     
     UINT8       bootpres[SBC_BOOT_PRES_LEN];    /**< Boot pres */
 }rawprt_hdr_t;
 
@@ -129,6 +147,8 @@ typedef union _boot_fw_inf_t {
 
 #pragma pack()
 
+
+#define LEN_DFLT_OFS                    0x04
 
 #define SYS_CONF_START_OFS              (0x18000000 | BOOT_FW_SRTOFS)
 #define SYS_CONF_OSID_OFS               0x00000000

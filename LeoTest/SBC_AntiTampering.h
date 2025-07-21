@@ -200,9 +200,9 @@ SBCStatus SBC_GenFWID(EFI_HANDLE *h_image, UINT8 *devid, UINT8 *fwid);
 SBCStatus SBC_GenOSID(EFI_HANDLE *h_image, UINT8 *fwid, UINT8 *osid);
 
 
-SBCStatus  SBC_FSBLIntgCheck(EFI_HANDLE *h_image , VOID *blkio);
+SBCStatus  SBC_FSBLIntgCheck(EFI_HANDLE *h_image , VOID *blkio, VOID *cert, UINTN certle, UINTN nrombank, UINTN mode);
 
-SBCStatus  SBC_FSBL_Verify(VOID *blkhnd, VOID *ansr);
+SBCStatus  SBC_FSBL_Verify(VOID *blkhnd, VOID *ansr, UINTN normbank, UINTN bm);
 
 SBCStatus  SBC_BlkIoHandleInit(OUT VOID **hblk, OUT VOID *hdr);
 

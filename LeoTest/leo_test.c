@@ -437,7 +437,7 @@ UefiMain (
     UINT32 pres_low = 0;
     UINT32 currbank_id = 0;
     UINT32 prevbank_id = 0;
-    UINT32 bootmd = 0; // Boot Mode
+    __attribute__((unused)) UINT32 bootmd = 0; // Boot Mode
     LV_t baseansr;
  
 
@@ -454,32 +454,7 @@ UefiMain (
     //Print(L"Find Raw Partition (0x%x)...\n", h_rawptrheader.magicid);
     dprint("Partition Info (%a) \n", h_rawptrheader.prtinfo);
 
-    // Step 1 )  FSBL, self sign and verify
-
-    ret = SBC_FSBL_Verify(h_blkio, &baseansr);
-    if (ret != SBCOK) {
-          sbc_err_sysprn(SBC_LOG_CMN_PRIO_ERR, 2, 
-                 L"SBC", 
-                 L"FSBL", 
-                 L"Weapon System", 
-                 8, 
-                 L"Determine Firmare Tampering ", 
-                 L"FSBL tampering check fail");
-          retval = EFI_INVALID_PARAMETER;
-          goto errdone;
-      }
-
-     sbc_err_sysprn(SBC_LOG_CMN_PRIO_ERR, 2, 
-       L"SBC", 
-       L"FSBL", 
-       L"Weapon System", 
-       8, 
-       L"Determine Firmare Tampering ", 
-       L"FSBL tampering check Done with %x",
-       (UINT32)ret);
-
-
-    // Check the Preference SSBL bank
+        // Check the Preference SSBL bank
     CopyMem((void *)&pres_low, (void *)&h_rawptrheader.bootpres[0], 4);
     CopyMem((void *)&pres_hi, (void *)&h_rawptrheader.bootpres[4], 4);
 
@@ -506,6 +481,33 @@ UefiMain (
         goto errdone;
     }
     dprint("Currently Valid FW Bank ID : %d , Previously Bank ID : %d \n", currbank_id, prevbank_id);
+
+   // Step 1-1 )  FSBL, self sign and verify
+
+    ret = SBC_FSBL_Verify(h_blkio, &baseansr, currbank_id, h_rawptrheader.bootmode);
+    if (ret != SBCOK) {
+          sbc_err_sysprn(SBC_LOG_CMN_PRIO_ERR, 2, 
+                 L"SBC", 
+                 L"FSBL", 
+                 L"Weapon System", 
+                 8, 
+                 L"Determine Firmare Tampering ", 
+                 L"FSBL tampering check fail");
+          retval = EFI_INVALID_PARAMETER;
+          goto errdone;
+      }
+
+     sbc_err_sysprn(SBC_LOG_CMN_PRIO_ERR, 2, 
+       L"SBC", 
+       L"FSBL", 
+       L"Weapon System", 
+       8, 
+       L"Determine Firmare Tampering ", 
+       L"FSBL tampering check Done with %x",
+       (UINT32)ret);
+
+
+
 
     // Step 2 ) SSBL sign and verify
     ret = SBC_SSBL_Verify(h_blkio, &baseansr, currbank_id);
@@ -551,8 +553,8 @@ UefiMain (
     
            
     // Check boot mode
-    bootmd = SBC_ReadBootMode();
-    switch (bootmd) {
+    //bootmd = SBC_ReadBootMode();
+    switch (h_rawptrheader.bootmode) {
     case BOOT_MODE_NORMAL:
       dprint("Boot Mode is BOOT_MODE_NORMAL");
 #ifdef _SBC_DEVID_VERIFY_

@@ -1516,7 +1516,7 @@ errdone:
 
 }
 
-SBCStatus  SBC_FSBL_Verify(VOID *blkhnd, VOID *ansr)
+SBCStatus  SBC_FSBL_Verify(VOID *blkhnd, VOID *ansr, UINTN normbank, UINTN bm)
 {
     SBCStatus       ret = SBCOK;
     EFI_STATUS      retval = EFI_SUCCESS;
@@ -1607,6 +1607,11 @@ SBCStatus  SBC_FSBL_Verify(VOID *blkhnd, VOID *ansr)
     bsptrcnt += bsinfo.m.siglen;
 
     //SBC_external_mem_print_bin("Signature", (UINT8 *)info.signature,  bsinfo.m.siglen );
+
+    // Verify the FSBL certificate using RootCA certificate
+    ret = SBC_FSBLIntgCheck(NULL , blkhnd, info.certi, bsinfo.m.certlen, normbank, bm);
+    SBC_RET_VALIDATE_ERRCODEMSG((ret == SBCOK), ret, "FSBL certificate validation fail");
+
 
     BOOLEAN retbool = TRUE;
     retbool = EcGetPublicKeyFromX509((CONST UINT8  *)info.certi, (UINTN)bsinfo.m.certlen,  &EcPubKey);
@@ -2047,54 +2052,57 @@ errdone:
 }
 
 // FSBL Integrity check 
-SBCStatus  SBC_FSBLIntgCheck(EFI_HANDLE *h_image , VOID *blkio)
+SBCStatus  SBC_FSBLIntgCheck([[gnu::unused]]EFI_HANDLE *h_image , VOID *blkio, VOID *cert, UINTN certle, UINTN nrombank, UINTN mode)
 {
     SBCStatus ret = SBCOK;
 
-    UINT8 rdbuf[SBC_BLKDEV_BLKSZ << 2] = {0,};
-    UINT32 rdlen = 532 + 529;
+    UINTN   startlba = 0;
+    UINT32  imglen = SBC_RAWPRT_DFLT_BLK_SZ;
+    [[maybe_unused]] UINT8   imghdr[SBC_RAWPRT_DFLT_BLK_SZ] = { 0, };
+    UINT8 *imgbuf = NULL;
 //  VOID *blkio;
+    UINT8 *cabuf =  NULL;
     UINTN calen = 0;
     UINTN certlen = 0;
 
-//  ret = SBC_FindBlkIoHandle(&blkio);
-//  if (ret != SBCOK) {
-//    Print(L"Find Block I/O handle fail \n");
-//    goto errdone;
-//  }
-
-
-    rdlen = SBC_BLKDEV_BLKSZ;
-    ret = SBC_RawPrtReadBlock(blkio, rdbuf, &rdlen, SBC_INTG_BLOCK_LAB);
-    if (ret != SBCOK) {
-      Print(L"Raw Partition Read behavior fail \n");
+    switch (mode) {
+    case BOOT_MODE_NORMAL:
+    case BOOT_MODE_UPDATE:
+      startlba = (SYS_CONF_START_OFS >> SBC_RAWPRT_DFLT_SHIFT);
+      imglen = ALIGN_VALUE(SYS_SETTING_STORAGE_LEN, ((EFI_BLOCK_IO_PROTOCOL *)blkio)->Media->BlockSize);
+      break;
+    case BOOT_MODE_FACTORY:
+      startlba = (SYS_CONF_START_OFS >> SBC_RAWPRT_DFLT_SHIFT);
+      imglen = ALIGN_VALUE(SYS_SETTING_STORAGE_LEN, ((EFI_BLOCK_IO_PROTOCOL *)blkio)->Media->BlockSize);
+      break;
+    default:
+      eprint("Invalid argument ");
+      ret = SBCINVPARAM;
       goto errdone;
+      break;
     }
 
-    rdlen = SBC_BLKDEV_BLKSZ;
-    ret = SBC_RawPrtReadBlock(blkio, &rdbuf[rdlen], &rdlen, SBC_INTG_BLOCK_LAB + 1);
-    if (ret != SBCOK) {
-      Print(L"Raw Partition Read behavior fail \n");
-      goto errdone;
-    }
+    imgbuf = AllocateZeroPool(imglen);
+    SBC_RET_VALIDATE_ERRCODEMSG((imgbuf != NULL), SBCNULLP, "RooTCA load buf allocate fail");
 
-    rdlen = SBC_BLKDEV_BLKSZ;
-    ret = SBC_RawPrtReadBlock(blkio, &rdbuf[rdlen*2], &rdlen, SBC_INTG_BLOCK_LAB + 2);
-    if (ret != SBCOK) {
-      Print(L"Raw Partition Read behavior fail \n");
-      goto errdone;
-    }
-    // TO DO : certificatoin lengt read, and than, SHOULD be check  whether read more the data from device 
-    // At the June 10,  fixed it ( as follows : ROOT CA -c> 532 , Intermidnate CA -> 529 
 
-    //SBC_mem_print_bin("cRT", &rdbuf[SBC_INTG_CRET_SKIP], 532 + 529);
-    certlen = calen = 532;
+    ret = SBC_RawPrtReadBlock(blkio, 
+                              (void *)imgbuf, 
+                              &imglen, 
+                              startlba);
+    SBC_RET_VALIDATE_ERRCODEMSG((ret == SBCOK), ret, "RooTCA load fail");
+
+    // Pointing the RooTCA Address
+    CopyMem((void *)&calen, (void *)&imgbuf[SYS_CONF_ROOT_CA_OFS], LEN_DFLT_OFS);
+    cabuf = &imgbuf[SYS_CONF_ROOT_CA_OFS + LEN_DFLT_OFS];
+    
+
+
     ret = SBC_X509VerifyCert(
-                      (CONST UINT8 *)&rdbuf[SBC_INTG_CRET_SKIP],  // CA Cert
-                      calen,
-                      (CONST UINT8 *)&rdbuf[SBC_INTG_CRET_SKIP], // Signed Cert
-                      certlen
-
+                      (CONST UINT8 *)cert,  //  Cert
+                      certlen,
+                      cabuf, // CA
+                      calen
         );
 
     if (ret != SBCOK) {
@@ -2103,34 +2111,13 @@ SBCStatus  SBC_FSBLIntgCheck(EFI_HANDLE *h_image , VOID *blkio)
     }
 
 
-    intgreen_dprint("!!! FSBL Integrity Check Success !!!");
-
-    calen = 532;
-    certlen =  529;
-
-   
-   // SBC_mem_print_bin("Int cRT", &rdbuf[SBC_INTG_CRET_SKIP + calen], 529);
-    ret = SBC_X509VerifyCert(
-                      (CONST UINT8 *)&rdbuf[SBC_INTG_CRET_SKIP + calen],
-                      certlen,
-                      (CONST UINT8 *)&rdbuf[SBC_INTG_CRET_SKIP],
-                      calen
-
-        );
-
-    
-    if (ret != SBCOK) {
-      int_eprint("SSBL Verify fail ^^ \n");
-      goto errdone;
-    }
-
-    intgreen_dprint("SSBL Integrity Check Success !!!");
-
-    ret = SBCOK;
-
     
 
 errdone:
+    if (imgbuf != NULL) {
+        FreePool(imgbuf);
+        imgbuf=  NULL;
+    }
     return ret;
 
 }
