@@ -3,6 +3,8 @@
 
 #include "SBC_ErrorType.h"
 
+#define BOOT_VENDOR_BASEDIR     L"\\EFI\\rocky"
+
 #define BOOT_MODE_FNAME         L"\\EFI\\BOOT\\bootmode"
 #define BOOT_MODE_STRNRORMAL    "normal"
 #define BOOT_MODE_STRUPDATE     "update"
@@ -386,4 +388,10 @@ UINT32  SBC_ReadBootMode(VOID);
 EFI_STATUS SBC_WriteFile(EFI_HANDLE ImageHandle, CHAR16 *FileNames, LV_t *out);
 
 UINTN SBC_FindEfiFileSystemProtocol(EFI_HANDLE **handle);
+
+EFI_STATUS SBC_IsFlieAccess(EFI_HANDLE ImageHandle, CHAR16 *FileNames);
+
+EFI_STATUS SBC_IsDirExist(EFI_HANDLE ImageHandle, CHAR16 *DirName);
+
+SBCStatus  SBC_FindFileBufHndl(UINT16 *f_path, UINTN *hndlcnt, VOID **hndl);
 #endif

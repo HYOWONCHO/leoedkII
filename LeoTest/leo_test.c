@@ -282,6 +282,8 @@ SBCStatus SBC_BootModeNormalAndpUdate(VOID *blkhnd, VOID *ImageHandle, UINTN nro
   [[maybe_unused]]INTN       hndlcnt = 0;
   __attribute__((unused))EFI_STATUS retval;
   [[gnu::unused]]CHAR16 *fname = L"\\EFI\\rocky\\SSBL.efi";
+  int idx;
+
 
 
   LV_t wrlv;
@@ -349,27 +351,31 @@ SBCStatus SBC_BootModeNormalAndpUdate(VOID *blkhnd, VOID *ImageHandle, UINTN nro
 
   //SBC_mem_print_bin("SSBL Load Image", wrlv.value, 512);
 #if 1
-  for (int idx = 0; idx < hndlcnt; idx++) {
-    retval = SBC_WriteFile(ssbl_img_hndl[idx], fname, &wrlv);
+  for (idx = 0; idx < hndlcnt; idx++) {
+    retval = SBC_IsDirExist(ssbl_img_hndl[idx], BOOT_VENDOR_BASEDIR);
     if (EFI_ERROR(retval)) {
-        //eprint("%s file write fail %r", fname, retval);
-        //Print(L"%a file write fail %r \n", fname, retval);
-        ret = SBCIO;
-        continue;
-        //goto errdone;
+      continue;
     }
 
-    //Print(L"Index %d Result : %d \n", idx, retval);
     break;
   }
 
   if (EFI_ERROR(retval)) {
-    eprint("%s file write fail %r", fname, retval);
-    ret = SBCIO;
+    //eprint("%s file write fail %r", fname, retval);
+    //Print(L"%a file write fail %r \n", fname, retval);
+    ret = SBCNOTFND;
+    //continue;
     goto errdone;
   }
 
-
+  retval = SBC_WriteFile(ssbl_img_hndl[idx], fname, &wrlv);
+  if (EFI_ERROR(retval)) {
+    //eprint("%s file write fail %r", fname, retval);
+    //Print(L"%a file write fail %r \n", fname, retval);
+    ret = SBCIO;
+    //continue;
+    goto errdone;
+  }
 
   Print(L"SSBL Write is Done \n");
   //SBC_mem_print_bin("SSBL Header", imghdr, imglen);
@@ -439,9 +445,15 @@ UefiMain (
     UINT32 prevbank_id = 0;
     __attribute__((unused)) UINT32 bootmd = 0; // Boot Mode
     LV_t baseansr;
+    //UINTN fmtlen = 0;
+    //CHAR16 buf[8192];
+    CHAR16 int_to_str[64];
+    UINT32 testid = 0xAA55AA55;
  
 
     intgreen_dprint("------------- FSBL START -------------\n");
+
+
 
     ZeroMem(&h_rawptrheader, sizeof h_rawptrheader);
     // Get the NVMe SSD Raw Partiton handle and Header information
@@ -484,71 +496,82 @@ UefiMain (
 
    // Step 1-1 )  FSBL, self sign and verify
 
+
+
     ret = SBC_FSBL_Verify(h_blkio, &baseansr, currbank_id, h_rawptrheader.bootmode);
     if (ret != SBCOK) {
-          sbc_err_sysprn(SBC_LOG_CMN_PRIO_ERR, 2, 
-                 L"SBC", 
-                 L"FSBL", 
-                 L"Weapon System", 
-                 8, 
-                 L"Determine Firmare Tampering ", 
-                 L"FSBL tampering check fail");
+//        sbc_err_sysprn(SBC_LOG_CMN_PRIO_ERR, 2,
+//               L"SBC",
+//               L"FSBL",
+//               L"Weapon System",
+//               8,
+//               L"Determine Firmare Tampering ",
+//               L"FSBL tampering check fail");
           retval = EFI_INVALID_PARAMETER;
           goto errdone;
       }
 
-     sbc_err_sysprn(SBC_LOG_CMN_PRIO_ERR, 2, 
-       L"SBC", 
-       L"FSBL", 
-       L"Weapon System", 
-       8, 
-       L"Determine Firmare Tampering ", 
-       L"FSBL tampering check Done with %x",
-       (UINT32)ret);
-
-
-
+//  dprint("");
+    UnicodeSPrint(int_to_str, sizeof int_to_str, L"0x%lx", testid);
+    sbc_err_sysprn(SBC_LOG_CMN_PRIO_ERR, 2,
+     L"SBC",
+     L"FSBL",
+     L"Weapon System",
+     8,
+     L"Determine Firmare Tampering ",
+     L"FSBL tampering check Done with",
+     int_to_str);
+//
+//  dprint("");
+    sbc_err_sysprn(SBC_LOG_CMN_PRIO_ERR, 2,
+       L"SBC",
+       L"FSBL",
+       L"Weapon System",
+       8,
+       L"Determine Firmare Tampering ",
+       L"FSBL tampering check Done with",
+       L"I am Log");
 
     // Step 2 ) SSBL sign and verify
-    ret = SBC_SSBL_Verify(h_blkio, &baseansr, currbank_id);
-    if (ret != SBCOK) {
-          sbc_err_sysprn(SBC_LOG_CMN_PRIO_ERR, 2, 
-                 L"SBC", 
-                 L"FSBL", 
-                 L"Weapon System", 
-                 8, 
-                 L"Determine Firmare Tampering ", 
-                 L"FSBL tampering check fail");
-          retval = EFI_INVALID_PARAMETER;
-          goto errdone;
-      }
-
-     sbc_err_sysprn(SBC_LOG_CMN_PRIO_ERR, 2, 
-       L"SBC", 
-       L"FSBL", 
-       L"Weapon System", 
-       8, 
-       L"Determine Firmare Tampering ", 
-       L"FSBL tampering check Done with %x",
-       (UINT32)ret);
+//  ret = SBC_SSBL_Verify(h_blkio, NULL, currbank_id);
+//  if (ret != SBCOK) {
+//        sbc_err_sysprn(SBC_LOG_CMN_PRIO_ERR, 2,
+//               L"SBC",
+//               L"FSBL",
+//               L"Weapon System",
+//               8,
+//               L"Determine Firmare Tampering ",
+//               L"FSBL tampering check fail");
+//        retval = EFI_INVALID_PARAMETER;
+//        goto errdone;
+//  }
+//
+// sbc_err_sysprn(SBC_LOG_CMN_PRIO_ERR, 2,
+//   L"SBC",
+//   L"FSBL",
+//   L"Weapon System",
+//   8,
+//   L"Determine Firmare Tampering ",
+//   L"FSBL tampering check Done with %x",
+//   (UINT32)ret);
 
     ret = SBC_DiceKeysGen(ImageHandle, &diceid);
     if (ret != SBCOK) {
-        sbc_err_sysprn(SBC_LOG_CMN_PRIO_ERR, 2, L"SBC", L"FSBL", L"Weapon System", 4, L"EVT", L"Dice Key creation fail\n");
+        //sbc_err_sysprn(SBC_LOG_CMN_PRIO_ERR, 2, L"SBC", L"FSBL", L"Weapon System", 4, L"EVT", L"Dice Key creation fail\n");
         retval = EFI_INVALID_PARAMETER;
         goto errdone;
     }
 
     ret = SBC_GenMigrationKey(h_blkio, currbank_id, prevbank_id, diceid.migid);
     if (ret != SBCOK) {
-        sbc_err_sysprn(SBC_LOG_CMN_PRIO_ERR, 2, L"SBC", L"FSBL", L"Weapon System", 4, L"EVT", L"Migration Key creation fail\n");
+        //sbc_err_sysprn(SBC_LOG_CMN_PRIO_ERR, 2, L"SBC", L"FSBL", L"Weapon System", 4, L"EVT", L"Migration Key creation fail\n");
         retval = EFI_INVALID_PARAMETER;
         goto errdone;
     }
 
     SBC_external_mem_print_bin("Migraiotn Key", diceid.migid, 32);
 
-    sbc_err_sysprn(SBC_LOG_CMN_PRIO_INFO, 2, L"SBC", L"FSBL", L"Weapon System", 4, L"EVT", L"Migration Key creation Success\n");
+    //sbc_err_sysprn(SBC_LOG_CMN_PRIO_INFO, 2, L"SBC", L"FSBL", L"Weapon System", 4, L"EVT", L"Migration Key creation Success\n");
 
     
            
@@ -573,13 +596,13 @@ UefiMain (
 #endif         
       ret = SBC_BaseAnswerValidate(h_blkio, (UINT8 *)baseansr.value, baseansr.length, diceid.osid, BASE_ANS_KEY_STR);
       if (ret != SBCOK) {
-              sbc_err_sysprn(SBC_LOG_CMN_PRIO_ERR, 2, 
-                     L"SBC", 
-                     L"FSBL", 
-                     L"Weapon System", 
-                     3, 
-                     L"EVT", 
-                     L"BaseAnswer Validate fail");
+//            sbc_err_sysprn(SBC_LOG_CMN_PRIO_ERR, 2,
+//                   L"SBC",
+//                   L"FSBL",
+//                   L"Weapon System",
+//                   3,
+//                   L"EVT",
+//                   L"BaseAnswer Validate fail");
               retval = EFI_INVALID_PARAMETER;
               goto errdone;
       }
@@ -597,13 +620,13 @@ UefiMain (
 #ifdef _SBC_DEVID_VERIFY_
       ret =  SBC_DeviceIdKyeVerify(h_blkio, diceid.devid, diceid.osid);
       if (ret != SBCOK) {
-              sbc_err_sysprn(SBC_LOG_CMN_PRIO_ERR, 2, 
-                     L"SBC", 
-                     L"FSBL", 
-                     L"Weapon System", 
-                     8, 
-                     L"EVT", 
-                     L"Device ID verify fail ");
+//            sbc_err_sysprn(SBC_LOG_CMN_PRIO_ERR, 2,
+//                   L"SBC",
+//                   L"FSBL",
+//                   L"Weapon System",
+//                   8,
+//                   L"EVT",
+//                   L"Device ID verify fail ");
               retval = EFI_INVALID_PARAMETER;
               goto errdone;
       }
@@ -612,13 +635,13 @@ UefiMain (
         // Storing the Base answer
       ret = SBC_BaseAnswerEncryptStore(h_blkio, baseansr.value, baseansr.length, diceid.osid, BASE_ANS_KEY_STR);
       if (ret != SBCOK) {
-              sbc_err_sysprn(SBC_LOG_CMN_PRIO_ERR, 2, 
-                     L"SBC", 
-                     L"FSBL", 
-                     L"Weapon System", 
-                     4, 
-                     L"EVT", 
-                     L"BaseAnswerEncryptStore fail");
+//            sbc_err_sysprn(SBC_LOG_CMN_PRIO_ERR, 2,
+//                   L"SBC",
+//                   L"FSBL",
+//                   L"Weapon System",
+//                   4,
+//                   L"EVT",
+//                   L"BaseAnswerEncryptStore fail");
               retval = EFI_INVALID_PARAMETER;
               goto errdone;
       }
@@ -635,13 +658,13 @@ UefiMain (
 #ifdef _SBC_DEVID_VERIFY_
       ret =  SBC_DeviceIdKyeVerify(h_blkio, diceid.devid, diceid.migid);
       if (ret != SBCOK) {
-              sbc_err_sysprn(SBC_LOG_CMN_PRIO_ERR, 2, 
-                     L"SBC", 
-                     L"FSBL", 
-                     L"Weapon System", 
-                     8, 
-                     L"EVT", 
-                     L"Device ID verify fail ");
+//            sbc_err_sysprn(SBC_LOG_CMN_PRIO_ERR, 2,
+//                   L"SBC",
+//                   L"FSBL",
+//                   L"Weapon System",
+//                   8,
+//                   L"EVT",
+//                   L"Device ID verify fail ");
               retval = EFI_INVALID_PARAMETER;
               goto errdone;
       }

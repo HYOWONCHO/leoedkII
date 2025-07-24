@@ -335,65 +335,139 @@ VOID SBC_LogVarIntMrg(CHAR16 *msg, UINT32 val, CHAR16 *msgout)
     UnicodeSPrint(msgout, StrLen(msg) + 4, L"%s:%d", (char *)msg, val);
 }
 
-VOID  SBC_LogPrint(CONST CHAR16* func, UINT32 funcline, UINT32 prio, UINT32 ver, CHAR16 *host, 
+UINTN SBC_LogFmtOutNoraml(IN CONST CHAR16 *fmt, ...)
+{
+    return 0;
+}
+
+UINTN SBC_LogFmtOut(OUT CHAR16 *outbuf, IN CONST CHAR16 *fmt, ...)
+{
+    VA_LIST marker;
+    CHAR16 buf[8192];
+    UINTN   retval;
+
+    VA_START(marker, fmt);
+    retval = UnicodeVSPrint(buf, sizeof(buf), fmt, marker);
+    VA_END(marker);
+
+    buf[retval] = '\0';
+
+    CopyMem(outbuf, buf, retval);
+
+    return retval;
+}
+
+//static CHAR8 full_log_msg[8192] = {0, };
+
+VOID  SBC_LogPrint(UINT32 prio, UINT32 ver, CHAR16 *host, 
                         CHAR16 *appname, CHAR16 *csc,
                         UINT32 sfrid, CHAR16 *evtype,
-                        CHAR16 *format, ...)
+                        CHAR16 *message, CHAR16 *msgarg)
 {
 
 
-    //CHAR16 buf[512];
-    //AR16 logtime[64];
-    va_list args;
+    [[gnu::unused]] VA_LIST args;
     EFI_TIME logtime;
     CHAR8 *wrlog = NULL;
-    CHAR16 full_log_msg[512] = {0, };
-    //CHAR16 sfr_id_buf[16] = {0, };
-    //CHAR16 time_buf[128] = {0, };
-
+    CHAR16 full_log_msg[8192] = {0, };
     UINTN nxtofs = 0;
-    
     UINTN endofs = sizeof full_log_msg;
-
- 
 
     ZeroMem(&logtime, sizeof(EFI_TIME));
     gRT->GetTime(&logtime, NULL);
 
-    //nxtofs=  UnicodeSPrint(full_log_msg, endofs, L"[%a:%d]", func, funcline);
-    //endofs -= nxtofs;
-
-    nxtofs +=  UnicodeSPrint(&full_log_msg[nxtofs], endofs , L"%d %d %d-%d-%dT%d:%d.%d %s %s %s", 
-                             prio, ver, 
+    nxtofs +=  UnicodeSPrint(&full_log_msg[nxtofs], endofs , L"%d %d %d-%d-%dT%d:%d.%d %s %s %s",
+                             prio, ver,
                              logtime.Year, logtime.Month, logtime.Day,
                              logtime.Hour, logtime.Minute, logtime.Second,
                              host, appname, csc);
 
     endofs -= nxtofs;
-    nxtofs +=  UnicodeSPrint(&full_log_msg[nxtofs], endofs , L" R-SAT-PWT-SFR-%03d %s ", 
+    nxtofs +=  UnicodeSPrint(&full_log_msg[nxtofs], endofs , L" R-SAT-PWT-SFR-%03d %s ",
                              sfrid, evtype);
 
 
     endofs -= nxtofs;
- 
+    nxtofs += UnicodeSPrint(&full_log_msg[nxtofs], endofs, L"%s-%s", message, msgarg);
 
-    va_start(args, format);
-    nxtofs += UnicodeVSPrint(&full_log_msg[nxtofs] , endofs, format, args);
-    va_end(args);
+
+//  VA_START(args, format);
+//
+//  dprint("End of FS :  %lu", endofs);
+//  //nxtofs += UnicodeVSPrint(&full_log_msg[nxtofs] , endofs, format, args);
+//  nxtofs += UnicodeVSPrint(full_log_msg , endofs, format, args);
+//  VA_END(args);
 
 
 
     //Print(L"Mesage buf length : %d  , size : %d\n", StrnLenS(full_log_msg,8192), StrnSizeS(full_log_msg,8192));
 
     wrlog = (CHAR8 *)full_log_msg;
+    Print(L"%s \n", full_log_msg);
     nxtofs = remove_all_space(wrlog,StrnSizeS(full_log_msg,8192));
     //SBC_mem_print_bin("Log", (UINT8 *)wrlog, nxtofs);
-    Print(L"[%a:%d] %a \n", func, funcline, wrlog);
-    _sbc_write_log_file(wrlog,strlen(wrlog));
     
+    _sbc_write_log_file(wrlog,strlen(wrlog));
+
     
 
 }
+
+
+//VOID  SBC_LogPrint(CONST CHAR16* func, UINT32 funcline, UINT32 prio, UINT32 ver, CHAR16 *host,
+//                        CHAR16 *appname, CHAR16 *csc,
+//                        UINT32 sfrid, CHAR16 *evtype,
+//                        CHAR16 *message, CHAR16 *msgarg,
+//                        CHAR16 *format, ...)
+//{
+//
+//
+//    [[gnu::unused]] VA_LIST args;
+//    EFI_TIME logtime;
+//    CHAR8 *wrlog = NULL;
+//    CHAR16 full_log_msg[8192] = {0, };
+//    UINTN nxtofs = 0;
+//    UINTN endofs = sizeof full_log_msg;
+//
+//    ZeroMem(&logtime, sizeof(EFI_TIME));
+//    gRT->GetTime(&logtime, NULL);
+//
+//    nxtofs +=  UnicodeSPrint(&full_log_msg[nxtofs], endofs , L"%d %d %d-%d-%dT%d:%d.%d %s %s %s",
+//                             prio, ver,
+//                             logtime.Year, logtime.Month, logtime.Day,
+//                             logtime.Hour, logtime.Minute, logtime.Second,
+//                             host, appname, csc);
+//
+//    endofs -= nxtofs;
+//    nxtofs +=  UnicodeSPrint(&full_log_msg[nxtofs], endofs , L" R-SAT-PWT-SFR-%03d %s ",
+//                             sfrid, evtype);
+//
+//
+//    endofs -= nxtofs;
+//    nxtofs += UnicodeSPrint(&full_log_msg[nxtofs], endofs, L"%s-%s", message, msgarg);
+//
+//
+////  VA_START(args, format);
+////
+////  dprint("End of FS :  %lu", endofs);
+////  //nxtofs += UnicodeVSPrint(&full_log_msg[nxtofs] , endofs, format, args);
+////  nxtofs += UnicodeVSPrint(full_log_msg , endofs, format, args);
+////  VA_END(args);
+//
+//
+//
+//    //Print(L"Mesage buf length : %d  , size : %d\n", StrnLenS(full_log_msg,8192), StrnSizeS(full_log_msg,8192));
+//
+//    wrlog = (CHAR8 *)full_log_msg;
+//    nxtofs = remove_all_space(wrlog,StrnSizeS(full_log_msg,8192));
+//    //SBC_mem_print_bin("Log", (UINT8 *)wrlog, nxtofs);
+//    Print(L"[%a:%d] %a \n", func, funcline, wrlog);
+//    _sbc_write_log_file(wrlog,strlen(wrlog));
+//
+//
+//
+//}
+
 
 VOID  SBC_LogPrintX(UINT32 prio, UINT32 ver, CHAR16 *host, 
                         CHAR16 *appname, CHAR16 *csc,
@@ -404,7 +478,7 @@ VOID  SBC_LogPrintX(UINT32 prio, UINT32 ver, CHAR16 *host,
 
     //CHAR16 buf[512];
     //AR16 logtime[64];
-    va_list args;
+    [[gnu::unused]]VA_LIST args;
     EFI_TIME logtime;
     CHAR8 *wrlog = NULL;
     CHAR16 full_log_msg[512] = {0, };

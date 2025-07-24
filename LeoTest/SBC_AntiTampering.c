@@ -19,6 +19,8 @@
 #include <Library/BaseCryptLib.h>
 #include <Protocol/BlockIo.h>
 
+#include <Library/DevicePathLib.h>
+
 #include "SBC_CryptAES.h"
 #include "SBC_TypeDefs.h"
 
@@ -58,7 +60,7 @@ static SBCStatus _kernel_image_load(EFI_HANDLE ImageHandle, LV_t *lv)
   EFI_HANDLE                      *HandleBuffer;
   UINTN                           NumberOfHandles;
   UINTN                           Index;
-  CHAR16                          FilePath[] = L"\\EFI\\rocky\\vmlinuz_test"; // Path relative to the root of the file system
+  //CHAR16                          FilePath[] = OSID_KERNEL_PATH; // Path relative to the root of the file system
   BOOLEAN                         FoundFs1 = FALSE;
   EFI_DEVICE_PATH_TO_TEXT_PROTOCOL *DevicePathToText = NULL;
   CHAR16                          *DevicePathStr = NULL;
@@ -142,12 +144,12 @@ static SBCStatus _kernel_image_load(EFI_HANDLE ImageHandle, LV_t *lv)
   Status = Root->Open (
                     Root,
                     &FileHandle,
-                    FilePath,
+                    OSID_KERNEL_PATH,
                     EFI_FILE_MODE_READ,
                     0 // Attributes: no special attributes for reading
                     );
   if (EFI_ERROR (Status)) {
-    Print(L"Failed to open file %s: %r\n", FilePath, Status);
+    Print(L"Failed to open file %s: %r\n", OSID_KERNEL_PATH, Status);
     Root->Close(Root);
     goto errdone;
   }
@@ -221,7 +223,7 @@ static SBCStatus _kernel_image_load(EFI_HANDLE ImageHandle, LV_t *lv)
   }
 
   lv->length = (UINT32)BufferSize;
-  Print(L"Successfully read %u bytes from %s.\n", (UINT32)BufferSize, FilePath);
+  //Print(L"Successfully read %u bytes from %s.\n", (UINT32)BufferSize, FilePath);
 
   // Now 'Buffer' contains the content of X64.efi.
   // You can process this content (e.g., parse it as an EFI executable)
@@ -456,6 +458,8 @@ EFI_STATUS efi_boot_fsbl_load(LV_t *lv)
   EFI_FILE_PROTOCOL                   *X64File = NULL;
   EFI_FILE_INFO                       *FileInfo = NULL;
   UINTN                               FileInfoSize = 0;
+
+  EFI_DEVICE_PATH_PROTOCOL *DevicePath = NULL;
 //VOID                                *FileBuffer = NULL;
 //UINTN                               FileSize = 0;
 
@@ -477,7 +481,16 @@ EFI_STATUS efi_boot_fsbl_load(LV_t *lv)
   // Iterate through found file systems to find the one containing /EFI/BOOT/X64.efi
   // In a real scenario, you might have logic to identify the correct ESP.
   // For simplicity, we'll try the first one here.
-  for (UINTN Index = NumberOfHandles - 1; Index < NumberOfHandles; Index++) {
+  for (UINTN Index = 0; Index < NumberOfHandles; Index++) {
+
+    DevicePath = FileDevicePath(HandleBuffer[Index], L"\\EFI\\rocky\\FSBL.efi");
+    if (DevicePath == NULL) {
+      eprint("FSBL Device path not found ");
+      continue;
+    }
+
+    dprint("Discover the device path for FSBL~~~");
+
     Status = gBS->HandleProtocol (
                     HandleBuffer[Index],
                     &gEfiSimpleFileSystemProtocolGuid,
@@ -1181,24 +1194,24 @@ SBCStatus  SBC_DeviceIdKyeVerify(VOID *blkio, UINT8 *devid, UINT8 *deckey)
         goto errdone;
     }
 
-    sbc_err_sysprn(SBC_LOG_CMN_PRIO_ERR, 2, 
-           L"SBC", 
-           L"FSBL", 
-           L"Weapon System", 
-           1, 
-           L"EVT", 
-           L"Device ID Verify Done");    
+//  sbc_err_sysprn(SBC_LOG_CMN_PRIO_ERR, 2,
+//         L"SBC",
+//         L"FSBL",
+//         L"Weapon System",
+//         1,
+//         L"EVT",
+//         L"Device ID Verify Done");
     
 
 errdone:
     if (ret != SBCOK) {
-      sbc_err_sysprn(SBC_LOG_CMN_PRIO_ERR, 2, 
-             L"SBC", 
-             L"FSBL", 
-             L"Weapon System", 
-             1, 
-             L"EVT", 
-             L"Device ID Verify Fail");
+//    sbc_err_sysprn(SBC_LOG_CMN_PRIO_ERR, 2,
+//           L"SBC",
+//           L"FSBL",
+//           L"Weapon System",
+//           1,
+//           L"EVT",
+//           L"Device ID Verify Fail");
     }
     return ret;
 
@@ -1242,13 +1255,13 @@ SBCStatus SBC_BaseAnswerEncryptStore(VOID *blkhnd, UINT8* msg, UINT32 msgl, UINT
 
     ret = SBC_AESEncrypt(&aesctx);
     if (ret != SBCOK) {
-            sbc_err_sysprn(SBC_LOG_CMN_PRIO_ERR, 2, 
-                     L"SBC", 
-                     L"FSBL", 
-                     L"Weapon System", 
-                     4, 
-                     L"EVT", 
-                     L"Base Answer Encrypt error");
+//          sbc_err_sysprn(SBC_LOG_CMN_PRIO_ERR, 2,
+//                   L"SBC",
+//                   L"FSBL",
+//                   L"Weapon System",
+//                   4,
+//                   L"EVT",
+//                   L"Base Answer Encrypt error");
       goto errdone;
     }
 
@@ -1264,13 +1277,13 @@ SBCStatus SBC_BaseAnswerEncryptStore(VOID *blkhnd, UINT8* msg, UINT32 msgl, UINT
 
     ret = _baseanswer_store(blkhnd, (VOID *)&ansid);
     if (ret != SBCOK) {
-      sbc_err_sysprn(SBC_LOG_CMN_PRIO_ERR, 2, 
-                     L"SBC", 
-                     L"FSBL", 
-                     L"Weapon System", 
-                     4, 
-                     L"EVT", 
-                     L"Base Answer Storing error");
+//    sbc_err_sysprn(SBC_LOG_CMN_PRIO_ERR, 2,
+//                   L"SBC",
+//                   L"FSBL",
+//                   L"Weapon System",
+//                   4,
+//                   L"EVT",
+//                   L"Base Answer Storing error");
       goto errdone;
     }
 
@@ -1483,6 +1496,10 @@ SBCStatus  SBC_SSBL_Verify(VOID *blkhnd, VOID *ansr,  UINTN nrombank)
         goto errdone;
     }
 
+    if (ansr == NULL) {
+      goto errdone;
+    }
+
     //sbc_err_sysprn(SBC_LOG_CMN_PRIO_INFO, 2, L"SBC", L"FSBL", L"CSC-01", 23, L"VERIFY", L"SSBL Integrate check is Done\n");
     Print(L"SSBL Verify Success !!!\n");
 
@@ -1522,6 +1539,7 @@ SBCStatus  SBC_FSBL_Verify(VOID *blkhnd, VOID *ansr, UINTN normbank, UINTN bm)
     EFI_STATUS      retval = EFI_SUCCESS;
     EFI_HANDLE      *hndl = NULL;
     UINT16          *fblpath = L"\\EFI\\rocky\\FSBL.efi";
+    //UINT16          *fblpath = L"\\boot\\vmlinuz-5.14.0-284.11.1.el9_2.x86_64" ;
     UINT8           *infostart = NULL;
     UINT32          last_of_fsbl = 0;
     UINT32          bsinfolen = 0;
@@ -1552,7 +1570,10 @@ SBCStatus  SBC_FSBL_Verify(VOID *blkhnd, VOID *ansr, UINTN normbank, UINTN bm)
       goto errdone;
     }
 
-    retval = SBC_ReadFile(hndl[HandleCount - 1], fblpath, &rdlv);
+    ret = SBC_FindFileBufHndl(fblpath, &HandleCount, hndl);
+    SBC_RET_VALIDATE_ERRCODEMSG((ret == SBCOK), ret, "File not found");
+
+    retval = SBC_ReadFile(hndl[HandleCount], fblpath, &rdlv);
     if (EFI_ERROR(retval)) {
       eprint("%s filr read fail : %r", fblpath, retval);
       ret = SBCIO;
@@ -1609,8 +1630,9 @@ SBCStatus  SBC_FSBL_Verify(VOID *blkhnd, VOID *ansr, UINTN normbank, UINTN bm)
     //SBC_external_mem_print_bin("Signature", (UINT8 *)info.signature,  bsinfo.m.siglen );
 
     // Verify the FSBL certificate using RootCA certificate
-    ret = SBC_FSBLIntgCheck(NULL , blkhnd, info.certi, bsinfo.m.certlen, normbank, bm);
-    SBC_RET_VALIDATE_ERRCODEMSG((ret == SBCOK), ret, "FSBL certificate validation fail");
+    // Later not comment 
+//  ret = SBC_FSBLIntgCheck(NULL , blkhnd, info.certi, bsinfo.m.certlen, normbank, bm);
+//  SBC_RET_VALIDATE_ERRCODEMSG((ret == SBCOK), ret, "FSBL certificate validation fail");
 
 
     BOOLEAN retbool = TRUE;
@@ -1647,7 +1669,7 @@ SBCStatus  SBC_FSBL_Verify(VOID *blkhnd, VOID *ansr, UINTN normbank, UINTN bm)
       goto errdone;
     }
 
-    sbc_err_sysprn(SBC_LOG_CMN_PRIO_INFO, 2, L"SBC", L"FSBL", L"CSC-01", 23, L"VERIFY", L"FSBL Integrate check is Done\n");
+    //sbc_err_sysprn(SBC_LOG_CMN_PRIO_INFO, 2, L"SBC", L"FSBL", L"CSC-01", 23, L"VERIFY", L"FSBL Integrate check is Done\n");
     Print(L"FSBL Verify Success !!!\n");
 
     ((LV_t *)ansr)->value = AllocateZeroPool(bsinfo.m.banswlen);

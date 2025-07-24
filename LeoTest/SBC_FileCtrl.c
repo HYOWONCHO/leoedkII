@@ -12,6 +12,8 @@
 //#include <Protocol/DevicePathToText.h>
 #include <string.h>
 
+#include <Library/DevicePathLib.h>
+
 #include "SBC_Util.h"
 #include "SBC_FileCtrl.h"
 
@@ -59,6 +61,36 @@ errdone:
 
 }
 
+SBCStatus  SBC_FindFileBufHndl(UINT16 *f_path, UINTN *hndlcnt, VOID **hndl)
+{
+    EFI_STATUS  retval = EFI_SUCCESS;
+    SBCStatus   ret = SBCOK;
+    UINTN       idx = 0;
+
+    SBC_RET_VALIDATE_ERRCODEMSG((f_path != NULL), SBCNULLP, "File Path obj Nill");
+    SBC_RET_VALIDATE_ERRCODEMSG((*hndl != NULL), SBCNULLP, "Handle Obj Nill");
+
+    for ( idx = 0; idx < *hndlcnt; idx++) {
+        retval = SBC_IsFlieAccess(hndl[idx], f_path);
+        if (EFI_ERROR(retval)) {
+            continue;
+        }
+
+        break;
+    }
+
+    if (EFI_ERROR(retval)) {
+        ret = SBCNOTFND;
+        goto errdone;
+    }
+
+    *hndlcnt = idx;
+
+errdone:
+    return ret;
+
+}
+
 
 
 //SBCStatus  SBC_GetFileSize(IN CHAR16 *FileName, OUT *FileSize)
@@ -72,7 +104,9 @@ SBCStatus  SBC_GetFileSize(CHAR16 *FileName, UINTN  *FileSize)
     EFI_FILE_PROTOCOL *File;
     UINTN              InfoSize = 0;
     EFI_FILE_INFO     *FileInfo;
-    UINTN           hndlcnt;
+    UINTN               hndlcnt;
+    UINTN               idx;
+
 
     hndlcnt = SBC_FindEfiFileSystemProtocol(&ImageHandle);
     Print(L"Hndl Count :%d \n", hndlcnt);
@@ -81,7 +115,23 @@ SBCStatus  SBC_GetFileSize(CHAR16 *FileName, UINTN  *FileSize)
         //sbc_err_sysprn()
     }
 
-    Status = gBS->HandleProtocol(ImageHandle[--hndlcnt],
+    for (idx = 0; idx < hndlcnt; idx++) {
+        Status = SBC_IsFlieAccess(ImageHandle[idx], FileName);
+        if (EFI_ERROR(Status)) {
+            //eprint("Is File (%r)", Status);
+            continue;
+        }
+
+        break;
+    }
+
+    if (EFI_ERROR(Status)) {
+        eprint("File %r", Status);
+        return SBCFAIL;
+    }
+
+
+    Status = gBS->HandleProtocol(ImageHandle[idx],
                                    &gEfiSimpleFileSystemProtocolGuid,
                                    (VOID **)&FileSystem);
     if(EFI_ERROR(Status)) {
@@ -130,6 +180,8 @@ SBCStatus  SBC_GetFileSize(CHAR16 *FileName, UINTN  *FileSize)
     } else {
         *FileSize = FileInfo->FileSize;
     }
+
+    dprint("File Size : %d", *FileSize);
 
     // Clean up allocated memory and open handles.
     FreePool(FileInfo);

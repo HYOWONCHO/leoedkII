@@ -89,13 +89,17 @@ AsciiPrintToBuffer (
   ...
   );
 
-VOID  SBC_LogPrint(CONST CHAR16* func, UINT32 funcline, UINT32 prio, UINT32 ver, CHAR16 *host, 
+UINTN SBC_LogFmtOut(OUT CHAR16 *outbuf, IN CONST CHAR16 *fmt, ...);
+UINTN SBC_LogFmtOutNoraml(IN CONST CHAR16 *fmt, ...);
+
+
+VOID  SBC_LogPrint(UINT32 prio, UINT32 ver, CHAR16 *host, 
                         CHAR16 *appname, CHAR16 *csc,
                         UINT32 sfrid, CHAR16 *evtype,
-                        CHAR16 *format, ...);
+                        CHAR16 *message, CHAR16 *msgarg);
 
-#define sbc_err_sysprn(prio, ver, host, appname, csc, sfrid, evtype, fmt,...)                                  \
-    SBC_LogPrint((CONST CHAR16 *)__FUNCTION__, (UINT32)__LINE__, prio, ver, host, appname, csc, sfrid, evtype, fmt "\n", ##__VA_ARGS__)
+#define sbc_err_sysprn(prio, ver, host, appname, csc, sfrid, evtype, msg, msgarg)   \
+    SBC_LogPrint(prio, ver, host, appname, csc, sfrid, evtype, msg, msgarg)
 
 
 #endif
