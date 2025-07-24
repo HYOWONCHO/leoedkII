@@ -117,6 +117,9 @@
 [UserExtensions.TianoCore."ExtraFiles"]
   leo_test_extra.uni
 
+[BuildOptions]
+   *_GCC_*_DLINK_FLAGS = -Wl,--gc-section
+
 #[BuildOptions.X64]
 #GCC:DEBUG_GCC5_X64_CC_FLAGS = -flto
 

@@ -394,4 +394,6 @@ EFI_STATUS SBC_IsFlieAccess(EFI_HANDLE ImageHandle, CHAR16 *FileNames);
 EFI_STATUS SBC_IsDirExist(EFI_HANDLE ImageHandle, CHAR16 *DirName);
 
 SBCStatus  SBC_FindFileBufHndl(UINT16 *f_path, UINTN *hndlcnt, VOID **hndl);
+
+EFI_STATUS SBC_LogWriteFile(EFI_HANDLE ImageHandle, CHAR16 *FileNames, LV_t *out);
 #endif

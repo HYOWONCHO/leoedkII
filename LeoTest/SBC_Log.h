@@ -85,21 +85,32 @@ extern VOID  SBC_LogWrite(UINT32 prio, CHAR16 *ver, CHAR16 *host,
 
 UINTN
 AsciiPrintToBuffer (
-  IN  CONST CHAR16 *Format,
+  IN  CONST CHAR8 *Format,
   ...
   );
 
 UINTN SBC_LogFmtOut(OUT CHAR16 *outbuf, IN CONST CHAR16 *fmt, ...);
 UINTN SBC_LogFmtOutNoraml(IN CONST CHAR16 *fmt, ...);
+EFI_STATUS SBC_CustomPrint (
+  IN CONST CHAR16 *Format,
+  ...
+  );
 
 
-VOID  SBC_LogPrint(UINT32 prio, UINT32 ver, CHAR16 *host, 
+EFI_STATUS
+EFIAPI
+SBC_LogCustomPrint (
+  OUT CHAR16 *OutFormat,
+  IN CONST CHAR16 *Format,
+  ...
+  );
+
+VOID  SBC_LogPrint(CONST CHAR16* func, UINT32 funcline, UINT32 prio, UINT32 ver, CHAR16 *host, 
                         CHAR16 *appname, CHAR16 *csc,
                         UINT32 sfrid, CHAR16 *evtype,
-                        CHAR16 *message, CHAR16 *msgarg);
-
-#define sbc_err_sysprn(prio, ver, host, appname, csc, sfrid, evtype, msg, msgarg)   \
-    SBC_LogPrint(prio, ver, host, appname, csc, sfrid, evtype, msg, msgarg)
+                        CHAR16 *format, ...);
+#define sbc_err_sysprn(prio, ver, host, appname, csc, sfrid, evtype, fmt,...)                                  \
+    SBC_LogPrint((CONST CHAR16 *)__FUNCTION__, (UINT32)__LINE__, prio, ver, host, appname, csc, sfrid, evtype, fmt "\n", ##__VA_ARGS__)
 
 
 #endif
