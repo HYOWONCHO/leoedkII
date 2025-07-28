@@ -291,15 +291,19 @@ EFI_STATUS SBC_WriteFile(EFI_HANDLE ImageHandle, CHAR16 *FileNames, LV_t *out)
   if (EFI_ERROR(Status)) {
       DEBUG((DEBUG_ERROR, " %a:%d RootDir->Open fail (%r) \r\n",
      __FUNCTION__, __LINE__, Status));
+      RootDir->Close(RootDir);
     return Status;
   }
 
   // Read the file
   Status = File->Write(File, (UINTN *)&out->length, out->value);
   if (EFI_ERROR(Status)) {
-      DEBUG((DEBUG_ERROR, " %a:%d File->Read fail (%r) \r\n",
+      DEBUG((DEBUG_ERROR, " %a:%d File->Write fail (%r) \r\n",
               __FUNCTION__, __LINE__, Status));
       //Print(L"File Content: %a\n", Buffer);
+
+      File->Close(File);
+      RootDir->Close(RootDir);
       return Status;
   }
 
@@ -351,39 +355,101 @@ errdone:
     
 }
 
-EFI_STATUS SBC_IsDirExist(EFI_HANDLE ImageHandle, CHAR16 *DirName)
+BOOLEAN SBC_IsDirExist(EFI_HANDLE ImageHandle, CHAR16 *DirectoryName)
 {
-    EFI_STATUS  retval = EFI_SUCCESS;
-    EFI_SIMPLE_FILE_SYSTEM_PROTOCOL *FileSystem;
-    EFI_FILE_PROTOCOL *RootDir = NULL;
-    EFI_FILE_PROTOCOL *DirHandle = NULL;
+  EFI_STATUS                 Status;
+  EFI_SIMPLE_FILE_SYSTEM_PROTOCOL *FileSystem;
+  EFI_FILE_PROTOCOL          *RootFile;
+  EFI_FILE_PROTOCOL          *TargetDirectory;
+  EFI_FILE_INFO              *FileInfo;
+  BOOLEAN                    Exists = FALSE;
+  UINTN                      FileInfoSize;
 
-    //gImageHandle = NULL:
 
-    retval = gBS->HandleProtocol(ImageHandle,
+  
+    Status = gBS->HandleProtocol(ImageHandle,
                                  &gEfiSimpleFileSystemProtocolGuid,
                                  (VOID **)&FileSystem);
-    
-    if (EFI_ERROR(retval)) {
-        eprint("Locate file system handle fail (%r)", retval);
-        goto errdone;
+
+    if (EFI_ERROR(Status)) {
+        eprint("Locate file system handle fail (%r)", Status);
+        return FALSE;
+        //goto errdone;
     }
 
-    retval = FileSystem->OpenVolume(FileSystem, &RootDir);
-    if (EFI_ERROR(retval)) {
-        eprint("OpenVolume fail (%r)", retval);
-        goto errdone;
+  // 1. Open the root directory of the file system volume
+  Status = FileSystem->OpenVolume (FileSystem, &RootFile);
+  if (EFI_ERROR(Status)) {
+    DEBUG ((DEBUG_ERROR, "DirectoryExists: Failed to open volume. Status: %r\n", Status));
+    return FALSE;
+  }
+
+  // 2. Try to open the target directory
+  //    EFI_FILE_MODE_READ for read access
+  //    EFI_FILE_DIRECTORY if we expect it to be a directory
+  Status = RootFile->Open (
+                       RootFile,
+                       &TargetDirectory,
+                       DirectoryName,
+                       EFI_FILE_MODE_READ,
+                       EFI_FILE_DIRECTORY // Expecting a directory
+                       );
+
+  if (EFI_ERROR(Status)) {
+    // If opening failed, it likely doesn't exist or isn't a directory
+    DEBUG ((DEBUG_INFO, "DirectoryExists: Failed to open '%s'. Status: %r\n", DirectoryName, Status));
+    // Close the RootFile handle before returning
+    RootFile->Close (RootFile);
+    return FALSE;
+  }
+
+  // 3. If opened successfully, get its information to confirm it's a directory
+  //    First call with NULL buffer to get required size
+  FileInfoSize = 0;
+  Status = TargetDirectory->GetInfo (
+                             TargetDirectory,
+                             &gEfiFileInfoGuid,
+                             &FileInfoSize,
+                             NULL
+                             );
+
+  if (Status == EFI_BUFFER_TOO_SMALL) {
+    FileInfo = AllocatePool (FileInfoSize);
+    if (FileInfo == NULL) {
+      DEBUG ((DEBUG_ERROR, "DirectoryExists: Failed to allocate FileInfo buffer.\n"));
+      // Close handles before returning
+      TargetDirectory->Close (TargetDirectory);
+      RootFile->Close (RootFile);
+      return FALSE;
     }
 
-    retval = RootDir->Open(RootDir, &DirHandle, DirName, EFI_FILE_MODE_READ,  0);
-
-
-
-errdone:
-    if (DirHandle != NULL) {
-        DirHandle->Close(DirHandle);
+    Status = TargetDirectory->GetInfo (
+                               TargetDirectory,
+                               &gEfiFileInfoGuid,
+                               &FileInfoSize,
+                               FileInfo
+                               );
+    if (EFI_ERROR(Status)) {
+      DEBUG ((DEBUG_ERROR, "DirectoryExists: Failed to get file info. Status: %r\n", Status));
+    } else {
+      // 4. Check if the EFI_FILE_DIRECTORY attribute is set
+      if ((FileInfo->Attribute & EFI_FILE_DIRECTORY) == EFI_FILE_DIRECTORY) {
+          dprint("FNAME : %s", FileInfo->FileName);
+        Exists = TRUE;
+      } else {
+        DEBUG ((DEBUG_INFO, "DirectoryExists: '%s' exists but is not a directory.\n", DirectoryName));
+      }
     }
-    return retval; 
+    FreePool (FileInfo);
+  } else {
+    DEBUG ((DEBUG_ERROR, "DirectoryExists: Failed to get file info size. Status: %r\n", Status));
+  }
+
+  // 5. Close all opened handles
+  TargetDirectory->Close (TargetDirectory);
+  RootFile->Close (RootFile);
+
+  return Exists;
     
 }
 

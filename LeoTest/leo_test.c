@@ -105,6 +105,7 @@ SBCStatus  SBC_DiceKeysGen(EFI_HANDLE ImageHandle, VOID *p)
     SBCStatus ret = SBCOK;
     atp_ident_t *h = NULL;
 
+
     h = (atp_ident_t *)p;
 
     ret = SBC_GenDeviceID(h->devid);
@@ -353,12 +354,40 @@ SBCStatus SBC_BootModeNormalAndpUdate(VOID *blkhnd, VOID *ImageHandle, UINTN nro
 
   //SBC_mem_print_bin("SSBL Load Image", wrlv.value, 512);
 #if 1
-  for (idx = 0; idx < hndlcnt; idx++) {
-    retval = SBC_IsDirExist(ssbl_img_hndl[idx], BOOT_VENDOR_BASEDIR);
+
+  //  for (idx = 0; idx < hndlcnt; idx++) {
+  //
+  ////  retval = SBC_IsFlieAccess(ssbl_img_hndl[idx], fname);
+  ////  dprint("[%d] ret value : %r", idx , retval);
+  ////  if (EFI_ERROR(retval)) {
+  ////    continue;
+  ////  }
+  //
+  //
+  //    BOOLEAN bret = FALSE;
+  //
+  //
+  //    bret = SBC_IsDirExist(ssbl_img_hndl[idx], L"\\EFI\\rocky");
+  //    dprint("bret : %d , idx : %d", bret, idx);
+  //    if (bret != TRUE) {
+  //      continue;
+  //    }
+  //
+  //    break;
+  //  }
+
+
+  for (int idx = 0; idx < hndlcnt; idx++) {
+    retval = SBC_WriteFile(ssbl_img_hndl[idx], fname, &wrlv);
     if (EFI_ERROR(retval)) {
-      continue;
+        //eprint("%s file write fail %r", fname, retval);
+        //Print(L"%a file write fail %r \n", fname, retval);
+        //ret = SBCIO;
+        continue;
+        //goto errdone;
     }
 
+    //Print(L"Index %d Result : %d \n", idx, retval);
     break;
   }
 
@@ -369,16 +398,7 @@ SBCStatus SBC_BootModeNormalAndpUdate(VOID *blkhnd, VOID *ImageHandle, UINTN nro
     //continue;
     goto errdone;
   }
-
-  retval = SBC_WriteFile(ssbl_img_hndl[idx], fname, &wrlv);
-  if (EFI_ERROR(retval)) {
-    //eprint("%s file write fail %r", fname, retval);
-    //Print(L"%a file write fail %r \n", fname, retval);
-    ret = SBCIO;
-    //continue;
-    goto errdone;
-  }
-
+  dprint("idx : %d , hndlecount : %d", idx, hndlcnt);
   Print(L"SSBL Write is Done \n");
   //SBC_mem_print_bin("SSBL Header", imghdr, imglen);
   
@@ -716,6 +736,8 @@ UefiMain (
 
     intgreen_dprint("------------- FSBL START -------------\n");
 
+
+
     ZeroMem(&h_rawptrheader, sizeof h_rawptrheader);
     // Get the NVMe SSD Raw Partiton handle and Header information
     ret = SBC_BlkIoHandleInit(&h_blkio, &h_rawptrheader);
@@ -756,8 +778,6 @@ UefiMain (
     dprint("Currently Valid FW Bank ID : %d , Previously Bank ID : %d \n", currbank_id, prevbank_id);
 
    // Step 1-1 )  FSBL, self sign and verify
-
-
 
     ret = SBC_FSBL_Verify(h_blkio, &baseansr, currbank_id, h_rawptrheader.bootmode);
     if (ret != SBCOK) {
@@ -820,7 +840,8 @@ UefiMain (
            
     // Check boot mode
     //bootmd = SBC_ReadBootMode();
-    switch (h_rawptrheader.bootmode) {
+    switch (BOOT_MODE_NORMAL) {
+    //switch (h_rawptrheader.bootmode) {
     case BOOT_MODE_NORMAL:
       dprint("Boot Mode is BOOT_MODE_NORMAL");
 #ifdef _SBC_DEVID_VERIFY_
@@ -837,22 +858,22 @@ UefiMain (
               goto errdone;
       }
 #endif         
-      ret = SBC_BaseAnswerValidate(h_blkio, (UINT8 *)baseansr.value, baseansr.length, diceid.osid, BASE_ANS_KEY_STR);
-      if (ret != SBCOK) {
-//            sbc_err_sysprn(SBC_LOG_CMN_PRIO_ERR, 2,
-//                   L"SBC",
-//                   L"FSBL",
-//                   L"Weapon System",
-//                   3,
-//                   L"EVT",
-//                   L"BaseAnswer Validate fail");
-              retval = EFI_INVALID_PARAMETER;
-              goto errdone;
-      }
+//      ret = SBC_BaseAnswerValidate(h_blkio, (UINT8 *)baseansr.value, baseansr.length, diceid.osid, BASE_ANS_KEY_STR);
+//      if (ret != SBCOK) {
+////            sbc_err_sysprn(SBC_LOG_CMN_PRIO_ERR, 2,
+////                   L"SBC",
+////                   L"FSBL",
+////                   L"Weapon System",
+////                   3,
+////                   L"EVT",
+////                   L"BaseAnswer Validate fail");
+//              retval = EFI_INVALID_PARAMETER;
+//              goto errdone;
+//      }
 
       ret = SBC_BootModeNormalAndpUdate(h_blkio, ImageHandle, currbank_id);
       if (ret != SBCOK) {
-          eprint("Factory Boot Fail");
+          eprint("Normal Boot Fail");
           retval = EFI_INVALID_PARAMETER;
           goto errdone;
       }
@@ -888,6 +909,8 @@ UefiMain (
               retval = EFI_INVALID_PARAMETER;
               goto errdone;
       }
+
+      dprint("Base Answer Encrypt is Done");
 
       ret = SBC_BootModeFactory(h_blkio, ImageHandle);
       if (ret != SBCOK) {

@@ -891,7 +891,7 @@ void _sbc_write_log_file(CHAR8 *message, UINT32 msglen)
     UINTN           hndlcnt;
     LV_t            wrlv;
 
-    CHAR16         *rocky_dir_name = L"\\EFI\\rocky";
+    CHAR16         *rocky_dir_name = L"\\EFI\\rocky\\sbc_fsbl_sys_log";
     CHAR16         *sbc_log_fname = L"\\EFI\\rocky\\sbc_fsbl_sys_log";
 
     EFI_STATUS retval = EFI_SUCCESS;
@@ -902,7 +902,7 @@ void _sbc_write_log_file(CHAR8 *message, UINT32 msglen)
 
     for (int idx = 0; idx < hndlcnt; idx++) {
         //dprint("[idx:%d] handle addr : 0x%x", idx, hndl[idx]);
-        Status = SBC_IsDirExist(hndl[idx], rocky_dir_name);
+        Status = SBC_IsFlieAccess(hndl[idx], rocky_dir_name);
         switch (Status) {
         case EFI_SUCCESS:
           loghnd=  hndl[idx];
