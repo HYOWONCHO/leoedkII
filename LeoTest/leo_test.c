@@ -100,7 +100,7 @@ RETURN_STATUS EFIAPI SerialPortInitialize(VOID)
 
 
 
-SBCStatus  SBC_DiceKeysGen(EFI_HANDLE ImageHandle, VOID *p)
+SBCStatus  SBC_DiceKeysGen(EFI_HANDLE ImageHandle, VOID *p,UINTN normbank, UINTN bm)
 {
     SBCStatus ret = SBCOK;
     atp_ident_t *h = NULL;
@@ -115,8 +115,7 @@ SBCStatus  SBC_DiceKeysGen(EFI_HANDLE ImageHandle, VOID *p)
     }
 
     //SBC_mem_print_bin("Device ID", h->devid, sizeof h->devid);SBC_mem_print_bin("Device ID", h->devid, sizeof h->devid);
-
-    ret = SBC_GenFWID(ImageHandle, h->devid, h->fwid);
+    ret = SBC_GenFWID(ImageHandle, h->devid, h->fwid, normbank, bm);
     if (ret != SBCOK) {
         Print(L"FW ID generate fail \n");
         goto errdone;
@@ -818,7 +817,7 @@ UefiMain (
 //   L"FSBL tampering check Done with %x",
 //   (UINT32)ret);
 
-    ret = SBC_DiceKeysGen(ImageHandle, &diceid);
+    ret = SBC_DiceKeysGen(ImageHandle, &diceid,BOOT_MODE_NORMAL, currbank_id);
     if (ret != SBCOK) {
         //sbc_err_sysprn(SBC_LOG_CMN_PRIO_ERR, 2, L"SBC", L"FSBL", L"Weapon System", 4, L"EVT", L"Dice Key creation fail\n");
         retval = EFI_INVALID_PARAMETER;
