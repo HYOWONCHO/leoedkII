@@ -684,159 +684,10 @@ Exit:
 
   return Status;
 }
-static UINTN remove_all_space(CHAR8* str, UINTN cnt) {
-    UINTN write_index = 0; 
-    UINTN read_index = 0;  
-
-    while (read_index != cnt) {
-        if (str[read_index] != 0x00) {
-            str[write_index] = str[read_index];
-            write_index++;
-        }
-        read_index++;
-    }
-    str[write_index] = '\0';
-
-    return write_index;
-}
-
-void _sbc_write_log_file(CHAR8 *message, UINT32 msglen)
-{
-    EFI_STATUS Status;
-    SBCStatus ret = SBCOK;
-    EFI_HANDLE      *hndl = NULL;
-    EFI_HANDLE      loghnd = NULL;
-    UINTN           hndlcnt;
-    LV_t            wrlv;
-
-    CHAR16         *rocky_dir_name = L"\\EFI\\rocky";
-    CHAR16         *sbc_log_fname = L"\\EFI\\rocky\\sbc_fsbl_sys_log";
-
-    EFI_STATUS retval = EFI_SUCCESS;
-
-    hndlcnt = SBC_FindEfiFileSystemProtocol(&hndl);
-
-    //dprint("Log gEfiSimpleFileSystemProtocolGuid Handle Count :%d ", hndlcnt);
-
-    for (int idx = 0; idx < hndlcnt; idx++) {
-        //dprint("[idx:%d] handle addr : 0x%x", idx, hndl[idx]);
-        Status = SBC_IsDirExist(hndl[idx], rocky_dir_name);
-        switch (Status) {
-        case EFI_SUCCESS:
-          loghnd=  hndl[idx];
-          //dprint("%s dir exists \n", rocky_dir_name);
-          break;
-        case EFI_NOT_FOUND:
-          //dprint("%s dir not found \n", rocky_dir_name);
-          //dprint();
-          //goto errdone;
-          break;
-        default:
-          dprint("Unknown error (%s) \n", Status);
-          break;
-        }
-
-    }
-
-    if (loghnd == NULL) {
-        goto errdone;
-    }
-
-    Status = SBC_IsFlieAccess(loghnd, sbc_log_fname);
-    switch (Status) {
-    case EFI_SUCCESS:
-      break;
-    case EFI_NOT_FOUND:
-      // Create File 
-      ret = SBC_CreateFile(loghnd, sbc_log_fname);
-      break;
-      
-    default:
-      dprint("Unknown error (%s) \n", Status);
-      goto errdone;
-      
-    }
-
-    if (ret != SBCOK) {
-        eprint("log file create fail \n");
-        return;
-    }
-
-
-    wrlv.value = message;
-    wrlv.length = msglen;
-
-    retval = SBC_LogWriteFile(loghnd, sbc_log_fname, &wrlv);
-    if (EFI_ERROR(retval)) {
-        dprint(" og  write fail (%r) \n",  retval);
-        
-    }
-
- 
-errdone:
-    return;
-
-}
-
-VOID  SBC_LogPrint(CONST CHAR16* func, UINT32 funcline, UINT32 prio, UINT32 ver, CHAR16 *host, 
-                        CHAR16 *appname, CHAR16 *csc,
-                        UINT32 sfrid, CHAR16 *evtype,
-                        CHAR16 *format, ...)
-{
-
-
-    //CHAR16 buf[512];
-    //AR16 logtime[64];
-    va_list args;
-    EFI_TIME logtime;
-    CHAR8 *wrlog = NULL;
-    CHAR16 full_log_msg[8192] = {0, };
-    //CHAR16 sfr_id_buf[16] = {0, };
-    //CHAR16 time_buf[128] = {0, };
-
-    UINTN nxtofs = 0;
-    
-    UINTN endofs = sizeof full_log_msg;
-
- 
-
-    ZeroMem(&logtime, sizeof(EFI_TIME));
-    gRT->GetTime(&logtime, NULL);
-
-    nxtofs=  UnicodeSPrint(full_log_msg, endofs, L"[%a:%d]", func, funcline);
-
-    endofs -= nxtofs;
-    nxtofs +=  UnicodeSPrint(&full_log_msg[nxtofs], endofs , L"%d %d %d-%d-%dT%d:%d.%d %s %s %s", 
-                             prio, ver, 
-                             logtime.Year, logtime.Month, logtime.Day,
-                             logtime.Hour, logtime.Minute, logtime.Second,
-                             host, appname, csc);
-
-    endofs -= nxtofs;
-    nxtofs +=  UnicodeSPrint(&full_log_msg[nxtofs], endofs , L" R-SAT-PWT-SFR-%03d %s ", 
-                             sfrid, evtype);
-
-
-    endofs -= nxtofs;
- 
-
-    va_start(args, format);
-    nxtofs += UnicodeVSPrint(&full_log_msg[nxtofs] , endofs, format, args);
-    va_end(args);
 
 
 
-    //Print(L"Mesage buf length : %d  , size : %d\n", StrnLenS(full_log_msg,8192), StrnSizeS(full_log_msg,8192));
 
-    wrlog = (CHAR8 *)full_log_msg;
-    nxtofs = remove_all_space(wrlog,StrnSizeS(full_log_msg,8192));
-    //SBC_mem_print_bin("Log", (UINT8 *)wrlog, nxtofs);
-    Print(L"Full Log msg : %a \n", wrlog);
-    _sbc_write_log_file(wrlog,strlen(wrlog));
-    
-    
-
-}
 
 
 EFI_STATUS
@@ -860,40 +711,10 @@ UefiMain (
     LV_t baseansr;
     //UINTN fmtlen = 0;
     //CHAR16 buf[8192];
-    [[maybe_unused]]CHAR16 int_to_str[(PcdGet32 (PcdUefiLibMaxPrintBufferSize) + 1) * sizeof (CHAR16)];
-    UINT32 testid = 0xAA55AA55;
+    //UINT32 testid = 0xAA55AA55;
  
 
     intgreen_dprint("------------- FSBL START -------------\n");
-//  ZeroMem(int_to_str, sizeof int_to_str);
-//  SBC_LogCustomPrint(int_to_str,L"--- SBC_LogCustomPrint 사용 예시 ---\r\n");
-//  SBC_mem_print_bin("x1", (UINT8 *)int_to_str, 29*2);
-//
-//  ZeroMem(int_to_str, sizeof int_to_str);
-//  SBC_LogCustomPrint(int_to_str,L"Hello, %s! This is a number: %d.\r\n", L"UEFI World", testid);
-//  SBC_mem_print_bin("x1", (UINT8 *)int_to_str, 32*2);
-//
-//  ZeroMem(int_to_str, sizeof int_to_str);
-//  SBC_LogCustomPrint(int_to_str,L"Negative number: %d.\r\n", -6789);
-//  dprint("%s", int_to_str);
-//
-//  ZeroMem(int_to_str, sizeof int_to_str);
-//  SBC_LogCustomPrint(int_to_str,L"Another string: %s.\r\n", L"TestString");
-//  dprint("%s", int_to_str);
-//
-//  ZeroMem(int_to_str, sizeof int_to_str);
-//  SBC_LogCustomPrint(int_to_str,L"Percentage sign: %%\r\n");
-//  dprint("%s", int_to_str);
-//
-    ZeroMem(int_to_str, sizeof int_to_str);
-    SBC_LogCustomPrint(int_to_str,L"Combined: %s and %d and %s.\r\n", L"Alpha", 500, L"Beta");
-    dprint("%s", int_to_str);
-
-    ZeroMem(int_to_str, sizeof int_to_str);
-    SBC_LogCustomPrint(int_to_str,L"Null string test: %s\r\n", (CHAR16*)NULL);
-    dprint("%s", int_to_str);
-
-
 
     ZeroMem(&h_rawptrheader, sizeof h_rawptrheader);
     // Get the NVMe SSD Raw Partiton handle and Header information
@@ -953,30 +774,6 @@ UefiMain (
     //SBC_CustomPrint(L"Weapon System %d %d \r\n", testid, testid);
     //SBC_CustomPrint(L"Weapon System %d %d %s \n", testid, testid, L"Weapon System");
 
-//    dprint("");
-//    UINTN prnlen = 0;
-//    prnlen = AsciiPrintToBuffer("0x%lx %d %lu", testid, testid, testid);
-//    dprint("Print out len : %d", prnlen);
-    sbc_err_sysprn(SBC_LOG_CMN_PRIO_ERR, 2,
-     L"SBC",
-     L"FSBL",
-     L"Weapon System",
-     8,
-     L"Determine Firmare Tampering ",
-     L"FSBL tampering check %lx Done",
-     testid);
-////
-//    dprint("");
-//    prnlen = AsciiPrintToBuffer("%s", OSID_KERNEL_PATH);
-//    dprint("Print out len : %d", prnlen);
-    sbc_err_sysprn(SBC_LOG_CMN_PRIO_ERR, 2,
-       L"SBC",
-       L"FSBL",
-       L"Weapon System",
-       8,
-       L"Determine Firmare Tampering ",
-       L"FSBL tampering check Done with %s",
-       L"Unknown Error");
 
     // Step 2 ) SSBL sign and verify
 //  ret = SBC_SSBL_Verify(h_blkio, NULL, currbank_id);

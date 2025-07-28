@@ -113,4 +113,33 @@ VOID  SBC_LogPrint(CONST CHAR16* func, UINT32 funcline, UINT32 prio, UINT32 ver,
     SBC_LogPrint((CONST CHAR16 *)__FUNCTION__, (UINT32)__LINE__, prio, ver, host, appname, csc, sfrid, evtype, fmt "\n", ##__VA_ARGS__)
 
 
+typedef enum {
+    LOG_LEVEL_DEBUG,    // 디버그 정보 (가장 상세)
+    LOG_LEVEL_INFO,     // 일반 정보
+    LOG_LEVEL_NOTICE,   // 일반적이지만 중요한 조건
+    LOG_LEVEL_WARNING,  // 경고 조건
+    LOG_LEVEL_ERROR,    // 에러 조건
+    LOG_LEVEL_CRITICAL, // 치명적인 에러 (시스템 중단 가능성)
+    LOG_LEVEL_ALERT,    // 즉시 조치가 필요한 조건
+    LOG_LEVEL_EMERGENCY // 시스템 사용 불가 (가장 심각)
+} LOG_LEVEL;
+
+//
+// 이벤트/카테고리 정의
+// 로그 메시지가 어떤 종류의 이벤트에 속하는지 나타냅니다.
+//
+typedef enum {
+    LOG_EVENT_GENERIC,      // 일반 이벤트
+    LOG_EVENT_BOOT_INIT,    // 부팅 초기화
+    LOG_EVENT_DRIVER_LOAD,  // 드라이버 로드
+    LOG_EVENT_FS_OPERATION, // 파일 시스템 작업
+    LOG_EVENT_NETWORK,      // 네트워크 관련
+    LOG_EVENT_SECURITY,     // 보안 관련
+    LOG_EVENT_CONFIG,       // 설정 관련
+    LOG_EVENT_NVRAM,        // NVRAM 관련
+    LOG_EVENT_REBOOT,       // 재부팅 관련
+    // ... 필요한 이벤트 추가
+} LOG_EVENT;
+
+VOID UefiLog(LOG_LEVEL Level, LOG_EVENT Event, CONST CHAR16 *Format, ...);
 #endif

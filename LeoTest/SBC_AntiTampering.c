@@ -48,401 +48,303 @@ typedef struct {
 
 static SBCStatus _kernel_image_load(EFI_HANDLE ImageHandle, LV_t *lv)
 {
-  SBCStatus                       ret = SBCFAIL;
-  EFI_STATUS                      Status;
-  EFI_SIMPLE_FILE_SYSTEM_PROTOCOL *SimpleFileSystem;
-  EFI_FILE_PROTOCOL               *Root;
-  EFI_FILE_PROTOCOL               *FileHandle;
-  UINTN                           BufferSize;
-  VOID                            *Buffer;
-  EFI_DEVICE_PATH_PROTOCOL        *DevicePath;
-  EFI_LOADED_IMAGE_PROTOCOL       *LoadedImage;
-  EFI_HANDLE                      *HandleBuffer;
-  UINTN                           NumberOfHandles;
-  UINTN                           Index;
-  //CHAR16                          FilePath[] = OSID_KERNEL_PATH; // Path relative to the root of the file system
-  BOOLEAN                         FoundFs1 = FALSE;
-  EFI_DEVICE_PATH_TO_TEXT_PROTOCOL *DevicePathToText = NULL;
-  CHAR16                          *DevicePathStr = NULL;
-  CONST CHAR16                     *deviceidnetiifer = L"NVMe";
+    SBCStatus           ret = SBCOK;
+    EFI_STATUS          Status;
+    UINTN               len_of_kernel = 0;
+    UINTN               hndlcnt;
+    UINTN               idx;
+    EFI_HANDLE          *hndl;
 
 
-  // 1. Get the Loaded Image Protocol to determine the current device
-  //    This is one way to find the file system where your current image is located.
-  //    You could also iterate all SimpleFileSystem protocols to find FS1 explicitly.
-  Status = gBS->OpenProtocol (
-                  ImageHandle,
-                  &gEfiLoadedImageProtocolGuid,
-                  (VOID **)&LoadedImage,
-                  ImageHandle,
-                  NULL,
-                  EFI_OPEN_PROTOCOL_GET_PROTOCOL
-                  );
-  if (EFI_ERROR (Status)) {
-    Print(L"Failed to open LoadedImageProtocol: %r\n", Status);
-    goto errdone;
-  }
+    ret = SBC_GetFileSize( OSID_KERNEL_PATH, &len_of_kernel);
+    SBC_RET_VALIDATE_ERRCODEMSG((ret == SBCOK), ret, "File Not Found");
 
-  // 2. Locate all Simple File System Protocols
-  Status = gBS->LocateHandleBuffer (
-                  ByProtocol,
-                  &gEfiSimpleFileSystemProtocolGuid,
-                  NULL,
-                  &NumberOfHandles,
-                  &HandleBuffer
-                  );
-  if (EFI_ERROR (Status)) {
-    Print(L"Failed to locate SimpleFileSystemProtocol handles: %r\n", Status);
-    goto errdone;
-  }
-
-  //Print(L"Number of HandleBuffre : %d \n", NumberOfHandles);
-
-  for (Index = 0; Index < NumberOfHandles; Index++) {
-    Status = gBS->OpenProtocol (
-                    HandleBuffer[Index],
-                    &gEfiSimpleFileSystemProtocolGuid,
-                    (VOID **)&SimpleFileSystem,
-                    ImageHandle,
-                    NULL,
-                    EFI_OPEN_PROTOCOL_GET_PROTOCOL
-                    );
-    if (EFI_ERROR (Status)) {
-      continue; // Skip if we can't open this instance
+    hndlcnt = SBC_FindEfiFileSystemProtocol(&hndl);
+    if (hndlcnt <= 0) {
+      eprint("File System Handle find fail : %d", hndlcnt);
+      return SBCFAIL;
     }
 
-    gBS->HandleProtocol(HandleBuffer[Index], &gEfiDevicePathProtocolGuid, (VOID**)&DevicePath);
-    gBS->LocateProtocol(&gEfiDevicePathToTextProtocolGuid, NULL, (VOID**)&DevicePathToText);
-    DevicePathStr = DevicePathToText->ConvertDevicePathToText(DevicePath, FALSE, FALSE);
+    for (idx = 0; idx < hndlcnt; idx++) {
+      Status = SBC_IsFlieAccess(hndl[idx], OSID_KERNEL_PATH);
+      if (EFI_ERROR(Status)) {
+        continue;
+      }
 
-    //Print(L"Device path str : %s \n", DevicePathStr);
-    if (StrStr((CONST CHAR16 *)DevicePathStr, deviceidnetiifer) == NULL) {
-      //Print(L"NVMe path NOT find \n");
-      continue;
+      break;
     }
 
-    Status = SimpleFileSystem->OpenVolume (SimpleFileSystem, &Root);
-    if (EFI_ERROR (Status)) {
-      Print(L"Failed to open volume: %r\n", Status);
-      continue;
+    if (EFI_ERROR(Status)) {
+        eprint("%s  : %r", OSID_KERNEL_PATH, Status);
+        return SBCFAIL;
     }
 
-    FoundFs1 = TRUE; // Assuming we found the correct file system
-    //Print(L"Found a file system, attempting to open: %s\n", FilePath);
-    break; // Found the file system, exit loop
-  }
+    lv->value = AllocateZeroPool(len_of_kernel);
+    lv->length = len_of_kernel;
+    dprint("%s size %d", OSID_KERNEL_PATH, lv->length);
+    SBC_RET_VALIDATE_ERRCODEMSG((lv->value != NULL), SBCNULLP, "Out of Memory");
 
-  gBS->FreePool(HandleBuffer);
 
-  if (!FoundFs1) {
-    Print(L"Could not locate the desired file system (FS1:).\n");
-    ret = SBCNOTFND;
-    goto errdone;
-  }
+    Status = SBC_ReadFile(hndl[idx], OSID_KERNEL_PATH, lv);
+    if (EFI_ERROR(Status)) {
+      eprint("%s file read fail with %r", OSID_KERNEL_PATH, Status);
+      ret = SBCNOTFND;
+      goto errdone;
+    }
 
-  // 3. Open the X64.efi file
-  Status = Root->Open (
-                    Root,
-                    &FileHandle,
-                    OSID_KERNEL_PATH,
-                    EFI_FILE_MODE_READ,
-                    0 // Attributes: no special attributes for reading
-                    );
-  if (EFI_ERROR (Status)) {
-    Print(L"Failed to open file %s: %r\n", OSID_KERNEL_PATH, Status);
-    Root->Close(Root);
-    goto errdone;
-  }
 
-  // 4. Get the file size
-  EFI_FILE_INFO *FileInfo;
-  BufferSize = 0;
-  // First call to GetInfo with BufferSize = 0 to get the required buffer size
-  Status = FileHandle->GetInfo (
-                         FileHandle,
-                         &gEfiFileInfoGuid,
-                         &BufferSize,
-                         NULL
-                         );
-  if (Status != EFI_BUFFER_TOO_SMALL) {
-    Print(L"Failed to get file info (first call): %r\n", Status);
-    FileHandle->Close(FileHandle);
-    Root->Close(Root);
-    goto errdone;
-  }
-
-  Status = gBS->AllocatePool (EfiBootServicesData, BufferSize, (VOID **)&FileInfo);
-  if (EFI_ERROR (Status)) {
-    Print(L"Failed to allocate memory for file info: %r\n", Status);
-    FileHandle->Close(FileHandle);
-    Root->Close(Root);
-    goto errdone;
-  }
-
-  Status = FileHandle->GetInfo (
-                         FileHandle,
-                         &gEfiFileInfoGuid,
-                         &BufferSize,
-                         FileInfo
-                         );
-  if (EFI_ERROR (Status)) {
-    Print(L"Failed to get file info (second call): %r\n", Status);
-    gBS->FreePool(FileInfo);
-    FileHandle->Close(FileHandle);
-    Root->Close(Root);
-    goto errdone;
-  }
-
-  UINT64 FileSize = FileInfo->FileSize;
-  //Print(L"File size of %s: %llu bytes\n", FilePath, FileSize);
-  gBS->FreePool(FileInfo);
-
-  // 5. Allocate buffer to read the file content
-  Buffer = NULL;
-  Status = gBS->AllocatePool (EfiBootServicesData, FileSize, &lv->value);
-  if (EFI_ERROR (Status)) {
-    Print(L"Failed to allocate memory for file content: %r\n", Status);
-    FileHandle->Close(FileHandle);
-    Root->Close(Root);
-    goto errdone;
-  }
-
-  // 6. Read the file content
-  BufferSize = (UINTN)FileSize; // BufferSize must be UINTN for Read()
-  Status = FileHandle->Read (
-                         FileHandle,
-                         &BufferSize,
-                         lv->value
-                         );
-  if (EFI_ERROR (Status)) {
-    Print(L"Failed to read file: %r\n", Status);
-    gBS->FreePool(Buffer);
-    FileHandle->Close(FileHandle);
-    Root->Close(Root);
-    goto errdone;
-  }
-
-  lv->length = (UINT32)BufferSize;
-  //Print(L"Successfully read %u bytes from %s.\n", (UINT32)BufferSize, FilePath);
-
-  // Now 'Buffer' contains the content of X64.efi.
-  // You can process this content (e.g., parse it as an EFI executable)
-
-  // Example: print a few bytes (assuming it's a binary file)
-  // Be careful printing raw binary data to the console, it might not be readable.
-  // For demonstration, let's print the first 16 bytes in hex.
-
-  //SBC_mem_print_bin("First 16 byte", (UINT8 *)lv->value, 16);
-
-  ret = SBCOK;
 errdone:
-  // 7. Close the file and volume handles
-  FileHandle->Close(FileHandle);
-  Root->Close(Root);
-  gBS->FreePool(Buffer);
-
-  return ret;
-  
-
+    return ret;
 }
 
 SBCStatus _ssbl_image_load(EFI_HANDLE ImageHandle, LV_t *lv)
 {
-  SBCStatus                       ret = SBCFAIL;
-  EFI_STATUS                      Status;
-  EFI_SIMPLE_FILE_SYSTEM_PROTOCOL *SimpleFileSystem;
-  EFI_FILE_PROTOCOL               *Root;
-  EFI_FILE_PROTOCOL               *FileHandle;
-  UINTN                           BufferSize;
-  VOID                            *Buffer;
-  EFI_DEVICE_PATH_PROTOCOL        *DevicePath;
-  EFI_LOADED_IMAGE_PROTOCOL       *LoadedImage;
-  EFI_HANDLE                      *HandleBuffer;
-  UINTN                           NumberOfHandles;
-  UINTN                           Index;
-  CHAR16                          FilePath[] = L"\\EFI\\BOOT\\SSBL.efi"; // Path relative to the root of the file system
-  BOOLEAN                         FoundFs1 = FALSE;
-  EFI_DEVICE_PATH_TO_TEXT_PROTOCOL *DevicePathToText = NULL;
-  CHAR16                          *DevicePathStr = NULL;
-  CONST CHAR16                     *deviceidnetiifer = L"NVMe";
+
+    SBCStatus           ret = SBCOK;
+    EFI_STATUS          Status;
+    UINTN               len_of_kernel = 0;
+    UINTN               hndlcnt;
+    UINTN               idx;
+    EFI_HANDLE          *hndl;
+    CHAR16              ssbl_path[] = L"\\EFI\\BOOT\\SSBL.efi";
 
 
-  // 1. Get the Loaded Image Protocol to determine the current device
-  //    This is one way to find the file system where your current image is located.
-  //    You could also iterate all SimpleFileSystem protocols to find FS1 explicitly.
-  Status = gBS->OpenProtocol (
-                  ImageHandle,
-                  &gEfiLoadedImageProtocolGuid,
-                  (VOID **)&LoadedImage,
-                  ImageHandle,
-                  NULL,
-                  EFI_OPEN_PROTOCOL_GET_PROTOCOL
-                  );
-  if (EFI_ERROR (Status)) {
-    Print(L"Failed to open LoadedImageProtocol: %r\n", Status);
-    goto errdone;
-  }
+    ret = SBC_GetFileSize( ssbl_path, &len_of_kernel);
+    SBC_RET_VALIDATE_ERRCODEMSG((ret == SBCOK), ret, "File Not Found");
 
-  // 2. Locate all Simple File System Protocols
-  Status = gBS->LocateHandleBuffer (
-                  ByProtocol,
-                  &gEfiSimpleFileSystemProtocolGuid,
-                  NULL,
-                  &NumberOfHandles,
-                  &HandleBuffer
-                  );
-  if (EFI_ERROR (Status)) {
-    Print(L"Failed to locate SimpleFileSystemProtocol handles: %r\n", Status);
-    goto errdone;
-  }
-
-  //Print(L"Number of HandleBuffre : %d \n", NumberOfHandles);
-
-  for (Index = 0; Index < NumberOfHandles; Index++) {
-    Status = gBS->OpenProtocol (
-                    HandleBuffer[Index],
-                    &gEfiSimpleFileSystemProtocolGuid,
-                    (VOID **)&SimpleFileSystem,
-                    ImageHandle,
-                    NULL,
-                    EFI_OPEN_PROTOCOL_GET_PROTOCOL
-                    );
-    if (EFI_ERROR (Status)) {
-      continue; // Skip if we can't open this instance
+    hndlcnt = SBC_FindEfiFileSystemProtocol(&hndl);
+    if (hndlcnt <= 0) {
+      eprint("File System Handle find fail : %d", hndlcnt);
+      return SBCFAIL;
     }
 
-    gBS->HandleProtocol(HandleBuffer[Index], &gEfiDevicePathProtocolGuid, (VOID**)&DevicePath);
-    gBS->LocateProtocol(&gEfiDevicePathToTextProtocolGuid, NULL, (VOID**)&DevicePathToText);
-    DevicePathStr = DevicePathToText->ConvertDevicePathToText(DevicePath, FALSE, FALSE);
+    for (idx = 0; idx < hndlcnt; idx++) {
+      Status = SBC_IsFlieAccess(hndl[idx], ssbl_path);
+      if (EFI_ERROR(Status)) {
+        continue;
+      }
 
-    //Print(L"Device path str : %s \n", DevicePathStr);
-    if (StrStr((CONST CHAR16 *)DevicePathStr, deviceidnetiifer) == NULL) {
-      //Print(L"NVMe path NOT find \n");
-      continue;
+      break;
     }
 
-    Status = SimpleFileSystem->OpenVolume (SimpleFileSystem, &Root);
-    if (EFI_ERROR (Status)) {
-      Print(L"Failed to open volume: %r\n", Status);
-      continue;
+    if (EFI_ERROR(Status)) {
+        eprint("%s  : %r", ssbl_path, Status);
+        return SBCFAIL;
     }
 
-    FoundFs1 = TRUE; // Assuming we found the correct file system
-    //Print(L"Found a file system, attempting to open: %s\n", FilePath);
-    break; // Found the file system, exit loop
-  }
+    lv->value = AllocateZeroPool(len_of_kernel);
+    lv->length = len_of_kernel;
+    dprint("%s size %d", OSID_KERNEL_PATH, lv->length);
+    SBC_RET_VALIDATE_ERRCODEMSG((lv->value != NULL), SBCNULLP, "Out of Memory");
 
-  gBS->FreePool(HandleBuffer);
 
-  if (!FoundFs1) {
-    Print(L"Could not locate the desired file system (FS1:).\n");
-    ret = SBCNOTFND;
-    goto errdone;
-  }
+    Status = SBC_ReadFile(hndl[idx], ssbl_path, lv);
+    if (EFI_ERROR(Status)) {
+      eprint("%s file read fail with %r", ssbl_path, Status);
+      ret = SBCNOTFND;
+      goto errdone;
+    }
 
-  // 3. Open the X64.efi file
-  Status = Root->Open (
-                    Root,
-                    &FileHandle,
-                    FilePath,
-                    EFI_FILE_MODE_READ,
-                    0 // Attributes: no special attributes for reading
-                    );
-  if (EFI_ERROR (Status)) {
-    Print(L"Failed to open file %s: %r\n", FilePath, Status);
-    Root->Close(Root);
-    goto errdone;
-  }
 
-  // 4. Get the file size
-  EFI_FILE_INFO *FileInfo;
-  BufferSize = 0;
-  // First call to GetInfo with BufferSize = 0 to get the required buffer size
-  Status = FileHandle->GetInfo (
-                         FileHandle,
-                         &gEfiFileInfoGuid,
-                         &BufferSize,
-                         NULL
-                         );
-  if (Status != EFI_BUFFER_TOO_SMALL) {
-    Print(L"Failed to get file info (first call): %r\n", Status);
-    FileHandle->Close(FileHandle);
-    Root->Close(Root);
-    goto errdone;
-  }
-
-  Status = gBS->AllocatePool (EfiBootServicesData, BufferSize, (VOID **)&FileInfo);
-  if (EFI_ERROR (Status)) {
-    Print(L"Failed to allocate memory for file info: %r\n", Status);
-    FileHandle->Close(FileHandle);
-    Root->Close(Root);
-    goto errdone;
-  }
-
-  Status = FileHandle->GetInfo (
-                         FileHandle,
-                         &gEfiFileInfoGuid,
-                         &BufferSize,
-                         FileInfo
-                         );
-  if (EFI_ERROR (Status)) {
-    Print(L"Failed to get file info (second call): %r\n", Status);
-    gBS->FreePool(FileInfo);
-    FileHandle->Close(FileHandle);
-    Root->Close(Root);
-    goto errdone;
-  }
-
-  UINT64 FileSize = FileInfo->FileSize;
-  //Print(L"File size of %s: %llu bytes\n", FilePath, FileSize);
-  gBS->FreePool(FileInfo);
-
-  // 5. Allocate buffer to read the file content
-  Buffer = NULL;
-  Status = gBS->AllocatePool (EfiBootServicesData, FileSize, &lv->value);
-  if (EFI_ERROR (Status)) {
-    Print(L"Failed to allocate memory for file content: %r\n", Status);
-    FileHandle->Close(FileHandle);
-    Root->Close(Root);
-    goto errdone;
-  }
-
-  // 6. Read the file content
-  BufferSize = (UINTN)FileSize; // BufferSize must be UINTN for Read()
-  Status = FileHandle->Read (
-                         FileHandle,
-                         &BufferSize,
-                         lv->value
-                         );
-  if (EFI_ERROR (Status)) {
-    Print(L"Failed to read file: %r\n", Status);
-    gBS->FreePool(Buffer);
-    FileHandle->Close(FileHandle);
-    Root->Close(Root);
-    goto errdone;
-  }
-
-  lv->length = (UINT32)BufferSize;
-  Print(L"Successfully read %u bytes from %s.\n", (UINT32)BufferSize, FilePath);
-
-  // Now 'Buffer' contains the content of X64.efi.
-  // You can process this content (e.g., parse it as an EFI executable)
-
-  // Example: print a few bytes (assuming it's a binary file)
-  // Be careful printing raw binary data to the console, it might not be readable.
-  // For demonstration, let's print the first 16 bytes in hex.
-
-  //SBC_mem_print_bin("First 16 byte", (UINT8 *)lv->value, 16);
-
-  ret = SBCOK;
 errdone:
-  // 7. Close the file and volume handles
-  FileHandle->Close(FileHandle);
-  Root->Close(Root);
-  gBS->FreePool(Buffer);
+    return ret;
 
-  return ret;
-  
+
+//  SBCStatus                       ret = SBCFAIL;
+//  EFI_STATUS                      Status;
+//  EFI_SIMPLE_FILE_SYSTEM_PROTOCOL *SimpleFileSystem;
+//  EFI_FILE_PROTOCOL               *Root;
+//  EFI_FILE_PROTOCOL               *FileHandle;
+//  UINTN                           BufferSize;
+//  VOID                            *Buffer;
+//  EFI_DEVICE_PATH_PROTOCOL        *DevicePath;
+//  EFI_LOADED_IMAGE_PROTOCOL       *LoadedImage;
+//  EFI_HANDLE                      *HandleBuffer;
+//  UINTN                           NumberOfHandles;
+//  UINTN                           Index;
+//  CHAR16                          FilePath[] = L"\\EFI\\BOOT\\SSBL.efi"; // Path relative to the root of the file system
+//  BOOLEAN                         FoundFs1 = FALSE;
+//  EFI_DEVICE_PATH_TO_TEXT_PROTOCOL *DevicePathToText = NULL;
+//  CHAR16                          *DevicePathStr = NULL;
+//  CONST CHAR16                     *deviceidnetiifer = L"NVMe";
+//
+//
+//  // 1. Get the Loaded Image Protocol to determine the current device
+//  //    This is one way to find the file system where your current image is located.
+//  //    You could also iterate all SimpleFileSystem protocols to find FS1 explicitly.
+//  Status = gBS->OpenProtocol (
+//                  ImageHandle,
+//                  &gEfiLoadedImageProtocolGuid,
+//                  (VOID **)&LoadedImage,
+//                  ImageHandle,
+//                  NULL,
+//                  EFI_OPEN_PROTOCOL_GET_PROTOCOL
+//                  );
+//  if (EFI_ERROR (Status)) {
+//    Print(L"Failed to open LoadedImageProtocol: %r\n", Status);
+//    goto errdone;
+//  }
+//
+//  // 2. Locate all Simple File System Protocols
+//  Status = gBS->LocateHandleBuffer (
+//                  ByProtocol,
+//                  &gEfiSimpleFileSystemProtocolGuid,
+//                  NULL,
+//                  &NumberOfHandles,
+//                  &HandleBuffer
+//                  );
+//  if (EFI_ERROR (Status)) {
+//    Print(L"Failed to locate SimpleFileSystemProtocol handles: %r\n", Status);
+//    goto errdone;
+//  }
+//
+//  //Print(L"Number of HandleBuffre : %d \n", NumberOfHandles);
+//
+//  for (Index = 0; Index < NumberOfHandles; Index++) {
+//    Status = gBS->OpenProtocol (
+//                    HandleBuffer[Index],
+//                    &gEfiSimpleFileSystemProtocolGuid,
+//                    (VOID **)&SimpleFileSystem,
+//                    ImageHandle,
+//                    NULL,
+//                    EFI_OPEN_PROTOCOL_GET_PROTOCOL
+//                    );
+//    if (EFI_ERROR (Status)) {
+//      continue; // Skip if we can't open this instance
+//    }
+//
+//    gBS->HandleProtocol(HandleBuffer[Index], &gEfiDevicePathProtocolGuid, (VOID**)&DevicePath);
+//    gBS->LocateProtocol(&gEfiDevicePathToTextProtocolGuid, NULL, (VOID**)&DevicePathToText);
+//    DevicePathStr = DevicePathToText->ConvertDevicePathToText(DevicePath, FALSE, FALSE);
+//
+//    //Print(L"Device path str : %s \n", DevicePathStr);
+//    if (StrStr((CONST CHAR16 *)DevicePathStr, deviceidnetiifer) == NULL) {
+//      //Print(L"NVMe path NOT find \n");
+//      continue;
+//    }
+//
+//    Status = SimpleFileSystem->OpenVolume (SimpleFileSystem, &Root);
+//    if (EFI_ERROR (Status)) {
+//      Print(L"Failed to open volume: %r\n", Status);
+//      continue;
+//    }
+//
+//    FoundFs1 = TRUE; // Assuming we found the correct file system
+//    //Print(L"Found a file system, attempting to open: %s\n", FilePath);
+//    break; // Found the file system, exit loop
+//  }
+//
+//  gBS->FreePool(HandleBuffer);
+//
+//  if (!FoundFs1) {
+//    Print(L"Could not locate the desired file system (FS1:).\n");
+//    ret = SBCNOTFND;
+//    goto errdone;
+//  }
+//
+//  // 3. Open the X64.efi file
+//  Status = Root->Open (
+//                    Root,
+//                    &FileHandle,
+//                    FilePath,
+//                    EFI_FILE_MODE_READ,
+//                    0 // Attributes: no special attributes for reading
+//                    );
+//  if (EFI_ERROR (Status)) {
+//    Print(L"Failed to open file %s: %r\n", FilePath, Status);
+//    Root->Close(Root);
+//    goto errdone;
+//  }
+//
+//  // 4. Get the file size
+//  EFI_FILE_INFO *FileInfo;
+//  BufferSize = 0;
+//  // First call to GetInfo with BufferSize = 0 to get the required buffer size
+//  Status = FileHandle->GetInfo (
+//                         FileHandle,
+//                         &gEfiFileInfoGuid,
+//                         &BufferSize,
+//                         NULL
+//                         );
+//  if (Status != EFI_BUFFER_TOO_SMALL) {
+//    Print(L"Failed to get file info (first call): %r\n", Status);
+//    FileHandle->Close(FileHandle);
+//    Root->Close(Root);
+//    goto errdone;
+//  }
+//
+//  Status = gBS->AllocatePool (EfiBootServicesData, BufferSize, (VOID **)&FileInfo);
+//  if (EFI_ERROR (Status)) {
+//    Print(L"Failed to allocate memory for file info: %r\n", Status);
+//    FileHandle->Close(FileHandle);
+//    Root->Close(Root);
+//    goto errdone;
+//  }
+//
+//  Status = FileHandle->GetInfo (
+//                         FileHandle,
+//                         &gEfiFileInfoGuid,
+//                         &BufferSize,
+//                         FileInfo
+//                         );
+//  if (EFI_ERROR (Status)) {
+//    Print(L"Failed to get file info (second call): %r\n", Status);
+//    gBS->FreePool(FileInfo);
+//    FileHandle->Close(FileHandle);
+//    Root->Close(Root);
+//    goto errdone;
+//  }
+//
+//  UINT64 FileSize = FileInfo->FileSize;
+//  //Print(L"File size of %s: %llu bytes\n", FilePath, FileSize);
+//  gBS->FreePool(FileInfo);
+//
+//  // 5. Allocate buffer to read the file content
+//  Buffer = NULL;
+//  Status = gBS->AllocatePool (EfiBootServicesData, FileSize, &lv->value);
+//  if (EFI_ERROR (Status)) {
+//    Print(L"Failed to allocate memory for file content: %r\n", Status);
+//    FileHandle->Close(FileHandle);
+//    Root->Close(Root);
+//    goto errdone;
+//  }
+//
+//  // 6. Read the file content
+//  BufferSize = (UINTN)FileSize; // BufferSize must be UINTN for Read()
+//  Status = FileHandle->Read (
+//                         FileHandle,
+//                         &BufferSize,
+//                         lv->value
+//                         );
+//  if (EFI_ERROR (Status)) {
+//    Print(L"Failed to read file: %r\n", Status);
+//    gBS->FreePool(Buffer);
+//    FileHandle->Close(FileHandle);
+//    Root->Close(Root);
+//    goto errdone;
+//  }
+//
+//  lv->length = (UINT32)BufferSize;
+//  Print(L"Successfully read %u bytes from %s.\n", (UINT32)BufferSize, FilePath);
+//
+//  // Now 'Buffer' contains the content of X64.efi.
+//  // You can process this content (e.g., parse it as an EFI executable)
+//
+//  // Example: print a few bytes (assuming it's a binary file)
+//  // Be careful printing raw binary data to the console, it might not be readable.
+//  // For demonstration, let's print the first 16 bytes in hex.
+//
+//  //SBC_mem_print_bin("First 16 byte", (UINT8 *)lv->value, 16);
+//
+//  ret = SBCOK;
+//errdone:
+//  // 7. Close the file and volume handles
+//  FileHandle->Close(FileHandle);
+//  Root->Close(Root);
+//  gBS->FreePool(Buffer);
+//
+//  return ret;
+//
 
 }
 

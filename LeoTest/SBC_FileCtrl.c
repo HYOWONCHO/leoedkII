@@ -112,6 +112,7 @@ SBCStatus  SBC_GetFileSize(CHAR16 *FileName, UINTN  *FileSize)
     Print(L"Hndl Count :%d \n", hndlcnt);
     if (hndlcnt <= 0) {
         Print(L"File Sys handle find fail : %d \n", hndlcnt);
+        return SBCFAIL;
         //sbc_err_sysprn()
     }
 

@@ -145,6 +145,8 @@ VOID SBC_LogBoolean(BOOLEAN expression, CONST CHAR8 *funcname, UINTN linenumber,
 
 }
 
+
+
 //VOID SBC_LogMsg(/*@unused@*/UINT8* logmsg ARG_UNUSED, CONST CHAR8 *funcname, UINTN linenumber, CONST CHAR8 *filename, CONST CHAR8 *description)
 VOID SBC_LogMsg(CHAR8* logmsg , CONST CHAR8 *funcname, UINTN linenumber, CONST CHAR8 *filename)
 {
@@ -861,6 +863,244 @@ void SBC_external_mem_print_bin(
         buffer += sz;
         length -= sz;
     }
+}
+
+
+static UINTN remove_all_space(CHAR8* str, UINTN cnt) {
+    UINTN write_index = 0; 
+    UINTN read_index = 0;  
+
+    while (read_index != cnt) {
+        if (str[read_index] != 0x00) {
+            str[write_index] = str[read_index];
+            write_index++;
+        }
+        read_index++;
+    }
+    str[write_index] = '\0';
+
+    return write_index;
+}
+
+void _sbc_write_log_file(CHAR8 *message, UINT32 msglen)
+{
+    EFI_STATUS Status;
+    SBCStatus ret = SBCOK;
+    EFI_HANDLE      *hndl = NULL;
+    EFI_HANDLE      loghnd = NULL;
+    UINTN           hndlcnt;
+    LV_t            wrlv;
+
+    CHAR16         *rocky_dir_name = L"\\EFI\\rocky";
+    CHAR16         *sbc_log_fname = L"\\EFI\\rocky\\sbc_fsbl_sys_log";
+
+    EFI_STATUS retval = EFI_SUCCESS;
+
+    hndlcnt = SBC_FindEfiFileSystemProtocol(&hndl);
+
+    //dprint("Log gEfiSimpleFileSystemProtocolGuid Handle Count :%d ", hndlcnt);
+
+    for (int idx = 0; idx < hndlcnt; idx++) {
+        //dprint("[idx:%d] handle addr : 0x%x", idx, hndl[idx]);
+        Status = SBC_IsDirExist(hndl[idx], rocky_dir_name);
+        switch (Status) {
+        case EFI_SUCCESS:
+          loghnd=  hndl[idx];
+          //dprint("%s dir exists \n", rocky_dir_name);
+          break;
+        case EFI_NOT_FOUND:
+          //dprint("%s dir not found \n", rocky_dir_name);
+          //dprint();
+          //goto errdone;
+          break;
+        default:
+          dprint("Unknown error (%s) \n", Status);
+          break;
+        }
+
+    }
+
+    if (loghnd == NULL) {
+        goto errdone;
+    }
+
+    Status = SBC_IsFlieAccess(loghnd, sbc_log_fname);
+    switch (Status) {
+    case EFI_SUCCESS:
+      break;
+    case EFI_NOT_FOUND:
+      // Create File 
+      ret = SBC_CreateFile(loghnd, sbc_log_fname);
+      break;
+      
+    default:
+      dprint("Unknown error (%s) \n", Status);
+      goto errdone;
+      
+    }
+
+    if (ret != SBCOK) {
+        eprint("log file create fail \n");
+        return;
+    }
+
+
+    wrlv.value = message;
+    wrlv.length = msglen;
+
+    retval = SBC_LogWriteFile(loghnd, sbc_log_fname, &wrlv);
+    if (EFI_ERROR(retval)) {
+        dprint(" og  write fail (%r) \n",  retval);
+        
+    }
+
+ 
+errdone:
+    return;
+
+}
+
+
+UINTN _LogFmtVPrint(IN CONST CHAR16 *Format, IN VA_LIST VaListMaker, CHAR16 *LogBuf, UINTN BufLen)
+{
+
+  return UnicodeVSPrint(LogBuf, BufLen, Format, VaListMaker);
+
+  
+
+}
+
+VOID  SBC_LogPrint(CONST CHAR16* func, UINT32 funcline, UINT32 prio, UINT32 ver, CHAR16 *host, 
+                        CHAR16 *appname, CHAR16 *csc,
+                        UINT32 sfrid, CHAR16 *evtype,
+                        CHAR16 *format, ...)
+{
+
+
+    EFI_STATUS retval;
+    VA_LIST args;
+    EFI_TIME logtime;
+    CHAR8 *wrlog = NULL;
+    CHAR16 full_log_msg[(PcdGet32 (PcdUefiLibMaxPrintBufferSize) + 1) * sizeof (CHAR16)];
+    //CHAR16 fmtlog[(PcdGet32 (PcdUefiLibMaxPrintBufferSize) + 1) * sizeof (CHAR16)];
+
+    UINTN nxtofs = 0;
+    //UINTN fmtofs = 0;
+    //UINTN   offset = 0;
+    
+    UINTN endofs = sizeof(full_log_msg);
+
+ 
+
+    dprint("Log buf size %d", sizeof(full_log_msg));
+    ZeroMem(full_log_msg, sizeof full_log_msg);
+    ZeroMem(&logtime, sizeof(EFI_TIME));
+    retval = gRT->GetTime(&logtime, NULL);
+    if (EFI_ERROR(retval)) {
+      SetMem(&logtime, sizeof(EFI_TIME), 0);
+    }
+
+    //nxtofs=  UnicodeSPrint(full_log_msg + offset, endofs, L"[%a:%d]", func, funcline);
+
+
+
+    //endofs = sizeof(full_log_msg)  - (nxtofs * sizeof(CHAR16));
+    nxtofs +=  UnicodeSPrint(full_log_msg + nxtofs, endofs  - (nxtofs * sizeof(CHAR16)), 
+                             L"%d %d %d-%d-%dT%d:%d.%d %s %s %s R-SAT-PWT-SFR-%03d %s", 
+                             prio, ver, 
+                             logtime.Year, logtime.Month, logtime.Day,
+                             logtime.Hour, logtime.Minute, logtime.Second,
+                             host, appname, csc,
+                             sfrid, evtype);
+
+
+    VA_START(args, format);
+    nxtofs += _LogFmtVPrint((CONST CHAR16 *)format, args, (CHAR16 *)full_log_msg + nxtofs, endofs  - (nxtofs * sizeof(CHAR16)));
+    VA_END(args);
+
+
+
+    //Print(L"Mesage buf length : %d  , size : %d\n", StrnLenS(full_log_msg,8192), StrnSizeS(full_log_msg,8192));
+
+    wrlog = (CHAR8 *)full_log_msg;
+    Print(L"Full Log msg : %s \n", full_log_msg);
+    nxtofs = remove_all_space(wrlog,StrnSizeS(full_log_msg,sizeof(full_log_msg)));
+    //SBC_mem_print_bin("Log", (UINT8 *)wrlog, nxtofs);
+    Print(L"Full Log msg : %a \n", wrlog);
+    _sbc_write_log_file(wrlog,strlen(wrlog));
+    
+    
+
+}
+
+
+
+
+//
+// 헬퍼 함수: 로그 레벨을 문자열로 변환
+//
+CONST CHAR16* GetLogLevelString(LOG_LEVEL Level) {
+    switch (Level) {
+        case LOG_LEVEL_DEBUG:       return L"DEBUG";
+        case LOG_LEVEL_INFO:        return L"INFO";
+        case LOG_LEVEL_NOTICE:      return L"NOTICE";
+        case LOG_LEVEL_WARNING:     return L"WARNING";
+        case LOG_LEVEL_ERROR:       return L"ERROR";
+        case LOG_LEVEL_CRITICAL:    return L"CRITICAL";
+        case LOG_LEVEL_ALERT:       return L"ALERT";
+        case LOG_LEVEL_EMERGENCY:   return L"EMERGENCY";
+        default:                    return L"UNKNOWN";
+    }
+}
+
+//
+// 헬퍼 함수: 이벤트를 문자열로 변환
+//
+CONST CHAR16* GetLogEventString(LOG_EVENT Event) {
+    switch (Event) {
+        case LOG_EVENT_GENERIC:       return L"GENERIC";
+        case LOG_EVENT_BOOT_INIT:     return L"BOOT_INIT";
+        case LOG_EVENT_DRIVER_LOAD:   return L"DRIVER_LOAD";
+        case LOG_EVENT_FS_OPERATION:  return L"FS_OPER";
+        case LOG_EVENT_NETWORK:       return L"NETWORK";
+        case LOG_EVENT_SECURITY:      return L"SECURITY";
+        case LOG_EVENT_CONFIG:        return L"CONFIG";
+        case LOG_EVENT_NVRAM:         return L"NVRAM";
+        case LOG_EVENT_REBOOT:        return L"REBOOT";
+        default:                      return L"UNKNOWN_EVENT";
+    }
+}
+
+#define MAX_LOG_MESSAGE_LENGTH 512
+
+VOID UefiLog(LOG_LEVEL Level, LOG_EVENT Event, CONST CHAR16 *Format, ...) {
+    EFI_STATUS  Status;
+    EFI_TIME    Time;
+    CHAR16      LogMessageBuffer[MAX_LOG_MESSAGE_LENGTH];
+    VA_LIST     Args;
+    UINTN       Offset = 0;
+
+    // 현재 시간을 가져옴
+    Status = gRT->GetTime(&Time, NULL);
+    if (EFI_ERROR(Status)) {
+        // 시간 가져오기 실패 시 기본값 사용
+        SetMem(&Time, sizeof(EFI_TIME), 0);
+    }
+
+    // 타임스탬프, 레벨, 이벤트 카테고리 포맷
+    Offset += UnicodeSPrint(LogMessageBuffer + Offset, sizeof(LogMessageBuffer) - (Offset * sizeof(CHAR16)),
+                     L"[%04d-%02d-%02d %02d:%02d:%02d] [%s] [%s] ",
+                     Time.Year, Time.Month, Time.Day, Time.Hour, Time.Minute, Time.Second,
+                     GetLogLevelString(Level), GetLogEventString(Event));
+
+    // 사용자 메시지 포맷
+    VA_START(Args, Format);
+    Offset += UnicodeSPrint(LogMessageBuffer + Offset, sizeof(LogMessageBuffer) - (Offset * sizeof(CHAR16)),
+                     Format, Args);
+    VA_END(Args);
+
+    // 콘솔에 출력
+    Print(L"%s\n", LogMessageBuffer);
 }
 
 
