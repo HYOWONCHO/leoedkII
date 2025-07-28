@@ -125,7 +125,12 @@ SBCStatus _ssbl_image_load(VOID *blkhnd, LV_t *lv,  UINTN normbank, UINTN bm)
     lv->value = AllocateReservedZeroPool(imglen);
     SBC_RET_VALIDATE_ERRCODEMSG((lv->value != NULL), SBCNULLP, "Allocate Memory Fail");
 
+    ret = SBC_RawPrtReadBlock(blkhnd, (void *)lv->value, &imglen, startlba);
+    SBC_RET_VALIDATE_ERRCODEMSG((ret == SBCOK), ret, "SSBL image read fail");
+
+
     lv->length = imglen - FSBL_BNIFO_SIZE;
+    // skip the image header ( for Length )
     lv->value += 4;
 
 errdone:

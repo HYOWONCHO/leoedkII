@@ -158,38 +158,23 @@ SBCStatus SBC_BootModeFactory(VOID *blkhnd, VOID *ImageHandle)
 
 
   LV_t wrlv;
-  //UINT8 *imgssbl = NULL;
 
   SBC_RET_VALIDATE_ERRCODEMSG((blkhnd != NULL), SBCNULLP, "Block I/O Handle Nill");
 
   startlba = ((BOOT_SECTOR3_OFS | BOOT_SSBL_OFS) >> SBC_RAWPRT_DFLT_SHIFT);
-  //Print("Start LBA Address : 0x%x  \n")
-  //endlba = (BOOT_SSBL_MAX >>  SBC_RAWPRT_DFLT_SHIFT) - startlba;
 
-  //Print(L"Start Addr : 0x%lx , End addr : 0x%lx \n", startlba, endlba);
 
   ret = SBC_RawPrtReadBlock(blkhnd, (void *)imghdr, &imglen, startlba);
   if (ret != SBCOK) {
     Print(L"SSBL Factory Block Read Fail \n");
     goto errdone;
   }
-  //SBC_RET_VALIDATE_ERRCODEMSG((ret != SBCOK), SBCIO, "SSBL Factory Block Read Fail");
 
 
   CopyMem((void *)&imglen, &imghdr[0], sizeof imglen);
-  // Temp code, at later, should be need to remove 
-  //imglen = SBC_SWAP_ENDIAN_32(imglen);
 
-  //Print(L"SSBL Image Len : %d \n", imglen);
  
   imglen = ALIGN_VALUE(imglen, SBC_RAWPRT_DFLT_BLK_SZ);
-  //Print(L"Align Image Len : %d \n", imglen);
-  //loadimg = AllocateZeroPool(imglen);
-//if (loadimg == NULL) {
-//  Print(L"Allocate Image pool fail \n");
-//  ret = SBCNULLP;
-//  goto errdone;
-//}
 
   dprint("Boot Service Allocate ");
   retval = gBS->AllocatePool(EfiBootServicesData, imglen, (VOID **)&loadimg);
@@ -211,23 +196,18 @@ SBCStatus SBC_BootModeFactory(VOID *blkhnd, VOID *ImageHandle)
     goto errdone;
   }
 
-  //Print(L"File System Handle Found (Handle Count : %d) \n", hndlcnt);
 
   _lv_set_data(&wrlv,&loadimg[4], imglen - 4);
 
-  //SBC_mem_print_bin("SSBL Load Image", wrlv.value, 512);
 #if 1
   for (int idx = 0; idx < hndlcnt; idx++) {
     retval = SBC_WriteFile(ssbl_img_hndl[idx], fname, &wrlv);
     if (EFI_ERROR(retval)) {
-        //eprint("%s file write fail %r", fname, retval);
-        //Print(L"%a file write fail %r \n", fname, retval);
         ret = SBCIO;
         continue;
         //goto errdone;
     }
 
-    //Print(L"Index %d Result : %d \n", idx, retval);
     break;
   }
 
@@ -299,34 +279,16 @@ SBCStatus SBC_BootModeNormalAndpUdate(VOID *blkhnd, VOID *ImageHandle, UINTN nro
   bsofs = (BOOT_SECTOR1_OFS | ((nrombank - 1) << 20));
   startlba = ((bsofs | BOOT_SSBL_OFS) >> SBC_RAWPRT_DFLT_SHIFT);
 
-  //Print("Start LBA Address : 0x%x  \n")
-  //endlba = (BOOT_SSBL_MAX >>  SBC_RAWPRT_DFLT_SHIFT) - startlba;
-
-  //Print(L"Start Addr : 0x%lx , End addr : 0x%lx \n", startlba, endlba);
-
   ret = SBC_RawPrtReadBlock(blkhnd, (void *)imghdr, &imglen, startlba);
   if (ret != SBCOK) {
     Print(L"SSBL Factory Block Read Fail \n");
     goto errdone;
   }
-  //SBC_RET_VALIDATE_ERRCODEMSG((ret != SBCOK), SBCIO, "SSBL Factory Block Read Fail");
 
 
   CopyMem((void *)&imglen, &imghdr[0], sizeof imglen);
-  // Temp code, at later, should be need to remove 
-  //imglen = SBC_SWAP_ENDIAN_32(imglen);
-
-  //Print(L"SSBL Image Len : %d \n", imglen);
  
   imglen = ALIGN_VALUE(imglen, SBC_RAWPRT_DFLT_BLK_SZ);
-  //Print(L"Align Image Len : %d \n", imglen);
-  //loadimg = AllocateZeroPool(imglen);
-//if (loadimg == NULL) {
-//  Print(L"Allocate Image pool fail \n");
-//  ret = SBCNULLP;
-//  goto errdone;
-//}
-
   //dprint("Boot Service Allocate ");
   retval = gBS->AllocatePool(EfiBootServicesData, imglen, (VOID **)&loadimg);
   if (EFI_ERROR(retval)) {
@@ -379,20 +341,14 @@ SBCStatus SBC_BootModeNormalAndpUdate(VOID *blkhnd, VOID *ImageHandle, UINTN nro
   for (int idx = 0; idx < hndlcnt; idx++) {
     retval = SBC_WriteFile(ssbl_img_hndl[idx], fname, &wrlv);
     if (EFI_ERROR(retval)) {
-        //eprint("%s file write fail %r", fname, retval);
-        //Print(L"%a file write fail %r \n", fname, retval);
-        //ret = SBCIO;
         continue;
         //goto errdone;
     }
 
-    //Print(L"Index %d Result : %d \n", idx, retval);
     break;
   }
 
   if (EFI_ERROR(retval)) {
-    //eprint("%s file write fail %r", fname, retval);
-    //Print(L"%a file write fail %r \n", fname, retval);
     ret = SBCNOTFND;
     //continue;
     goto errdone;
@@ -692,9 +648,6 @@ Exit:
   // 구성된 문자열을 콘솔에 출력
   if (!EFI_ERROR(Status)) {
     Status = gST->ConOut->OutputString(gST->ConOut, Buffer);
-    //dprint("Copy Count : %d", CopyCnt * sizeof(CHAR16));
-    //CopyMem((void *)OutFormat, Buffer, CopyCnt * sizeof(CHAR16));
-    //OutFormat[CopyCnt] = L'\0';
   } else {
     // 오류 발생 시 디버그 메시지만 출력
     DEBUG((DEBUG_ERROR, "SBC_LogCustomPrint: Failed to format string, attempting to print partial buffer.\n"));
