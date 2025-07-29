@@ -6,6 +6,9 @@
 #include <Library/UefiRuntimeServicesTableLib.h> // For gRT->GetTime
 //#include <Library/SafeStringLib.h>  // For StrnCpyS, StrnLenS, UnicodeStrToAsciiStrS etc. (EDK II safe string functions)
 
+
+#include <Library/MemoryAllocationLib.h>
+#include <Library/UefiBootServicesTableLib.h>
 #include "SBC_Log.h"
 
 
@@ -777,6 +780,64 @@ Exit:
 }
 
 
+UINTN
+SBC_InternalPrint (
+  IN  CONST CHAR16                     *Format,
+  IN  VA_LIST                          Marker
+  )
+{
+  [[maybe_unused]] EFI_STATUS  Status;
+  UINTN       Return;
+  CHAR16      *Buffer;
+  UINTN       BufferSize;
+
+  dprint();
+  ASSERT (Format != NULL);
+  dprint();
+
+  // The memory address pointed to by the Fromat Pointet
+  // Must be an even number.s
+  ASSERT (((UINTN)Format & BIT0) == 0);
+
+  dprint();
+  BufferSize = (PcdGet32 (PcdUefiLibMaxPrintBufferSize) + 1) * sizeof (CHAR16);
+  //DEBUG((DEBUG_INFO,"Buffer Size : %d \n", BufferSize));
+  //Buffer = (CHAR16 *)AllocateZeroPool (BufferSize);
+  Status = gBS->AllocatePool(
+      EfiBootServicesData,
+      BufferSize,
+      (VOID **)&Buffer);
+
+  if (EFI_ERROR(Status)) {
+      dprint("Faile to allocate pool : %r", Status);
+      Buffer = NULL;
+      return 0;
+  }
+
+  if (((UINTN)Buffer % 8) != 0) {
+      dprint("Memory not align by 8 byte");
+      return 0;
+
+  }
+
+
+  dprint("Allocated 8-byte aligned memory at 0x%lx (Size: %ld)\n", (UINTN)Buffer, BufferSize);
+
+//if (Buffer == NULL) {
+//    dprint();
+//  ASSERT (Buffer != NULL);
+//  return 0;
+//}
+
+  dprint();
+  Return = UnicodeVSPrint (Buffer, BufferSize, Format, Marker);
+
+  dprint("Msg : %a", Buffer);
+
+  FreePool (Buffer);
+
+  return Return;
+}
 // ===========================================================================
 // SBC_LogPrint (Main Logging Function)
 // ===========================================================================
@@ -883,12 +944,17 @@ SBC_LogPrint(
     VA_START(args, format);
     //dprint();
     // Call the enhanced _LogFmtVPrint, which now handles NULL CHAR16* arguments safely.
+#if 0
+    nxtofs += SBC_InternalPrint(format,
+                                args);
+#else
     nxtofs += _LogFmtVPrint(
                 format, // The format string for the variable arguments
                 args,
                 full_log_msg + nxtofs, // Start writing from current offset
                 remaining_buffer_bytes   // Remaining buffer size in bytes
                 );
+#endif
     VA_END(args);
 
     // --- Final null-termination and length check ---
