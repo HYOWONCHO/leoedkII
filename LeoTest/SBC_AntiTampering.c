@@ -32,9 +32,8 @@
 #include "SBC_AntiTampering.h"
 #include "SBC_EccSignVerify.h"
 #include "SBC_X509.h"
-#include "SBC_Kdf.h"
-
-
+#include "SBC_Kdf.h" 
+#include "SBC_Log.h"
   
 
 
@@ -565,13 +564,8 @@ static SBCStatus _baseboard_sn(hw_uniqueinfo_t *p)
                     cnt++;
                 }
 #endif
-                Print(L"_baseboard_sn Serial Number: %a (Count : %d)\n",
-                      SerialNumberString,
-                      cnt);
-
-
                 p->mbsnl = strlen(SerialNumberString);
-                SBC_mem_print_bin("_baseboard_sn", (UINT8 *)SerialNumberString, p->mbsnl);
+                SBC_external_mem_print_bin("_baseboard_sn", (UINT8 *)SerialNumberString, p->mbsnl);
                 CopyMem(p->mbsn, SerialNumberString, p->mbsnl);
 
 
@@ -1052,14 +1046,31 @@ SBCStatus  SBC_BaseAnswerValidate(VOID *blkhnd, UINT8 *answer, UINTN answerl, UI
 //  SBC_external_mem_print_bin("decrypt msg", decbuf, ctx.out.length);
 
     if (CompareMem((const void *)decbuf, (const void *)answer, answerl) != 0) {
-      Print(L"Base Answer validate Fail \n");
-      ret = SBCFAIL;
-      goto errdone;
+      //Print(L"Base Answer validate Fail \n");
+
+
+        ZeroMem(mrgmsg, sizeof mrgmsg);
+        UnicodeSPrint(mrgmsg, sizeof mrgmsg, L"Base Answer validate fail(%s:%s) \n",answer,decbuf);
+        sbc_err_sysprn(SBC_LOG_CMN_PRIO_ERR, 2,
+             L"SBC",
+             L"FSBL",
+             L"Weapon System",
+             8,
+             L"Determine Firmare Tampering ",
+             mrgmsg);
+          ret = SBCFAIL;
+          goto errdone;
     }
 
-    Print(L"Base Answer validate Success \n");
-
-
+    ZeroMem(mrgmsg, sizeof mrgmsg);
+    UnicodeSPrint(mrgmsg, sizeof mrgmsg, L"Base Answer validate Success (%s:%s) \n",answer,decbuf);
+    sbc_err_sysprn(SBC_LOG_CMN_PRIO_ERR, 2,
+         L"SBC",
+         L"FSBL",
+         L"Weapon System",
+         8,
+         L"Determine Firmare Tampering ",
+         mrgmsg);
 
 errdone:
     return ret;
@@ -1410,6 +1421,18 @@ SBCStatus  SBC_FSBL_Verify(VOID *blkhnd, VOID *ansr, UINTN normbank, UINTN bm)
     //ret = SBCOK;
 
 errdone:
+
+    if (ret != SBCOK) {
+      ZeroMem(mrgmsg, sizeof mrgmsg);
+      UnicodeSPrint(mrgmsg, sizeof mrgmsg, L"FSBL Verify Fail \n");
+      sbc_err_sysprn(SBC_LOG_CMN_PRIO_ERR, 2,
+             L"SBC",
+             L"FSBL",
+             L"Weapon System",
+             8,
+             L"Determine Firmare Tampering ",
+             mrgmsg);
+    }
 
     if (EcPubKey != NULL) {
       EcFree(EcPubKey);

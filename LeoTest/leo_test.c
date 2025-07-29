@@ -657,7 +657,7 @@ Exit:
   return Status;
 }
 
-
+CHAR16 mrgmsg[8192]; 
 
 
 
@@ -684,7 +684,7 @@ UefiMain (
     //UINTN fmtlen = 0;
     //CHAR16 buf[8192];
     UINTN testid = 0xAA55AA55;
-    CHAR16 mrgmsg[8192]; 
+    
  
 
     dprint("------------- FSBL START -------------\n");
@@ -698,33 +698,6 @@ UefiMain (
            8,
            L"Determine Firmare Tampering ",
            mrgmsg);
-
-
-
-
-//  sbc_err_sysprn(SBC_LOG_CMN_PRIO_ERR, 2,
-//         L"SBC",
-//         L"FSBL",
-//         L"Weapon System",
-//         8,
-//         L"Determine Firmare Tampering ",
-//         mrgmsg);
-
-
-    //mrgmsg = SBC_LogMrg(L"FSBL tampering check fail (%x) (%s)", testid,  L"Test string");
-    //dprint("Msg1 :%s \n", mrgmsg);
-//  sbc_err_sysprn(SBC_LOG_CMN_PRIO_ERR, 2,
-//         L"SBC",
-//         L"FSBL",
-//         L"Weapon System",
-//         8,
-//         L"Determine Firmare Tampering ",
-//        mrgmsg);
-
-
-
-    return EFI_SUCCESS;
-
 
 
     ZeroMem(&h_rawptrheader, sizeof h_rawptrheader);
@@ -770,16 +743,21 @@ UefiMain (
 
     ret = SBC_FSBL_Verify(h_blkio, &baseansr, currbank_id, h_rawptrheader.bootmode);
     if (ret != SBCOK) {
-//        sbc_err_sysprn(SBC_LOG_CMN_PRIO_ERR, 2,
-//               L"SBC",
-//               L"FSBL",
-//               L"Weapon System",
-//               8,
-//               L"Determine Firmare Tampering ",
-//               L"FSBL tampering check fail");
+
           retval = EFI_INVALID_PARAMETER;
           goto errdone;
-      }
+    }
+
+    ZeroMem(mrgmsg, sizeof mrgmsg);
+    UnicodeSPrint(mrgmsg, sizeof mrgmsg, L"FSBL Verify Success \n");
+    sbc_err_sysprn(SBC_LOG_CMN_PRIO_ERR, 2,
+         L"SBC",
+         L"FSBL",
+         L"Weapon System",
+         8,
+         L"Determine Firmare Tampering ",
+         mrgmsg);
+  
     //SBC_CustomPrint(L"Weapon System %d %d \r\n", testid, testid);
     //SBC_CustomPrint(L"Weapon System %d %d %s \n", testid, testid, L"Weapon System");
 

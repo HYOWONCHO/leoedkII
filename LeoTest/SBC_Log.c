@@ -59,6 +59,98 @@ extern EFI_STATUS _sbc_write_log_file(CHAR8 *log_data, UINTN length_in_bytes);
 // EDK II provides these in SafeStringLib, but if you need to roll your own:
 // ===========================================================================
 
+#define LINE_LEN 16
+void SBC_mem_print_bin(
+        CHAR8 *title /**< [in] display name strings */,
+        UINT8* buffer /**< [in] print buffer  */,
+        UINT32 length /**< [in] length of buffer */
+        )
+{
+    UINT32 i, sz;
+
+    if(title) {
+        Print(L"%a (length of buffer: %d) \r\r\n", title, length) ;
+    }
+
+    if (!buffer) {
+        Print(L"\tNULL\r\n");
+        return;
+    }
+
+    while (length > 0) {
+        sz = length;
+        if (sz > LINE_LEN)
+            sz = LINE_LEN;
+
+        Print(L"\t");
+        for (i = 0; i < LINE_LEN; i++) {
+            if (i < length)
+                Print(L"%02x ", buffer[i]);
+            else
+                Print(L"   ");
+        }
+        Print(L"| ");
+        for (i = 0; i < sz; i++) {
+            if (buffer[i] > 31 && buffer[i] < 127)
+                Print(L"%c", buffer[i]);
+            else
+                Print(L".");
+        }
+        Print(L"\r\r\n");
+
+
+        buffer += sz;
+        length -= sz;
+    }
+}
+
+
+void SBC_external_mem_print_bin(
+        CHAR8 *title /**< [in] display name strings */,
+        UINT8* buffer /**< [in] print buffer  */,
+        UINT32 length /**< [in] length of buffer */
+        )
+{
+    UINT32 i, sz;
+    UINT32 offset = 0;
+
+    if(title) {
+        DEBUG((DEBUG_INFO,"%a (length of buffer: %d) \r\r\n", title, length)) ;
+    }
+
+    if (!buffer) {
+        return;
+    }
+
+    while (length > 0) {
+        sz = length;
+        if (sz > LINE_LEN)
+            sz = LINE_LEN;
+
+        DEBUG((DEBUG_INFO," [0x%08X] :  ", offset));
+        for (i = 0; i < LINE_LEN; i++) {
+            if (i < length)
+                DEBUG((DEBUG_INFO,"%02x ", buffer[i]));
+            else
+                DEBUG((DEBUG_INFO,"   "));
+        }
+        DEBUG((DEBUG_INFO," | "));
+        for (i = 0; i < sz; i++) {
+            if (buffer[i] > 31 && buffer[i] < 127)
+                DEBUG((DEBUG_INFO,"%c", buffer[i]));
+            else
+                DEBUG((DEBUG_INFO,"."));
+        }
+        offset += LINE_LEN;
+        DEBUG((DEBUG_INFO,"\r\n"));
+
+
+        buffer += sz;
+        length -= sz;
+    }
+}
+
+
 CHAR16 *SBC_LogMrg(CONST CHAR16 *fmt, ...)
 {
 

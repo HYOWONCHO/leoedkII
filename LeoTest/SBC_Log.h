@@ -105,6 +105,8 @@ SBC_LogCustomPrint (
   ...
   );
 
+extern CHAR16 mrgmsg[8192]; 
+
 CHAR16 *SBC_LogMrg(CONST CHAR16 *fmt, ...);
 
 VOID  SBC_LogPrint(CONST CHAR16* func, UINT32 funcline, UINT32 prio, UINT32 ver, CHAR16 *host, 
