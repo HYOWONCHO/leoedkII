@@ -690,7 +690,7 @@ UefiMain (
     dprint("------------- FSBL START -------------\n");
 
     ZeroMem(mrgmsg, sizeof mrgmsg);
-    UnicodeSPrint(mrgmsg, sizeof mrgmsg, L"FSBL START (Magic ID: %x) (Magic Str: %s)", testid,  L"Test string");
+    UnicodeSPrint(mrgmsg, sizeof mrgmsg, L"FSBL START (Magic ID: %x) (Magic Str: %s) \n", testid,  L"Test string");
     sbc_err_sysprn(SBC_LOG_CMN_PRIO_ERR, 2,
            L"SBC",
            L"FSBL",
