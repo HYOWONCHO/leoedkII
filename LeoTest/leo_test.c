@@ -683,10 +683,47 @@ UefiMain (
     LV_t baseansr;
     //UINTN fmtlen = 0;
     //CHAR16 buf[8192];
-    //UINT32 testid = 0xAA55AA55;
+    UINTN testid = 0xAA55AA55;
+    CHAR16 mrgmsg[8192]; 
  
 
-    intgreen_dprint("------------- FSBL START -------------\n");
+    dprint("------------- FSBL START -------------\n");
+
+    ZeroMem(mrgmsg, sizeof mrgmsg);
+    UnicodeSPrint(mrgmsg, sizeof mrgmsg, L"FSBL START (Magic ID: %x) (Magic Str: %s)", testid,  L"Test string");
+    sbc_err_sysprn(SBC_LOG_CMN_PRIO_ERR, 2,
+           L"SBC",
+           L"FSBL",
+           L"Weapon System",
+           8,
+           L"Determine Firmare Tampering ",
+           mrgmsg);
+
+
+
+
+//  sbc_err_sysprn(SBC_LOG_CMN_PRIO_ERR, 2,
+//         L"SBC",
+//         L"FSBL",
+//         L"Weapon System",
+//         8,
+//         L"Determine Firmare Tampering ",
+//         mrgmsg);
+
+
+    //mrgmsg = SBC_LogMrg(L"FSBL tampering check fail (%x) (%s)", testid,  L"Test string");
+    //dprint("Msg1 :%s \n", mrgmsg);
+//  sbc_err_sysprn(SBC_LOG_CMN_PRIO_ERR, 2,
+//         L"SBC",
+//         L"FSBL",
+//         L"Weapon System",
+//         8,
+//         L"Determine Firmare Tampering ",
+//        mrgmsg);
+
+
+
+    return EFI_SUCCESS;
 
 
 

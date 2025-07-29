@@ -105,13 +105,16 @@ SBC_LogCustomPrint (
   ...
   );
 
+CHAR16 *SBC_LogMrg(CONST CHAR16 *fmt, ...);
+
 VOID  SBC_LogPrint(CONST CHAR16* func, UINT32 funcline, UINT32 prio, UINT32 ver, CHAR16 *host, 
                         CHAR16 *appname, CHAR16 *csc,
                         UINT32 sfrid, CHAR16 *evtype,
                         CHAR16 *format, ...);
+
+
 #define sbc_err_sysprn(prio, ver, host, appname, csc, sfrid, evtype, fmt,...)                                  \
     SBC_LogPrint((CONST CHAR16 *)__FUNCTION__, (UINT32)__LINE__, prio, ver, host, appname, csc, sfrid, evtype, fmt "\n", ##__VA_ARGS__)
-
 
 typedef enum {
     LOG_LEVEL_DEBUG,    // 디버그 정보 (가장 상세)

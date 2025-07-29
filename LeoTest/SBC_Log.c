@@ -1,4 +1,926 @@
+#include <Uefi.h>
+#include <Library/UefiLib.h>
+#include <Library/PrintLib.h>       // For UnicodeSPrint (used internally by my _LogFmtVPrint)
+#include <Library/BaseMemoryLib.h>  // For ZeroMem, SetMem
+#include <Library/DebugLib.h>       // For DEBUG macros
+#include <Library/UefiRuntimeServicesTableLib.h> // For gRT->GetTime
+//#include <Library/SafeStringLib.h>  // For StrnCpyS, StrnLenS, UnicodeStrToAsciiStrS etc. (EDK II safe string functions)
 
+#include "SBC_Log.h"
+
+
+
+
+
+#ifndef FMT_INT64_DFORMAT
+#define FMT_INT64_DFORMAT   L"ll"   // For signed decimal 64-bit
+#endif
+
+#ifndef FMT_UINT64_DFORMAT
+#define FMT_UINT64_DFORMAT  L"ll"   // For unsigned decimal 64-bit
+#endif
+
+#ifndef FMT_UINT64_XFORMAT
+#define FMT_UINT64_XFORMAT  L"ll"   // For hexadecimal 64-bit
+#endif
+
+// For 32-bit (if needed)
+#ifndef FMT_INT32_DFORMAT
+#define FMT_INT32_DFORMAT   L""     // int is default
+#endif
+
+#ifndef FMT_UINT32_DFORMAT
+#define FMT_UINT32_DFORMAT  L""
+#endif
+
+#ifndef FMT_UINT32_XFORMAT
+#define FMT_UINT32_XFORMAT  L""
+#endif
+
+// Define a suitable max print buffer size via PCD or a fixed constant
+// This should match your EDK II PCD for PcdUefiLibMaxPrintBufferSize if you use it.
+#ifndef PcdGet32
+#define PcdGet32(TokenName)   8192 // Default if PCD is not defined
+#endif
+
+CHAR16 str_log_format[8192];
+
+// Global string literals for safety (in case of NULL input pointers)
+CONST CHAR16 * CONST gNullStringUefi  = L"(null)"; // For Unicode strings (%s)
+CONST CHAR8  * CONST gNullStringAscii = "(null)"; // For ASCII strings (%a)
+CONST CHAR16 * CONST gEmptyStringUefi = L"";       // For empty Unicode strings
+
+// Dummy for external functions (replace with your actual implementations)
+extern UINTN remove_all_space(CHAR8 *buffer, UINTN buffer_size_in_bytes);
+extern EFI_STATUS _sbc_write_log_file(CHAR8 *log_data, UINTN length_in_bytes);
+
+// ===========================================================================
+// Helper Functions (UnicodeStrLen, UnicodeStrToAsciiStrS - adapted for safety)
+// EDK II provides these in SafeStringLib, but if you need to roll your own:
+// ===========================================================================
+
+CHAR16 *SBC_LogMrg(CONST CHAR16 *fmt, ...)
+{
+
+  VA_LIST maker;
+
+  VA_START(maker, fmt);
+
+  ZeroMem(str_log_format, sizeof str_log_format);
+  UnicodeSPrint(str_log_format, sizeof str_log_format, fmt);
+
+  VA_END(maker);
+
+
+
+  return str_log_format;
+}
+
+/**
+  Returns the length of a Null-terminated Unicode string, up to a specified maximum size.
+  (Similar to StrnLenS in EDK II's SafeStringLib)
+
+  @param  String  A pointer to a Null-terminated Unicode string.
+  @param  MaxSize The maximum number of Unicode characters to examine.
+
+  @retval 0       If String is NULL or empty.
+  @retval Others  The length of String, or MaxSize if the string is longer
+                  than MaxSize and no Null-terminator is found.
+**/
+UINTN
+MyUnicodeStrnLenS (
+  IN CONST CHAR16  *String,
+  IN UINTN         MaxSize
+  )
+{
+  UINTN Length;
+
+  if (String == NULL) {
+    DEBUG ((DEBUG_ERROR, "MyUnicodeStrnLenS: Input String is NULL.\n"));
+    return 0;
+  }
+
+  for (Length = 0; Length < MaxSize && *String != L'\0'; String++, Length++);
+
+  return Length;
+}
+
+
+/**
+  Converts a Null-terminated Unicode string to a Null-terminated ASCII string.
+  (Similar to UnicodeStrToAsciiStrS in EDK II's SafeStringLib)
+
+  @param  Destination   A pointer to the buffer to store the ASCII string.
+  @param  DestinationSize The size in bytes of the Destination buffer.
+  @param  Source        A pointer to the Null-terminated Unicode string.
+
+  @retval The length of the converted ASCII string (not including null terminator).
+          Returns 0 if Source is NULL, or DestinationSize is too small for null terminator.
+          Truncates if Source is too long.
+**/
+UINTN
+MyUnicodeStrToAsciiStrS (
+  OUT CHAR8        *Destination,
+  IN  UINTN        DestinationSize, // Size in bytes
+  IN  CONST CHAR16 *Source
+  )
+{
+  UINTN Index;
+
+  if (Destination == NULL || Source == NULL || DestinationSize == 0) {
+    DEBUG ((DEBUG_ERROR, "MyUnicodeStrToAsciiStrS: Invalid input parameters.\n"));
+    return 0;
+  }
+
+  // Ensure there's space for the null terminator
+  if (DestinationSize < 1) {
+    return 0;
+  }
+
+  for (Index = 0; Index < (DestinationSize - 1) && Source[Index] != L'\0'; Index++) {
+    // Only convert if the Unicode character is within ASCII range
+    if (Source[Index] > 0xFF) {
+      Destination[Index] = '?'; // Replace non-ASCII with '?'
+      DEBUG ((DEBUG_WARN, "MyUnicodeStrToAsciiStrS: Non-ASCII char 0x%x replaced with '?'.\n", Source[Index]));
+    } else {
+      Destination[Index] = (CHAR8)Source[Index];
+    }
+  }
+  Destination[Index] = '\0'; // Null-terminate the ASCII string
+
+  return Index; // Return length without null terminator
+}
+
+
+// ===========================================================================
+// _LogFmtVPrint (The heart of safe variable argument formatting)
+// ===========================================================================
+
+/**
+  Formats a variable argument list into a Unicode string buffer,
+  handling NULL CHAR16* arguments safely.
+
+  This function parses the format string and uses arguments from VaListMaker
+  to construct a formatted Unicode string in LogBuf. It performs NULL checks
+  for %s specifiers to prevent hard faults.
+
+  @param  Format        The format string.
+  @param  VaListMaker   The VA_LIST containing the arguments.
+  @param  LogBuf        The destination buffer for the formatted Unicode string.
+  @param  BufLenBytes   The remaining size of LogBuf in BYTES.
+
+  @retval The number of CHAR16s written to LogBuf (excluding null terminator).
+**/
+//UINTN
+//_LogFmtVPrint(
+//  IN CONST CHAR16 *Format,
+//  IN VA_LIST      VaListMaker, // The original VA_LIST
+//  IN OUT CHAR16   *LogBuf,     // Buffer to write into (CHAR16 array)
+//  IN UINTN        BufLenBytes  // Remaining buffer size in BYTES
+//  )
+//{
+//  CONST CHAR16      *Fmt;
+//  CHAR16            *Dest;
+//  UINTN             PrintedChars = 0;
+//  UINTN             RemainingBufChars;
+//  VA_LIST           CurrentVaList; // Use a copy to iterate
+//
+//  // Make a copy of the VA_LIST for safe iteration within this function.
+//  // VA_COPY is preferred for portability, but direct assignment often works.
+//  #ifdef VA_COPY
+//  dprint();
+//  VA_COPY(CurrentVaList, VaListMaker);
+//  #else
+//  dprint();
+//  CurrentVaList = VaListMaker;
+//  #endif
+//
+//  Fmt = Format;
+//  Dest = LogBuf;
+//  RemainingBufChars = BufLenBytes / sizeof(CHAR16);
+//
+//  dprint();
+//  // Leave at least one CHAR16 for the null terminator.
+//  if (RemainingBufChars == 0) {
+//      goto Exit;
+//  }
+//
+//  dprint();
+//  // Loop through the format string
+//  while (*Fmt != L'\0' && RemainingBufChars > 1) {
+//    if (*Fmt != L'%') {
+//      *Dest++ = *Fmt++;
+//      PrintedChars++;
+//      RemainingBufChars--;
+//      continue;
+//    }
+//
+//    dprint();
+//
+//    // Found a '%', now parse the specifier and arguments
+//    Fmt++; // Skip '%'
+//
+//    // Simple parsing for flags, width, precision, length modifiers
+//    // This is a minimalist set; PrintLib's internal v_snprintf_unicode is far more robust.
+//    BOOLEAN PadWithZero = FALSE;
+//    BOOLEAN LeftJustify = FALSE;
+//    UINTN   Width = 0;
+//    UINTN   Precision = MAX_UINTN; // Unlimited precision by default
+//    BOOLEAN Long = FALSE; // %l, %ll, %L (used for size modifiers)
+//
+//    dprint();
+//    // Parse flags
+//    while (TRUE) {
+//      if (*Fmt == L'-') { LeftJustify = TRUE; }
+//      else if (*Fmt == L'0') { PadWithZero = TRUE; }
+//      else { break; }
+//      Fmt++;
+//    }
+//
+//    dprint();
+//    // Parse width
+//    if (*Fmt == L'*') {
+//      Width = VA_ARG(CurrentVaList, UINTN);
+//      Fmt++;
+//    } else {
+//      while ((*Fmt >= L'0') && (*Fmt <= L'9')) {
+//        Width = Width * 10 + (*Fmt - L'0');
+//        Fmt++;
+//      }
+//    }
+//
+//    dprint();
+//
+//    // Parse precision
+//    if (*Fmt == L'.') {
+//      Fmt++;
+//      if (*Fmt == L'*') {
+//        Precision = VA_ARG(CurrentVaList, UINTN);
+//        Fmt++;
+//      } else {
+//        Precision = 0; // Default precision if no number follows '.'
+//        while ((*Fmt >= L'0') && (*Fmt <= L'9')) {
+//          Precision = Precision * 10 + (*Fmt - L'0');
+//          Fmt++;
+//        }
+//      }
+//    }
+//
+//    dprint();
+//    // Parse length modifiers
+//    if ((*Fmt == L'l') || (*Fmt == L'L')) {
+//      Long = TRUE; // Indicate a 'long' argument size
+//      Fmt++;
+//      if (*Fmt == L'l') { // For %ll (long long)
+//          Fmt++;
+//      }
+//    } else if ((*Fmt == L'h')) { // For %h (short)
+//        Fmt++;
+//        if (*Fmt == L'h') { // For %hh (char)
+//            Fmt++;
+//        }
+//    }
+//
+//    dprint();
+//
+//    UINTN CharsWrittenForSpecifier = 0;
+//    UINTN RemainingBytesForSpecifier = RemainingBufChars * sizeof(CHAR16);
+//
+//    switch (*Fmt) {
+//      case L's': // Unicode string (CHAR16*)
+//      {
+//        dprint();
+//        CONST CHAR16 *StringArg = VA_ARG(CurrentVaList, CONST CHAR16*);
+//        dprint();
+//        // *** THE CRITICAL NULL CHECK ***
+//        if (StringArg == NULL) {
+//          StringArg = gNullStringUefi; // Substitute with safe "(null)" string
+//        }
+//        // Use UnicodeSPrint for the segment to handle padding, width, precision for strings
+//        CharsWrittenForSpecifier = UnicodeSPrint(Dest, RemainingBytesForSpecifier, L"%s", StringArg);
+//        break;
+//      }
+//      case L'a': // ASCII string (CHAR8*) - needs conversion
+//      {
+//        dprint();
+//        CONST CHAR8 *AsciiArg = VA_ARG(CurrentVaList, CONST CHAR8*);
+//        CHAR8 TempAsciiBuf[PcdGet32(PcdUefiLibMaxPrintBufferSize) + 1]; // Temp buffer for ASCII string
+//        UINTN AsciiLen;
+//        dprint();
+//
+//        if (AsciiArg == NULL) {
+//          AsciiArg = gNullStringAscii; // Substitute with safe "(null)"
+//        }
+//        // Safely copy ASCII to temp buffer, truncate if needed for ASCII buffer
+//        AsciiLen = AsciiStrCpyS(TempAsciiBuf, sizeof(TempAsciiBuf), AsciiArg);
+//
+//        // Apply precision for ASCII strings before converting to Unicode
+//        if (Precision != MAX_UINTN && AsciiLen > Precision) {
+//            AsciiLen = Precision;
+//            TempAsciiBuf[AsciiLen] = '\0'; // Truncate
+//        }
+//
+//        // Now convert temp ASCII to Unicode char by char into the destination
+//        UINTN Count = 0;
+//        CHAR16 PadChar = PadWithZero ? L'0' : L' ';
+//
+//        // Handle right-justification (padding before string)
+//        if (Width > AsciiLen && !LeftJustify) {
+//            for (UINTN i = 0; i < Width - AsciiLen && RemainingBufChars > (PrintedChars + Count + 1); i++) {
+//                Dest[Count++] = PadChar;
+//            }
+//        }
+//        // Copy characters
+//        for (UINTN i = 0; i < AsciiLen && RemainingBufChars > (PrintedChars + Count + 1); i++) {
+//          Dest[Count++] = (CHAR16)TempAsciiBuf[i];
+//        }
+//        // Handle left-justification (padding after string)
+//        if (Width > AsciiLen && LeftJustify) {
+//            for (UINTN i = 0; i < Width - AsciiLen && RemainingBufChars > (PrintedChars + Count + 1); i++) {
+//                Dest[Count++] = PadChar;
+//            }
+//        }
+//        CharsWrittenForSpecifier = Count;
+//        break;
+//      }
+//      case L'd': // Signed decimal integer
+//      case L'i':
+//      {
+//        dprint();
+//        INTN Val = (Long ? VA_ARG(CurrentVaList, INT64) : VA_ARG(CurrentVaList, INTN));
+//        dprint();
+//        CharsWrittenForSpecifier = UnicodeSPrint(Dest, RemainingBytesForSpecifier, L"%" FMT_INT64_DFORMAT L"d", Val);
+//        break;
+//      }
+//      case L'u': // Unsigned decimal integer
+//      {
+//        dprint();
+//        UINTN Val = (Long ? VA_ARG(CurrentVaList, UINT64) : VA_ARG(CurrentVaList, UINTN));
+//        dprint();
+//        CharsWrittenForSpecifier = UnicodeSPrint(Dest, RemainingBytesForSpecifier, L"%" FMT_UINT64_DFORMAT L"u", Val);
+//        break;
+//      }
+//      case L'x': // Hexadecimal lowercase
+//      {
+//        dprint();
+//        UINTN Val = (Long ? VA_ARG(CurrentVaList, UINT64) : VA_ARG(CurrentVaList, UINTN));
+//        dprint();
+//        CharsWrittenForSpecifier = UnicodeSPrint(Dest, RemainingBytesForSpecifier, L"%" FMT_UINT64_XFORMAT L"x", Val);
+//        break;
+//      }
+//      case L'X': // Hexadecimal uppercase
+//      {
+//        dprint();
+//        UINTN Val = (Long ? VA_ARG(CurrentVaList, UINT64) : VA_ARG(CurrentVaList, UINTN));
+//        dprint();
+//        CharsWrittenForSpecifier = UnicodeSPrint(Dest, RemainingBytesForSpecifier, L"%" FMT_UINT64_XFORMAT L"X", Val);
+//        break;
+//      }
+//      case L'p': // Pointer address (hex)
+//      {
+//        dprint();
+//        VOID *Ptr = VA_ARG(CurrentVaList, VOID*);
+//        dprint();
+//        CharsWrittenForSpecifier = UnicodeSPrint(Dest, RemainingBytesForSpecifier, L"%p", Ptr);
+//        break;
+//      }
+//      case L'c': // Unicode character
+//      {
+//        dprint();
+//        CHAR16 CharVal = (CHAR16)VA_ARG(CurrentVaList, UINTN); // Char args are promoted to int
+//        dprint();
+//        *Dest = CharVal;
+//        CharsWrittenForSpecifier = 1;
+//        break;
+//      }
+//      case L'%': // Literal '%'
+//        dprint();
+//        *Dest = L'%';
+//        CharsWrittenForSpecifier = 1;
+//        break;
+//      default: // Unrecognized specifier, print literally
+//        dprint();
+//        *Dest++ = L'%';
+//        *Dest++ = *Fmt;
+//        PrintedChars += 2; // Adjust immediately as we wrote directly
+//        RemainingBufChars -= 2;
+//        goto NextFmtChar; // Skip common update at end of switch
+//    }
+//
+//    dprint();
+//    // Update pointers and counts after processing a specifier
+//    Dest += CharsWrittenForSpecifier;
+//    PrintedChars += CharsWrittenForSpecifier;
+//    RemainingBufChars -= CharsWrittenForSpecifier;
+//
+//NextFmtChar:
+//    dprint();
+//    Fmt++; // Move to next char in format string
+//  }
+//
+//  *Dest = L'\0'; // Null-terminate the buffer
+//
+//Exit:
+//  dprint();
+//  VA_END(CurrentVaList); // Clean up the copied VA_LIST
+//  dprint();
+//  return PrintedChars;
+//}
+
+
+UINTN
+_LogFmtVPrint(
+  IN CONST CHAR16 *Format,
+  IN VA_LIST      VaListMaker, // The original VA_LIST
+  IN OUT CHAR16   *LogBuf,     // Buffer to write into (CHAR16 array)
+  IN UINTN        BufLenBytes  // Remaining buffer size in BYTES
+  )
+{
+  CONST CHAR16      *Fmt;
+  CHAR16            *Dest;
+  UINTN             PrintedChars = 0;
+  UINTN             RemainingBufChars;
+//VA_LIST           CurrentVaList; // Use a copy to iterate
+//
+//// Make a copy of the VA_LIST for safe iteration within this function.
+//// VA_COPY is preferred for portability, but direct assignment often works.
+//#ifdef VA_COPY
+//dprint();
+//VA_COPY(CurrentVaList, VaListMaker);
+//#else
+//dprint();
+//CurrentVaList = VaListMaker;
+//#endif
+
+  Fmt = Format;
+  Dest = LogBuf;
+  RemainingBufChars = BufLenBytes / sizeof(CHAR16);
+
+  dprint();
+  // Leave at least one CHAR16 for the null terminator.
+  if (RemainingBufChars == 0) {
+      goto Exit;
+  }
+
+  dprint();
+  // Loop through the format string
+  while (*Fmt != L'\0' && RemainingBufChars > 1) {
+    if (*Fmt != L'%') {
+      *Dest++ = *Fmt++;
+      PrintedChars++;
+      RemainingBufChars--;
+      continue;
+    }
+
+    dprint();
+
+    // Found a '%', now parse the specifier and arguments
+    Fmt++; // Skip '%'
+
+    // Simple parsing for flags, width, precision, length modifiers
+    // This is a minimalist set; PrintLib's internal v_snprintf_unicode is far more robust.
+    BOOLEAN PadWithZero = FALSE;
+    BOOLEAN LeftJustify = FALSE;
+    UINTN   Width = 0;
+    UINTN   Precision = MAX_UINTN; // Unlimited precision by default
+    BOOLEAN Long = FALSE; // %l, %ll, %L (used for size modifiers)
+
+    dprint();
+    // Parse flags
+    while (TRUE) {
+      if (*Fmt == L'-') { LeftJustify = TRUE; }
+      else if (*Fmt == L'0') { PadWithZero = TRUE; }
+      else { break; }
+      Fmt++;
+    }
+
+    dprint();
+    // Parse width
+    if (*Fmt == L'*') {
+      Width = VA_ARG(VaListMaker, UINTN);
+      Fmt++;
+    } else {
+      while ((*Fmt >= L'0') && (*Fmt <= L'9')) {
+        Width = Width * 10 + (*Fmt - L'0');
+        Fmt++;
+      }
+    }
+
+    dprint();
+
+    // Parse precision
+    if (*Fmt == L'.') {
+      Fmt++;
+      if (*Fmt == L'*') {
+        Precision = VA_ARG(VaListMaker, UINTN);
+        Fmt++;
+      } else {
+        Precision = 0; // Default precision if no number follows '.'
+        while ((*Fmt >= L'0') && (*Fmt <= L'9')) {
+          Precision = Precision * 10 + (*Fmt - L'0');
+          Fmt++;
+        }
+      }
+    }
+
+    dprint();
+    // Parse length modifiers
+    if ((*Fmt == L'l') || (*Fmt == L'L')) {
+      Long = TRUE; // Indicate a 'long' argument size
+      Fmt++;
+      if (*Fmt == L'l') { // For %ll (long long)
+          Fmt++;
+      }
+    } else if ((*Fmt == L'h')) { // For %h (short)
+        Fmt++;
+        if (*Fmt == L'h') { // For %hh (char)
+            Fmt++;
+        }
+    }
+
+    dprint();
+
+    UINTN CharsWrittenForSpecifier = 0;
+    UINTN RemainingBytesForSpecifier = RemainingBufChars * sizeof(CHAR16);
+
+    switch (*Fmt) {
+      case L's': // Unicode string (CHAR16*)
+      {
+        dprint();
+        CONST CHAR16 *StringArg = VA_ARG(VaListMaker, CONST CHAR16*);
+        dprint();
+        // *** THE CRITICAL NULL CHECK ***
+        if (StringArg == NULL) {
+          StringArg = gNullStringUefi; // Substitute with safe "(null)" string
+        }
+        // Use UnicodeSPrint for the segment to handle padding, width, precision for strings
+        CharsWrittenForSpecifier = UnicodeSPrint(Dest, RemainingBytesForSpecifier, L"%s", StringArg);
+        break;
+      }
+      case L'a': // ASCII string (CHAR8*) - needs conversion
+      {
+        dprint();
+        CONST CHAR8 *AsciiArg = VA_ARG(VaListMaker, CONST CHAR8*);
+        CHAR8 TempAsciiBuf[PcdGet32(PcdUefiLibMaxPrintBufferSize) + 1]; // Temp buffer for ASCII string
+        UINTN AsciiLen;
+        dprint();
+
+        if (AsciiArg == NULL) {
+          AsciiArg = gNullStringAscii; // Substitute with safe "(null)"
+        }
+        // Safely copy ASCII to temp buffer, truncate if needed for ASCII buffer
+        AsciiLen = AsciiStrCpyS(TempAsciiBuf, sizeof(TempAsciiBuf), AsciiArg);
+        
+        // Apply precision for ASCII strings before converting to Unicode
+        if (Precision != MAX_UINTN && AsciiLen > Precision) {
+            AsciiLen = Precision;
+            TempAsciiBuf[AsciiLen] = '\0'; // Truncate
+        }
+
+        // Now convert temp ASCII to Unicode char by char into the destination
+        UINTN Count = 0;
+        CHAR16 PadChar = PadWithZero ? L'0' : L' ';
+
+        // Handle right-justification (padding before string)
+        if (Width > AsciiLen && !LeftJustify) {
+            for (UINTN i = 0; i < Width - AsciiLen && RemainingBufChars > (PrintedChars + Count + 1); i++) {
+                Dest[Count++] = PadChar;
+            }
+        }
+        // Copy characters
+        for (UINTN i = 0; i < AsciiLen && RemainingBufChars > (PrintedChars + Count + 1); i++) {
+          Dest[Count++] = (CHAR16)TempAsciiBuf[i];
+        }
+        // Handle left-justification (padding after string)
+        if (Width > AsciiLen && LeftJustify) {
+            for (UINTN i = 0; i < Width - AsciiLen && RemainingBufChars > (PrintedChars + Count + 1); i++) {
+                Dest[Count++] = PadChar;
+            }
+        }
+        CharsWrittenForSpecifier = Count;
+        break;
+      }
+      case L'd': // Signed decimal integer
+      case L'i':
+      {
+        dprint();
+        INTN Val = (Long ? VA_ARG(VaListMaker, INT64) : VA_ARG(VaListMaker, INTN));
+        dprint();
+        CharsWrittenForSpecifier = UnicodeSPrint(Dest, RemainingBytesForSpecifier, L"%" FMT_INT64_DFORMAT L"d", Val);
+        break;
+      }
+      case L'u': // Unsigned decimal integer
+      {
+        dprint();
+        UINTN Val = (Long ? VA_ARG(VaListMaker, UINT64) : VA_ARG(VaListMaker, UINTN));
+        dprint();
+        CharsWrittenForSpecifier = UnicodeSPrint(Dest, RemainingBytesForSpecifier, L"%" FMT_UINT64_DFORMAT L"u", Val);
+        break;
+      }
+      case L'x': // Hexadecimal lowercase
+      {
+        dprint();
+        UINTN Val = (Long ? VA_ARG(VaListMaker, UINT64) : VA_ARG(VaListMaker, UINTN));
+        dprint();
+        CharsWrittenForSpecifier = UnicodeSPrint(Dest, RemainingBytesForSpecifier, L"%" FMT_UINT64_XFORMAT L"x", Val);
+        break;
+      }
+      case L'X': // Hexadecimal uppercase
+      {
+        dprint();
+        UINTN Val = (Long ? VA_ARG(VaListMaker, UINT64) : VA_ARG(VaListMaker, UINTN));
+        dprint();
+        CharsWrittenForSpecifier = UnicodeSPrint(Dest, RemainingBytesForSpecifier, L"%" FMT_UINT64_XFORMAT L"X", Val);
+        break;
+      }
+      case L'p': // Pointer address (hex)
+      {
+        dprint();
+        VOID *Ptr = VA_ARG(VaListMaker, VOID*);
+        dprint();
+        CharsWrittenForSpecifier = UnicodeSPrint(Dest, RemainingBytesForSpecifier, L"%p", Ptr);
+        break;
+      }
+      case L'c': // Unicode character
+      {
+        dprint();
+        CHAR16 CharVal = (CHAR16)VA_ARG(VaListMaker, UINTN); // Char args are promoted to int
+        dprint();
+        *Dest = CharVal;
+        CharsWrittenForSpecifier = 1;
+        break;
+      }
+      case L'%': // Literal '%'
+        dprint();
+        *Dest = L'%';
+        CharsWrittenForSpecifier = 1;
+        break;
+      default: // Unrecognized specifier, print literally
+        dprint();
+        *Dest++ = L'%';
+        *Dest++ = *Fmt;
+        PrintedChars += 2; // Adjust immediately as we wrote directly
+        RemainingBufChars -= 2;
+        goto NextFmtChar; // Skip common update at end of switch
+    }
+    
+    dprint();
+    // Update pointers and counts after processing a specifier
+    Dest += CharsWrittenForSpecifier;
+    PrintedChars += CharsWrittenForSpecifier;
+    RemainingBufChars -= CharsWrittenForSpecifier;
+
+NextFmtChar:
+    dprint();
+    Fmt++; // Move to next char in format string
+  }
+
+  *Dest = L'\0'; // Null-terminate the buffer
+  
+Exit:
+  dprint();
+  VA_END(VaListMaker); // Clean up the copied VA_LIST
+  dprint();
+  return PrintedChars;
+}
+
+
+// ===========================================================================
+// SBC_LogPrint (Main Logging Function)
+// ===========================================================================
+
+VOID
+SBC_LogPrint(
+  CONST CHAR16* func,     // For [%s:%d] if uncommented (CHAR16*)
+  UINT32 funcline,        // For [%s:%d] if uncommented
+  UINT32 prio,            // Priority
+  UINT32 ver,             // Version (e.g., event version)
+  CHAR16 *host,           // Hostname or system identifier (potentially NULL)
+  CHAR16 *appname,        // Application name (potentially NULL)
+  CHAR16 *csc,            // Custom field (e.g., Component Specific Code, potentially NULL)
+  UINT32 sfrid,           // Specific Function/Event ID
+  CHAR16 *evtype,         // Event Type string (potentially NULL)
+  CHAR16 *format,         // Format string for the message body (can contain %s, %d etc.)
+  ...
+  )
+{
+    EFI_STATUS retval;
+    VA_LIST args;
+    EFI_TIME logtime;
+    
+    // Buffer for the full Unicode log message. Size in CHAR16s.
+    CHAR16 full_log_msg[PcdGet32 (PcdUefiLibMaxPrintBufferSize) + 1]; 
+    UINTN nxtofs = 0; // Current offset in CHAR16s
+    UINTN remaining_buffer_bytes;
+    
+    // Calculate total buffer size in bytes for safer print functions
+    UINTN max_full_log_msg_bytes = sizeof(full_log_msg);
+
+    dprint("SBC_LogPrint: Log buf size in CHAR16s: %d (Bytes: %d)\n",
+                         PcdGet32(PcdUefiLibMaxPrintBufferSize) + 1, max_full_log_msg_bytes);
+    
+    ZeroMem(full_log_msg, max_full_log_msg_bytes); // Clear the buffer
+    ZeroMem(&logtime, sizeof(EFI_TIME)); // Clear time struct
+
+    dprint();
+    retval = gRT->GetTime(&logtime, NULL);
+    if (EFI_ERROR(retval)) {
+      // Fallback if time retrieval fails (e.g., set to a fixed epoch or default)
+      logtime.Year = 2000;
+      logtime.Month = 1;
+      logtime.Day = 1;
+      logtime.Hour = 0;
+      logtime.Minute = 0;
+      logtime.Second = 0;
+      logtime.Nanosecond = 0;
+      // Also set timezone and DaylightSaving if needed
+    }
+
+    dprint();
+
+    // --- Safely handle potentially NULL CHAR16* arguments for the header ---
+    // These pointers are passed directly to UnicodeSPrint, which itself is safe.
+    // However, explicitly ensuring non-NULL pointers is good practice and clear.
+    [[maybe_unused]] CONST CHAR16 *safe_func    = (func != NULL) ? func : gEmptyStringUefi; // If func is CHAR16*
+    CONST CHAR16 *safe_host    = (host != NULL) ? host : gNullStringUefi;
+    CONST CHAR16 *safe_appname = (appname != NULL) ? appname : gNullStringUefi;
+    CONST CHAR16 *safe_csc     = (csc != NULL) ? csc : gNullStringUefi;
+    CONST CHAR16 *safe_evtype  = (evtype != NULL) ? evtype : gNullStringUefi;
+
+    remaining_buffer_bytes = max_full_log_msg_bytes;
+
+    // Optional: Prepend function name and line number
+    // Assuming 'func' is a CHAR16* as per your signature.
+    // If 'func' was CHAR8*, you would use %a or convert it first.
+    // nxtofs += UnicodeSPrint(
+    //             full_log_msg + nxtofs,
+    //             remaining_buffer_bytes,
+    //             L"[%s:%d] ", // Added space after ]
+    //             safe_func, funcline
+    //             );
+    // remaining_buffer_bytes -= (nxtofs * sizeof(CHAR16));
+
+
+    dprint();
+    // --- Construct the main header part of the log message ---
+    // Format: PRIO VER YYYY-MM-DDTHH:MM:SS HOST APPNAME CSC R-SAT-PWT-SFR-XXX EVTYPE [Message Body]
+    // Using %02d for consistent two-digit formatting for month, day, hour, etc.
+    nxtofs += UnicodeSPrint(
+                full_log_msg + nxtofs,
+                remaining_buffer_bytes,
+                L"%d %d %04d-%02d-%02dT%02d:%02d:%02d %s %s %s R-SAT-PWT-SFR-%03d %s ",
+                prio, ver,
+                logtime.Year, logtime.Month, logtime.Day,
+                logtime.Hour, logtime.Minute, logtime.Second,
+                safe_host, safe_appname, safe_csc, // Using the safely handled pointers
+                sfrid, safe_evtype
+                );
+
+    // Update remaining buffer size in bytes for the next print.
+    remaining_buffer_bytes -= (nxtofs * sizeof(CHAR16));
+    
+    dprint();
+    // Ensure we have at least some space left for the message body and null terminator
+    if (remaining_buffer_bytes <= sizeof(CHAR16) * 4) { // Small space for "..." + NULL
+        dprint("SBC_LogPrint: Buffer almost full before message body. Truncating.\n");
+        UnicodeSPrint(full_log_msg + nxtofs, sizeof(CHAR16)*4, L"..."); // Indicate truncation
+        return; // Skip to the end
+    }
+
+    // --- Message body (variable part) ---
+    VA_START(args, format);
+    dprint();
+    // Call the enhanced _LogFmtVPrint, which now handles NULL CHAR16* arguments safely.
+    nxtofs += _LogFmtVPrint(
+                format, // The format string for the variable arguments
+                args,
+                full_log_msg + nxtofs, // Start writing from current offset
+                remaining_buffer_bytes   // Remaining buffer size in bytes
+                );
+    VA_END(args);
+
+    // --- Final null-termination and length check ---
+    // _LogFmtVPrint should null-terminate, but being explicit for the overall buffer.
+    // Ensure the final message length does not exceed the total buffer capacity.
+    if (nxtofs >= PcdGet32(PcdUefiLibMaxPrintBufferSize)) {
+        // Truncate if necessary and ensure final null-termination
+        full_log_msg[PcdGet32(PcdUefiLibMaxPrintBufferSize)] = L'\0';
+    } else {
+        full_log_msg[nxtofs] = L'\0'; // Explicit null termination
+    }
+
+    // --- Post-processing and output ---
+    // Convert the full Unicode log message to ASCII for file/network output
+    // Assuming `remove_all_space` and `_sbc_write_log_file` expect ASCII CHAR8*.
+    CHAR8  AsciiLogBuffer[PcdGet32 (PcdUefiLibMaxPrintBufferSize) + 1]; // One byte per CHAR16 (safe for ASCII range)
+    UINTN  AsciiConvertedLen;
+
+    AsciiConvertedLen = MyUnicodeStrToAsciiStrS(AsciiLogBuffer, sizeof(AsciiLogBuffer), full_log_msg);
+    if (AsciiConvertedLen == 0 && full_log_msg[0] != L'\0') {
+        DEBUG ((DEBUG_ERROR, "SBC_LogPrint: Failed to convert Unicode log to ASCII or buffer too small.\n"));
+        // Handle conversion error, maybe log truncated msg or error to console
+        Print(L"WARNING: ASCII conversion failed for log. Unicode content: %s\n", full_log_msg);
+        goto ExitLog;
+    }
+
+    // Now wrlog points to a proper ASCII string
+    CHAR8 *wrlog_ptr = AsciiLogBuffer; 
+    
+    // Print for debug (both Unicode and ASCII for comparison)
+    dprint("SBC_LogPrint: Full Unicode Log msg : %s \n", full_log_msg);
+    dprint("SBC_LogPrint: Full ASCII Log msg   : %a (Length: %d) \n", wrlog_ptr, AsciiConvertedLen);
+
+    // Call your remove_all_space function (expects ASCII CHAR8*)
+    // It should modify wrlog_ptr in place and return the new length.
+    // Make sure remove_all_space works on a null-terminated string and updates length correctly.
+    UINTN final_ascii_len = remove_all_space(wrlog_ptr, AsciiConvertedLen); // Pass converted length, not full buffer size
+
+    dprint("SBC_LogPrint: ASCII Log msg after space removal: %a (Final Length: %d)\n", wrlog_ptr, final_ascii_len);
+
+    // _sbc_write_log_file expects CHAR8* and its strlen.
+    _sbc_write_log_file(wrlog_ptr, final_ascii_len);
+
+ExitLog:
+    return;
+}
+
+// ===========================================================================
+// Dummy External Functions (Replace with your actual implementations)
+// ===========================================================================
+
+// Replace with your actual implementation that removes spaces from an ASCII buffer
+UINTN remove_all_space(CHAR8 *buffer, UINTN buffer_size_in_bytes) {
+    if (buffer == NULL || buffer_size_in_bytes == 0) {
+        return 0;
+    }
+    UINTN  read_idx = 0;
+    UINTN  write_idx = 0;
+    while (read_idx < buffer_size_in_bytes && buffer[read_idx] != '\0') {
+        if (buffer[read_idx] != ' ') {
+            buffer[write_idx++] = buffer[read_idx];
+        }
+        read_idx++;
+    }
+    buffer[write_idx] = '\0'; // Null-terminate the new string
+    return write_idx; // Return new length
+}
+
+// Replace with your actual implementation for writing to a log file or sending over network
+EFI_STATUS _sbc_write_log_file(CHAR8 *log_data, UINTN length_in_bytes) {
+    if (log_data == NULL || length_in_bytes == 0) {
+        DEBUG ((DEBUG_ERROR, "SysLog: No data to write or invalid length.\n"));
+        return EFI_INVALID_PARAMETER;
+    }
+    // For demonstration, just print to console as ASCII
+    Print(L"SysLog_OUTPUT (ASCII): %a\n", log_data);
+
+    // --- Placeholder for actual network (UDP) sending ---
+    // EFI_STATUS Status;
+    // EFI_UDP4_PROTOCOL *gUdp4 = NULL; // Get this protocol instance elsewhere
+    // EFI_IP4_CONFIG_PROTOCOL *gIp4Config = NULL; // Get this protocol instance elsewhere
+    // UINT32 SyslogServerIp = 0xC0A8010A; // Example: 192.168.1.10
+    // UINT16 SyslogServerPort = 514;
+    //
+    // // Initialize UDP, configure IP, etc. (complex setup not shown)
+    // // Status = gBS->LocateProtocol(&gEfiUdp4ProtocolGuid, NULL, (VOID **)&gUdp4);
+    // // if (!EFI_ERROR(Status) && gUdp4 != NULL) {
+    // //     EFI_UDP4_TRANSMIT_DATA TxData;
+    // //     ZeroMem(&TxData, sizeof(TxData));
+    // //     TxData.DestinationAddress.Addr[0] = (UINT8)(SyslogServerIp >> 24);
+    // //     ...
+    // //     TxData.FragmentCount = 1;
+    // //     TxData.Fragment[0].FragmentLength = (UINT32)length_in_bytes;
+    // //     TxData.Fragment[0].FragmentBuffer = log_data;
+    // //     Status = gUdp4->Transmit(gUdp4, &TxData);
+    // // }
+    //
+    // --- Placeholder for actual file writing ---
+    // EFI_STATUS Status;
+    // EFI_SIMPLE_FILE_SYSTEM_PROTOCOL *gFs = NULL; // Get this protocol instance elsewhere
+    // EFI_FILE_PROTOCOL *LogFile = NULL;
+    //
+    // // Locate file system protocol (e.g., on ESP or USB)
+    // // Status = gBS->LocateProtocol(&gEfiSimpleFileSystemProtocolGuid, NULL, (VOID **)&gFs);
+    // // if (!EFI_ERROR(Status) && gFs != NULL) {
+    // //     // Open root directory
+    // //     EFI_FILE_PROTOCOL *Root = NULL;
+    // //     Status = gFs->OpenVolume(gFs, &Root);
+    // //     if (!EFI_ERROR(Status) && Root != NULL) {
+    // //         // Open or create log file
+    // //         Status = Root->Open(Root, &LogFile, L"\\SysLog.log", EFI_FILE_MODE_READ | EFI_FILE_MODE_WRITE | EFI_FILE_MODE_CREATE, 0);
+    // //         if (!EFI_ERROR(Status) && LogFile != NULL) {
+    // //             // Seek to end and write
+    // //             LogFile->SetPosition(LogFile, EFI_MAX_UINT64); // Seek to end
+    // //             LogFile->Write(LogFile, &length_in_bytes, log_data);
+    // //             LogFile->Close(LogFile);
+    // //         }
+    // //         Root->Close(Root);
+    // //     }
+    // // }
+
+    return EFI_SUCCESS;
+}
+#if 0
 #include <Uefi.h>
 #include <Library/BaseMemoryLib.h>
 #include <Library/UnitTestLib.h>
@@ -881,348 +1803,882 @@ static UINTN remove_all_space(CHAR8* str, UINTN cnt) {
 
     return write_index;
 }
+//
+//void _sbc_write_log_file(CHAR8 *message, UINT32 msglen)
+//{
+//    EFI_STATUS Status;
+//    SBCStatus ret = SBCOK;
+//    EFI_HANDLE      *hndl = NULL;
+//    EFI_HANDLE      loghnd = NULL;
+//    UINTN           hndlcnt;
+//    LV_t            wrlv;
+//
+//    CHAR16         *rocky_dir_name = L"\\EFI\\rocky\\sbc_fsbl_sys_log";
+//    CHAR16         *sbc_log_fname = L"\\EFI\\rocky\\sbc_fsbl_sys_log";
+//
+//    EFI_STATUS retval = EFI_SUCCESS;
+//
+//    hndlcnt = SBC_FindEfiFileSystemProtocol(&hndl);
+//
+//    //dprint("Log gEfiSimpleFileSystemProtocolGuid Handle Count :%d ", hndlcnt);
+//
+//    for (int idx = 0; idx < hndlcnt; idx++) {
+//        //dprint("[idx:%d] handle addr : 0x%x", idx, hndl[idx]);
+//        Status = SBC_IsFlieAccess(hndl[idx], rocky_dir_name);
+//        switch (Status) {
+//        case EFI_SUCCESS:
+//          loghnd=  hndl[idx];
+//          //dprint("%s dir exists \n", rocky_dir_name);
+//          break;
+//        case EFI_NOT_FOUND:
+//          //dprint("%s dir not found \n", rocky_dir_name);
+//          //dprint();
+//          //goto errdone;
+//          break;
+//        default:
+//          dprint("Unknown error (%s) \n", Status);
+//          break;
+//        }
+//
+//    }
+//
+//    if (loghnd == NULL) {
+//        goto errdone;
+//    }
+//
+//    Status = SBC_IsFlieAccess(loghnd, sbc_log_fname);
+//    switch (Status) {
+//    case EFI_SUCCESS:
+//      break;
+//    case EFI_NOT_FOUND:
+//      // Create File
+//      ret = SBC_CreateFile(loghnd, sbc_log_fname);
+//      break;
+//
+//    default:
+//      dprint("Unknown error (%s) \n", Status);
+//      goto errdone;
+//
+//    }
+//
+//    if (ret != SBCOK) {
+//        eprint("log file create fail \n");
+//        return;
+//    }
+//
+//
+//    wrlv.value = message;
+//    wrlv.length = msglen;
+//
+//    retval = SBC_LogWriteFile(loghnd, sbc_log_fname, &wrlv);
+//    if (EFI_ERROR(retval)) {
+//        dprint(" og  write fail (%r) \n",  retval);
+//
+//    }
+//
+//
+//errdone:
+//    return;
+//
+//}
+//
+//// Global string literals for safety (in case of NULL input pointers)
+//CONST CHAR16 * CONST gNullStringUefi = L"(null)"; // For Unicode strings
+//CONST CHAR8  * CONST gNullStringAscii = "(null)"; // For ASCII strings (if you use %a)
+//
+//UINTN
+//InternalUnicodePrintUint (
+//  IN OUT CHAR16  *Buffer,
+//  IN     UINTN   BufferSize,
+//  IN     UINTN   Value,
+//  IN     UINTN   Radix,
+//  IN     BOOLEAN Uppercase,
+//  IN     UINTN   MinWidth,
+//  IN     BOOLEAN PadWithZero
+//  )
+//{
+//  CHAR16 TempBuf[30]; // Sufficient for 64-bit numbers
+//  CHAR16 *p = TempBuf + sizeof(TempBuf)/sizeof(CHAR16) - 1;
+//  UINTN  Count = 0;
+//  CHAR16 DigitChar;
+//
+//  *p = L'\0'; // Null terminate
+//  if (Value == 0) {
+//    *(--p) = L'0';
+//    Count = 1;
+//  } else {
+//    while (Value > 0) {
+//      DigitChar = (CHAR16)(Value % Radix);
+//      if (DigitChar < 10) {
+//        *(--p) = (CHAR16)(L'0' + DigitChar);
+//      } else {
+//        *(--p) = (CHAR16)((Uppercase ? L'A' : L'a') + DigitChar - 10);
+//      }
+//      Value /= Radix;
+//      Count++;
+//    }
+//  }
+//
+//  // Handle padding
+//  while (Count < MinWidth) {
+//    *(--p) = PadWithZero ? L'0' : L' ';
+//    Count++;
+//  }
+//
+//  // Copy to destination buffer, respecting BufferSize
+//  return UnicodeSPrint(Buffer, BufferSize, L"%s", p);
+//}
+//
+//
+//// --- MODIFIED _LogFmtVPrint ---
+//// This function will now parse the format string and handle NULL %s arguments.
+//UINTN
+//_LogFmtVPrint(
+//  IN CONST CHAR16 *Format,
+//  IN VA_LIST      VaListMaker, // The original VA_LIST
+//  IN OUT CHAR16   *LogBuf,     // Buffer to write into (CHAR16 array)
+//  IN UINTN        BufLen       // Remaining buffer size in BYTES
+//  )
+//{
+//  CONST CHAR16      *Fmt;
+//  CHAR16            *Dest;
+//  UINTN             PrintedLength = 0;
+//  UINTN             RemainingBufChars;
+//  VA_LIST           CurrentVaList; // Use a copy to iterate
+//
+//  // Make a copy of the VA_LIST for safe iteration within this function.
+//  // VA_COPY is preferred, but VA_LIST can often be copied by assignment on many compilers.
+//  // For robustness, if VA_COPY is available and supported, use it.
+//  // Example: VA_COPY(CurrentVaList, VaListMaker);
+//  CurrentVaList = VaListMaker; // Simple assignment, might not be portable to all compilers
+//
+//  dprint();
+//
+//  Fmt = Format;
+//  Dest = LogBuf;
+//  RemainingBufChars = BufLen / sizeof(CHAR16); // Convert byte length to CHAR16s
+//
+//  dprint();
+//
+//  // Loop through the format string
+//  while (*Fmt != L'\0' && RemainingBufChars > 1) { // Leave space for null terminator
+//    if (*Fmt != L'%') {
+//      *Dest++ = *Fmt++;
+//      PrintedLength++;
+//      RemainingBufChars--;
+//      continue;
+//    }
+//
+//    dprint();
+//
+//    // Found a '%', now parse the specifier
+//    Fmt++; // Skip '%'
+//
+//    // Simple parsing for common specifiers and flags.
+//    // This is a minimal implementation. A full one is complex.
+//    [[maybe_unused]] BOOLEAN Long = FALSE; // For %l, %L (often ignored or used for size_t/long long)
+//    [[maybe_unused]] BOOLEAN IsSigned = FALSE; // For %d, %i
+//    BOOLEAN PadWithZero = FALSE;
+//    UINTN   Width = 0;
+//
+//    // Flags (e.g., '0' for zero-padding)
+//    while (*Fmt == L'0') {
+//        PadWithZero = TRUE;
+//        Fmt++;
+//    }
+//
+//    // Width (e.g., %5d)
+//    while ((*Fmt >= L'0') && (*Fmt <= L'9')) {
+//      Width = Width * 10 + (*Fmt - L'0');
+//      Fmt++;
+//    }
+//
+//    // Length modifier (e.g., %lX for long)
+//    if (*Fmt == L'l') {
+//      Long = TRUE;
+//      Fmt++;
+//    }
+//
+//    dprint();
+//
+//    switch (*Fmt) {
+//      case L's': // Unicode string
+//      {
+//        CONST CHAR16 *StringArg = VA_ARG(CurrentVaList, CONST CHAR16*);
+//        // *** THE CRITICAL NULL CHECK ***
+//        if (StringArg == NULL) {
+//          StringArg = gNullStringUefi; // Substitute with safe "(null)"
+//        }
+//        UINTN BytesWritten = UnicodeSPrint(Dest, RemainingBufChars * sizeof(CHAR16), L"%s", StringArg);
+//        PrintedLength += BytesWritten / sizeof(CHAR16);
+//        Dest += BytesWritten / sizeof(CHAR16);
+//        RemainingBufChars -= BytesWritten / sizeof(CHAR16);
+//        break;
+//      }
+//      case L'a': // ASCII string (must be converted to Unicode for LogBuf)
+//      {
+//        CONST CHAR8 *AsciiArg = VA_ARG(CurrentVaList, CONST CHAR8*);
+//        CHAR8 TempAsciiBuf[256]; // Temp buffer for ASCII string
+//        UINTN BytesConverted;
+//
+//        if (AsciiArg == NULL) {
+//          AsciiArg = gNullStringAscii; // Substitute with safe "(null)"
+//        }
+//        // Safely copy ASCII to temp buffer, truncate if needed
+//        AsciiStrCpyS(TempAsciiBuf, sizeof(TempAsciiBuf), AsciiArg);
+//        BytesConverted = AsciiStrLen(TempAsciiBuf);
+//
+//        // Now convert temp ASCII to Unicode and print
+//        // Use an internal helper or manually convert char by char
+//        for (UINTN i = 0; i < BytesConverted && RemainingBufChars > 1; i++) {
+//          *Dest++ = (CHAR16)TempAsciiBuf[i];
+//          PrintedLength++;
+//          RemainingBufChars--;
+//        }
+//        break;
+//      }
+//      case L'd': // Signed decimal integer
+//      case L'i':
+//      {
+//        dprint();
+//        INTN Val = VA_ARG(CurrentVaList, INTN);
+//        // Implement simple signed integer print or call PrintLib helper
+//        UINTN BytesWritten = UnicodeSPrint(Dest, RemainingBufChars * sizeof(CHAR16), L"%d", Val);
+//        PrintedLength += BytesWritten / sizeof(CHAR16);
+//        Dest += BytesWritten / sizeof(CHAR16);
+//        RemainingBufChars -= BytesWritten / sizeof(CHAR16);
+//        break;
+//      }
+//      case L'u': // Unsigned decimal integer
+//      {
+//        dprint();
+//        UINTN Val = VA_ARG(CurrentVaList, UINTN);
+//        UINTN BytesWritten = InternalUnicodePrintUint(Dest, RemainingBufChars * sizeof(CHAR16), Val, 10, FALSE, Width, PadWithZero);
+//        PrintedLength += BytesWritten / sizeof(CHAR16);
+//        Dest += BytesWritten / sizeof(CHAR16);
+//        RemainingBufChars -= BytesWritten / sizeof(CHAR16);
+//        break;
+//      }
+//      case L'x': // Hexadecimal lowercase
+//      {
+//        dprint();
+//        UINTN Val = VA_ARG(CurrentVaList, UINTN);
+//        dprint("x val :%lx", Val);
+//        UINTN BytesWritten = InternalUnicodePrintUint(Dest, RemainingBufChars * sizeof(CHAR16), Val, 16, FALSE, Width, PadWithZero);
+//        PrintedLength += BytesWritten / sizeof(CHAR16);
+//        Dest += BytesWritten / sizeof(CHAR16);
+//        RemainingBufChars -= BytesWritten / sizeof(CHAR16);
+//        break;
+//      }
+//      case L'X': // Hexadecimal uppercase
+//      {
+//        UINTN Val = VA_ARG(CurrentVaList, UINTN);
+//        UINTN BytesWritten = InternalUnicodePrintUint(Dest, RemainingBufChars * sizeof(CHAR16), Val, 16, TRUE, Width, PadWithZero);
+//        PrintedLength += BytesWritten / sizeof(CHAR16);
+//        Dest += BytesWritten / sizeof(CHAR16);
+//        RemainingBufChars -= BytesWritten / sizeof(CHAR16);
+//        break;
+//      }
+//      case L'p': // Pointer address (hex)
+//      {
+//        VOID *Ptr = VA_ARG(CurrentVaList, VOID*);
+//        UINTN BytesWritten = UnicodeSPrint(Dest, RemainingBufChars * sizeof(CHAR16), L"%p", Ptr);
+//        PrintedLength += BytesWritten / sizeof(CHAR16);
+//        Dest += BytesWritten / sizeof(CHAR16);
+//        RemainingBufChars -= BytesWritten / sizeof(CHAR16);
+//        break;
+//      }
+//      case L'c': // Unicode character
+//      {
+//        CHAR16 CharVal = (CHAR16)VA_ARG(CurrentVaList, UINTN); // Char args are promoted to int
+//        *Dest++ = CharVal;
+//        PrintedLength++;
+//        RemainingBufChars--;
+//        break;
+//      }
+//      case L'%': // Literal '%'
+//        *Dest++ = L'%';
+//        PrintedLength++;
+//        RemainingBufChars--;
+//        break;
+//      default: // Unrecognized specifier, print literally
+//        *Dest++ = L'%';
+//        *Dest++ = *Fmt;
+//        PrintedLength += 2;
+//        RemainingBufChars -= 2;
+//        break;
+//    }
+//    Fmt++; // Move to next char in format string
+//  }
+//
+//  *Dest = L'\0'; // Null-terminate the buffer
+//  return PrintedLength;
+//}
+//
+//
+//VOID
+//SBC_LogPrint(
+//  CONST CHAR16* func,     // For [%a:%d] if uncommented
+//  UINT32 funcline,        // For [%a:%d] if uncommented
+//  UINT32 prio,
+//  UINT32 ver,
+//  CHAR16 *host,           // Potentially NULL
+//  CHAR16 *appname,        // Potentially NULL
+//  CHAR16 *csc,            // Potentially NULL
+//  UINT32 sfrid,
+//  CHAR16 *evtype,         // Potentially NULL
+//  CHAR16 *format,         // Format string for the message body
+//  ...
+//  )
+//{
+//    EFI_STATUS retval;
+//    VA_LIST args;
+//    EFI_TIME logtime;
+//    CHAR8 *wrlog = NULL;
+//    // Buffer for the full Unicode log message
+//    CHAR16 full_log_msg[(PcdGet32 (PcdUefiLibMaxPrintBufferSize) + 1)]; // Size is in CHAR16s now
+//    UINTN nxtofs = 0;
+//    UINTN remaining_buffer_bytes;
+//
+//    // Convert CHAR16 buffer size to bytes
+//    UINTN max_full_log_msg_bytes = sizeof(full_log_msg);
+//
+//    DEBUG ((DEBUG_INFO, "Log buf size in CHAR16s: %d\n", PcdGet32(PcdUefiLibMaxPrintBufferSize) + 1));
+//    ZeroMem(full_log_msg, max_full_log_msg_bytes); // Use byte size
+//    ZeroMem(&logtime, sizeof(EFI_TIME));
+//
+//    retval = gRT->GetTime(&logtime, NULL);
+//    if (EFI_ERROR(retval)) {
+//      // If getting time fails, set to a known zero value or a default epoch
+//      SetMem(&logtime, sizeof(EFI_TIME), 0);
+//      // Or you might use specific fixed values for year, month, day, etc.
+//      // logtime.Year = 2000; logtime.Month = 1; logtime.Day = 1; ...
+//    }
+//
+//    // --- First part of the log header ---
+//    // Safely handle potentially NULL CHAR16* arguments for %s
+//    CONST CHAR16 *safe_host    = (host != NULL) ? host : gNullStringUefi;
+//    CONST CHAR16 *safe_appname = (appname != NULL) ? appname : gNullStringUefi;
+//    CONST CHAR16 *safe_csc     = (csc != NULL) ? csc : gNullStringUefi;
+//    CONST CHAR16 *safe_evtype  = (evtype != NULL) ? evtype : gNullStringUefi;
+//
+//    remaining_buffer_bytes = max_full_log_msg_bytes;
+//
+//    // The commented out line below was using %a for func (CHAR16* func).
+//    // If func is a CHAR16*, using %a is incorrect in UnicodeSPrint.
+//    // If func is CHAR8*, then %a is correct. Assuming func is CHAR16* based on signature.
+//    // If func is CHAR16* and you want it, use %s:
+//    // nxtofs = UnicodeSPrint(full_log_msg, remaining_buffer_bytes, L"[%s:%d]", func, funcline);
+//    // If func is CHAR8* and you want it converted:
+//    // nxtofs = UnicodeSPrint(full_log_msg, remaining_buffer_bytes, L"[%a:%d]", (func != NULL ? (CHAR8*)func : gNullStringAscii), funcline);
+//    // For now, it's commented out, so it won't be an issue.
+//
+//    // Calculate remaining buffer size in bytes for the next print.
+//    remaining_buffer_bytes -= (nxtofs * sizeof(CHAR16));
+//
+//    dprint();
+//    // Construct the main header part of the log message
+//    nxtofs += UnicodeSPrint(
+//                full_log_msg + nxtofs,
+//                remaining_buffer_bytes,
+//                L"%d %d %d-%02d-%02dT%02d:%02d:%02d %s %s %s R-SAT-PWT-SFR-%03d %s ", // Added space after %s for clarity
+//                prio, ver,
+//                logtime.Year, logtime.Month, logtime.Day, // Use %02d for consistent formatting
+//                logtime.Hour, logtime.Minute, logtime.Second,
+//                safe_host, safe_appname, safe_csc, // Using the safely handled pointers
+//                sfrid, safe_evtype
+//                );
+//
+//    // Update remaining buffer size in bytes for _LogFmtVPrint
+//    remaining_buffer_bytes -= (nxtofs * sizeof(CHAR16));
+//
+//    dprint();
+//    // Ensure we don't pass a negative or zero remaining_buffer_bytes to _LogFmtVPrint
+//    if (remaining_buffer_bytes == 0 || nxtofs >= PcdGet32(PcdUefiLibMaxPrintBufferSize)) {
+//        DEBUG ((DEBUG_ERROR, "SBC_LogPrint: Buffer full before message body. nxtofs=%d\n", nxtofs));
+//        // Optionally, append an ellipsis to indicate truncation
+//        UnicodeSPrint(full_log_msg + nxtofs, sizeof(CHAR16)*4, L"..."); // 4 bytes for "..." + NULL
+//        goto Exit; // Skip to the end
+//    }
+//
+//    dprint();
+//
+//    // --- Message body (variable part) ---
+//    VA_START(args, format);
+//
+//    dprint();
+//    // Call your internal _LogFmtVPrint. This function *must* also handle NULL CHAR16*
+//    // for its %s specifiers from the 'format' string.
+//    nxtofs += _LogFmtVPrint(
+//                (CONST CHAR16 *)format,
+//                args,
+//                (CHAR16 *)full_log_msg + nxtofs, // Start writing from current offset
+//                remaining_buffer_bytes           // Remaining buffer size in bytes
+//                );
+//    VA_END(args);
+//
+//    dprint();
+//
+//    // Ensure the final message is null-terminated and doesn't exceed buffer
+//    // UnicodeSPrint/VPrint usually null-terminate, but good to be explicit
+//    // and check against the total allocated buffer size for robustness.
+//    if (nxtofs >= PcdGet32(PcdUefiLibMaxPrintBufferSize)) {
+//        // Truncate if necessary and null-terminate
+//        full_log_msg[PcdGet32(PcdUefiLibMaxPrintBufferSize)] = L'\0';
+//    } else {
+//        full_log_msg[nxtofs] = L'\0';
+//    }
+//
+//    dprint();
+//
+//    // --- Post-processing and output ---
+////  DEBUG ((DEBUG_INFO, L"Mesage buf length (CHAR16s): %d, size (bytes): %d\n",
+////                       StrnLenS(full_log_msg), StrnLenS(full_log_msg)));
+//
+//    wrlog = (CHAR8 *)full_log_msg; // Cast for ASCII processing
+//
+//    // Print for debug
+//    dprint("Full Log msg : %s \n", full_log_msg);
+//
+//    // Call your remove_all_space function (assumed to work on ASCII CHAR8*)
+//    // You need to be careful if remove_all_space expects an ASCII string,
+//    // but wrlog is actually a Unicode string in memory.
+//    // If remove_all_space expects ASCII, you need to convert full_log_msg to ASCII first.
+//    // If it works on the raw byte representation of Unicode, that's unusual but possible.
+//    // Assuming it's safe for now.
+//    nxtofs = remove_all_space(wrlog, StrnSizeS((CHAR16*)wrlog, max_full_log_msg_bytes));
+//
+//    //DEBUG ((DEBUG_INFO, L"Full Log msg after space removal (ASCII interpretation): %a \n", wrlog));
+//    //Print(L"Log : %a \n", wrlog);
+//
+//    // _sbc_write_log_file expects CHAR8* and its strlen.
+//    // This again implies wrlog must be a valid ASCII string.
+//    // If full_log_msg is truly Unicode, then wrlog needs to be a separate, converted ASCII buffer.
+//    _sbc_write_log_file(wrlog, strlen(wrlog));
+//
+//Exit:
+//    return;
+//}
+//
 
-void _sbc_write_log_file(CHAR8 *message, UINT32 msglen)
-{
-    EFI_STATUS Status;
-    SBCStatus ret = SBCOK;
-    EFI_HANDLE      *hndl = NULL;
-    EFI_HANDLE      loghnd = NULL;
-    UINTN           hndlcnt;
-    LV_t            wrlv;
 
-    CHAR16         *rocky_dir_name = L"\\EFI\\rocky\\sbc_fsbl_sys_log";
-    CHAR16         *sbc_log_fname = L"\\EFI\\rocky\\sbc_fsbl_sys_log";
-
-    EFI_STATUS retval = EFI_SUCCESS;
-
-    hndlcnt = SBC_FindEfiFileSystemProtocol(&hndl);
-
-    //dprint("Log gEfiSimpleFileSystemProtocolGuid Handle Count :%d ", hndlcnt);
-
-    for (int idx = 0; idx < hndlcnt; idx++) {
-        //dprint("[idx:%d] handle addr : 0x%x", idx, hndl[idx]);
-        Status = SBC_IsFlieAccess(hndl[idx], rocky_dir_name);
-        switch (Status) {
-        case EFI_SUCCESS:
-          loghnd=  hndl[idx];
-          //dprint("%s dir exists \n", rocky_dir_name);
-          break;
-        case EFI_NOT_FOUND:
-          //dprint("%s dir not found \n", rocky_dir_name);
-          //dprint();
-          //goto errdone;
-          break;
-        default:
-          dprint("Unknown error (%s) \n", Status);
-          break;
-        }
-
-    }
-
-    if (loghnd == NULL) {
-        goto errdone;
-    }
-
-    Status = SBC_IsFlieAccess(loghnd, sbc_log_fname);
-    switch (Status) {
-    case EFI_SUCCESS:
-      break;
-    case EFI_NOT_FOUND:
-      // Create File 
-      ret = SBC_CreateFile(loghnd, sbc_log_fname);
-      break;
-      
-    default:
-      dprint("Unknown error (%s) \n", Status);
-      goto errdone;
-      
-    }
-
-    if (ret != SBCOK) {
-        eprint("log file create fail \n");
-        return;
-    }
-
-
-    wrlv.value = message;
-    wrlv.length = msglen;
-
-    retval = SBC_LogWriteFile(loghnd, sbc_log_fname, &wrlv);
-    if (EFI_ERROR(retval)) {
-        dprint(" og  write fail (%r) \n",  retval);
-        
-    }
-
- 
-errdone:
-    return;
-
-}
+// Define a suitable max print buffer size via PCD or a fixed constant
+// This should match your EDK II PCD for PcdUefiLibMaxPrintBufferSize if you use it.
+#ifndef PcdGet32
+#define PcdGet32(TokenName)   8192 // Default if PCD is not defined
+#endif
 
 // Global string literals for safety (in case of NULL input pointers)
-CONST CHAR16 * CONST gNullStringUefi = L"(null)"; // For Unicode strings
-CONST CHAR8  * CONST gNullStringAscii = "(null)"; // For ASCII strings (if you use %a)
+CONST CHAR16 * CONST gNullStringUefi  = L"(null)"; // For Unicode strings (%s)
+CONST CHAR8  * CONST gNullStringAscii = "(null)"; // For ASCII strings (%a)
+CONST CHAR16 * CONST gEmptyStringUefi = L"";       // For empty Unicode strings
 
+// Dummy for external functions (replace with your actual implementations)
+extern UINTN remove_all_space(CHAR8 *buffer, UINTN buffer_size_in_bytes);
+extern EFI_STATUS _sbc_write_log_file(CHAR8 *log_data, UINTN length_in_bytes);
+
+// ===========================================================================
+// Helper Functions (UnicodeStrLen, UnicodeStrToAsciiStrS - adapted for safety)
+// EDK II provides these in SafeStringLib, but if you need to roll your own:
+// ===========================================================================
+
+/**
+  Returns the length of a Null-terminated Unicode string, up to a specified maximum size.
+  (Similar to StrnLenS in EDK II's SafeStringLib)
+
+  @param  String  A pointer to a Null-terminated Unicode string.
+  @param  MaxSize The maximum number of Unicode characters to examine.
+
+  @retval 0       If String is NULL or empty.
+  @retval Others  The length of String, or MaxSize if the string is longer
+                  than MaxSize and no Null-terminator is found.
+**/
 UINTN
-InternalUnicodePrintUint (
-  IN OUT CHAR16  *Buffer,
-  IN     UINTN   BufferSize,
-  IN     UINTN   Value,
-  IN     UINTN   Radix,
-  IN     BOOLEAN Uppercase,
-  IN     UINTN   MinWidth,
-  IN     BOOLEAN PadWithZero
+MyUnicodeStrnLenS (
+  IN CONST CHAR16  *String,
+  IN UINTN         MaxSize
   )
 {
-  CHAR16 TempBuf[30]; // Sufficient for 64-bit numbers
-  CHAR16 *p = TempBuf + sizeof(TempBuf)/sizeof(CHAR16) - 1;
-  UINTN  Count = 0;
-  CHAR16 DigitChar;
+  UINTN Length;
 
-  *p = L'\0'; // Null terminate
-  if (Value == 0) {
-    *(--p) = L'0';
-    Count = 1;
-  } else {
-    while (Value > 0) {
-      DigitChar = (CHAR16)(Value % Radix);
-      if (DigitChar < 10) {
-        *(--p) = (CHAR16)(L'0' + DigitChar);
-      } else {
-        *(--p) = (CHAR16)((Uppercase ? L'A' : L'a') + DigitChar - 10);
-      }
-      Value /= Radix;
-      Count++;
-    }
+  if (String == NULL) {
+    DEBUG ((DEBUG_ERROR, "MyUnicodeStrnLenS: Input String is NULL.\n"));
+    return 0;
   }
 
-  // Handle padding
-  while (Count < MinWidth) {
-    *(--p) = PadWithZero ? L'0' : L' ';
-    Count++;
-  }
+  for (Length = 0; Length < MaxSize && *String != L'\0'; String++, Length++);
 
-  // Copy to destination buffer, respecting BufferSize
-  return UnicodeSPrint(Buffer, BufferSize, L"%s", p);
+  return Length;
 }
 
 
-// --- MODIFIED _LogFmtVPrint ---
-// This function will now parse the format string and handle NULL %s arguments.
+/**
+  Converts a Null-terminated Unicode string to a Null-terminated ASCII string.
+  (Similar to UnicodeStrToAsciiStrS in EDK II's SafeStringLib)
+
+  @param  Destination   A pointer to the buffer to store the ASCII string.
+  @param  DestinationSize The size in bytes of the Destination buffer.
+  @param  Source        A pointer to the Null-terminated Unicode string.
+
+  @retval The length of the converted ASCII string (not including null terminator).
+          Returns 0 if Source is NULL, or DestinationSize is too small for null terminator.
+          Truncates if Source is too long.
+**/
+UINTN
+MyUnicodeStrToAsciiStrS (
+  OUT CHAR8        *Destination,
+  IN  UINTN        DestinationSize, // Size in bytes
+  IN  CONST CHAR16 *Source
+  )
+{
+  UINTN Index;
+
+  if (Destination == NULL || Source == NULL || DestinationSize == 0) {
+    DEBUG ((DEBUG_ERROR, "MyUnicodeStrToAsciiStrS: Invalid input parameters.\n"));
+    return 0;
+  }
+
+  // Ensure there's space for the null terminator
+  if (DestinationSize < 1) {
+    return 0;
+  }
+
+  for (Index = 0; Index < (DestinationSize - 1) && Source[Index] != L'\0'; Index++) {
+    // Only convert if the Unicode character is within ASCII range
+    if (Source[Index] > 0xFF) {
+      Destination[Index] = '?'; // Replace non-ASCII with '?'
+      DEBUG ((DEBUG_WARN, "MyUnicodeStrToAsciiStrS: Non-ASCII char 0x%x replaced with '?'.\n", Source[Index]));
+    } else {
+      Destination[Index] = (CHAR8)Source[Index];
+    }
+  }
+  Destination[Index] = '\0'; // Null-terminate the ASCII string
+
+  return Index; // Return length without null terminator
+}
+
+
+// ===========================================================================
+// _LogFmtVPrint (The heart of safe variable argument formatting)
+// ===========================================================================
+
+/**
+  Formats a variable argument list into a Unicode string buffer,
+  handling NULL CHAR16* arguments safely.
+
+  This function parses the format string and uses arguments from VaListMaker
+  to construct a formatted Unicode string in LogBuf. It performs NULL checks
+  for %s specifiers to prevent hard faults.
+
+  @param  Format        The format string.
+  @param  VaListMaker   The VA_LIST containing the arguments.
+  @param  LogBuf        The destination buffer for the formatted Unicode string.
+  @param  BufLenBytes   The remaining size of LogBuf in BYTES.
+
+  @retval The number of CHAR16s written to LogBuf (excluding null terminator).
+**/
+
+#ifndef FMT_INT64_DFORMAT
+#define FMT_INT64_DFORMAT   L"ll"   // For signed decimal 64-bit
+#endif
+
+#ifndef FMT_UINT64_DFORMAT
+#define FMT_UINT64_DFORMAT  L"ll"   // For unsigned decimal 64-bit
+#endif
+
+#ifndef FMT_UINT64_XFORMAT
+#define FMT_UINT64_XFORMAT  L"ll"   // For hexadecimal 64-bit
+#endif
+
+// For 32-bit (if needed)
+#ifndef FMT_INT32_DFORMAT
+#define FMT_INT32_DFORMAT   L""     // int is default
+#endif
+
+#ifndef FMT_UINT32_DFORMAT
+#define FMT_UINT32_DFORMAT  L""
+#endif
+
+#ifndef FMT_UINT32_XFORMAT
+#define FMT_UINT32_XFORMAT  L""
+#endif
 UINTN
 _LogFmtVPrint(
   IN CONST CHAR16 *Format,
   IN VA_LIST      VaListMaker, // The original VA_LIST
   IN OUT CHAR16   *LogBuf,     // Buffer to write into (CHAR16 array)
-  IN UINTN        BufLen       // Remaining buffer size in BYTES
+  IN UINTN        BufLenBytes  // Remaining buffer size in BYTES
   )
 {
   CONST CHAR16      *Fmt;
   CHAR16            *Dest;
-  UINTN             PrintedLength = 0;
+  UINTN             PrintedChars = 0;
   UINTN             RemainingBufChars;
   VA_LIST           CurrentVaList; // Use a copy to iterate
-  
+
   // Make a copy of the VA_LIST for safe iteration within this function.
-  // VA_COPY is preferred, but VA_LIST can often be copied by assignment on many compilers.
-  // For robustness, if VA_COPY is available and supported, use it.
-  // Example: VA_COPY(CurrentVaList, VaListMaker);
-  CurrentVaList = VaListMaker; // Simple assignment, might not be portable to all compilers
+  // VA_COPY is preferred for portability, but direct assignment often works.
+  #ifdef VA_COPY
+  VA_COPY(CurrentVaList, VaListMaker);
+  #else
+  CurrentVaList = VaListMaker;
+  #endif
 
   Fmt = Format;
   Dest = LogBuf;
-  RemainingBufChars = BufLen / sizeof(CHAR16); // Convert byte length to CHAR16s
+  RemainingBufChars = BufLenBytes / sizeof(CHAR16);
+
+  // Leave at least one CHAR16 for the null terminator.
+  if (RemainingBufChars == 0) {
+      goto Exit;
+  }
 
   // Loop through the format string
-  while (*Fmt != L'\0' && RemainingBufChars > 1) { // Leave space for null terminator
+  while (*Fmt != L'\0' && RemainingBufChars > 1) {
     if (*Fmt != L'%') {
       *Dest++ = *Fmt++;
-      PrintedLength++;
+      PrintedChars++;
       RemainingBufChars--;
       continue;
     }
 
-    // Found a '%', now parse the specifier
+    // Found a '%', now parse the specifier and arguments
     Fmt++; // Skip '%'
 
-    // Simple parsing for common specifiers and flags.
-    // This is a minimal implementation. A full one is complex.
-    BOOLEAN Long = FALSE; // For %l, %L (often ignored or used for size_t/long long)
-    BOOLEAN IsSigned = FALSE; // For %d, %i
+    // Simple parsing for flags, width, precision, length modifiers
+    // This is a minimalist set; PrintLib's internal v_snprintf_unicode is far more robust.
     BOOLEAN PadWithZero = FALSE;
+    BOOLEAN LeftJustify = FALSE;
     UINTN   Width = 0;
+    UINTN   Precision = MAX_UINTN; // Unlimited precision by default
+    BOOLEAN Long = FALSE; // %l, %ll, %L (used for size modifiers)
 
-    // Flags (e.g., '0' for zero-padding)
-    while (*Fmt == L'0') {
-        PadWithZero = TRUE;
+    // Parse flags
+    while (TRUE) {
+      if (*Fmt == L'-') { LeftJustify = TRUE; }
+      else if (*Fmt == L'0') { PadWithZero = TRUE; }
+      else { break; }
+      Fmt++;
+    }
+
+    // Parse width
+    if (*Fmt == L'*') {
+      Width = VA_ARG(CurrentVaList, UINTN);
+      Fmt++;
+    } else {
+      while ((*Fmt >= L'0') && (*Fmt <= L'9')) {
+        Width = Width * 10 + (*Fmt - L'0');
         Fmt++;
+      }
     }
 
-    // Width (e.g., %5d)
-    while ((*Fmt >= L'0') && (*Fmt <= L'9')) {
-      Width = Width * 10 + (*Fmt - L'0');
+    // Parse precision
+    if (*Fmt == L'.') {
       Fmt++;
+      if (*Fmt == L'*') {
+        Precision = VA_ARG(CurrentVaList, UINTN);
+        Fmt++;
+      } else {
+        Precision = 0; // Default precision if no number follows '.'
+        while ((*Fmt >= L'0') && (*Fmt <= L'9')) {
+          Precision = Precision * 10 + (*Fmt - L'0');
+          Fmt++;
+        }
+      }
     }
-    
-    // Length modifier (e.g., %lX for long)
-    if (*Fmt == L'l') {
-      Long = TRUE;
+
+    // Parse length modifiers
+    if ((*Fmt == L'l') || (*Fmt == L'L')) {
+      Long = TRUE; // Indicate a 'long' argument size
       Fmt++;
+      if (*Fmt == L'l') { // For %ll (long long)
+          Fmt++;
+      }
+    } else if ((*Fmt == L'h')) { // For %h (short)
+        Fmt++;
+        if (*Fmt == L'h') { // For %hh (char)
+            Fmt++;
+        }
     }
+
+
+    UINTN CharsWrittenForSpecifier = 0;
+    UINTN RemainingBytesForSpecifier = RemainingBufChars * sizeof(CHAR16);
 
     switch (*Fmt) {
-      case L's': // Unicode string
+      case L's': // Unicode string (CHAR16*)
       {
         CONST CHAR16 *StringArg = VA_ARG(CurrentVaList, CONST CHAR16*);
         // *** THE CRITICAL NULL CHECK ***
         if (StringArg == NULL) {
-          StringArg = gNullStringUefi; // Substitute with safe "(null)"
+          StringArg = gNullStringUefi; // Substitute with safe "(null)" string
         }
-        UINTN BytesWritten = UnicodeSPrint(Dest, RemainingBufChars * sizeof(CHAR16), L"%s", StringArg);
-        PrintedLength += BytesWritten / sizeof(CHAR16);
-        Dest += BytesWritten / sizeof(CHAR16);
-        RemainingBufChars -= BytesWritten / sizeof(CHAR16);
+        // Use UnicodeSPrint for the segment to handle padding, width, precision for strings
+        CharsWrittenForSpecifier = UnicodeSPrint(Dest, RemainingBytesForSpecifier, L"%s", StringArg);
         break;
       }
-      case L'a': // ASCII string (must be converted to Unicode for LogBuf)
+      case L'a': // ASCII string (CHAR8*) - needs conversion
       {
         CONST CHAR8 *AsciiArg = VA_ARG(CurrentVaList, CONST CHAR8*);
-        CHAR8 TempAsciiBuf[256]; // Temp buffer for ASCII string
-        UINTN BytesConverted;
+        CHAR8 TempAsciiBuf[PcdGet32(PcdUefiLibMaxPrintBufferSize) + 1]; // Temp buffer for ASCII string
+        UINTN AsciiLen;
 
         if (AsciiArg == NULL) {
           AsciiArg = gNullStringAscii; // Substitute with safe "(null)"
         }
-        // Safely copy ASCII to temp buffer, truncate if needed
-        AsciiStrCpyS(TempAsciiBuf, sizeof(TempAsciiBuf), AsciiArg);
-        BytesConverted = AsciiStrLen(TempAsciiBuf);
+        // Safely copy ASCII to temp buffer, truncate if needed for ASCII buffer
+        AsciiLen = AsciiStrCpyS(TempAsciiBuf, sizeof(TempAsciiBuf), AsciiArg);
         
-        // Now convert temp ASCII to Unicode and print
-        // Use an internal helper or manually convert char by char
-        for (UINTN i = 0; i < BytesConverted && RemainingBufChars > 1; i++) {
-          *Dest++ = (CHAR16)TempAsciiBuf[i];
-          PrintedLength++;
-          RemainingBufChars--;
+        // Apply precision for ASCII strings before converting to Unicode
+        if (Precision != MAX_UINTN && AsciiLen > Precision) {
+            AsciiLen = Precision;
+            TempAsciiBuf[AsciiLen] = '\0'; // Truncate
         }
+
+        // Now convert temp ASCII to Unicode char by char into the destination
+        UINTN Count = 0;
+        CHAR16 PadChar = PadWithZero ? L'0' : L' ';
+
+        // Handle right-justification (padding before string)
+        if (Width > AsciiLen && !LeftJustify) {
+            for (UINTN i = 0; i < Width - AsciiLen && RemainingBufChars > (PrintedChars + Count + 1); i++) {
+                Dest[Count++] = PadChar;
+            }
+        }
+        // Copy characters
+        for (UINTN i = 0; i < AsciiLen && RemainingBufChars > (PrintedChars + Count + 1); i++) {
+          Dest[Count++] = (CHAR16)TempAsciiBuf[i];
+        }
+        // Handle left-justification (padding after string)
+        if (Width > AsciiLen && LeftJustify) {
+            for (UINTN i = 0; i < Width - AsciiLen && RemainingBufChars > (PrintedChars + Count + 1); i++) {
+                Dest[Count++] = PadChar;
+            }
+        }
+        CharsWrittenForSpecifier = Count;
         break;
       }
       case L'd': // Signed decimal integer
       case L'i':
       {
-        INTN Val = VA_ARG(CurrentVaList, INTN);
-        // Implement simple signed integer print or call PrintLib helper
-        UINTN BytesWritten = UnicodeSPrint(Dest, RemainingBufChars * sizeof(CHAR16), L"%d", Val);
-        PrintedLength += BytesWritten / sizeof(CHAR16);
-        Dest += BytesWritten / sizeof(CHAR16);
-        RemainingBufChars -= BytesWritten / sizeof(CHAR16);
+        INTN Val = (Long ? VA_ARG(CurrentVaList, INT64) : VA_ARG(CurrentVaList, INTN));
+        CharsWrittenForSpecifier = UnicodeSPrint(Dest, RemainingBytesForSpecifier, L"%" FMT_INT64_DFORMAT L"d", Val);
         break;
       }
       case L'u': // Unsigned decimal integer
       {
-        UINTN Val = VA_ARG(CurrentVaList, UINTN);
-        UINTN BytesWritten = InternalUnicodePrintUint(Dest, RemainingBufChars * sizeof(CHAR16), Val, 10, FALSE, Width, PadWithZero);
-        PrintedLength += BytesWritten / sizeof(CHAR16);
-        Dest += BytesWritten / sizeof(CHAR16);
-        RemainingBufChars -= BytesWritten / sizeof(CHAR16);
+        UINTN Val = (Long ? VA_ARG(CurrentVaList, UINT64) : VA_ARG(CurrentVaList, UINTN));
+        CharsWrittenForSpecifier = UnicodeSPrint(Dest, RemainingBytesForSpecifier, L"%" FMT_UINT64_DFORMAT L"u", Val);
         break;
       }
       case L'x': // Hexadecimal lowercase
       {
-        UINTN Val = VA_ARG(CurrentVaList, UINTN);
-        UINTN BytesWritten = InternalUnicodePrintUint(Dest, RemainingBufChars * sizeof(CHAR16), Val, 16, FALSE, Width, PadWithZero);
-        PrintedLength += BytesWritten / sizeof(CHAR16);
-        Dest += BytesWritten / sizeof(CHAR16);
-        RemainingBufChars -= BytesWritten / sizeof(CHAR16);
+        UINTN Val = (Long ? VA_ARG(CurrentVaList, UINT64) : VA_ARG(CurrentVaList, UINTN));
+        CharsWrittenForSpecifier = UnicodeSPrint(Dest, RemainingBytesForSpecifier, L"%" FMT_UINT64_XFORMAT L"x", Val);
         break;
       }
       case L'X': // Hexadecimal uppercase
       {
-        UINTN Val = VA_ARG(CurrentVaList, UINTN);
-        UINTN BytesWritten = InternalUnicodePrintUint(Dest, RemainingBufChars * sizeof(CHAR16), Val, 16, TRUE, Width, PadWithZero);
-        PrintedLength += BytesWritten / sizeof(CHAR16);
-        Dest += BytesWritten / sizeof(CHAR16);
-        RemainingBufChars -= BytesWritten / sizeof(CHAR16);
+        UINTN Val = (Long ? VA_ARG(CurrentVaList, UINT64) : VA_ARG(CurrentVaList, UINTN));
+        CharsWrittenForSpecifier = UnicodeSPrint(Dest, RemainingBytesForSpecifier, L"%" FMT_UINT64_XFORMAT L"X", Val);
         break;
       }
       case L'p': // Pointer address (hex)
       {
         VOID *Ptr = VA_ARG(CurrentVaList, VOID*);
-        UINTN BytesWritten = UnicodeSPrint(Dest, RemainingBufChars * sizeof(CHAR16), L"%p", Ptr);
-        PrintedLength += BytesWritten / sizeof(CHAR16);
-        Dest += BytesWritten / sizeof(CHAR16);
-        RemainingBufChars -= BytesWritten / sizeof(CHAR16);
+        CharsWrittenForSpecifier = UnicodeSPrint(Dest, RemainingBytesForSpecifier, L"%p", Ptr);
         break;
       }
       case L'c': // Unicode character
       {
         CHAR16 CharVal = (CHAR16)VA_ARG(CurrentVaList, UINTN); // Char args are promoted to int
-        *Dest++ = CharVal;
-        PrintedLength++;
-        RemainingBufChars--;
+        *Dest = CharVal;
+        CharsWrittenForSpecifier = 1;
         break;
       }
       case L'%': // Literal '%'
-        *Dest++ = L'%';
-        PrintedLength++;
-        RemainingBufChars--;
+        *Dest = L'%';
+        CharsWrittenForSpecifier = 1;
         break;
       default: // Unrecognized specifier, print literally
         *Dest++ = L'%';
         *Dest++ = *Fmt;
-        PrintedLength += 2;
+        PrintedChars += 2; // Adjust immediately as we wrote directly
         RemainingBufChars -= 2;
-        break;
+        goto NextFmtChar; // Skip common update at end of switch
     }
+    
+    // Update pointers and counts after processing a specifier
+    Dest += CharsWrittenForSpecifier;
+    PrintedChars += CharsWrittenForSpecifier;
+    RemainingBufChars -= CharsWrittenForSpecifier;
+
+NextFmtChar:
     Fmt++; // Move to next char in format string
   }
 
   *Dest = L'\0'; // Null-terminate the buffer
-  return PrintedLength;
+  
+Exit:
+  VA_END(CurrentVaList); // Clean up the copied VA_LIST
+  return PrintedChars;
 }
 
 
+// ===========================================================================
+// SBC_LogPrint (Main Logging Function)
+// ===========================================================================
+
 VOID
 SBC_LogPrint(
-  CONST CHAR16* func,     // For [%a:%d] if uncommented
-  UINT32 funcline,        // For [%a:%d] if uncommented
-  UINT32 prio,
-  UINT32 ver,
-  CHAR16 *host,           // Potentially NULL
-  CHAR16 *appname,        // Potentially NULL
-  CHAR16 *csc,            // Potentially NULL
-  UINT32 sfrid,
-  CHAR16 *evtype,         // Potentially NULL
-  CHAR16 *format,         // Format string for the message body
+  CONST CHAR16* func,     // For [%s:%d] if uncommented (CHAR16*)
+  UINT32 funcline,        // For [%s:%d] if uncommented
+  UINT32 prio,            // Priority
+  UINT32 ver,             // Version (e.g., event version)
+  CHAR16 *host,           // Hostname or system identifier (potentially NULL)
+  CHAR16 *appname,        // Application name (potentially NULL)
+  CHAR16 *csc,            // Custom field (e.g., Component Specific Code, potentially NULL)
+  UINT32 sfrid,           // Specific Function/Event ID
+  CHAR16 *evtype,         // Event Type string (potentially NULL)
+  CHAR16 *format,         // Format string for the message body (can contain %s, %d etc.)
   ...
   )
 {
     EFI_STATUS retval;
     VA_LIST args;
     EFI_TIME logtime;
-    CHAR8 *wrlog = NULL;
-    // Buffer for the full Unicode log message
-    CHAR16 full_log_msg[(PcdGet32 (PcdUefiLibMaxPrintBufferSize) + 1)]; // Size is in CHAR16s now
-    UINTN nxtofs = 0;
+    
+    // Buffer for the full Unicode log message. Size in CHAR16s.
+    CHAR16 full_log_msg[PcdGet32 (PcdUefiLibMaxPrintBufferSize) + 1]; 
+    UINTN nxtofs = 0; // Current offset in CHAR16s
     UINTN remaining_buffer_bytes;
     
-    // Convert CHAR16 buffer size to bytes
+    // Calculate total buffer size in bytes for safer print functions
     UINTN max_full_log_msg_bytes = sizeof(full_log_msg);
 
-    DEBUG ((DEBUG_INFO, "Log buf size in CHAR16s: %d\n", PcdGet32(PcdUefiLibMaxPrintBufferSize) + 1));
-    ZeroMem(full_log_msg, max_full_log_msg_bytes); // Use byte size
-    ZeroMem(&logtime, sizeof(EFI_TIME));
+    DEBUG ((DEBUG_INFO, "SBC_LogPrint: Log buf size in CHAR16s: %d (Bytes: %d)\n",
+                         PcdGet32(PcdUefiLibMaxPrintBufferSize) + 1, max_full_log_msg_bytes));
     
+    ZeroMem(full_log_msg, max_full_log_msg_bytes); // Clear the buffer
+    ZeroMem(&logtime, sizeof(EFI_TIME)); // Clear time struct
+
     retval = gRT->GetTime(&logtime, NULL);
     if (EFI_ERROR(retval)) {
-      // If getting time fails, set to a known zero value or a default epoch
-      SetMem(&logtime, sizeof(EFI_TIME), 0);
-      // Or you might use specific fixed values for year, month, day, etc.
-      // logtime.Year = 2000; logtime.Month = 1; logtime.Day = 1; ...
+      // Fallback if time retrieval fails (e.g., set to a fixed epoch or default)
+      logtime.Year = 2000;
+      logtime.Month = 1;
+      logtime.Day = 1;
+      logtime.Hour = 0;
+      logtime.Minute = 0;
+      logtime.Second = 0;
+      logtime.Nanosecond = 0;
+      // Also set timezone and DaylightSaving if needed
     }
 
-    // --- First part of the log header ---
-    // Safely handle potentially NULL CHAR16* arguments for %s
+    // --- Safely handle potentially NULL CHAR16* arguments for the header ---
+    // These pointers are passed directly to UnicodeSPrint, which itself is safe.
+    // However, explicitly ensuring non-NULL pointers is good practice and clear.
+    CONST CHAR16 *safe_func    = (func != NULL) ? func : gEmptyStringUefi; // If func is CHAR16*
     CONST CHAR16 *safe_host    = (host != NULL) ? host : gNullStringUefi;
     CONST CHAR16 *safe_appname = (appname != NULL) ? appname : gNullStringUefi;
     CONST CHAR16 *safe_csc     = (csc != NULL) ? csc : gNullStringUefi;
@@ -1230,91 +2686,177 @@ SBC_LogPrint(
 
     remaining_buffer_bytes = max_full_log_msg_bytes;
 
-    // The commented out line below was using %a for func (CHAR16* func).
-    // If func is a CHAR16*, using %a is incorrect in UnicodeSPrint.
-    // If func is CHAR8*, then %a is correct. Assuming func is CHAR16* based on signature.
-    // If func is CHAR16* and you want it, use %s:
-    // nxtofs = UnicodeSPrint(full_log_msg, remaining_buffer_bytes, L"[%s:%d]", func, funcline);
-    // If func is CHAR8* and you want it converted:
-    // nxtofs = UnicodeSPrint(full_log_msg, remaining_buffer_bytes, L"[%a:%d]", (func != NULL ? (CHAR8*)func : gNullStringAscii), funcline);
-    // For now, it's commented out, so it won't be an issue.
+    // Optional: Prepend function name and line number
+    // Assuming 'func' is a CHAR16* as per your signature.
+    // If 'func' was CHAR8*, you would use %a or convert it first.
+    // nxtofs += UnicodeSPrint(
+    //             full_log_msg + nxtofs,
+    //             remaining_buffer_bytes,
+    //             L"[%s:%d] ", // Added space after ]
+    //             safe_func, funcline
+    //             );
+    // remaining_buffer_bytes -= (nxtofs * sizeof(CHAR16));
 
-    // Calculate remaining buffer size in bytes for the next print.
-    remaining_buffer_bytes -= (nxtofs * sizeof(CHAR16));
 
-    // Construct the main header part of the log message
+    // --- Construct the main header part of the log message ---
+    // Format: PRIO VER YYYY-MM-DDTHH:MM:SS HOST APPNAME CSC R-SAT-PWT-SFR-XXX EVTYPE [Message Body]
+    // Using %02d for consistent two-digit formatting for month, day, hour, etc.
     nxtofs += UnicodeSPrint(
                 full_log_msg + nxtofs,
                 remaining_buffer_bytes,
-                L"%d %d %d-%02d-%02dT%02d:%02d:%02d %s %s %s R-SAT-PWT-SFR-%03d %s ", // Added space after %s for clarity
+                L"%d %d %04d-%02d-%02dT%02d:%02d:%02d %s %s %s R-SAT-PWT-SFR-%03d %s ",
                 prio, ver,
-                logtime.Year, logtime.Month, logtime.Day, // Use %02d for consistent formatting
+                logtime.Year, logtime.Month, logtime.Day,
                 logtime.Hour, logtime.Minute, logtime.Second,
                 safe_host, safe_appname, safe_csc, // Using the safely handled pointers
                 sfrid, safe_evtype
                 );
 
-    // Update remaining buffer size in bytes for _LogFmtVPrint
+    // Update remaining buffer size in bytes for the next print.
     remaining_buffer_bytes -= (nxtofs * sizeof(CHAR16));
     
-    // Ensure we don't pass a negative or zero remaining_buffer_bytes to _LogFmtVPrint
-    if (remaining_buffer_bytes == 0 || nxtofs >= PcdGet32(PcdUefiLibMaxPrintBufferSize)) {
-        DEBUG ((DEBUG_ERROR, "SBC_LogPrint: Buffer full before message body. nxtofs=%d\n", nxtofs));
-        // Optionally, append an ellipsis to indicate truncation
-        UnicodeSPrint(full_log_msg + nxtofs, sizeof(CHAR16)*4, L"..."); // 4 bytes for "..." + NULL
-        goto Exit; // Skip to the end
+    // Ensure we have at least some space left for the message body and null terminator
+    if (remaining_buffer_bytes <= sizeof(CHAR16) * 4) { // Small space for "..." + NULL
+        DEBUG ((DEBUG_ERROR, "SBC_LogPrint: Buffer almost full before message body. Truncating.\n"));
+        UnicodeSPrint(full_log_msg + nxtofs, sizeof(CHAR16)*4, L"..."); // Indicate truncation
+        return; // Skip to the end
     }
 
     // --- Message body (variable part) ---
     VA_START(args, format);
-    // Call your internal _LogFmtVPrint. This function *must* also handle NULL CHAR16*
-    // for its %s specifiers from the 'format' string.
+    // Call the enhanced _LogFmtVPrint, which now handles NULL CHAR16* arguments safely.
     nxtofs += _LogFmtVPrint(
-                (CONST CHAR16 *)format,
+                format, // The format string for the variable arguments
                 args,
-                (CHAR16 *)full_log_msg + nxtofs, // Start writing from current offset
-                remaining_buffer_bytes           // Remaining buffer size in bytes
+                full_log_msg + nxtofs, // Start writing from current offset
+                remaining_buffer_bytes   // Remaining buffer size in bytes
                 );
     VA_END(args);
 
-    // Ensure the final message is null-terminated and doesn't exceed buffer
-    // UnicodeSPrint/VPrint usually null-terminate, but good to be explicit
-    // and check against the total allocated buffer size for robustness.
+    // --- Final null-termination and length check ---
+    // _LogFmtVPrint should null-terminate, but being explicit for the overall buffer.
+    // Ensure the final message length does not exceed the total buffer capacity.
     if (nxtofs >= PcdGet32(PcdUefiLibMaxPrintBufferSize)) {
-        // Truncate if necessary and null-terminate
+        // Truncate if necessary and ensure final null-termination
         full_log_msg[PcdGet32(PcdUefiLibMaxPrintBufferSize)] = L'\0';
     } else {
-        full_log_msg[nxtofs] = L'\0';
+        full_log_msg[nxtofs] = L'\0'; // Explicit null termination
     }
 
-
     // --- Post-processing and output ---
-    DEBUG ((DEBUG_INFO, L"Mesage buf length (CHAR16s): %d, size (bytes): %d\n",
-                         UnicodeStrLen(full_log_msg), UnicodeStrSize(full_log_msg)));
+    // Convert the full Unicode log message to ASCII for file/network output
+    // Assuming `remove_all_space` and `_sbc_write_log_file` expect ASCII CHAR8*.
+    CHAR8  AsciiLogBuffer[PcdGet32 (PcdUefiLibMaxPrintBufferSize) + 1]; // One byte per CHAR16 (safe for ASCII range)
+    UINTN  AsciiConvertedLen;
 
-    wrlog = (CHAR8 *)full_log_msg; // Cast for ASCII processing
+    AsciiConvertedLen = MyUnicodeStrToAsciiStrS(AsciiLogBuffer, sizeof(AsciiLogBuffer), full_log_msg);
+    if (AsciiConvertedLen == 0 && full_log_msg[0] != L'\0') {
+        DEBUG ((DEBUG_ERROR, "SBC_LogPrint: Failed to convert Unicode log to ASCII or buffer too small.\n"));
+        // Handle conversion error, maybe log truncated msg or error to console
+        Print(L"WARNING: ASCII conversion failed for log. Unicode content: %s\n", full_log_msg);
+        goto ExitLog;
+    }
 
-    // Print for debug
-    Print(L"Full Log msg : %s \n", full_log_msg);
+    // Now wrlog points to a proper ASCII string
+    CHAR8 *wrlog_ptr = AsciiLogBuffer; 
+    
+    // Print for debug (both Unicode and ASCII for comparison)
+    dprint("SBC_LogPrint: Full Unicode Log msg : %s \n", full_log_msg);
+    dprint("SBC_LogPrint: Full ASCII Log msg   : %a (Length: %d) \n", wrlog_ptr, AsciiConvertedLen);
 
-    // Call your remove_all_space function (assumed to work on ASCII CHAR8*)
-    // You need to be careful if remove_all_space expects an ASCII string,
-    // but wrlog is actually a Unicode string in memory.
-    // If remove_all_space expects ASCII, you need to convert full_log_msg to ASCII first.
-    // If it works on the raw byte representation of Unicode, that's unusual but possible.
-    // Assuming it's safe for now.
-    nxtofs = remove_all_space(wrlog, StrnSizeS((CHAR16*)wrlog, max_full_log_msg_bytes));
+    // Call your remove_all_space function (expects ASCII CHAR8*)
+    // It should modify wrlog_ptr in place and return the new length.
+    // Make sure remove_all_space works on a null-terminated string and updates length correctly.
+    UINTN final_ascii_len = remove_all_space(wrlog_ptr, AsciiConvertedLen); // Pass converted length, not full buffer size
 
-    DEBUG ((DEBUG_INFO, L"Full Log msg after space removal (ASCII interpretation): %a \n", wrlog));
+    dprint("SBC_LogPrint: ASCII Log msg after space removal: %a (Final Length: %d)\n", wrlog_ptr, final_ascii_len);
 
     // _sbc_write_log_file expects CHAR8* and its strlen.
-    // This again implies wrlog must be a valid ASCII string.
-    // If full_log_msg is truly Unicode, then wrlog needs to be a separate, converted ASCII buffer.
-    _sbc_write_log_file(wrlog, strlen(wrlog));
+    _sbc_write_log_file(wrlog_ptr, final_ascii_len);
 
-Exit:
+ExitLog:
     return;
 }
+
+// ===========================================================================
+// Dummy External Functions (Replace with your actual implementations)
+// ===========================================================================
+
+// Replace with your actual implementation that removes spaces from an ASCII buffer
+UINTN remove_all_space(CHAR8 *buffer, UINTN buffer_size_in_bytes) {
+    if (buffer == NULL || buffer_size_in_bytes == 0) {
+        return 0;
+    }
+    UINTN  read_idx = 0;
+    UINTN  write_idx = 0;
+    while (read_idx < buffer_size_in_bytes && buffer[read_idx] != '\0') {
+        if (buffer[read_idx] != ' ') {
+            buffer[write_idx++] = buffer[read_idx];
+        }
+        read_idx++;
+    }
+    buffer[write_idx] = '\0'; // Null-terminate the new string
+    return write_idx; // Return new length
+}
+
+// Replace with your actual implementation for writing to a log file or sending over network
+EFI_STATUS _sbc_write_log_file(CHAR8 *log_data, UINTN length_in_bytes) {
+    if (log_data == NULL || length_in_bytes == 0) {
+        DEBUG ((DEBUG_ERROR, "SysLog: No data to write or invalid length.\n"));
+        return EFI_INVALID_PARAMETER;
+    }
+    // For demonstration, just print to console as ASCII
+    Print(L"SysLog_OUTPUT (ASCII): %a\n", log_data);
+
+    // --- Placeholder for actual network (UDP) sending ---
+    // EFI_STATUS Status;
+    // EFI_UDP4_PROTOCOL *gUdp4 = NULL; // Get this protocol instance elsewhere
+    // EFI_IP4_CONFIG_PROTOCOL *gIp4Config = NULL; // Get this protocol instance elsewhere
+    // UINT32 SyslogServerIp = 0xC0A8010A; // Example: 192.168.1.10
+    // UINT16 SyslogServerPort = 514;
+    //
+    // // Initialize UDP, configure IP, etc. (complex setup not shown)
+    // // Status = gBS->LocateProtocol(&gEfiUdp4ProtocolGuid, NULL, (VOID **)&gUdp4);
+    // // if (!EFI_ERROR(Status) && gUdp4 != NULL) {
+    // //     EFI_UDP4_TRANSMIT_DATA TxData;
+    // //     ZeroMem(&TxData, sizeof(TxData));
+    // //     TxData.DestinationAddress.Addr[0] = (UINT8)(SyslogServerIp >> 24);
+    // //     ...
+    // //     TxData.FragmentCount = 1;
+    // //     TxData.Fragment[0].FragmentLength = (UINT32)length_in_bytes;
+    // //     TxData.Fragment[0].FragmentBuffer = log_data;
+    // //     Status = gUdp4->Transmit(gUdp4, &TxData);
+    // // }
+    //
+    // --- Placeholder for actual file writing ---
+    // EFI_STATUS Status;
+    // EFI_SIMPLE_FILE_SYSTEM_PROTOCOL *gFs = NULL; // Get this protocol instance elsewhere
+    // EFI_FILE_PROTOCOL *LogFile = NULL;
+    //
+    // // Locate file system protocol (e.g., on ESP or USB)
+    // // Status = gBS->LocateProtocol(&gEfiSimpleFileSystemProtocolGuid, NULL, (VOID **)&gFs);
+    // // if (!EFI_ERROR(Status) && gFs != NULL) {
+    // //     // Open root directory
+    // //     EFI_FILE_PROTOCOL *Root = NULL;
+    // //     Status = gFs->OpenVolume(gFs, &Root);
+    // //     if (!EFI_ERROR(Status) && Root != NULL) {
+    // //         // Open or create log file
+    // //         Status = Root->Open(Root, &LogFile, L"\\SysLog.log", EFI_FILE_MODE_READ | EFI_FILE_MODE_WRITE | EFI_FILE_MODE_CREATE, 0);
+    // //         if (!EFI_ERROR(Status) && LogFile != NULL) {
+    // //             // Seek to end and write
+    // //             LogFile->SetPosition(LogFile, EFI_MAX_UINT64); // Seek to end
+    // //             LogFile->Write(LogFile, &length_in_bytes, log_data);
+    // //             LogFile->Close(LogFile);
+    // //         }
+    // //         Root->Close(Root);
+    // //     }
+    // // }
+
+    return EFI_SUCCESS;
+}
+
+
+
 
 
 //
@@ -1384,4 +2926,4 @@ VOID UefiLog(LOG_LEVEL Level, LOG_EVENT Event, CONST CHAR16 *Format, ...) {
     Print(L"%s\n", LogMessageBuffer);
 }
 
-
+#endif
