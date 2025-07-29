@@ -689,15 +689,15 @@ UefiMain (
 
     dprint("------------- FSBL START -------------\n");
 
-    ZeroMem(mrgmsg, sizeof mrgmsg);
-    UnicodeSPrint(mrgmsg, sizeof mrgmsg, L"FSBL START (Magic ID: %x) (Magic Str: %s) \n", testid,  L"Test string");
-    sbc_err_sysprn(SBC_LOG_CMN_PRIO_ERR, 2,
-           L"SBC",
-           L"FSBL",
-           L"Weapon System",
-           8,
-           L"Determine Firmare Tampering ",
-           mrgmsg);
+//  ZeroMem(mrgmsg, sizeof mrgmsg);
+//  UnicodeSPrint(mrgmsg, sizeof mrgmsg, L"FSBL START (Magic ID: %x) (Magic Str: %s) \n", testid,  L"Test string");
+//  sbc_err_sysprn(SBC_LOG_CMN_PRIO_ERR, 2,
+//         L"SBC",
+//         L"FSBL",
+//         L"Weapon System",
+//         8,
+//         L"Determine Firmare Tampering ",
+//         mrgmsg);
 
 
     ZeroMem(&h_rawptrheader, sizeof h_rawptrheader);
@@ -709,7 +709,7 @@ UefiMain (
     }
 
     //Print(L"Find Raw Partition (0x%x)...\n", h_rawptrheader.magicid);
-    dprint("Partition Info (%a) \n", h_rawptrheader.prtinfo);
+    //dprint("Partition Info (%a) \n", h_rawptrheader.prtinfo);
 
         // Check the Preference SSBL bank
     CopyMem((void *)&pres_low, (void *)&h_rawptrheader.bootpres[0], 4);
@@ -719,7 +719,7 @@ UefiMain (
     pres_hi = SBC_SWAP_ENDIAN_32(pres_hi);
 
     //sbc_err_sysprn(SBC_LOG_CMN_PRIO_INFO, 2, L"SBC", L"FSBL", L"xxx", 233, L"EVT", L"Pres HI : 0x%x , Pres Low: %a \n", "holla oops");
-    Print(L"Pres HI : 0x%x , Pres Low: 0x%x \n", pres_low, pres_hi);
+    //Print(L"Pres HI : 0x%x , Pres Low: 0x%x \n", pres_low, pres_hi);
 
     //SBC_mem_print_bin("Pres Low", (UINT8 *)&pres_low, 4);
     //SBC_mem_print_bin("Pres Hi", (UINT8 *)&pres_hi, 4);
@@ -737,7 +737,7 @@ UefiMain (
         retval = EFI_INVALID_PARAMETER;
         goto errdone;
     }
-    dprint("Currently Valid FW Bank ID : %d , Previously Bank ID : %d \n", currbank_id, prevbank_id);
+    //dprint("Currently Valid FW Bank ID : %d , Previously Bank ID : %d \n", currbank_id, prevbank_id);
 
    // Step 1-1 )  FSBL, self sign and verify
 
