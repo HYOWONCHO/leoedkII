@@ -264,6 +264,7 @@ EFI_STATUS SBC_WriteFile(EFI_HANDLE ImageHandle, CHAR16 *FileNames, LV_t *out)
   //UINTN BufferSize = 128;
   //CHAR8 Buffer[128];
 
+  //dprint();
 
   //TODO
   // out buffer nill check
@@ -272,12 +273,14 @@ EFI_STATUS SBC_WriteFile(EFI_HANDLE ImageHandle, CHAR16 *FileNames, LV_t *out)
   Status = gBS->HandleProtocol(ImageHandle,
                                &gEfiSimpleFileSystemProtocolGuid,
                                (VOID **)&FileSystem);
+  //dprint();
   if(EFI_ERROR(Status)) {
     DEBUG((DEBUG_ERROR, " %a:%d Locate File Systam fail (%r) \r\n",
            __FUNCTION__, __LINE__, Status));
     return Status;
   }
 
+  //dprint();
   // Open the roor directory
   Status = FileSystem->OpenVolume(FileSystem, &RootDir);
   if (EFI_ERROR(Status)) {
@@ -286,18 +289,22 @@ EFI_STATUS SBC_WriteFile(EFI_HANDLE ImageHandle, CHAR16 *FileNames, LV_t *out)
     return Status;
   }
 
+  //dprint();
   // Open the file
   Status = RootDir->Open(RootDir, &File, FileNames, EFI_FILE_MODE_READ | EFI_FILE_MODE_WRITE | EFI_FILE_MODE_CREATE, 0);
   if (EFI_ERROR(Status)) {
       DEBUG((DEBUG_ERROR, " %a:%d RootDir->Open fail (%r) \r\n",
      __FUNCTION__, __LINE__, Status));
+      //dprint();
       RootDir->Close(RootDir);
     return Status;
   }
 
+  //dprint();
   // Read the file
   Status = File->Write(File, (UINTN *)&out->length, out->value);
   if (EFI_ERROR(Status)) {
+      //dprint();
       DEBUG((DEBUG_ERROR, " %a:%d File->Write fail (%r) \r\n",
               __FUNCTION__, __LINE__, Status));
       //Print(L"File Content: %a\n", Buffer);
@@ -307,6 +314,7 @@ EFI_STATUS SBC_WriteFile(EFI_HANDLE ImageHandle, CHAR16 *FileNames, LV_t *out)
       return Status;
   }
 
+  //dprint();
 
 
   // Close the file
@@ -877,10 +885,13 @@ SBCStatus SBC_RawPrtReadBlock(VOID *blkhnd, VOID *rdbuf,  UINT32 *rdlen, UINTN r
 //    UINTN   blklen = 0LU;
 
     //Print(L"%a:%d \n",__FUNCTION__, __LINE__);
+    SBC_RET_VALIDATE_ERRCODEMSG((blkhnd != NULL), SBCNULLP, "Block IO Handle Nill");
     SBC_RET_VALIDATE_ERRCODEMSG(((rdbuf != NULL) || (rdlen != NULL)), SBCNULLP, "Invalid parameter");
     SBC_RET_VALIDATE_ERRCODEMSG((*rdlen != 0), SBCZEROL, "Invalid parameter");
 
     blkio  = (EFI_BLOCK_IO_PROTOCOL *)blkhnd;
+
+    
 
 //  blklen = ALIGN_VALUE(*rdlen, blkio->Media->BlockSize);
 //  //Print(L"BLK Len : %d \n", blklen);
@@ -891,6 +902,13 @@ SBCStatus SBC_RawPrtReadBlock(VOID *blkhnd, VOID *rdbuf,  UINT32 *rdlen, UINTN r
 //      goto errdone;
 //  }
 
+
+//  dprint("Handle %p, Media Id, %ld, lba : %ld, Len : %ld, rdbuf : %p",
+//         blkio,
+//         blkio->Media->MediaId,
+//         rlba,
+//         *rdlen,
+//         rdbuf);
 
     retval = blkio->ReadBlocks(
                 blkio,
@@ -916,7 +934,6 @@ SBCStatus SBC_RawPrtReadBlock(VOID *blkhnd, VOID *rdbuf,  UINT32 *rdlen, UINTN r
     //_sfc_init_info_parse(readbuf, rdbuf);
 
 
-    
 
 errdone:
 //  if (readbuf != NULL) {

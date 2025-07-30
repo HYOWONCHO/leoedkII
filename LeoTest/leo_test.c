@@ -67,6 +67,8 @@
 #include "SBC_Util.h"
 
 
+VOID *h_blkio;               // Block I/O handle
+
 extern SBCStatus SBC_SSBL_LoadAndStart(EFI_HANDLE ImageHandle);
 
 #ifdef LEO_EMUPKG
@@ -104,6 +106,8 @@ SBCStatus  SBC_DiceKeysGen(EFI_HANDLE ImageHandle, VOID *p,UINTN normbank, UINTN
 {
     SBCStatus ret = SBCOK;
     atp_ident_t *h = NULL;
+
+    (VOID)ImageHandle;
 
 
     h = (atp_ident_t *)p;
@@ -674,7 +678,7 @@ UefiMain (
     EFI_STATUS retval = EFI_SUCCESS;
     SBCStatus  ret = SBCOK;
     rawprt_hdr_t h_rawptrheader;    // Raw Partition Header handle
-    VOID *h_blkio;               // Block I/O handle
+    
     UINT32 pres_hi = 0;
     UINT32 pres_low = 0;
     UINT32 currbank_id = 0;
@@ -683,7 +687,7 @@ UefiMain (
     LV_t baseansr;
     //UINTN fmtlen = 0;
     //CHAR16 buf[8192];
-    UINTN testid = 0xAA55AA55;
+    [[maybe_unused]] UINTN testid = 0xAA55AA55;
     
  
 
@@ -707,6 +711,12 @@ UefiMain (
       Print(L"Raw Partitino find fail !!! \n");
       ASSERT((ret != SBCOK));
     }
+
+//  Print(L"Block IO Handle Information \n");
+//  Print(L"Handle Addr : %p \n", h_blkio);
+//  Print(L"Media ID  Addr: %p \n", ((EFI_BLOCK_IO_PROTOCOL *)h_blkio)->Media);
+//  Print(L"Media ID : %ld \n", ((EFI_BLOCK_IO_PROTOCOL *)h_blkio)->Media->MediaId);
+//  Print(L"Media Block Size : %ld \n", ((EFI_BLOCK_IO_PROTOCOL *)h_blkio)->Media->BlockSize);
 
     //Print(L"Find Raw Partition (0x%x)...\n", h_rawptrheader.magicid);
     //dprint("Partition Info (%a) \n", h_rawptrheader.prtinfo);
@@ -741,6 +751,12 @@ UefiMain (
 
    // Step 1-1 )  FSBL, self sign and verify
 
+//  Print(L"%s:%d Block IO Handle Information \n",__FUNCTION__, __LINE__);
+//  Print(L"Handle Addr : %p \n", h_blkio);
+//  Print(L"Media ID  Addr: %p \n", ((EFI_BLOCK_IO_PROTOCOL *)h_blkio)->Media);
+//  Print(L"Media ID : %ld \n", ((EFI_BLOCK_IO_PROTOCOL *)h_blkio)->Media->MediaId);
+//  Print(L"Media Block Size : %ld \n", ((EFI_BLOCK_IO_PROTOCOL *)h_blkio)->Media->BlockSize);
+
     ret = SBC_FSBL_Verify(h_blkio, &baseansr, currbank_id, h_rawptrheader.bootmode);
     if (ret != SBCOK) {
 
@@ -749,7 +765,7 @@ UefiMain (
     }
 
     ZeroMem(mrgmsg, sizeof mrgmsg);
-    UnicodeSPrint(mrgmsg, sizeof mrgmsg, L"FSBL Verify Success \n");
+    UnicodeSPrint(mrgmsg, sizeof mrgmsg, L"FSBL Verify Success %s\n", baseansr.value);
     sbc_err_sysprn(SBC_LOG_CMN_PRIO_ERR, 2,
          L"SBC",
          L"FSBL",
@@ -763,27 +779,26 @@ UefiMain (
 
 
     // Step 2 ) SSBL sign and verify
-//  ret = SBC_SSBL_Verify(h_blkio, NULL, currbank_id);
-//  if (ret != SBCOK) {
-//        sbc_err_sysprn(SBC_LOG_CMN_PRIO_ERR, 2,
-//               L"SBC",
-//               L"FSBL",
-//               L"Weapon System",
-//               8,
-//               L"Determine Firmare Tampering ",
-//               L"FSBL tampering check fail");
-//        retval = EFI_INVALID_PARAMETER;
-//        goto errdone;
-//  }
-//
-// sbc_err_sysprn(SBC_LOG_CMN_PRIO_ERR, 2,
-//   L"SBC",
-//   L"FSBL",
-//   L"Weapon System",
-//   8,
-//   L"Determine Firmare Tampering ",
-//   L"FSBL tampering check Done with %x",
-//   (UINT32)ret);
+    ret = SBC_SSBL_Verify(h_blkio, NULL, currbank_id);
+    if (ret != SBCOK) {
+          sbc_err_sysprn(SBC_LOG_CMN_PRIO_ERR, 2,
+                 L"SBC",
+                 L"FSBL",
+                 L"Weapon System",
+                 8,
+                 L"Determine Firmare Tampering ",
+                 L"FSBL tampering check fail");
+          retval = EFI_INVALID_PARAMETER;
+          //goto errdone;
+    }
+
+   sbc_err_sysprn(SBC_LOG_CMN_PRIO_ERR, 2,
+     L"SBC",
+     L"FSBL",
+     L"Weapon System",
+     8,
+     L"Determine Firmare Tampering ",
+     L"FSBL tampering check Done");
 
     ret = SBC_DiceKeysGen(ImageHandle, &diceid,BOOT_MODE_NORMAL, currbank_id);
     if (ret != SBCOK) {
@@ -791,6 +806,7 @@ UefiMain (
         retval = EFI_INVALID_PARAMETER;
         goto errdone;
     }
+
 
     ret = SBC_GenMigrationKey(h_blkio, currbank_id, prevbank_id, diceid.migid);
     if (ret != SBCOK) {
@@ -864,18 +880,18 @@ UefiMain (
 #endif     
 
         // Storing the Base answer
-      ret = SBC_BaseAnswerEncryptStore(h_blkio, baseansr.value, baseansr.length, diceid.osid, BASE_ANS_KEY_STR);
-      if (ret != SBCOK) {
-//            sbc_err_sysprn(SBC_LOG_CMN_PRIO_ERR, 2,
-//                   L"SBC",
-//                   L"FSBL",
-//                   L"Weapon System",
-//                   4,
-//                   L"EVT",
-//                   L"BaseAnswerEncryptStore fail");
-              retval = EFI_INVALID_PARAMETER;
-              goto errdone;
-      }
+//      ret = SBC_BaseAnswerEncryptStore(h_blkio, baseansr.value, baseansr.length, diceid.osid, BASE_ANS_KEY_STR);
+//      if (ret != SBCOK) {
+////            sbc_err_sysprn(SBC_LOG_CMN_PRIO_ERR, 2,
+////                   L"SBC",
+////                   L"FSBL",
+////                   L"Weapon System",
+////                   4,
+////                   L"EVT",
+////                   L"BaseAnswerEncryptStore fail");
+//              retval = EFI_INVALID_PARAMETER;
+//              goto errdone;
+//      }
 
       dprint("Base Answer Encrypt is Done");
 

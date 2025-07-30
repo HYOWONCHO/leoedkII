@@ -59,7 +59,7 @@ VOID SBC_LogMsg(CHAR8* logmsg, CONST CHAR8 *funcname, UINTN linenumber,
   SBC_LogMsg(#logmsg, __func__, __LINE__ , __FILE__)
 
 #define dprint(fmt,...) \
-    DEBUG((DEBUG_INFO, "(%a:%a:%d) : "fmt"\n",__FILE__,__FUNCTION__, __LINE__,##__VA_ARGS__))
+    DEBUG((DEBUG_INFO, "(%a:%d) : "fmt"\n",__FUNCTION__, __LINE__,##__VA_ARGS__))
 
 #define eprint(fmt,...) \
     DEBUG((DEBUG_ERROR, "(ERROR %a:%a:%d) : "fmt"\n",__FILE__,__FUNCTION__, __LINE__,##__VA_ARGS__))

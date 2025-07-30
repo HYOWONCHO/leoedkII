@@ -45,7 +45,7 @@ typedef struct {
 } NVME_CONTROLLER_DATA;
 #pragma pack()
 
-static SBCStatus _kernel_image_load(EFI_HANDLE ImageHandle, LV_t *lv)
+SBCStatus _kernel_image_load(EFI_HANDLE ImageHandle, LV_t *lv)
 {
     SBCStatus           ret = SBCOK;
     EFI_STATUS          Status;
@@ -55,15 +55,16 @@ static SBCStatus _kernel_image_load(EFI_HANDLE ImageHandle, LV_t *lv)
     EFI_HANDLE          *hndl;
 
 
+    dprint();
     ret = SBC_GetFileSize( OSID_KERNEL_PATH, &len_of_kernel);
     SBC_RET_VALIDATE_ERRCODEMSG((ret == SBCOK), ret, "File Not Found");
-
+    dprint();
     hndlcnt = SBC_FindEfiFileSystemProtocol(&hndl);
     if (hndlcnt <= 0) {
       eprint("File System Handle find fail : %d", hndlcnt);
       return SBCFAIL;
     }
-
+    dprint();
     for (idx = 0; idx < hndlcnt; idx++) {
       Status = SBC_IsFlieAccess(hndl[idx], OSID_KERNEL_PATH);
       if (EFI_ERROR(Status)) {
@@ -72,17 +73,20 @@ static SBCStatus _kernel_image_load(EFI_HANDLE ImageHandle, LV_t *lv)
 
       break;
     }
+    dprint();
 
     if (EFI_ERROR(Status)) {
         eprint("%s  : %r", OSID_KERNEL_PATH, Status);
         return SBCFAIL;
     }
 
+    dprint();
     lv->value = AllocateZeroPool(len_of_kernel);
     lv->length = len_of_kernel;
     dprint("%s size %d", OSID_KERNEL_PATH, lv->length);
     SBC_RET_VALIDATE_ERRCODEMSG((lv->value != NULL), SBCNULLP, "Out of Memory");
 
+    dprint();
 
     Status = SBC_ReadFile(hndl[idx], OSID_KERNEL_PATH, lv);
     if (EFI_ERROR(Status)) {
@@ -92,6 +96,7 @@ static SBCStatus _kernel_image_load(EFI_HANDLE ImageHandle, LV_t *lv)
     }
 
 
+    dprint();
 errdone:
     return ret;
 }
@@ -110,18 +115,22 @@ SBCStatus _ssbl_image_load(VOID *blkhnd, LV_t *lv,  UINTN normbank, UINTN bm)
     bsofs = (BOOT_SECTOR1_OFS | ((normbank - 1) << 20));
     startlba = ((bsofs | BOOT_SSBL_OFS) >> SBC_RAWPRT_DFLT_SHIFT);
 
+    dprint("BSOFS:  0x%lx, StartLBA: %lu", bsofs, startlba);
+
     ret = SBC_RawPrtReadBlock(blkhnd, (void *)imghdr, &imglen, startlba);
     if (ret != SBCOK) {
         eprint("SSBL Factory Block Read Fail \n");
         goto errdone;
     }
 
-
     CopyMem((void *)&imglen, &imghdr[0], sizeof imglen);
+    dprint("SSBL image len : %ld", imglen);
     imglen = ALIGN_VALUE(imglen, SBC_RAWPRT_DFLT_BLK_SZ);
 
+    dprint("Align SSBL image len : %ld", imglen);
 
-    lv->value = AllocateReservedZeroPool(imglen);
+
+    lv->value = AllocatePool(imglen);
     SBC_RET_VALIDATE_ERRCODEMSG((lv->value != NULL), SBCNULLP, "Allocate Memory Fail");
 
     ret = SBC_RawPrtReadBlock(blkhnd, (void *)lv->value, &imglen, startlba);
@@ -1094,14 +1103,14 @@ SBCStatus  SBC_SSBL_Verify(VOID *blkhnd, VOID *ansr,  UINTN nrombank)
     UINT32          bsinfolen = 0;
     fsbl_bsinfo_t   bsinfo;
 
-    UINT32          bsptrcnt = 0;
-    UINT8           HashValue[256];
-    UINT32          HashSize =0;
-    UINT32          fsbl_len =0;
-    VOID            *EcPubKey = NULL;
+    [[maybe_unused]]UINT32          bsptrcnt = 0;
+    [[maybe_unused]]UINT8           HashValue[256];
+    [[maybe_unused]]UINT32          HashSize =0;
+    [[maybe_unused]]UINT32          fsbl_len =0;
+    [[maybe_unused]]VOID            *EcPubKey = NULL;
     [[maybe_unused]]UINTN           HandleCount;
-    fsbl_bsinfo_ptr_t info = {NULL, NULL, NULL, NULL};
-    BOOLEAN         retbool = TRUE;
+    [[maybe_unused]]fsbl_bsinfo_ptr_t info = {NULL, NULL, NULL, NULL};
+    [[maybe_unused]]BOOLEAN         retbool = TRUE;
 
 
     LV_t            rdlv = {
@@ -1166,68 +1175,68 @@ SBCStatus  SBC_SSBL_Verify(VOID *blkhnd, VOID *ansr,  UINTN nrombank)
     info.signature = (VOID *)&infostart[bsptrcnt];
     bsptrcnt += bsinfo.m.siglen;    
     
-    retbool = EcGetPublicKeyFromX509((CONST UINT8  *)info.certi, (UINTN)bsinfo.m.certlen,  &EcPubKey);
-    if (retbool != TRUE) {
-        eprint("EcGetPublicKeyFromX509 fail");
-        ret = SBCFAIL;
-        goto errdone;
-    }
+//  retbool = EcGetPublicKeyFromX509((CONST UINT8  *)info.certi, (UINTN)bsinfo.m.certlen,  &EcPubKey);
+//  if (retbool != TRUE) {
+//      eprint("EcGetPublicKeyFromX509 fail");
+//      ret = SBCFAIL;
+//      goto errdone;
+//  }
 
-    dprint("SSBL image len : %d", fsbl_len);
-
-    ret = SBC_HashCompute(
-                     NULL, /* Not yet used */
-                     rdlv.value,
-                     fsbl_len,
-                     HashValue
-                  ) ; 
-
-
-    HashSize = 32;
-
-    retbool = EcDsaVerify(
-        EcPubKey,
-        CRYPTO_NID_SHA256,
-        HashValue,
-        HashSize,
-        info.signature,
-        bsinfo.m.siglen
-        );
-
-    if (retbool != TRUE) {
-        eprint("FSBL Verify fail");
-        ret = SBCFAIL;
-        goto errdone;
-    }
-
-    if (ansr == NULL) {
-      goto errdone;
-    }
-
-    //sbc_err_sysprn(SBC_LOG_CMN_PRIO_INFO, 2, L"SBC", L"FSBL", L"CSC-01", 23, L"VERIFY", L"SSBL Integrate check is Done\n");
-    Print(L"SSBL Verify Success !!!\n");
-
-    ((LV_t *)ansr)->value = AllocateZeroPool(bsinfo.m.banswlen);
-    if (((LV_t *)ansr)->value == NULL) {
-        //sbc_err_sysprn(SBC_LOG_CMN_PRIO_INFO, 2, L"SBC", L"FSBL", L"CSC-01", 23, L"VERIFY", L"FSBL Integrate check is Done\n");
-        eprint("Base Answer buffer allocate fail");
-        ret = SBCNULLP;
-        goto errdone;
-    }
-
-    ((LV_t *)ansr)->length = bsinfo.m.banswlen;
-    CopyMem(((LV_t *)ansr)->value, info.baseansw, bsinfo.m.banswlen);
+//  dprint("SSBL image len : %d", fsbl_len);
+//
+//  ret = SBC_HashCompute(
+//                   NULL, /* Not yet used */
+//                   rdlv.value,
+//                   fsbl_len,
+//                   HashValue
+//                ) ;
+//
+//
+//  HashSize = 32;
+//
+//  retbool = EcDsaVerify(
+//      EcPubKey,
+//      CRYPTO_NID_SHA256,
+//      HashValue,
+//      HashSize,
+//      info.signature,
+//      bsinfo.m.siglen
+//      );
+//
+//  if (retbool != TRUE) {
+//      eprint("FSBL Verify fail");
+//      ret = SBCFAIL;
+//      goto errdone;
+//  }
+//
+//  if (ansr == NULL) {
+//    goto errdone;
+//  }
+//
+//  //sbc_err_sysprn(SBC_LOG_CMN_PRIO_INFO, 2, L"SBC", L"FSBL", L"CSC-01", 23, L"VERIFY", L"SSBL Integrate check is Done\n");
+//  Print(L"SSBL Verify Success !!!\n");
+//
+//  ((LV_t *)ansr)->value = AllocateZeroPool(bsinfo.m.banswlen);
+//  if (((LV_t *)ansr)->value == NULL) {
+//      //sbc_err_sysprn(SBC_LOG_CMN_PRIO_INFO, 2, L"SBC", L"FSBL", L"CSC-01", 23, L"VERIFY", L"FSBL Integrate check is Done\n");
+//      eprint("Base Answer buffer allocate fail");
+//      ret = SBCNULLP;
+//      goto errdone;
+//  }
+//
+//  ((LV_t *)ansr)->length = bsinfo.m.banswlen;
+//  CopyMem(((LV_t *)ansr)->value, info.baseansw, bsinfo.m.banswlen);
 
 
 errdone:
 
-    if (EcPubKey != NULL) {
-      EcFree(EcPubKey);
-    }
-    if (rdlv.value != NULL) {
-      FreePool(rdlv.value);
-      rdlv.value = NULL;
-    }
+//  if (EcPubKey != NULL) {
+//    EcFree(EcPubKey);
+//  }
+//  if (rdlv.value != NULL) {
+//    FreePool(rdlv.value);
+//    rdlv.value = NULL;
+//  }
 
 //  if (ret != SBCOK) {
 //      sbc_err_sysprn(SBC_LOG_CMN_PRIO_INFO, 2, L"SBC", L"FSBL", L"CSC-01", 23, L"VERIFY", L"SSBL Integrate check is Fail\n");
@@ -1553,8 +1562,10 @@ errdone:
 
 }
 
+extern VOID *h_blkio;
 SBCStatus SBC_GenFWID(EFI_HANDLE *h_image, UINT8 *devid, UINT8 *fwid, UINTN normbank, UINTN bm)
 {
+
   SBCStatus ret       = SBCOK;
   UINT8 *temp = NULL;
   //UINT8 *rdbuf = NULL;
@@ -1565,9 +1576,12 @@ SBCStatus SBC_GenFWID(EFI_HANDLE *h_image, UINT8 *devid, UINT8 *fwid, UINTN norm
   lv.value = NULL;
   lv.length = 0;
 
-  ret = _ssbl_image_load(h_image, &lv, normbank, bm);
+  ret = _ssbl_image_load(h_blkio, &lv, normbank, bm);
   SBC_RET_VALIDATE_ERRCODEMSG((ret == SBCOK), ret, "SSB Image load fail");
   SBC_RET_VALIDATE_ERRCODEMSG((lv.length > 0), SBCZEROL, "SSB Image length 0");
+
+  lv.value = hash_ssbl;
+  lv.length = SBC_AT_HASH_LEN;
 
   // Added the Hash for SSBL
   ret = SBC_HashCompute( NULL, 
@@ -1592,13 +1606,17 @@ SBCStatus SBC_GenFWID(EFI_HANDLE *h_image, UINT8 *devid, UINT8 *fwid, UINTN norm
   SBC_mem_print_bin("FW ID", fwid, 32);
 errdone:
 
+  dprint();
   if (temp != NULL) {
+    dprint();
     FreePool(temp);
   }
 
   if (lv.value != NULL) {
-    FreePool(lv.value);
+    dprint();
+    //FreePool(lv.value);
   }
+  dprint();
   return ret;
 
 
@@ -1624,6 +1642,7 @@ SBCStatus SBC_GenOSID(EFI_HANDLE *h_image, UINT8 *fwid, UINT8 *osid)
     Print(L"Kernel Image load fail \n");
     goto errdone;
   }
+
 
     // Added the Hash for SSBL
   ret = SBC_HashCompute( NULL, 
