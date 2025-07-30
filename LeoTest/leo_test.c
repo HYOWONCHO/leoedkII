@@ -117,22 +117,22 @@ SBCStatus  SBC_DiceKeysGen(EFI_HANDLE ImageHandle, VOID *p,UINTN normbank, UINTN
         Print(L"Device ID generate fail \n");
         goto errdone;
     }
-
-    //SBC_mem_print_bin("Device ID", h->devid, sizeof h->devid);SBC_mem_print_bin("Device ID", h->devid, sizeof h->devid);
-    ret = SBC_GenFWID(ImageHandle, h->devid, h->fwid, normbank, bm);
-    if (ret != SBCOK) {
-        Print(L"FW ID generate fail \n");
-        goto errdone;
-    }
-
-    //SBC_mem_print_bin("Firmware ID", h->fwid, sizeof h->fwid);
-
-    ret = SBC_GenOSID(ImageHandle,  h->fwid, h->osid);
-    if (ret != SBCOK) {
-        Print(L"FW ID generate fail \n");
-        goto errdone;
-    }
-
+//
+//  //SBC_mem_print_bin("Device ID", h->devid, sizeof h->devid);SBC_mem_print_bin("Device ID", h->devid, sizeof h->devid);
+//  ret = SBC_GenFWID(ImageHandle, h->devid, h->fwid, normbank, bm);
+//  if (ret != SBCOK) {
+//      Print(L"FW ID generate fail \n");
+//      goto errdone;
+//  }
+//
+//  //SBC_mem_print_bin("Firmware ID", h->fwid, sizeof h->fwid);
+//
+//  ret = SBC_GenOSID(ImageHandle,  h->fwid, h->osid);
+//  if (ret != SBCOK) {
+//      Print(L"FW ID generate fail \n");
+//      goto errdone;
+//  }
+//
     //SBC_mem_print_bin("Firmware ID", h->fwid, sizeof h->fwid);
     ret = SBCOK;
 
@@ -685,23 +685,12 @@ UefiMain (
     UINT32 prevbank_id = 0;
     __attribute__((unused)) UINT32 bootmd = 0; // Boot Mode
     LV_t baseansr;
-    //UINTN fmtlen = 0;
-    //CHAR16 buf[8192];
     [[maybe_unused]] UINTN testid = 0xAA55AA55;
     
  
 
     dprint("------------- FSBL START -------------\n");
 
-//  ZeroMem(mrgmsg, sizeof mrgmsg);
-//  UnicodeSPrint(mrgmsg, sizeof mrgmsg, L"FSBL START (Magic ID: %x) (Magic Str: %s) \n", testid,  L"Test string");
-//  sbc_err_sysprn(SBC_LOG_CMN_PRIO_ERR, 2,
-//         L"SBC",
-//         L"FSBL",
-//         L"Weapon System",
-//         8,
-//         L"Determine Firmare Tampering ",
-//         mrgmsg);
 
 
     ZeroMem(&h_rawptrheader, sizeof h_rawptrheader);
@@ -712,27 +701,13 @@ UefiMain (
       ASSERT((ret != SBCOK));
     }
 
-//  Print(L"Block IO Handle Information \n");
-//  Print(L"Handle Addr : %p \n", h_blkio);
-//  Print(L"Media ID  Addr: %p \n", ((EFI_BLOCK_IO_PROTOCOL *)h_blkio)->Media);
-//  Print(L"Media ID : %ld \n", ((EFI_BLOCK_IO_PROTOCOL *)h_blkio)->Media->MediaId);
-//  Print(L"Media Block Size : %ld \n", ((EFI_BLOCK_IO_PROTOCOL *)h_blkio)->Media->BlockSize);
-
-    //Print(L"Find Raw Partition (0x%x)...\n", h_rawptrheader.magicid);
-    //dprint("Partition Info (%a) \n", h_rawptrheader.prtinfo);
-
-        // Check the Preference SSBL bank
+    // Check the Preference SSBL bank
     CopyMem((void *)&pres_low, (void *)&h_rawptrheader.bootpres[0], 4);
     CopyMem((void *)&pres_hi, (void *)&h_rawptrheader.bootpres[4], 4);
 
     pres_low = SBC_SWAP_ENDIAN_32(pres_low);
     pres_hi = SBC_SWAP_ENDIAN_32(pres_hi);
 
-    //sbc_err_sysprn(SBC_LOG_CMN_PRIO_INFO, 2, L"SBC", L"FSBL", L"xxx", 233, L"EVT", L"Pres HI : 0x%x , Pres Low: %a \n", "holla oops");
-    //Print(L"Pres HI : 0x%x , Pres Low: 0x%x \n", pres_low, pres_hi);
-
-    //SBC_mem_print_bin("Pres Low", (UINT8 *)&pres_low, 4);
-    //SBC_mem_print_bin("Pres Hi", (UINT8 *)&pres_hi, 4);
 
     if ((CHAR8)(pres_low & 0x0000FFFF) == 'C') {
       currbank_id = (pres_low & 0xFFFF0000) >> 16;
@@ -751,12 +726,6 @@ UefiMain (
 
    // Step 1-1 )  FSBL, self sign and verify
 
-//  Print(L"%s:%d Block IO Handle Information \n",__FUNCTION__, __LINE__);
-//  Print(L"Handle Addr : %p \n", h_blkio);
-//  Print(L"Media ID  Addr: %p \n", ((EFI_BLOCK_IO_PROTOCOL *)h_blkio)->Media);
-//  Print(L"Media ID : %ld \n", ((EFI_BLOCK_IO_PROTOCOL *)h_blkio)->Media->MediaId);
-//  Print(L"Media Block Size : %ld \n", ((EFI_BLOCK_IO_PROTOCOL *)h_blkio)->Media->BlockSize);
-
     ret = SBC_FSBL_Verify(h_blkio, &baseansr, currbank_id, h_rawptrheader.bootmode);
     if (ret != SBCOK) {
 
@@ -774,11 +743,6 @@ UefiMain (
          L"Determine Firmare Tampering ",
          mrgmsg);
   
-    //SBC_CustomPrint(L"Weapon System %d %d \r\n", testid, testid);
-    //SBC_CustomPrint(L"Weapon System %d %d %s \n", testid, testid, L"Weapon System");
-
-
-    // Step 2 ) SSBL sign and verify
     ret = SBC_SSBL_Verify(h_blkio, NULL, currbank_id);
     if (ret != SBCOK) {
           sbc_err_sysprn(SBC_LOG_CMN_PRIO_ERR, 2,
@@ -808,21 +772,6 @@ UefiMain (
     }
 
 
-    ret = SBC_GenMigrationKey(h_blkio, currbank_id, prevbank_id, diceid.migid);
-    if (ret != SBCOK) {
-        //sbc_err_sysprn(SBC_LOG_CMN_PRIO_ERR, 2, L"SBC", L"FSBL", L"Weapon System", 4, L"EVT", L"Migration Key creation fail\n");
-        retval = EFI_INVALID_PARAMETER;
-        goto errdone;
-    }
-
-    SBC_external_mem_print_bin("Migraiotn Key", diceid.migid, 32);
-
-    //sbc_err_sysprn(SBC_LOG_CMN_PRIO_INFO, 2, L"SBC", L"FSBL", L"Weapon System", 4, L"EVT", L"Migration Key creation Success\n");
-
-    
-           
-    // Check boot mode
-    //bootmd = SBC_ReadBootMode();
     switch (BOOT_MODE_NORMAL) {
     //switch (h_rawptrheader.bootmode) {
     case BOOT_MODE_NORMAL:
@@ -841,18 +790,6 @@ UefiMain (
               goto errdone;
       }
 #endif         
-//      ret = SBC_BaseAnswerValidate(h_blkio, (UINT8 *)baseansr.value, baseansr.length, diceid.osid, BASE_ANS_KEY_STR);
-//      if (ret != SBCOK) {
-////            sbc_err_sysprn(SBC_LOG_CMN_PRIO_ERR, 2,
-////                   L"SBC",
-////                   L"FSBL",
-////                   L"Weapon System",
-////                   3,
-////                   L"EVT",
-////                   L"BaseAnswer Validate fail");
-//              retval = EFI_INVALID_PARAMETER;
-//              goto errdone;
-//      }
 
       ret = SBC_BootModeNormalAndpUdate(h_blkio, ImageHandle, currbank_id);
       if (ret != SBCOK) {
@@ -879,19 +816,6 @@ UefiMain (
       }
 #endif     
 
-        // Storing the Base answer
-//      ret = SBC_BaseAnswerEncryptStore(h_blkio, baseansr.value, baseansr.length, diceid.osid, BASE_ANS_KEY_STR);
-//      if (ret != SBCOK) {
-////            sbc_err_sysprn(SBC_LOG_CMN_PRIO_ERR, 2,
-////                   L"SBC",
-////                   L"FSBL",
-////                   L"Weapon System",
-////                   4,
-////                   L"EVT",
-////                   L"BaseAnswerEncryptStore fail");
-//              retval = EFI_INVALID_PARAMETER;
-//              goto errdone;
-//      }
 
       dprint("Base Answer Encrypt is Done");
 
@@ -939,15 +863,3 @@ errdone:
    return retval;
 }
 
-// Shell Reboot but do not jump to Grub 
-//EFI_BOOT_MANAGER_LOAD_OPTION *BootOptions;
-//UINTN BootOptionCount;
-//
-//
-//Print(L"Start BOOt .. !! \n");
-//BootOptions = NULL;
-//BootOptionCount = 0;
-//
-//BootOptions = EfiBootManagerGetLoadOptions(&BootOptionCount, LoadOptionTypeBoot);
-//
-//EfiBootManagerBoot(BootOptions);
