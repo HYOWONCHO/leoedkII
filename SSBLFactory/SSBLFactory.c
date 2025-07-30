@@ -263,136 +263,56 @@ errdone:
 
 }
 
-
-SBCStatus SBC_BootModeNormalAndpUdate(VOID *blkhnd, VOID *ImageHandle, UINTN nrombank)
+SBCStatus  SBC_BootModeNormal(UINT16 km, VOID *priv)
 {
-  SBCStatus ret = SBCOK;
-  
-  UINTN startlba = 0;
-  
+    SBCStatus ret = SBCOK;
 
-  UINT32  imglen = SBC_RAWPRT_DFLT_BLK_SZ;
-  UINT8   imghdr[SBC_RAWPRT_DFLT_BLK_SZ] = {0, };
-  UINT8   *loadimg = NULL;
-  UINTN   bsofs = 0; // Boot Sector Offset
-  
+    
+    SBC_RET_VALIDATE_ERRCODEMSG((priv != NULL), SBCNULLP, "Invalid argument");
 
-  EFI_HANDLE  *ssbl_img_hndl;
-  [[maybe_unused]]UINTN endlba = 0;
-  [[maybe_unused]]INTN       hndlcnt = 0;
-  __attribute__((unused))EFI_STATUS retval;
-  [[gnu::unused]]CHAR16 *fname = L"\\EFI\\rocky\\SSBL.efi";
-
-
-  LV_t wrlv;
-  //UINT8 *imgssbl = NULL;
-
-  dprint("----- Normal Boot SSBL running ( Bank Id : 0x%x ) -----", nrombank);
-
-  SBC_RET_VALIDATE_ERRCODEMSG((nrombank > 0 && nrombank < 3), SBCINVPARAM, "Invalid Parameter for SSBL bank");
-  SBC_RET_VALIDATE_ERRCODEMSG((blkhnd != NULL), SBCNULLP, "Block I/O Handle Nill");
-
-  bsofs = (BOOT_SECTOR1_OFS | ((nrombank - 1) << 20));
-  startlba = ((bsofs | BOOT_SSBL_OFS) >> SBC_RAWPRT_DFLT_SHIFT);
-
-  //Print("Start LBA Address : 0x%x  \n")
-  //endlba = (BOOT_SSBL_MAX >>  SBC_RAWPRT_DFLT_SHIFT) - startlba;
-
-  //Print(L"Start Addr : 0x%lx , End addr : 0x%lx \n", startlba, endlba);
-
-  ret = SBC_RawPrtReadBlock(blkhnd, (void *)imghdr, &imglen, startlba);
-  if (ret != SBCOK) {
-    Print(L"SSBL Factory Block Read Fail \n");
-    goto errdone;
-  }
-  //SBC_RET_VALIDATE_ERRCODEMSG((ret != SBCOK), SBCIO, "SSBL Factory Block Read Fail");
-
-
-  CopyMem((void *)&imglen, &imghdr[0], sizeof imglen);
-  // Temp code, at later, should be need to remove 
-  //imglen = SBC_SWAP_ENDIAN_32(imglen);
-
-  //Print(L"SSBL Image Len : %d \n", imglen);
- 
-  imglen = ALIGN_VALUE(imglen, SBC_RAWPRT_DFLT_BLK_SZ);
-  //Print(L"Align Image Len : %d \n", imglen);
-  //loadimg = AllocateZeroPool(imglen);
-//if (loadimg == NULL) {
-//  Print(L"Allocate Image pool fail \n");
-//  ret = SBCNULLP;
-//  goto errdone;
-//}
-
-  //dprint("Boot Service Allocate ");
-  retval = gBS->AllocatePool(EfiBootServicesData, imglen, (VOID **)&loadimg);
-  if (EFI_ERROR(retval)) {
-    eprint("Faile to allocate memrory : %r", retval);
-    ret = SBCNULLP;
-    goto errdone;
-  }
-
-  ret = SBC_RawPrtReadBlock(blkhnd, (void *)loadimg, &imglen, startlba);
-  if (ret != SBCOK) {
-    Print(L"SSBL Factory Block Read Fail \n");
-    goto errdone;
-  }
-
-  if ((hndlcnt = SBC_FindEfiFileSystemProtocol(&ssbl_img_hndl)) <= 0) {
-    Print(L"File SYstem Handle Found fail \n");
-    ret = SBCIO;
-    goto errdone;
-  }
-
-  //Print(L"File System Handle Found (Handle Count : %d) \n", hndlcnt);
-
-  _lv_set_data(&wrlv,&loadimg[4], imglen - 4);
-
-  //SBC_mem_print_bin("SSBL Load Image", wrlv.value, 512);
-#if 1
-  for (int idx = 0; idx < hndlcnt; idx++) {
-    retval = SBC_WriteFile(ssbl_img_hndl[idx], fname, &wrlv);
-    if (EFI_ERROR(retval)) {
-        //eprint("%s file write fail %r", fname, retval);
-        //Print(L"%a file write fail %r \n", fname, retval);
-        ret = SBCIO;
-        continue;
-        //goto errdone;
+    switch (km) {
+    case KEY_MODE_NORMAL:
+      //VOID *hnd_load_img = NULL;
+      SBC_GRUB_LoadAndStart(((bm_proc_t *)priv)->ldhndl);
+      while (TRUE) { }
+      break;
+    case KEY_MODE_BOOT:
+      break;
+    case KEY_MODE_UPDATE:
+      break;
+    default:
+      eprint("Unknown Key Mode (%d)", km);
+      goto errdone;
     }
 
-    //Print(L"Index %d Result : %d \n", idx, retval);
+errdone:
+    return ret;
+
+}
+
+
+SBCStatus SBC_BootModeNormalAndpUdate(VOID *blkhnd, VOID *ImageHandle, VOID *priv)
+{
+  SBCStatus ret = SBCOK;
+
+
+  switch (bm) {
+  case BOOT_MODE_NORMAL:
+    SBC_BootModeNormal(((boot_proc_t *)priv)->km, priv);
+    break;
+  case BOOT_MODE_UPDATE:
+    break;
+  case BOOT_MODE_RECOVERY:
+    break;
+  case BOOT_MODE_FACTORY:
+    break;
+  default:
+    eprint("Unknown Boot Mode (%d)", bm);
     break;
   }
 
-  if (EFI_ERROR(retval)) {
-    eprint("%s file write fail %r", fname, retval);
-    ret = SBCIO;
-    goto errdone;
-  }
 
-
-
-  Print(L"SSBL Write is Done \n");
-  //SBC_mem_print_bin("SSBL Header", imghdr, imglen);
-  
-  ret = SBC_SSBL_LoadAndStart(ImageHandle);
-  if (ret != SBCOK) {
-    Print(L"SSBL Factory Running Fail \n");
-    goto errdone;
-  }
-#else
-extern SBCStatus  LoadAndStartMemoryImage(VOID *handle, VOID *imgbuf, UINTN imglen);
-
-    ret = LoadAndStartMemoryImage(ImageHandle, wrlv.value, wrlv.length);
-
-#endif
 errdone:
-
-  if (loadimg != NULL) {
-    FreePool(loadimg);
-  }
-
-
-
   return ret;
 
   
@@ -440,14 +360,13 @@ extern SBCStatus SBC_GRUB_LoadAndStart(EFI_HANDLE ImageHandle);
     UINT32 prevbank_id = 0;
     UINT32 bootmd = 0; // Boot Mode
     LV_t baseansr;
+
+    boot_proc_t       btproc;
  
 
     intgreen_dprint("------------- SSBL Factory System START -------------\n");
 
-    SBC_GRUB_LoadAndStart(ImageHandle);
-    while (1) {
-    }
-
+    ZeroMem(&btproc, sizeof btproc);
     ZeroMem(&h_rawptrheader, sizeof h_rawptrheader);
     // Get the NVMe SSD Raw Partiton handle and Header information
     ret = SBC_BlkIoHandleInit(&h_blkio, &h_rawptrheader);
@@ -485,9 +404,16 @@ extern SBCStatus SBC_GRUB_LoadAndStart(EFI_HANDLE ImageHandle);
         goto errdone;
     }
 
+    btproc.bm = h_rawptrheader.bm;
+    btproc.km = h_rawptrheader.km;
+    btproc.curr_sw_bnk = currbank_id;
+    btproc.pvs_sw_bnk = prevbank_id;
+    btproc.blkhnd = h_blkio;
+    btproc.keyinfo = (VOID *)&diceid;
+
     dprint("Currently Valid FW Bank ID : %d , Previously Bank ID : %d \n", currbank_id, prevbank_id);
 
-    ret = SBC_SSBL_Verify(h_blkio, &baseansr, currbank_id);
+    ret = SBC_SSBL_Verify(h_blkio, &baseansr);
     if (ret != SBCOK) {
           sbc_err_sysprn(SBC_LOG_CMN_PRIO_ERR, 2, 
                  L"SBC", 
@@ -510,22 +436,14 @@ extern SBCStatus SBC_GRUB_LoadAndStart(EFI_HANDLE ImageHandle);
         goto errdone;
     }
 
-    ret = SBC_GenMigrationKey(h_blkio, currbank_id, prevbank_id, diceid.migid);
-    if (ret != SBCOK) {
-        sbc_err_sysprn(SBC_LOG_CMN_PRIO_ERR, 2, L"SBC", L"FSBL", L"Weapon System", 4, L"EVT", L"Migration Key creation fail\n");
-        retval = EFI_INVALID_PARAMETER;
-        goto errdone;
-    }
-
-    SBC_external_mem_print_bin("Migraiotn Key", diceid.migid, 32);
-
-    sbc_err_sysprn(SBC_LOG_CMN_PRIO_INFO, 2, L"SBC", L"FSBL", L"Weapon System", 4, L"EVT", L"Migration Key creation Success\n");
-
     
-           
-    // Check boot mode
-    bootmd = SBC_ReadBootMode();
-    switch (bootmd) {
+
+    // TODO : Read Key Mode 
+    //bootmd = SBC_ReadBootMode();
+
+
+    dprint("Boot Mode is %d", h_rawptrheader.bm);
+    switch (h_rawptrheader.bm) {
     case BOOT_MODE_NORMAL:
        dprint("Boot Mode is BOOT_MODE_NORMAL");
        break;
@@ -534,7 +452,18 @@ extern SBCStatus SBC_GRUB_LoadAndStart(EFI_HANDLE ImageHandle);
       //Print(L"Factory Boot Mode !!! \n");
       break;
     case BOOT_MODE_UPDATE:
-       dprint("Boot Mode is BOOT_MODE_UPDATE");
+
+      ret = SBC_GenMigrationKey(h_blkio, currbank_id, prevbank_id, diceid.migid);
+      if (ret != SBCOK) {
+          sbc_err_sysprn(SBC_LOG_CMN_PRIO_ERR, 2, L"SBC", L"FSBL", L"Weapon System", 4, L"EVT", L"Migration Key creation fail\n");
+          retval = EFI_INVALID_PARAMETER;
+          goto errdone;
+      }
+
+      SBC_external_mem_print_bin("Migraiotn Key", diceid.migid, 32);
+
+      sbc_err_sysprn(SBC_LOG_CMN_PRIO_INFO, 2, L"SBC", L"FSBL", L"Weapon System", 4, L"EVT", L"Migration Key creation Success\n");
+      dprint("Boot Mode is BOOT_MODE_UPDATE");
       break;
     default:
       Print(L"Unknown Boot Mode ... SHOULD go to Abort\n");
