@@ -416,6 +416,7 @@ extern SBCStatus SBC_GRUB_LoadAndStart(EFI_HANDLE ImageHandle);
     btproc.pvs_sw_bnk = prevbank_id;
     btproc.blkhnd = h_blkio;
     btproc.keyinfo = (VOID *)&diceid;
+    btproc.rawprt_hdr = &btproc;
 
     dprint("Currently Valid FW Bank ID : %d , Previously Bank ID : %d \n", currbank_id, prevbank_id);
 

@@ -14,6 +14,7 @@ typedef enum _boot_st_t {
 typedef struct _boot_proc_t {
     VOID *ldhndl;
     VOID *blkhnd;
+    VOID *rawprt_hdr; 
     VOID *keyinfo;                  /*! It's point to atp_ident_t structure */
     UINTN   pvs_sw_bnk;             /*! Previously SW Bank ID */
     UINTN   curr_sw_bnk;            /*! Current SW Bank ID */
