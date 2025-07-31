@@ -372,9 +372,6 @@ extern SBCStatus SBC_GRUB_LoadAndStart(EFI_HANDLE ImageHandle);
 
     intgreen_dprint("------------- SSBL Factory System START -------------\n");
 
-    dprint("Reset System !!! ");
-    SBC_RebootSystem();
-
     ZeroMem(&btproc, sizeof btproc);
     ZeroMem(&h_rawptrheader, sizeof h_rawptrheader);
     // Get the NVMe SSD Raw Partiton handle and Header information
@@ -424,19 +421,16 @@ extern SBCStatus SBC_GRUB_LoadAndStart(EFI_HANDLE ImageHandle);
 
     ret = SBC_SSBL_Verify(h_blkio, &baseansr, btproc.curr_sw_bnk );
     if (ret != SBCOK) {
-          sbc_err_sysprn(SBC_LOG_CMN_PRIO_ERR, 2, 
-                 L"SBC", 
-                 L"FSBL", 
-                 L"Weapon System", 
-                 8, 
-                 L"Determine Firmare Tampering ", 
+          sbc_err_sysprn(SBC_LOG_CMN_PRIO_ERR, 2,
+                 L"SBC",
+                 L"FSBL",
+                 L"Weapon System",
+                 8,
+                 L"Determine Firmare Tampering ",
                  L"FSBL tampering check fail");
           retval = EFI_INVALID_PARAMETER;
           goto errdone;
     }
-
-
-
 
     ret = SBC_DiceKeysGen(ImageHandle, &diceid);
     if (ret != SBCOK) {
@@ -444,6 +438,9 @@ extern SBCStatus SBC_GRUB_LoadAndStart(EFI_HANDLE ImageHandle);
         retval = EFI_INVALID_PARAMETER;
         goto errdone;
     }
+
+    // FWID and OSID certificate verify
+
 
     
 

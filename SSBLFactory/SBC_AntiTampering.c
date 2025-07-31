@@ -1082,6 +1082,131 @@ errdone:
   return ret;
 }
 
+SBCStatus  SBC_FirmWareIdKyeVerify(VOID *blkio, UINT8 *devid, UINT8 *deckey)
+{
+    SBCStatus ret = SBCOK;
+    at_key_t key_pair;
+
+    VOID *ctx = NULL;
+    BOOLEAN retval;
+
+    UINT8 pubkey[64] = {0,};
+    UINTN pubkeyl = 0;
+    UINT8 *loadbuf;
+    UINT32 ldlen = BASE_ANS_BLK_LEN;
+    UINTN baseansr_lba = 0;
+    SBC_AESGcmCtx  decctx;
+    SBC_AESContext  aesctx;
+
+    UINT8 secret_key[SBC_AT_HASH_LEN] = {0, };
+
+    UINTN offset = 0;
+    UINTN calen = 0;
+
+    UINT8 decbuf[2048] = {0,};
+
+    ret = SBC_HashCompute(NULL, deckey, SBC_AT_HASH_LEN, secret_key);
+    SBC_RET_VALIDATE_ERRCODEMSG((ret == SBCOK),SBCINVPARAM, "Secret Key creatation fail");
+
+
+    // Generate the Public Key
+    ret = SBC_DICESeedKeyPair(devid, &key_pair);
+    SBC_RET_VALIDATE_ERRCODEMSG((ret == SBCOK), SBCINVPARAM, "Device ID Key-pair gen fail");
+
+
+    // Device ID certificate Load 
+    baseansr_lba = (SYS_CONF_START_OFS >> SBC_RAWPRT_DFLT_SHIFT);
+    ldlen = ALIGN_VALUE(SYS_SETTING_STORAGE_LEN, ((EFI_BLOCK_IO_PROTOCOL *)blkio)->Media->BlockSize);
+    loadbuf = AllocateZeroPool(ldlen);
+    SBC_RET_VALIDATE_ERRCODEMSG((loadbuf != NULL), SBCNULLP, "Buffer invalid object");
+
+    ret = SBC_RawPrtReadBlock(blkio, 
+                              (VOID *)loadbuf, 
+                              &ldlen, 
+                              baseansr_lba);
+    if (ret != SBCOK) {
+        Print(L"SBC_RawPrtReadBlock fail (%p)\n", blkio);
+        goto errdone;
+    }
+
+    offset = SYS_CONF_DEVID_CRT_OFS;
+
+    CopyMem((void *)&calen, (void *)&loadbuf[0], 4);
+    offset += 4;
+    // Decrypt 
+
+    decctx.msg.value = &loadbuf[offset];
+    decctx.msg.length = calen;
+
+    offset += calen;
+    decctx.iv.value = &loadbuf[offset];
+    decctx.iv.length = BASE_ANS_IV_KEY_STR; 
+    
+    offset += BASE_ANS_IV_KEY_STR;
+    decctx.tag.value = &loadbuf[offset];
+    decctx.tag.length = BASE_ANS_TAG_LEN;
+
+    decctx.key.value = secret_key;
+    decctx.key.length = BASE_ANS_KEY_STR;
+
+    decctx.aad.value = NULL;
+    decctx.aad.length = 0;
+
+    decctx.out.value = decbuf;
+    decctx.out.length = calen;
+
+    aesctx.gcm = &decctx;
+    aesctx.algoid = SBC_CIPHER_AES_GCM;
+
+    if (SBC_AESGcmDecrypt(&aesctx) != SBCOK) {
+        eprint("DeviceID CA decrypt fail");
+        ret = SBCDECFAIL;
+        goto errdone;
+    }
+
+
+    // Get Public Key
+    ret = SBC_EcGetPublicKeyFromPem((CONST UINT8 *)decbuf, calen, &ctx);
+    SBC_RET_VALIDATE_ERRCODEMSG((ret == SBCOK), SBCINVPARAM, "Public key extract fail");
+
+    retval = EcGetPubKey(ctx, pubkey, &pubkeyl);
+    if(retval != TRUE) {
+        ret = SBCFAIL;
+        eprint("EcGetPubKey fail %r", retval);
+        goto errdone;
+    }
+
+    SBC_external_mem_print_bin("Device ID Pubkey", key_pair.q.value, key_pair.ql);
+    SBC_external_mem_print_bin("Certificate Pubkey", pubkey, pubkeyl);
+    if(CompareMem(key_pair.q.value,  pubkey, pubkeyl) != 0) {
+        eprint("CA public key verify fail");
+        ret = SBCINVPARAM;
+        goto errdone;
+    }
+
+    sbc_err_sysprn(SBC_LOG_CMN_PRIO_ERR, 2, 
+           L"SBC", 
+           L"FSBL", 
+           L"Weapon System", 
+           1, 
+           L"EVT", 
+           L"Device ID Verify Done");    
+    
+
+errdone:
+    if (ret != SBCOK) {
+      sbc_err_sysprn(SBC_LOG_CMN_PRIO_ERR, 2, 
+             L"SBC", 
+             L"FSBL", 
+             L"Weapon System", 
+             1, 
+             L"EVT", 
+             L"Device ID Verify Fail");
+    }
+    return ret;
+
+}
+
 
 SBCStatus  SBC_DeviceIdKyeVerify(VOID *blkio, UINT8 *devid, UINT8 *deckey)
 {
@@ -1550,51 +1675,45 @@ errdone:
 SBCStatus  SBC_SSBL_Verify(VOID *blkhnd, VOID *ansr, UINTN bank_id)
 {
     SBCStatus       ret = SBCOK;
-    EFI_STATUS      retval = EFI_SUCCESS;
-    EFI_HANDLE      *hndl = NULL;
-    UINT16          *fblpath = L"\\EFI\\rocky\\SSBL.efi";
+    //EFI_STATUS      retval = EFI_SUCCESS;
+    //EFI_HANDLE      *hndl = NULL;
+    //UINT16          *fblpath = L"\\EFI\\rocky\\SSBL.efi";
     UINT8           *infostart = NULL;
     UINT32          last_of_fsbl = 0;
     UINT32          bsinfolen = 0;
     fsbl_bsinfo_t   bsinfo; 
     UINT32          bsptrcnt = 0;
-    UINT8           HashValue[256];
-    UINT32          HashSize =0;
-    UINT32          fsbl_len =0;
-    VOID            *EcPubKey = NULL;
-    UINTN           HandleCount;
+    [[gnu::unused]] UINT8           HashValue[256];
+    [[gnu::unused]] UINT32          HashSize =0;
+    [[gnu::unused]] UINT32          fsbl_len =0;
+    [[maybe_unused]] VOID            *EcPubKey = NULL;
+    //UINTN           HandleCount;
 
-    LV_t            rdlv = {
-            .length = 0,
-            .value = NULL
-      };
+    UINT32  imglen = SBC_RAWPRT_DFLT_BLK_SZ;
+    UINT8   imghdr[SBC_RAWPRT_DFLT_BLK_SZ] = { 0, };
+    UINTN   bsofs = 0; // Boot Sector Offset
+    UINTN startlba = 0;
 
-    HandleCount  = SBC_FindEfiFileSystemProtocol(&hndl);
+    LV_t            blob; // =  (LV_t *)ansr;
+    // SSBL Image read from Raw Partition 
+    bsofs = (BOOT_SECTOR1_OFS | ((bank_id - 1) << 20));
+    startlba = ((bsofs | BOOT_SSBL_OFS) >> SBC_RAWPRT_DFLT_SHIFT);
+    ret = SBC_RawPrtReadBlock(blkhnd, (void *)imghdr, &imglen, startlba);
+    SBC_RET_VALIDATE_ERRCODEMSG((ret == SBCOK), ret, "SSBL header load fail");
 
-    ret = SBC_GetFileSize(fblpath, (UINTN *)&rdlv.length);
-    if (ret != SBCOK) {
-      goto errdone;
-    }
+    ZeroMem((void *)&blob, sizeof blob);
+    CopyMem(&imglen, imghdr, 4);
 
-    rdlv.value = AllocateZeroPool((UINTN)rdlv.length);
-    if (rdlv.value == NULL) {
-      eprint("FSBL Verify Allocate Pool fail");
-      ret = SBCNULLP;
-      goto errdone;
-    }
+    blob.length = ALIGN_VALUE(imglen,((EFI_BLOCK_IO_PROTOCOL *)blkhnd)->Media->BlockSize);
+    blob.value = AllocateZeroPool(blob.length);
+    SBC_RET_VALIDATE_ERRCODEMSG((blob.value != NULL), SBCNULLP, "Buffer allocate fail");
 
-    retval = SBC_ReadFile(hndl[HandleCount - 1], fblpath, &rdlv);
-    if (EFI_ERROR(retval)) {
-      eprint("%s filr read fail : %r", fblpath, retval);
-      ret = SBCIO;
-      goto errdone;
-    }
+    ret = SBC_RawPrtReadBlock(blkhnd, (void *)blob.value , &blob.length, startlba);
+    SBC_RET_VALIDATE_ERRCODEMSG((ret == SBCOK), ret, "SSBL header load fail");
 
-    last_of_fsbl = rdlv.length - FSBL_BNIFO_SIZE;
-    infostart = &((UINT8 *)rdlv.value)[last_of_fsbl];
-
+    last_of_fsbl = blob.length - FSBL_BNIFO_SIZE;
+    infostart = &((UINT8 *)blob.value)[last_of_fsbl];
     ZeroMem((void *)&bsinfo, sizeof bsinfo);
-
     CopyMem((void *)&bsinfo, (void *)infostart, sizeof bsinfo);
 
     ////SBC_external_mem_print_bin("BSINFO", (UINT8 *)&bsinfo, sizeof bsinfo);
@@ -1611,8 +1730,8 @@ SBCStatus  SBC_SSBL_Verify(VOID *blkhnd, VOID *ansr, UINTN bank_id)
     bsinfolen = bsinfo.m.siglen + bsinfo.m.fwinfolen + bsinfo.m.certlen  + bsinfo.m.banswlen;
 
       
-    fsbl_len = last_of_fsbl = rdlv.length - FSBL_BNIFO_SIZE - bsinfolen;
-    infostart = &((UINT8 *)rdlv.value)[last_of_fsbl];
+    fsbl_len = last_of_fsbl = blob.length - FSBL_BNIFO_SIZE - bsinfolen;
+    infostart = &((UINT8 *)blob.value)[last_of_fsbl];
 
     //dprint("FSBL Last : %d", last_of_fsbl);
     ////SBC_external_mem_print_bin("Addtional Information", infostart,bsinfolen  );
@@ -1638,7 +1757,7 @@ SBCStatus  SBC_SSBL_Verify(VOID *blkhnd, VOID *ansr, UINTN bank_id)
     bsptrcnt += bsinfo.m.siglen;
 
     //SBC_external_mem_print_bin("Signature", (UINT8 *)info.signature,  bsinfo.m.siglen );
-
+#if 0
     BOOLEAN retbool = TRUE;
     retbool = EcGetPublicKeyFromX509((CONST UINT8  *)info.certi, (UINTN)bsinfo.m.certlen,  &EcPubKey);
     if (retbool != TRUE) {
@@ -1675,7 +1794,7 @@ SBCStatus  SBC_SSBL_Verify(VOID *blkhnd, VOID *ansr, UINTN bank_id)
 
     sbc_err_sysprn(SBC_LOG_CMN_PRIO_INFO, 2, L"SBC", L"FSBL", L"CSC-01", 23, L"VERIFY", L"FSBL Integrate check is Done\n");
     Print(L"FSBL Verify Success !!!\n");
-
+#endif
     ((LV_t *)ansr)->value = AllocateZeroPool(bsinfo.m.banswlen);
     if (((LV_t *)ansr)->value == NULL) {
       //sbc_err_sysprn(SBC_LOG_CMN_PRIO_INFO, 2, L"SBC", L"FSBL", L"CSC-01", 23, L"VERIFY", L"FSBL Integrate check is Done\n");
@@ -1721,13 +1840,14 @@ SBCStatus  SBC_SSBL_Verify(VOID *blkhnd, VOID *ansr, UINTN bank_id)
     //ret = SBCOK;
 
 errdone:
-
+#if 0
     if (EcPubKey != NULL) {
       EcFree(EcPubKey);
     }
-    if (rdlv.value != NULL) {
-      FreePool(rdlv.value);
-      rdlv.value = NULL;
+#endif
+    if (blob.value != NULL) {
+      FreePool(blob.value);
+      blob.value = NULL;
 
     }
     return ret;
