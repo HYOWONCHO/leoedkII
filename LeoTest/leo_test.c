@@ -68,6 +68,7 @@
 
 
 VOID *h_blkio;               // Block I/O handle
+static rawprt_hdr_t tmp_prtheader;    // Raw Partition Header handle
 
 extern SBCStatus SBC_SSBL_LoadAndStart(EFI_HANDLE ImageHandle);
 
@@ -225,7 +226,14 @@ SBCStatus SBC_BootModeFactory(VOID *blkhnd, VOID *ImageHandle)
 
   Print(L"SSBL Write is Done \n");
   //SBC_mem_print_bin("SSBL Header", imghdr, imglen);
-  
+
+  if (tmp_prtheader.keymode != KEY_MODE_NORMAL) {
+    tmp_prtheader.keymode = KEY_MODE_NORMAL;
+
+    ret = SBC_RawPrtBlockWrite(h_blkio, (UINT8 *)&tmp_prtheader, sizeof(rawprt_hdr_t), 0);
+    SBC_RET_VALIDATE_ERRCODEMSG((ret == SBCOK), ret, "Key mode change fail");
+  }
+ 
   ret = SBC_SSBL_LoadAndStart(ImageHandle);
   if (ret != SBCOK) {
     Print(L"SSBL Factory Running Fail \n");
@@ -665,7 +673,7 @@ CHAR16 mrgmsg[8192];
 
 
 
-
+extern VOID SBC_ShutdownSystem(VOID);
 EFI_STATUS
 EFIAPI
 UefiMain (
@@ -677,7 +685,8 @@ UefiMain (
     atp_ident_t diceid;
     EFI_STATUS retval = EFI_SUCCESS;
     SBCStatus  ret = SBCOK;
-    rawprt_hdr_t h_rawptrheader;    // Raw Partition Header handle
+    rawprt_hdr_t h_rawprtheader;    // Raw Partition Header handle
+    rawprt_hdr_t tmp_prtheader;    // Raw Partition Header handle
     
     UINT32 pres_hi = 0;
     UINT32 pres_low = 0;
@@ -693,17 +702,19 @@ UefiMain (
 
 
 
-    ZeroMem(&h_rawptrheader, sizeof h_rawptrheader);
+    ZeroMem(&h_rawprtheader, sizeof h_rawprtheader);
     // Get the NVMe SSD Raw Partiton handle and Header information
-    ret = SBC_BlkIoHandleInit(&h_blkio, &h_rawptrheader);
+    ret = SBC_BlkIoHandleInit(&h_blkio, &h_rawprtheader);
     if (ret != SBCOK) {
       Print(L"Raw Partitino find fail !!! \n");
       ASSERT((ret != SBCOK));
     }
 
+    CopyMem(&tmp_prtheader, &h_rawprtheader, sizeof(rawprt_hdr_t));
+
     // Check the Preference SSBL bank
-    CopyMem((void *)&pres_low, (void *)&h_rawptrheader.bootpres[0], 4);
-    CopyMem((void *)&pres_hi, (void *)&h_rawptrheader.bootpres[4], 4);
+    CopyMem((void *)&pres_low, (void *)&h_rawprtheader.bootpres[0], 4);
+    CopyMem((void *)&pres_hi, (void *)&h_rawprtheader.bootpres[4], 4);
 
     pres_low = SBC_SWAP_ENDIAN_32(pres_low);
     pres_hi = SBC_SWAP_ENDIAN_32(pres_hi);
@@ -726,7 +737,7 @@ UefiMain (
 
    // Step 1-1 )  FSBL, self sign and verify
 
-    ret = SBC_FSBL_Verify(h_blkio, &baseansr, currbank_id, h_rawptrheader.bootmode);
+    ret = SBC_FSBL_Verify(h_blkio, &baseansr, currbank_id, h_rawprtheader.bootmode);
     if (ret != SBCOK) {
 
           retval = EFI_INVALID_PARAMETER;
@@ -772,8 +783,9 @@ UefiMain (
     }
 
 
+    //switch (h_rawprtheader.bootmode)
     switch (BOOT_MODE_NORMAL) {
-    //switch (h_rawptrheader.bootmode) {
+    //switch (h_rawprtheader.bootmode) {
     case BOOT_MODE_NORMAL:
       dprint("Boot Mode is BOOT_MODE_NORMAL");
 #ifdef _SBC_DEVID_VERIFY_
@@ -843,6 +855,15 @@ UefiMain (
       }
 #endif     
       break;
+    case BOOT_MODE_RECOVERY:
+
+      ret = SBC_BootModeNormalAndpUdate(h_blkio, ImageHandle, prevbank_id);
+      if (ret != SBCOK) {
+          eprint("Normal Boot Fail");
+          retval = EFI_INVALID_PARAMETER;
+          goto errdone;
+      }
+      break;
     default:
       Print(L"Unknown Boot Mode ... SHOULD go to Abort\n");
       break;
@@ -859,7 +880,23 @@ UefiMain (
 
 
 errdone:
- 
+
+
+  // In terms of the Abnormal behavior on Factory Mode 
+  if ((h_rawprtheader.bootmode == BOOT_MODE_FACTORY) && (retval != EFI_SUCCESS)) {
+    // Change the key mode to normal based on key mode behavior scenario.
+    if (tmp_prtheader.keymode != KEY_MODE_NORMAL) {
+      tmp_prtheader.keymode = KEY_MODE_NORMAL;
+
+      SBC_RawPrtBlockWrite(h_blkio, (UINT8 *)&tmp_prtheader, sizeof(rawprt_hdr_t), 0);
+    }
+
+
+    // Log write 
+    SBC_ShutdownSystem();
+
+
+  }
    return retval;
 }
 
