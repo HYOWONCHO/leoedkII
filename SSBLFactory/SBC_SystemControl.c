@@ -9,6 +9,17 @@
 #include "SBC_FileCtrl.h"
 
 
+static SBCStatus _sbc_abnormal_processing(VOID *priv)
+{
+    SBCStatus ret = SBCOK;
+
+
+
+    return ret;
+
+}
+
+
 SBCStatus  SBC_SecureBootCheck(VOID *priv)
 {
     SBCStatus ret = SBCOK;
@@ -36,14 +47,14 @@ errdone:
 VOID SBC_RebootSystem(VOID)
 {
   //Print(L"Rebooting ... \n");
-  gRT->ResetSystem(EfiResetCold, EFI_SUCCESS, 0, NULL);
-  return;
+    gRT->ResetSystem(EfiResetCold, EFI_SUCCESS, 0, NULL);
+    return;
 }
 
 
 VOID SBC_ShutdownSystem(VOID)
 {
   //Print(L"Shutting down ... \n");
-  gRT->ResetSystem(EfiResetShutdown, EFI_SUCCESS, 0, NULL);
-  return;
+    gRT->ResetSystem(EfiResetShutdown, EFI_SUCCESS, 0, NULL);
+    return;
 }
