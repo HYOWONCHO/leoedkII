@@ -4,6 +4,32 @@
 #include <Library/ResetSystemLib.h>
 
 #include "SBC_SystemControl.h"
+#include "SBC_ErrorType.h"
+#include "SBC_BootProc.h"
+#include "SBC_FileCtrl.h"
+
+
+SBCStatus  SBC_SecureBootCheck(VOID *priv)
+{
+    SBCStatus ret = SBCOK;
+
+    boot_proc_t *bp = (boot_proc_t *)priv;
+
+    switch(bp->bm) {
+    case BOOT_MODE_NORMAL:
+      break;
+    default:
+      goto errdone;
+      //break;
+    }
+
+    
+
+
+errdone:
+    return ret;
+
+}
 
 
 
