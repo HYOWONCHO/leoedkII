@@ -63,6 +63,8 @@
 #include "SBC_Config.h"
 #include "SBC_AntiTampering.h"
 #include "SBC_Util.h"
+#include "SBC_BootProc.h"
+#include "SBC_SystemControl.h"
 
 
 extern SBCStatus SBC_SSBL_LoadAndStart(EFI_HANDLE ImageHandle);
@@ -263,6 +265,8 @@ errdone:
 
 }
 
+
+extern SBCStatus SBC_GRUB_LoadAndStart(EFI_HANDLE ImageHandle);
 SBCStatus  SBC_BootModeNormal(UINT16 km, VOID *priv)
 {
     SBCStatus ret = SBCOK;
@@ -270,10 +274,11 @@ SBCStatus  SBC_BootModeNormal(UINT16 km, VOID *priv)
     
     SBC_RET_VALIDATE_ERRCODEMSG((priv != NULL), SBCNULLP, "Invalid argument");
 
-    switch (km) {
+    switch (((boot_proc_t *)priv)->km) {
     case KEY_MODE_NORMAL:
       //VOID *hnd_load_img = NULL;
-      SBC_GRUB_LoadAndStart(((bm_proc_t *)priv)->ldhndl);
+      
+      SBC_GRUB_LoadAndStart(((boot_proc_t *)priv)->ldhndl);
       while (TRUE) { }
       break;
     case KEY_MODE_BOOT:
@@ -296,7 +301,7 @@ SBCStatus SBC_BootModeNormalAndpUdate(VOID *blkhnd, VOID *ImageHandle, VOID *pri
   SBCStatus ret = SBCOK;
 
 
-  switch (bm) {
+  switch (((boot_proc_t *)priv)->bm) {
   case BOOT_MODE_NORMAL:
     SBC_BootModeNormal(((boot_proc_t *)priv)->km, priv);
     break;
@@ -307,7 +312,8 @@ SBCStatus SBC_BootModeNormalAndpUdate(VOID *blkhnd, VOID *ImageHandle, VOID *pri
   case BOOT_MODE_FACTORY:
     break;
   default:
-    eprint("Unknown Boot Mode (%d)", bm);
+    eprint("Unknown Boot Mode (%d)", ((boot_proc_t *)priv)->bm);
+    goto errdone;
     break;
   }
 
@@ -358,13 +364,16 @@ extern SBCStatus SBC_GRUB_LoadAndStart(EFI_HANDLE ImageHandle);
     UINT32 pres_low = 0;
     UINT32 currbank_id = 0;
     UINT32 prevbank_id = 0;
-    UINT32 bootmd = 0; // Boot Mode
+    //UINT32 bootmd = 0; // Boot Mode
     LV_t baseansr;
 
     boot_proc_t       btproc;
  
 
     intgreen_dprint("------------- SSBL Factory System START -------------\n");
+
+    dprint("Reset System !!! ");
+    SBC_RebootSystem();
 
     ZeroMem(&btproc, sizeof btproc);
     ZeroMem(&h_rawptrheader, sizeof h_rawptrheader);
@@ -413,7 +422,7 @@ extern SBCStatus SBC_GRUB_LoadAndStart(EFI_HANDLE ImageHandle);
 
     dprint("Currently Valid FW Bank ID : %d , Previously Bank ID : %d \n", currbank_id, prevbank_id);
 
-    ret = SBC_SSBL_Verify(h_blkio, &baseansr);
+    ret = SBC_SSBL_Verify(h_blkio, &baseansr, btproc.curr_sw_bnk );
     if (ret != SBCOK) {
           sbc_err_sysprn(SBC_LOG_CMN_PRIO_ERR, 2, 
                  L"SBC", 

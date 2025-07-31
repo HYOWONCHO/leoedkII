@@ -1,5 +1,7 @@
-//#include <Library/UefiBootServiceTableLib.h>
-//#include <Library/UefiRuntimeServiceTableLib.h>
+#include <Uefi.h>
+#include <Library/UefiRuntimeServicesTableLib.h>
+#include <Library/BaseLib.h>
+#include <Library/ResetSystemLib.h>
 
 #include "SBC_SystemControl.h"
 
@@ -8,7 +10,7 @@
 VOID SBC_RebootSystem(VOID)
 {
   //Print(L"Rebooting ... \n");
-  //gRT->ResetSystem(EfiResetCold, EFI_SUCCESS, 0, NULL);
+  gRT->ResetSystem(EfiResetCold, EFI_SUCCESS, 0, NULL);
   return;
 }
 
@@ -16,6 +18,6 @@ VOID SBC_RebootSystem(VOID)
 VOID SBC_ShutdownSystem(VOID)
 {
   //Print(L"Shutting down ... \n");
-  //gRT->ResetSystem(EfiResetShutdown, EFI_SUCCESS, 0 NULL);
+  gRT->ResetSystem(EfiResetShutdown, EFI_SUCCESS, 0, NULL);
   return;
 }

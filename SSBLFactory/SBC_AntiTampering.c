@@ -1547,7 +1547,7 @@ errdone:
 }
 
 
-SBCStatus  SBC_SSBL_Verify(VOID *blkhnd, VOID *ansr)
+SBCStatus  SBC_SSBL_Verify(VOID *blkhnd, VOID *ansr, UINTN bank_id)
 {
     SBCStatus       ret = SBCOK;
     EFI_STATUS      retval = EFI_SUCCESS;

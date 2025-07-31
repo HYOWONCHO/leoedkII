@@ -426,7 +426,7 @@ SBCStatus  SBC_RawPrtBlockWrite(VOID *blkio, UINT8 *wrbuf, UINT32 wrlen, UINT32 
  * 
  * \return UINT32 
  */
-UINT32  SBC_ReadBootMode(VOID *);
+UINT32  SBC_ReadBootMode(VOID);
 
 EFI_STATUS SBC_WriteFile(EFI_HANDLE ImageHandle, CHAR16 *FileNames, LV_t *out);
 
