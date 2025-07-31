@@ -8,7 +8,9 @@
 #include "SBC_BootProc.h"
 #include "SBC_FileCtrl.h"
 
-static BOOL _check_prev_fw(UINTN prev_bnk_id)
+//EFI_GUID g_sbc_guid  = {0x1F3F7E80, 0xDB6B, 0x93FA, {0x9E, 0x61, 0x4C, 0x31, 0x3D, 0x3A}};
+
+static BOOLEAN _check_prev_fw(UINTN prev_bnk_id)
 {
     if(prev_bnk_id == 0) {
         return FALSE;
@@ -37,7 +39,7 @@ static SBCStatus _sbc_abnormal_processing(VOID *priv)
         goto errdone;
     }
 
-errdone;
+errdone:
 
     return ret;
 
@@ -47,12 +49,19 @@ errdone;
 SBCStatus  SBC_SecureBootCheck(VOID *priv)
 {
     SBCStatus ret = SBCOK;
+    //BOOLEAN   bret = FALSE;
 
     boot_proc_t *bp = (boot_proc_t *)priv;
 
     switch(bp->bm) {
     case BOOT_MODE_NORMAL:
-      break;
+        if(bp->bootst == SB_PROC_ST_ABNRAM) {
+            if(_sbc_abnormal_processing(priv) != TRUE) {
+                // TODO : error processing
+            }
+        }
+        
+        break;
     default:
       goto errdone;
       //break;

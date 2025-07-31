@@ -2,6 +2,8 @@
 #define __SBC_BOOT_PROC_H__
 
 
+//1f3f7e80-bd6b-4d83-93fa-9e614c313d3a
+
 #define SB_PROC_ST_MAGICID              0xABCD0000
 
 typedef enum _boot_st_t {
