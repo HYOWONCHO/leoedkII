@@ -4,7 +4,7 @@
 #include <Library/ResetSystemLib.h>
 
 #include "SBC_SystemControl.h"
-#include "SBC_ErrorType.h"
+
 #include "SBC_BootProc.h"
 #include "SBC_FileCtrl.h"
 
@@ -16,13 +16,39 @@ static BOOLEAN _check_prev_fw(UINTN prev_bnk_id)
         return FALSE;
     }
 
+    return TRUE;
+
     // Load the 
 }
 
-
-static SBCStatus _sbc_abnormal_processing(VOID *priv)
+SBCStatus SBC_BootKeyModeChange(UINT32 newbm, UINT32 newkey, VOID *priv)
 {
     SBCStatus ret = SBCOK;
+    boot_proc_t *bp = (boot_proc_t *)priv;
+    rawprt_hdr_t *hdr = NULL;
+
+    hdr = (rawprt_hdr_t *)bp->rawprt_hdr;
+
+    hdr->bm = newbm;
+    hdr->km = newkey;
+
+
+    SBC_RET_VALIDATE_ERRCODEMSG((bp->blkhnd != NULL), SBCNULLP, "Raw Partition Block IO Handle Nill");
+
+    // Boot Mode write
+    ret = SBC_RawPrtBlockWrite(bp->blkhnd,(UINT8 *)hdr, sizeof(*hdr),0);
+    SBC_RET_VALIDATE_ERRCODEMSG((ret == SBCOK), ret, "Boot and Key mode write fail");
+
+
+errdone:
+
+    return ret;
+}
+
+
+static VOID _sbc_abnormal_processing(VOID *priv)
+{
+    //SBCStatus ret = SBCOK;
 
     boot_proc_t *bp = (boot_proc_t *)priv;
 
@@ -32,7 +58,11 @@ static SBCStatus _sbc_abnormal_processing(VOID *priv)
         // Check which existense the previously firmware 
         if(_check_prev_fw(bp->pvs_sw_bnk) != TRUE) {
             // Boot Mode changes from Normmal to Factory
-            //(boot_proc_t *)
+            SBC_BootKeyModeChange(BOOT_MODE_FACTORY, KEY_MODE_UPDATE, priv);
+        }
+        else {
+            SBC_BootKeyModeChange(BOOT_MODE_RECOVERY, KEY_MODE_UPDATE, priv);
+
         }
         break;
     default:
@@ -41,7 +71,7 @@ static SBCStatus _sbc_abnormal_processing(VOID *priv)
 
 errdone:
 
-    return ret;
+    return;
 
 }
 
@@ -49,6 +79,7 @@ errdone:
 SBCStatus  SBC_SecureBootCheck(VOID *priv)
 {
     SBCStatus ret = SBCOK;
+    //VOID        *new_hnd = NULL;
     //BOOLEAN   bret = FALSE;
 
     boot_proc_t *bp = (boot_proc_t *)priv;
@@ -56,11 +87,16 @@ SBCStatus  SBC_SecureBootCheck(VOID *priv)
     switch(bp->bm) {
     case BOOT_MODE_NORMAL:
         if(bp->bootst == SB_PROC_ST_ABNRAM) {
-            if(_sbc_abnormal_processing(priv) != TRUE) {
+
+            // In case of the Boot Mode is Normal and Boot State is Abnormal.
+            _sbc_abnormal_processing(priv);
                 // TODO : error processing
-            }
+            SBC_RebootSystem();
         }
-        
+
+        break;
+    case BOOT_MODE_RECOVERY:
+
         break;
     default:
       goto errdone;
@@ -81,7 +117,8 @@ VOID SBC_RebootSystem(VOID)
 {
   //Print(L"Rebooting ... \n");
     gRT->ResetSystem(EfiResetCold, EFI_SUCCESS, 0, NULL);
-    return;
+    while(TRUE) { };
+
 }
 
 
@@ -89,5 +126,5 @@ VOID SBC_ShutdownSystem(VOID)
 {
   //Print(L"Shutting down ... \n");
     gRT->ResetSystem(EfiResetShutdown, EFI_SUCCESS, 0, NULL);
-    return;
+    while(TRUE) { };
 }

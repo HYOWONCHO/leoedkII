@@ -22,7 +22,7 @@ typedef struct _boot_proc_t {
     UINTN   curr_sw_bnk;            /*! Current SW Bank ID */
     UINT16  bm;                     /*! Boot Mode */
     UINT16  km;                     /*! Key Mode */
-    UINT8   bootst;                 /*! Boot Status */
+    UINT32   bootst;                 /*! Boot Status */
 }boot_proc_t;
 #pragma pack()
 

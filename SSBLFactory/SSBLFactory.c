@@ -372,6 +372,8 @@ extern SBCStatus SBC_GRUB_LoadAndStart(EFI_HANDLE ImageHandle);
 
     intgreen_dprint("------------- SSBL Factory System START -------------\n");
 
+    btproc.bootst = SB_PROC_ST_NRMA;
+
     ZeroMem(&btproc, sizeof btproc);
     ZeroMem(&h_rawptrheader, sizeof h_rawptrheader);
     // Get the NVMe SSD Raw Partiton handle and Header information
@@ -410,13 +412,14 @@ extern SBCStatus SBC_GRUB_LoadAndStart(EFI_HANDLE ImageHandle);
         goto errdone;
     }
 
+
     btproc.bm = h_rawptrheader.bm;
     btproc.km = h_rawptrheader.km;
     btproc.curr_sw_bnk = currbank_id;
     btproc.pvs_sw_bnk = prevbank_id;
     btproc.blkhnd = h_blkio;
     btproc.keyinfo = (VOID *)&diceid;
-    btproc.rawprt_hdr = &btproc;
+    btproc.rawprt_hdr = &h_rawptrheader;
 
     dprint("Currently Valid FW Bank ID : %d , Previously Bank ID : %d \n", currbank_id, prevbank_id);
 
@@ -430,6 +433,7 @@ extern SBCStatus SBC_GRUB_LoadAndStart(EFI_HANDLE ImageHandle);
                  L"Determine Firmare Tampering ",
                  L"FSBL tampering check fail");
           retval = EFI_INVALID_PARAMETER;
+          btproc.bootst = SB_PROC_ST_ABNRAM;
           goto errdone;
     }
 
@@ -437,6 +441,7 @@ extern SBCStatus SBC_GRUB_LoadAndStart(EFI_HANDLE ImageHandle);
     if (ret != SBCOK) {
         sbc_err_sysprn(SBC_LOG_CMN_PRIO_ERR, 2, L"SBC", L"FSBL", L"Weapon System", 4, L"EVT", L"Dice Key creation fail\n");
         retval = EFI_INVALID_PARAMETER;
+        btproc.bootst = SB_PROC_ST_ABNRAM;
         goto errdone;
     }
 
@@ -453,6 +458,8 @@ extern SBCStatus SBC_GRUB_LoadAndStart(EFI_HANDLE ImageHandle);
     switch (h_rawptrheader.bm) {
     case BOOT_MODE_NORMAL:
        dprint("Boot Mode is BOOT_MODE_NORMAL");
+       SBC_SecureBootCheck((VOID *)&btproc);
+
        break;
     case BOOT_MODE_FACTORY:
        dprint("Boot Mode is BOOT_MODE_FACTORY");
@@ -500,6 +507,7 @@ extern SBCStatus SBC_GRUB_LoadAndStart(EFI_HANDLE ImageHandle);
 
 errdone:
  
+   SBC_SecureBootCheck((VOID *)&btproc);
    return retval;
 }
 
