@@ -75,6 +75,49 @@ errdone:
 
 }
 
+VOID SBC_RecoveryBootProcessing(VOID *priv)
+{
+    SBCStatus ret = SBCOK;
+    sb_rcv_proc_t *p = NULL;
+    boot_proc_t   *bt_proc = NULL; // BOot process
+    UINT8 sk[BASE_ANS_KEY_STR] = {0,}; // Secret key for Protected SW 
+
+    p = (sb_rcv_proc_t *)priv;
+    bt_proc = (boot_proc_t *)p->handle;
+
+    if(_check_prev_fw(bt_proc->pvs_sw_bnk) != FALSE) {
+        // System Shutdown
+        goto errdone;
+       
+    }
+
+    // Create the OSID
+
+    // Baseanswer Ecnrypt and Store
+    ret = SBC_BaseAnswerEncryptStore(
+                    bt_proc->blkhnd,
+                    ((LV_t *)p->baseans)->value,
+                    ((LV_t *)p->baseans)->length,
+                    (UINT8 *)p->osid,
+                    BASE_ANS_KEY_STR
+    );
+
+
+    SBC_RET_VALIDATE_ERRCODEMSG((ret == SBCOK),ret, "Base Answer re-write faie");
+
+    // Create the secret key
+    ret = SBC_HashCompute(NULL, p->osid, BASE_ANS_KEY_STR, sk);
+    SBC_RET_VALIDATE_ERRCODEMSG((ret == SBCOK), ret, "Secret key create fail");
+
+    // Load protected SW 
+
+    return;
+
+errdone:
+    SBC_ShutdownSystem();
+    return;
+}
+
 
 SBCStatus  SBC_SecureBootCheck(VOID *priv)
 {
@@ -96,7 +139,7 @@ SBCStatus  SBC_SecureBootCheck(VOID *priv)
 
         break;
     case BOOT_MODE_RECOVERY:
-
+        
         break;
     default:
       goto errdone;

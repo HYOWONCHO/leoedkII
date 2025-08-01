@@ -482,6 +482,8 @@ extern SBCStatus SBC_GRUB_LoadAndStart(EFI_HANDLE ImageHandle);
       sbc_err_sysprn(SBC_LOG_CMN_PRIO_INFO, 2, L"SBC", L"FSBL", L"Weapon System", 4, L"EVT", L"Migration Key creation Success\n");
       dprint("Boot Mode is BOOT_MODE_UPDATE");
       break;
+    case BOOT_MODE_RECOVERY:
+        break;
     default:
       Print(L"Unknown Boot Mode ... SHOULD go to Abort\n");
       break;
