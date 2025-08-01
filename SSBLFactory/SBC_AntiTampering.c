@@ -19,6 +19,8 @@
 #include <Library/BaseCryptLib.h>
 #include <Protocol/BlockIo.h>
 
+#include <Library/DevicePathLib.h>
+
 #include "SBC_CryptAES.h"
 #include "SBC_TypeDefs.h"
 
@@ -30,11 +32,10 @@
 #include "SBC_AntiTampering.h"
 #include "SBC_EccSignVerify.h"
 #include "SBC_X509.h"
-#include "SBC_Kdf.h"
-
-
+#include "SBC_Kdf.h" 
+#include "SBC_Log.h"
   
-
+extern CHAR16 mrgmsg[8192];
 
 #pragma pack(1)
 typedef struct {
@@ -44,403 +45,105 @@ typedef struct {
 } NVME_CONTROLLER_DATA;
 #pragma pack()
 
-static SBCStatus _kernel_image_load(EFI_HANDLE ImageHandle, LV_t *lv)
+SBCStatus _kernel_image_load(EFI_HANDLE ImageHandle, LV_t *lv)
 {
-  SBCStatus                       ret = SBCFAIL;
-  EFI_STATUS                      Status;
-  EFI_SIMPLE_FILE_SYSTEM_PROTOCOL *SimpleFileSystem;
-  EFI_FILE_PROTOCOL               *Root;
-  EFI_FILE_PROTOCOL               *FileHandle;
-  UINTN                           BufferSize;
-  VOID                            *Buffer;
-  EFI_DEVICE_PATH_PROTOCOL        *DevicePath;
-  EFI_LOADED_IMAGE_PROTOCOL       *LoadedImage;
-  EFI_HANDLE                      *HandleBuffer;
-  UINTN                           NumberOfHandles;
-  UINTN                           Index;
-  CHAR16                          FilePath[] = L"\\EFI\\rocky\\vmlinuz_test"; // Path relative to the root of the file system
-  BOOLEAN                         FoundFs1 = FALSE;
-  EFI_DEVICE_PATH_TO_TEXT_PROTOCOL *DevicePathToText = NULL;
-  CHAR16                          *DevicePathStr = NULL;
-  CONST CHAR16                     *deviceidnetiifer = L"NVMe";
+    SBCStatus           ret = SBCOK;
+    EFI_STATUS          Status;
+    UINTN               len_of_kernel = 0;
+    UINTN               hndlcnt;
+    UINTN               idx;
+    EFI_HANDLE          *hndl;
 
 
-  // 1. Get the Loaded Image Protocol to determine the current device
-  //    This is one way to find the file system where your current image is located.
-  //    You could also iterate all SimpleFileSystem protocols to find FS1 explicitly.
-  Status = gBS->OpenProtocol (
-                  ImageHandle,
-                  &gEfiLoadedImageProtocolGuid,
-                  (VOID **)&LoadedImage,
-                  ImageHandle,
-                  NULL,
-                  EFI_OPEN_PROTOCOL_GET_PROTOCOL
-                  );
-  if (EFI_ERROR (Status)) {
-    Print(L"Failed to open LoadedImageProtocol: %r\n", Status);
-    goto errdone;
-  }
+    dprint();
+    ret = SBC_GetFileSize( OSID_KERNEL_PATH, &len_of_kernel);
+    SBC_RET_VALIDATE_ERRCODEMSG((ret == SBCOK), ret, "File Not Found");
+    dprint();
+    hndlcnt = SBC_FindEfiFileSystemProtocol(&hndl);
+    if (hndlcnt <= 0) {
+      eprint("File System Handle find fail : %d", hndlcnt);
+      return SBCFAIL;
+    }
+    dprint();
+    for (idx = 0; idx < hndlcnt; idx++) {
+      Status = SBC_IsFlieAccess(hndl[idx], OSID_KERNEL_PATH);
+      if (EFI_ERROR(Status)) {
+        continue;
+      }
 
-  // 2. Locate all Simple File System Protocols
-  Status = gBS->LocateHandleBuffer (
-                  ByProtocol,
-                  &gEfiSimpleFileSystemProtocolGuid,
-                  NULL,
-                  &NumberOfHandles,
-                  &HandleBuffer
-                  );
-  if (EFI_ERROR (Status)) {
-    Print(L"Failed to locate SimpleFileSystemProtocol handles: %r\n", Status);
-    goto errdone;
-  }
+      break;
+    }
+    dprint();
 
-  //Print(L"Number of HandleBuffre : %d \n", NumberOfHandles);
-
-  for (Index = 0; Index < NumberOfHandles; Index++) {
-    Status = gBS->OpenProtocol (
-                    HandleBuffer[Index],
-                    &gEfiSimpleFileSystemProtocolGuid,
-                    (VOID **)&SimpleFileSystem,
-                    ImageHandle,
-                    NULL,
-                    EFI_OPEN_PROTOCOL_GET_PROTOCOL
-                    );
-    if (EFI_ERROR (Status)) {
-      continue; // Skip if we can't open this instance
+    if (EFI_ERROR(Status)) {
+        eprint("%s  : %r", OSID_KERNEL_PATH, Status);
+        return SBCFAIL;
     }
 
-    gBS->HandleProtocol(HandleBuffer[Index], &gEfiDevicePathProtocolGuid, (VOID**)&DevicePath);
-    gBS->LocateProtocol(&gEfiDevicePathToTextProtocolGuid, NULL, (VOID**)&DevicePathToText);
-    DevicePathStr = DevicePathToText->ConvertDevicePathToText(DevicePath, FALSE, FALSE);
+    dprint();
+    lv->value = AllocateZeroPool(len_of_kernel);
+    lv->length = len_of_kernel;
+    dprint("%s size %d", OSID_KERNEL_PATH, lv->length);
+    SBC_RET_VALIDATE_ERRCODEMSG((lv->value != NULL), SBCNULLP, "Out of Memory");
 
-    //Print(L"Device path str : %s \n", DevicePathStr);
-    if (StrStr((CONST CHAR16 *)DevicePathStr, deviceidnetiifer) == NULL) {
-      //Print(L"NVMe path NOT find \n");
-      continue;
+    dprint();
+
+    Status = SBC_ReadFile(hndl[idx], OSID_KERNEL_PATH, lv);
+    if (EFI_ERROR(Status)) {
+      eprint("%s file read fail with %r", OSID_KERNEL_PATH, Status);
+      ret = SBCNOTFND;
+      goto errdone;
     }
 
-    Status = SimpleFileSystem->OpenVolume (SimpleFileSystem, &Root);
-    if (EFI_ERROR (Status)) {
-      Print(L"Failed to open volume: %r\n", Status);
-      continue;
-    }
 
-    FoundFs1 = TRUE; // Assuming we found the correct file system
-    //Print(L"Found a file system, attempting to open: %s\n", FilePath);
-    break; // Found the file system, exit loop
-  }
-
-  gBS->FreePool(HandleBuffer);
-
-  if (!FoundFs1) {
-    Print(L"Could not locate the desired file system (FS1:).\n");
-    ret = SBCNOTFND;
-    goto errdone;
-  }
-
-  // 3. Open the X64.efi file
-  Status = Root->Open (
-                    Root,
-                    &FileHandle,
-                    FilePath,
-                    EFI_FILE_MODE_READ,
-                    0 // Attributes: no special attributes for reading
-                    );
-  if (EFI_ERROR (Status)) {
-    Print(L"Failed to open file %s: %r\n", FilePath, Status);
-    Root->Close(Root);
-    goto errdone;
-  }
-
-  // 4. Get the file size
-  EFI_FILE_INFO *FileInfo;
-  BufferSize = 0;
-  // First call to GetInfo with BufferSize = 0 to get the required buffer size
-  Status = FileHandle->GetInfo (
-                         FileHandle,
-                         &gEfiFileInfoGuid,
-                         &BufferSize,
-                         NULL
-                         );
-  if (Status != EFI_BUFFER_TOO_SMALL) {
-    Print(L"Failed to get file info (first call): %r\n", Status);
-    FileHandle->Close(FileHandle);
-    Root->Close(Root);
-    goto errdone;
-  }
-
-  Status = gBS->AllocatePool (EfiBootServicesData, BufferSize, (VOID **)&FileInfo);
-  if (EFI_ERROR (Status)) {
-    Print(L"Failed to allocate memory for file info: %r\n", Status);
-    FileHandle->Close(FileHandle);
-    Root->Close(Root);
-    goto errdone;
-  }
-
-  Status = FileHandle->GetInfo (
-                         FileHandle,
-                         &gEfiFileInfoGuid,
-                         &BufferSize,
-                         FileInfo
-                         );
-  if (EFI_ERROR (Status)) {
-    Print(L"Failed to get file info (second call): %r\n", Status);
-    gBS->FreePool(FileInfo);
-    FileHandle->Close(FileHandle);
-    Root->Close(Root);
-    goto errdone;
-  }
-
-  UINT64 FileSize = FileInfo->FileSize;
-  //Print(L"File size of %s: %llu bytes\n", FilePath, FileSize);
-  gBS->FreePool(FileInfo);
-
-  // 5. Allocate buffer to read the file content
-  Buffer = NULL;
-  Status = gBS->AllocatePool (EfiBootServicesData, FileSize, &lv->value);
-  if (EFI_ERROR (Status)) {
-    Print(L"Failed to allocate memory for file content: %r\n", Status);
-    FileHandle->Close(FileHandle);
-    Root->Close(Root);
-    goto errdone;
-  }
-
-  // 6. Read the file content
-  BufferSize = (UINTN)FileSize; // BufferSize must be UINTN for Read()
-  Status = FileHandle->Read (
-                         FileHandle,
-                         &BufferSize,
-                         lv->value
-                         );
-  if (EFI_ERROR (Status)) {
-    Print(L"Failed to read file: %r\n", Status);
-    gBS->FreePool(Buffer);
-    FileHandle->Close(FileHandle);
-    Root->Close(Root);
-    goto errdone;
-  }
-
-  lv->length = (UINT32)BufferSize;
-  Print(L"Successfully read %u bytes from %s.\n", (UINT32)BufferSize, FilePath);
-
-  // Now 'Buffer' contains the content of X64.efi.
-  // You can process this content (e.g., parse it as an EFI executable)
-
-  // Example: print a few bytes (assuming it's a binary file)
-  // Be careful printing raw binary data to the console, it might not be readable.
-  // For demonstration, let's print the first 16 bytes in hex.
-
-  //SBC_mem_print_bin("First 16 byte", (UINT8 *)lv->value, 16);
-
-  ret = SBCOK;
+    dprint();
 errdone:
-  // 7. Close the file and volume handles
-  FileHandle->Close(FileHandle);
-  Root->Close(Root);
-  gBS->FreePool(Buffer);
-
-  return ret;
-  
-
+    return ret;
 }
 
-SBCStatus _ssbl_image_load(EFI_HANDLE ImageHandle, LV_t *lv)
+SBCStatus _ssbl_image_load(VOID *blkhnd, LV_t *lv,  UINTN normbank, UINTN bm)
 {
-  SBCStatus                       ret = SBCFAIL;
-  EFI_STATUS                      Status;
-  EFI_SIMPLE_FILE_SYSTEM_PROTOCOL *SimpleFileSystem;
-  EFI_FILE_PROTOCOL               *Root;
-  EFI_FILE_PROTOCOL               *FileHandle;
-  UINTN                           BufferSize;
-  VOID                            *Buffer;
-  EFI_DEVICE_PATH_PROTOCOL        *DevicePath;
-  EFI_LOADED_IMAGE_PROTOCOL       *LoadedImage;
-  EFI_HANDLE                      *HandleBuffer;
-  UINTN                           NumberOfHandles;
-  UINTN                           Index;
-  CHAR16                          FilePath[] = L"\\EFI\\BOOT\\SSBL.efi"; // Path relative to the root of the file system
-  BOOLEAN                         FoundFs1 = FALSE;
-  EFI_DEVICE_PATH_TO_TEXT_PROTOCOL *DevicePathToText = NULL;
-  CHAR16                          *DevicePathStr = NULL;
-  CONST CHAR16                     *deviceidnetiifer = L"NVMe";
+
+    SBCStatus           ret = SBCOK;
+    UINTN               bsofs = 0; // Boot Sector Offset
+    UINTN               startlba = 0;
+
+    UINT32          imglen = SBC_RAWPRT_DFLT_BLK_SZ;
+    UINT8           imghdr[SBC_RAWPRT_DFLT_BLK_SZ] = {0, };
 
 
-  // 1. Get the Loaded Image Protocol to determine the current device
-  //    This is one way to find the file system where your current image is located.
-  //    You could also iterate all SimpleFileSystem protocols to find FS1 explicitly.
-  Status = gBS->OpenProtocol (
-                  ImageHandle,
-                  &gEfiLoadedImageProtocolGuid,
-                  (VOID **)&LoadedImage,
-                  ImageHandle,
-                  NULL,
-                  EFI_OPEN_PROTOCOL_GET_PROTOCOL
-                  );
-  if (EFI_ERROR (Status)) {
-    Print(L"Failed to open LoadedImageProtocol: %r\n", Status);
-    goto errdone;
-  }
+    bsofs = (BOOT_SECTOR1_OFS | ((normbank - 1) << 20));
+    startlba = ((bsofs | BOOT_SSBL_OFS) >> SBC_RAWPRT_DFLT_SHIFT);
 
-  // 2. Locate all Simple File System Protocols
-  Status = gBS->LocateHandleBuffer (
-                  ByProtocol,
-                  &gEfiSimpleFileSystemProtocolGuid,
-                  NULL,
-                  &NumberOfHandles,
-                  &HandleBuffer
-                  );
-  if (EFI_ERROR (Status)) {
-    Print(L"Failed to locate SimpleFileSystemProtocol handles: %r\n", Status);
-    goto errdone;
-  }
+    dprint("BSOFS:  0x%lx, StartLBA: %lu", bsofs, startlba);
 
-  //Print(L"Number of HandleBuffre : %d \n", NumberOfHandles);
-
-  for (Index = 0; Index < NumberOfHandles; Index++) {
-    Status = gBS->OpenProtocol (
-                    HandleBuffer[Index],
-                    &gEfiSimpleFileSystemProtocolGuid,
-                    (VOID **)&SimpleFileSystem,
-                    ImageHandle,
-                    NULL,
-                    EFI_OPEN_PROTOCOL_GET_PROTOCOL
-                    );
-    if (EFI_ERROR (Status)) {
-      continue; // Skip if we can't open this instance
+    ret = SBC_RawPrtReadBlock(blkhnd, (void *)imghdr, &imglen, startlba);
+    if (ret != SBCOK) {
+        eprint("SSBL Factory Block Read Fail \n");
+        goto errdone;
     }
 
-    gBS->HandleProtocol(HandleBuffer[Index], &gEfiDevicePathProtocolGuid, (VOID**)&DevicePath);
-    gBS->LocateProtocol(&gEfiDevicePathToTextProtocolGuid, NULL, (VOID**)&DevicePathToText);
-    DevicePathStr = DevicePathToText->ConvertDevicePathToText(DevicePath, FALSE, FALSE);
+    CopyMem((void *)&imglen, &imghdr[0], sizeof imglen);
+    dprint("SSBL image len : %ld", imglen);
+    imglen = ALIGN_VALUE(imglen, SBC_RAWPRT_DFLT_BLK_SZ);
 
-    //Print(L"Device path str : %s \n", DevicePathStr);
-    if (StrStr((CONST CHAR16 *)DevicePathStr, deviceidnetiifer) == NULL) {
-      //Print(L"NVMe path NOT find \n");
-      continue;
-    }
+    dprint("Align SSBL image len : %ld", imglen);
 
-    Status = SimpleFileSystem->OpenVolume (SimpleFileSystem, &Root);
-    if (EFI_ERROR (Status)) {
-      Print(L"Failed to open volume: %r\n", Status);
-      continue;
-    }
 
-    FoundFs1 = TRUE; // Assuming we found the correct file system
-    //Print(L"Found a file system, attempting to open: %s\n", FilePath);
-    break; // Found the file system, exit loop
-  }
+    lv->value = AllocatePool(imglen);
+    SBC_RET_VALIDATE_ERRCODEMSG((lv->value != NULL), SBCNULLP, "Allocate Memory Fail");
 
-  gBS->FreePool(HandleBuffer);
+    ret = SBC_RawPrtReadBlock(blkhnd, (void *)lv->value, &imglen, startlba);
+    SBC_RET_VALIDATE_ERRCODEMSG((ret == SBCOK), ret, "SSBL image read fail");
 
-  if (!FoundFs1) {
-    Print(L"Could not locate the desired file system (FS1:).\n");
-    ret = SBCNOTFND;
-    goto errdone;
-  }
 
-  // 3. Open the X64.efi file
-  Status = Root->Open (
-                    Root,
-                    &FileHandle,
-                    FilePath,
-                    EFI_FILE_MODE_READ,
-                    0 // Attributes: no special attributes for reading
-                    );
-  if (EFI_ERROR (Status)) {
-    Print(L"Failed to open file %s: %r\n", FilePath, Status);
-    Root->Close(Root);
-    goto errdone;
-  }
+    lv->length = imglen - FSBL_BNIFO_SIZE;
+    // skip the image header ( for Length )
+    lv->value += 4;
 
-  // 4. Get the file size
-  EFI_FILE_INFO *FileInfo;
-  BufferSize = 0;
-  // First call to GetInfo with BufferSize = 0 to get the required buffer size
-  Status = FileHandle->GetInfo (
-                         FileHandle,
-                         &gEfiFileInfoGuid,
-                         &BufferSize,
-                         NULL
-                         );
-  if (Status != EFI_BUFFER_TOO_SMALL) {
-    Print(L"Failed to get file info (first call): %r\n", Status);
-    FileHandle->Close(FileHandle);
-    Root->Close(Root);
-    goto errdone;
-  }
-
-  Status = gBS->AllocatePool (EfiBootServicesData, BufferSize, (VOID **)&FileInfo);
-  if (EFI_ERROR (Status)) {
-    Print(L"Failed to allocate memory for file info: %r\n", Status);
-    FileHandle->Close(FileHandle);
-    Root->Close(Root);
-    goto errdone;
-  }
-
-  Status = FileHandle->GetInfo (
-                         FileHandle,
-                         &gEfiFileInfoGuid,
-                         &BufferSize,
-                         FileInfo
-                         );
-  if (EFI_ERROR (Status)) {
-    Print(L"Failed to get file info (second call): %r\n", Status);
-    gBS->FreePool(FileInfo);
-    FileHandle->Close(FileHandle);
-    Root->Close(Root);
-    goto errdone;
-  }
-
-  UINT64 FileSize = FileInfo->FileSize;
-  //Print(L"File size of %s: %llu bytes\n", FilePath, FileSize);
-  gBS->FreePool(FileInfo);
-
-  // 5. Allocate buffer to read the file content
-  Buffer = NULL;
-  Status = gBS->AllocatePool (EfiBootServicesData, FileSize, &lv->value);
-  if (EFI_ERROR (Status)) {
-    Print(L"Failed to allocate memory for file content: %r\n", Status);
-    FileHandle->Close(FileHandle);
-    Root->Close(Root);
-    goto errdone;
-  }
-
-  // 6. Read the file content
-  BufferSize = (UINTN)FileSize; // BufferSize must be UINTN for Read()
-  Status = FileHandle->Read (
-                         FileHandle,
-                         &BufferSize,
-                         lv->value
-                         );
-  if (EFI_ERROR (Status)) {
-    Print(L"Failed to read file: %r\n", Status);
-    gBS->FreePool(Buffer);
-    FileHandle->Close(FileHandle);
-    Root->Close(Root);
-    goto errdone;
-  }
-
-  lv->length = (UINT32)BufferSize;
-  Print(L"Successfully read %u bytes from %s.\n", (UINT32)BufferSize, FilePath);
-
-  // Now 'Buffer' contains the content of X64.efi.
-  // You can process this content (e.g., parse it as an EFI executable)
-
-  // Example: print a few bytes (assuming it's a binary file)
-  // Be careful printing raw binary data to the console, it might not be readable.
-  // For demonstration, let's print the first 16 bytes in hex.
-
-  //SBC_mem_print_bin("First 16 byte", (UINT8 *)lv->value, 16);
-
-  ret = SBCOK;
 errdone:
-  // 7. Close the file and volume handles
-  FileHandle->Close(FileHandle);
-  Root->Close(Root);
-  gBS->FreePool(Buffer);
 
-  return ret;
-  
+    return ret;
 
 }
 
@@ -456,6 +159,8 @@ EFI_STATUS efi_boot_fsbl_load(LV_t *lv)
   EFI_FILE_PROTOCOL                   *X64File = NULL;
   EFI_FILE_INFO                       *FileInfo = NULL;
   UINTN                               FileInfoSize = 0;
+
+  EFI_DEVICE_PATH_PROTOCOL *DevicePath = NULL;
 //VOID                                *FileBuffer = NULL;
 //UINTN                               FileSize = 0;
 
@@ -477,7 +182,16 @@ EFI_STATUS efi_boot_fsbl_load(LV_t *lv)
   // Iterate through found file systems to find the one containing /EFI/BOOT/X64.efi
   // In a real scenario, you might have logic to identify the correct ESP.
   // For simplicity, we'll try the first one here.
-  for (UINTN Index = NumberOfHandles - 1; Index < NumberOfHandles; Index++) {
+  for (UINTN Index = 0; Index < NumberOfHandles; Index++) {
+
+    DevicePath = FileDevicePath(HandleBuffer[Index], L"\\EFI\\rocky\\FSBL.efi");
+    if (DevicePath == NULL) {
+      eprint("FSBL Device path not found ");
+      continue;
+    }
+
+    dprint("Discover the device path for FSBL~~~");
+
     Status = gBS->HandleProtocol (
                     HandleBuffer[Index],
                     &gEfiSimpleFileSystemProtocolGuid,
@@ -859,13 +573,8 @@ static SBCStatus _baseboard_sn(hw_uniqueinfo_t *p)
                     cnt++;
                 }
 #endif
-                Print(L"_baseboard_sn Serial Number: %a (Count : %d)\n",
-                      SerialNumberString,
-                      cnt);
-
-
                 p->mbsnl = strlen(SerialNumberString);
-                SBC_mem_print_bin("_baseboard_sn", (UINT8 *)SerialNumberString, p->mbsnl);
+                SBC_external_mem_print_bin("_baseboard_sn", (UINT8 *)SerialNumberString, p->mbsnl);
                 CopyMem(p->mbsn, SerialNumberString, p->mbsnl);
 
 
@@ -1082,131 +791,6 @@ errdone:
   return ret;
 }
 
-SBCStatus  SBC_FirmWareIdKyeVerify(VOID *blkio, UINT8 *devid, UINT8 *deckey)
-{
-    SBCStatus ret = SBCOK;
-    at_key_t key_pair;
-
-    VOID *ctx = NULL;
-    BOOLEAN retval;
-
-    UINT8 pubkey[64] = {0,};
-    UINTN pubkeyl = 0;
-    UINT8 *loadbuf;
-    UINT32 ldlen = BASE_ANS_BLK_LEN;
-    UINTN baseansr_lba = 0;
-    SBC_AESGcmCtx  decctx;
-    SBC_AESContext  aesctx;
-
-    UINT8 secret_key[SBC_AT_HASH_LEN] = {0, };
-
-    UINTN offset = 0;
-    UINTN calen = 0;
-
-    UINT8 decbuf[2048] = {0,};
-
-    ret = SBC_HashCompute(NULL, deckey, SBC_AT_HASH_LEN, secret_key);
-    SBC_RET_VALIDATE_ERRCODEMSG((ret == SBCOK),SBCINVPARAM, "Secret Key creatation fail");
-
-
-    // Generate the Public Key
-    ret = SBC_DICESeedKeyPair(devid, &key_pair);
-    SBC_RET_VALIDATE_ERRCODEMSG((ret == SBCOK), SBCINVPARAM, "Device ID Key-pair gen fail");
-
-
-    // Device ID certificate Load 
-    baseansr_lba = (SYS_CONF_START_OFS >> SBC_RAWPRT_DFLT_SHIFT);
-    ldlen = ALIGN_VALUE(SYS_SETTING_STORAGE_LEN, ((EFI_BLOCK_IO_PROTOCOL *)blkio)->Media->BlockSize);
-    loadbuf = AllocateZeroPool(ldlen);
-    SBC_RET_VALIDATE_ERRCODEMSG((loadbuf != NULL), SBCNULLP, "Buffer invalid object");
-
-    ret = SBC_RawPrtReadBlock(blkio, 
-                              (VOID *)loadbuf, 
-                              &ldlen, 
-                              baseansr_lba);
-    if (ret != SBCOK) {
-        Print(L"SBC_RawPrtReadBlock fail (%p)\n", blkio);
-        goto errdone;
-    }
-
-    offset = SYS_CONF_DEVID_CRT_OFS;
-
-    CopyMem((void *)&calen, (void *)&loadbuf[0], 4);
-    offset += 4;
-    // Decrypt 
-
-    decctx.msg.value = &loadbuf[offset];
-    decctx.msg.length = calen;
-
-    offset += calen;
-    decctx.iv.value = &loadbuf[offset];
-    decctx.iv.length = BASE_ANS_IV_KEY_STR; 
-    
-    offset += BASE_ANS_IV_KEY_STR;
-    decctx.tag.value = &loadbuf[offset];
-    decctx.tag.length = BASE_ANS_TAG_LEN;
-
-    decctx.key.value = secret_key;
-    decctx.key.length = BASE_ANS_KEY_STR;
-
-    decctx.aad.value = NULL;
-    decctx.aad.length = 0;
-
-    decctx.out.value = decbuf;
-    decctx.out.length = calen;
-
-    aesctx.gcm = &decctx;
-    aesctx.algoid = SBC_CIPHER_AES_GCM;
-
-    if (SBC_AESGcmDecrypt(&aesctx) != SBCOK) {
-        eprint("DeviceID CA decrypt fail");
-        ret = SBCDECFAIL;
-        goto errdone;
-    }
-
-
-    // Get Public Key
-    ret = SBC_EcGetPublicKeyFromPem((CONST UINT8 *)decbuf, calen, &ctx);
-    SBC_RET_VALIDATE_ERRCODEMSG((ret == SBCOK), SBCINVPARAM, "Public key extract fail");
-
-    retval = EcGetPubKey(ctx, pubkey, &pubkeyl);
-    if(retval != TRUE) {
-        ret = SBCFAIL;
-        eprint("EcGetPubKey fail %r", retval);
-        goto errdone;
-    }
-
-    SBC_external_mem_print_bin("Device ID Pubkey", key_pair.q.value, key_pair.ql);
-    SBC_external_mem_print_bin("Certificate Pubkey", pubkey, pubkeyl);
-    if(CompareMem(key_pair.q.value,  pubkey, pubkeyl) != 0) {
-        eprint("CA public key verify fail");
-        ret = SBCINVPARAM;
-        goto errdone;
-    }
-
-    sbc_err_sysprn(SBC_LOG_CMN_PRIO_ERR, 2, 
-           L"SBC", 
-           L"FSBL", 
-           L"Weapon System", 
-           1, 
-           L"EVT", 
-           L"Device ID Verify Done");    
-    
-
-errdone:
-    if (ret != SBCOK) {
-      sbc_err_sysprn(SBC_LOG_CMN_PRIO_ERR, 2, 
-             L"SBC", 
-             L"FSBL", 
-             L"Weapon System", 
-             1, 
-             L"EVT", 
-             L"Device ID Verify Fail");
-    }
-    return ret;
-
-}
-
 
 SBCStatus  SBC_DeviceIdKyeVerify(VOID *blkio, UINT8 *devid, UINT8 *deckey)
 {
@@ -1250,7 +834,8 @@ SBCStatus  SBC_DeviceIdKyeVerify(VOID *blkio, UINT8 *devid, UINT8 *deckey)
         goto errdone;
     }
 
-    CopyMem((void *)&calen, (void *)&loadbuf[0], 4);
+    offset = SYS_CONF_DEVID_CRT_OFS;
+    CopyMem((void *)&calen, (void *)&loadbuf[offset], 4);
     offset += 4;
     // Decrypt 
 
@@ -1297,30 +882,32 @@ SBCStatus  SBC_DeviceIdKyeVerify(VOID *blkio, UINT8 *devid, UINT8 *deckey)
 
     SBC_external_mem_print_bin("Device ID Pubkey", key_pair.q.value, key_pair.ql);
     SBC_external_mem_print_bin("Certificate Pubkey", pubkey, pubkeyl);
+
+
     if(CompareMem(key_pair.q.value,  pubkey, pubkeyl) != 0) {
         eprint("CA public key verify fail");
         ret = SBCINVPARAM;
         goto errdone;
     }
 
-    sbc_err_sysprn(SBC_LOG_CMN_PRIO_ERR, 2, 
-           L"SBC", 
-           L"FSBL", 
-           L"Weapon System", 
-           1, 
-           L"EVT", 
-           L"Device ID Verify Done");    
+//  sbc_err_sysprn(SBC_LOG_CMN_PRIO_ERR, 2,
+//         L"SBC",
+//         L"FSBL",
+//         L"Weapon System",
+//         1,
+//         L"EVT",
+//         L"Device ID Verify Done");
     
 
 errdone:
     if (ret != SBCOK) {
-      sbc_err_sysprn(SBC_LOG_CMN_PRIO_ERR, 2, 
-             L"SBC", 
-             L"FSBL", 
-             L"Weapon System", 
-             1, 
-             L"EVT", 
-             L"Device ID Verify Fail");
+//    sbc_err_sysprn(SBC_LOG_CMN_PRIO_ERR, 2,
+//           L"SBC",
+//           L"FSBL",
+//           L"Weapon System",
+//           1,
+//           L"EVT",
+//           L"Device ID Verify Fail");
     }
     return ret;
 
@@ -1364,13 +951,13 @@ SBCStatus SBC_BaseAnswerEncryptStore(VOID *blkhnd, UINT8* msg, UINT32 msgl, UINT
 
     ret = SBC_AESEncrypt(&aesctx);
     if (ret != SBCOK) {
-            sbc_err_sysprn(SBC_LOG_CMN_PRIO_ERR, 2, 
-                     L"SBC", 
-                     L"FSBL", 
-                     L"Weapon System", 
-                     4, 
-                     L"EVT", 
-                     L"Base Answer Encrypt error");
+//          sbc_err_sysprn(SBC_LOG_CMN_PRIO_ERR, 2,
+//                   L"SBC",
+//                   L"FSBL",
+//                   L"Weapon System",
+//                   4,
+//                   L"EVT",
+//                   L"Base Answer Encrypt error");
       goto errdone;
     }
 
@@ -1386,13 +973,13 @@ SBCStatus SBC_BaseAnswerEncryptStore(VOID *blkhnd, UINT8* msg, UINT32 msgl, UINT
 
     ret = _baseanswer_store(blkhnd, (VOID *)&ansid);
     if (ret != SBCOK) {
-      sbc_err_sysprn(SBC_LOG_CMN_PRIO_ERR, 2, 
-                     L"SBC", 
-                     L"FSBL", 
-                     L"Weapon System", 
-                     4, 
-                     L"EVT", 
-                     L"Base Answer Storing error");
+//    sbc_err_sysprn(SBC_LOG_CMN_PRIO_ERR, 2,
+//                   L"SBC",
+//                   L"FSBL",
+//                   L"Weapon System",
+//                   4,
+//                   L"EVT",
+//                   L"Base Answer Storing error");
       goto errdone;
     }
 
@@ -1464,32 +1051,208 @@ SBCStatus  SBC_BaseAnswerValidate(VOID *blkhnd, UINT8 *answer, UINTN answerl, UI
       goto errdone;
     }
 
-//  SBC_mem_print_bin("plain msg", answer, answerl);
-//    SBC_mem_print_bin("decrypt msg", decbuf, ctx.out.length);
+//  SBC_external_mem_print_bin("plain msg", answer, answerl);
+//  SBC_external_mem_print_bin("decrypt msg", decbuf, ctx.out.length);
 
     if (CompareMem((const void *)decbuf, (const void *)answer, answerl) != 0) {
-      Print(L"Base Answer validate Fail \n");
-      ret = SBCFAIL;
-      goto errdone;
+      //Print(L"Base Answer validate Fail \n");
+
+
+        ZeroMem(mrgmsg, sizeof mrgmsg);
+        UnicodeSPrint(mrgmsg, sizeof mrgmsg, L"Base Answer validate fail(%s:%s) \n",answer,decbuf);
+        sbc_err_sysprn(SBC_LOG_CMN_PRIO_ERR, 2,
+             L"SBC",
+             L"FSBL",
+             L"Weapon System",
+             8,
+             L"Determine Firmare Tampering ",
+             mrgmsg);
+          ret = SBCFAIL;
+          goto errdone;
     }
 
-    Print(L"Base Answer validate Success \n");
-
-
+    ZeroMem(mrgmsg, sizeof mrgmsg);
+    UnicodeSPrint(mrgmsg, sizeof mrgmsg, L"Base Answer validate Success (%s:%s) \n",answer,decbuf);
+    sbc_err_sysprn(SBC_LOG_CMN_PRIO_ERR, 2,
+         L"SBC",
+         L"FSBL",
+         L"Weapon System",
+         8,
+         L"Determine Firmare Tampering ",
+         mrgmsg);
 
 errdone:
     return ret;
 
 }
 
+SBCStatus  SBC_SSBL_Verify(VOID *blkhnd, VOID *ansr,  UINTN nrombank)
+{
+    SBCStatus       ret = SBCOK;
+
+    UINTN           startlba = 0;
+  
+
+    UINT32          imglen = SBC_RAWPRT_DFLT_BLK_SZ;
+    UINT8           imghdr[SBC_RAWPRT_DFLT_BLK_SZ] = {0, };
+    UINT8           *loadimg = NULL;
+    [[gnu::unused]]UINT8           *temp = NULL;
+    UINTN           bsofs = 0; // Boot Sector Offset
+    UINT32          last_of_fsbl = 0;
+    UINT8           *infostart = NULL;
+    UINT32          bsinfolen = 0;
+    fsbl_bsinfo_t   bsinfo;
+
+    [[maybe_unused]]UINT32          bsptrcnt = 0;
+    [[maybe_unused]]UINT8           HashValue[256];
+    [[maybe_unused]]UINT32          HashSize =0;
+    [[maybe_unused]]UINT32          fsbl_len =0;
+    [[maybe_unused]]VOID            *EcPubKey = NULL;
+    [[maybe_unused]]UINTN           HandleCount;
+    [[maybe_unused]]fsbl_bsinfo_ptr_t info = {NULL, NULL, NULL, NULL};
+    [[maybe_unused]]BOOLEAN         retbool = TRUE;
 
 
-SBCStatus  SBC_FSBL_Verify(VOID *blkhnd, VOID *ansr)
+    LV_t            rdlv = {
+            .length = 0,
+            .value = NULL
+    };
+    bsofs = (BOOT_SECTOR1_OFS | ((nrombank - 1) << 20));
+    startlba = ((bsofs | BOOT_SSBL_OFS) >> SBC_RAWPRT_DFLT_SHIFT);
+
+    ret = SBC_RawPrtReadBlock(blkhnd, (void *)imghdr, &imglen, startlba);
+    if (ret != SBCOK) {
+        eprint("SSBL Factory Block Read Fail \n");
+        goto errdone;
+    }
+
+    CopyMem((void *)&imglen, &imghdr[0], sizeof imglen);
+    imglen = ALIGN_VALUE(imglen, SBC_RAWPRT_DFLT_BLK_SZ);
+
+    loadimg = AllocateReservedZeroPool(imglen);
+    SBC_RET_VALIDATE_ERRCODEMSG((loadimg != NULL), SBCNULLP, "Allocate Memory Fail");
+
+    ret = SBC_RawPrtReadBlock(blkhnd, (void *)loadimg, &imglen, startlba);
+    SBC_RET_VALIDATE_ERRCODEMSG((ret == SBCOK), ret, "SSBL Factory Block Read Fail ");
+
+    rdlv.value = (UINT8 *)&loadimg[4];
+    rdlv.length = imglen;
+    last_of_fsbl =  rdlv.length - FSBL_BNIFO_SIZE;
+    infostart = &((UINT8 *)rdlv.value)[last_of_fsbl];
+
+    ZeroMem((void *)&bsinfo, sizeof bsinfo);
+    CopyMem((void *)&bsinfo, (void *)infostart, sizeof bsinfo);
+
+    dprint("----------- SSBL Boot Service Informmtion ------------");
+    dprint("Signature Len     : %d", bsinfo.m.siglen );
+    dprint("Firmware Info Len : %d", bsinfo.m.fwinfolen );
+    dprint("Certificate Len   : %d", bsinfo.m.certlen );
+    dprint("BaseAnswer Len    : %d", bsinfo.m.banswlen );
+    dprint("BSinfo verdion    : %d", bsinfo.m.bsinfv );
+    dprint("Spec.1 Value      : %d", bsinfo.m.reserv1 );
+    dprint("Spec.2 Value      : %d", bsinfo.m.reserv2 );
+
+    bsinfolen = bsinfo.m.siglen + bsinfo.m.fwinfolen + bsinfo.m.certlen  + bsinfo.m.banswlen;
+
+    fsbl_len = last_of_fsbl = rdlv.length - FSBL_BNIFO_SIZE - bsinfolen;
+    infostart = &((UINT8 *)rdlv.value)[last_of_fsbl];
+
+    info.baseansw = (VOID *)&infostart[bsptrcnt];
+    bsptrcnt += bsinfo.m.banswlen;
+
+    //SBC_external_mem_print_bin("Base Answer", (UINT8 *)info.baseansw,  bsinfo.m.banswlen );
+
+    info.fwinfo = (VOID *)&infostart[bsptrcnt];
+    bsptrcnt += bsinfo.m.fwinfolen;
+
+    //SBC_external_mem_print_bin("FW Info", (UINT8 *)info.fwinfo,  bsinfo.m.fwinfolen );
+
+    info.certi = (VOID *)&infostart[bsptrcnt];
+    bsptrcnt += bsinfo.m.certlen;
+
+    //SBC_external_mem_print_bin("Certificate", (UINT8 *)info.certi,  bsinfo.m.certlen );
+
+    info.signature = (VOID *)&infostart[bsptrcnt];
+    bsptrcnt += bsinfo.m.siglen;    
+    
+//  retbool = EcGetPublicKeyFromX509((CONST UINT8  *)info.certi, (UINTN)bsinfo.m.certlen,  &EcPubKey);
+//  if (retbool != TRUE) {
+//      eprint("EcGetPublicKeyFromX509 fail");
+//      ret = SBCFAIL;
+//      goto errdone;
+//  }
+
+//  dprint("SSBL image len : %d", fsbl_len);
+//
+//  ret = SBC_HashCompute(
+//                   NULL, /* Not yet used */
+//                   rdlv.value,
+//                   fsbl_len,
+//                   HashValue
+//                ) ;
+//
+//
+//  HashSize = 32;
+//
+//  retbool = EcDsaVerify(
+//      EcPubKey,
+//      CRYPTO_NID_SHA256,
+//      HashValue,
+//      HashSize,
+//      info.signature,
+//      bsinfo.m.siglen
+//      );
+//
+//  if (retbool != TRUE) {
+//      eprint("FSBL Verify fail");
+//      ret = SBCFAIL;
+//      goto errdone;
+//  }
+//
+//  if (ansr == NULL) {
+//    goto errdone;
+//  }
+//
+//  //sbc_err_sysprn(SBC_LOG_CMN_PRIO_INFO, 2, L"SBC", L"FSBL", L"CSC-01", 23, L"VERIFY", L"SSBL Integrate check is Done\n");
+//  Print(L"SSBL Verify Success !!!\n");
+//
+//  ((LV_t *)ansr)->value = AllocateZeroPool(bsinfo.m.banswlen);
+//  if (((LV_t *)ansr)->value == NULL) {
+//      //sbc_err_sysprn(SBC_LOG_CMN_PRIO_INFO, 2, L"SBC", L"FSBL", L"CSC-01", 23, L"VERIFY", L"FSBL Integrate check is Done\n");
+//      eprint("Base Answer buffer allocate fail");
+//      ret = SBCNULLP;
+//      goto errdone;
+//  }
+//
+//  ((LV_t *)ansr)->length = bsinfo.m.banswlen;
+//  CopyMem(((LV_t *)ansr)->value, info.baseansw, bsinfo.m.banswlen);
+
+
+errdone:
+
+//  if (EcPubKey != NULL) {
+//    EcFree(EcPubKey);
+//  }
+//  if (rdlv.value != NULL) {
+//    FreePool(rdlv.value);
+//    rdlv.value = NULL;
+//  }
+
+//  if (ret != SBCOK) {
+//      sbc_err_sysprn(SBC_LOG_CMN_PRIO_INFO, 2, L"SBC", L"FSBL", L"CSC-01", 23, L"VERIFY", L"SSBL Integrate check is Fail\n");
+//  }
+
+    return ret;
+
+}
+
+SBCStatus  SBC_FSBL_Verify(VOID *blkhnd, VOID *ansr, UINTN normbank, UINTN bm)
 {
     SBCStatus       ret = SBCOK;
     EFI_STATUS      retval = EFI_SUCCESS;
     EFI_HANDLE      *hndl = NULL;
     UINT16          *fblpath = L"\\EFI\\rocky\\FSBL.efi";
+    //UINT16          *fblpath = L"\\boot\\vmlinuz-5.14.0-284.11.1.el9_2.x86_64" ;
     UINT8           *infostart = NULL;
     UINT32          last_of_fsbl = 0;
     UINT32          bsinfolen = 0;
@@ -1520,7 +1283,10 @@ SBCStatus  SBC_FSBL_Verify(VOID *blkhnd, VOID *ansr)
       goto errdone;
     }
 
-    retval = SBC_ReadFile(hndl[HandleCount - 1], fblpath, &rdlv);
+    ret = SBC_FindFileBufHndl(fblpath, &HandleCount, hndl);
+    SBC_RET_VALIDATE_ERRCODEMSG((ret == SBCOK), ret, "File not found");
+
+    retval = SBC_ReadFile(hndl[HandleCount], fblpath, &rdlv);
     if (EFI_ERROR(retval)) {
       eprint("%s filr read fail : %r", fblpath, retval);
       ret = SBCIO;
@@ -1536,7 +1302,7 @@ SBCStatus  SBC_FSBL_Verify(VOID *blkhnd, VOID *ansr)
 
     ////SBC_external_mem_print_bin("BSINFO", (UINT8 *)&bsinfo, sizeof bsinfo);
 
-
+    dprint("----------- FSBL Boot Service Informmtion ------------");
     dprint("Signature Len     : %d", bsinfo.m.siglen );
     dprint("Firmware Info Len : %d", bsinfo.m.fwinfolen );
     dprint("Certificate Len   : %d", bsinfo.m.certlen );
@@ -1576,6 +1342,12 @@ SBCStatus  SBC_FSBL_Verify(VOID *blkhnd, VOID *ansr)
 
     //SBC_external_mem_print_bin("Signature", (UINT8 *)info.signature,  bsinfo.m.siglen );
 
+    // Verify the FSBL certificate using RootCA certificate
+    // Later not comment 
+//  ret = SBC_FSBLIntgCheck(NULL , blkhnd, info.certi, bsinfo.m.certlen, normbank, bm);
+//  SBC_RET_VALIDATE_ERRCODEMSG((ret == SBCOK), ret, "FSBL certificate validation fail");
+
+
     BOOLEAN retbool = TRUE;
     retbool = EcGetPublicKeyFromX509((CONST UINT8  *)info.certi, (UINTN)bsinfo.m.certlen,  &EcPubKey);
     if (retbool != TRUE) {
@@ -1610,7 +1382,7 @@ SBCStatus  SBC_FSBL_Verify(VOID *blkhnd, VOID *ansr)
       goto errdone;
     }
 
-    sbc_err_sysprn(SBC_LOG_CMN_PRIO_INFO, 2, L"SBC", L"FSBL", L"CSC-01", 23, L"VERIFY", L"FSBL Integrate check is Done\n");
+    //sbc_err_sysprn(SBC_LOG_CMN_PRIO_INFO, 2, L"SBC", L"FSBL", L"CSC-01", 23, L"VERIFY", L"FSBL Integrate check is Done\n");
     Print(L"FSBL Verify Success !!!\n");
 
     ((LV_t *)ansr)->value = AllocateZeroPool(bsinfo.m.banswlen);
@@ -1658,6 +1430,18 @@ SBCStatus  SBC_FSBL_Verify(VOID *blkhnd, VOID *ansr)
     //ret = SBCOK;
 
 errdone:
+
+    if (ret != SBCOK) {
+      ZeroMem(mrgmsg, sizeof mrgmsg);
+      UnicodeSPrint(mrgmsg, sizeof mrgmsg, L"FSBL Verify Fail \n");
+      sbc_err_sysprn(SBC_LOG_CMN_PRIO_ERR, 2,
+             L"SBC",
+             L"FSBL",
+             L"Weapon System",
+             8,
+             L"Determine Firmare Tampering ",
+             mrgmsg);
+    }
 
     if (EcPubKey != NULL) {
       EcFree(EcPubKey);
@@ -1667,193 +1451,13 @@ errdone:
       rdlv.value = NULL;
 
     }
+
+//  if (ret != SBCOK) {
+//      sbc_err_sysprn(SBC_LOG_CMN_PRIO_INFO, 2, L"SBC", L"FSBL", L"CSC-01", 23, L"VERIFY", L"SSBL Integrate check is Fail\n");
+//  }
     return ret;
 
 }
-
-
-SBCStatus  SBC_SSBL_Verify(VOID *blkhnd, VOID *ansr, UINTN bank_id)
-{
-    SBCStatus       ret = SBCOK;
-    //EFI_STATUS      retval = EFI_SUCCESS;
-    //EFI_HANDLE      *hndl = NULL;
-    //UINT16          *fblpath = L"\\EFI\\rocky\\SSBL.efi";
-    UINT8           *infostart = NULL;
-    UINT32          last_of_fsbl = 0;
-    UINT32          bsinfolen = 0;
-    fsbl_bsinfo_t   bsinfo; 
-    UINT32          bsptrcnt = 0;
-    [[gnu::unused]] UINT8           HashValue[256];
-    [[gnu::unused]] UINT32          HashSize =0;
-    [[gnu::unused]] UINT32          fsbl_len =0;
-    [[maybe_unused]] VOID            *EcPubKey = NULL;
-    //UINTN           HandleCount;
-
-    UINT32  imglen = SBC_RAWPRT_DFLT_BLK_SZ;
-    UINT8   imghdr[SBC_RAWPRT_DFLT_BLK_SZ] = { 0, };
-    UINTN   bsofs = 0; // Boot Sector Offset
-    UINTN startlba = 0;
-
-    LV_t            blob; // =  (LV_t *)ansr;
-    // SSBL Image read from Raw Partition 
-    bsofs = (BOOT_SECTOR1_OFS | ((bank_id - 1) << 20));
-    startlba = ((bsofs | BOOT_SSBL_OFS) >> SBC_RAWPRT_DFLT_SHIFT);
-    ret = SBC_RawPrtReadBlock(blkhnd, (void *)imghdr, &imglen, startlba);
-    SBC_RET_VALIDATE_ERRCODEMSG((ret == SBCOK), ret, "SSBL header load fail");
-
-    ZeroMem((void *)&blob, sizeof blob);
-    CopyMem(&imglen, imghdr, 4);
-
-    blob.length = ALIGN_VALUE(imglen,((EFI_BLOCK_IO_PROTOCOL *)blkhnd)->Media->BlockSize);
-    blob.value = AllocateZeroPool(blob.length);
-    SBC_RET_VALIDATE_ERRCODEMSG((blob.value != NULL), SBCNULLP, "Buffer allocate fail");
-
-    ret = SBC_RawPrtReadBlock(blkhnd, (void *)blob.value , &blob.length, startlba);
-    SBC_RET_VALIDATE_ERRCODEMSG((ret == SBCOK), ret, "SSBL header load fail");
-
-    last_of_fsbl = blob.length - FSBL_BNIFO_SIZE;
-    infostart = &((UINT8 *)blob.value)[last_of_fsbl];
-    ZeroMem((void *)&bsinfo, sizeof bsinfo);
-    CopyMem((void *)&bsinfo, (void *)infostart, sizeof bsinfo);
-
-    ////SBC_external_mem_print_bin("BSINFO", (UINT8 *)&bsinfo, sizeof bsinfo);
-
-
-    dprint("Signature Len     : %d", bsinfo.m.siglen );
-    dprint("Firmware Info Len : %d", bsinfo.m.fwinfolen );
-    dprint("Certificate Len   : %d", bsinfo.m.certlen );
-    dprint("BaseAnswer Len    : %d", bsinfo.m.banswlen );
-    dprint("BSinfo verdion    : %d", bsinfo.m.bsinfv );
-    dprint("Spec.1 Value      : %d", bsinfo.m.reserv1 );
-    dprint("Spec.2 Value      : %d", bsinfo.m.reserv2 );
-
-    bsinfolen = bsinfo.m.siglen + bsinfo.m.fwinfolen + bsinfo.m.certlen  + bsinfo.m.banswlen;
-
-      
-    fsbl_len = last_of_fsbl = blob.length - FSBL_BNIFO_SIZE - bsinfolen;
-    infostart = &((UINT8 *)blob.value)[last_of_fsbl];
-
-    //dprint("FSBL Last : %d", last_of_fsbl);
-    ////SBC_external_mem_print_bin("Addtional Information", infostart,bsinfolen  );
-
-    fsbl_bsinfo_ptr_t info = {NULL, NULL, NULL, NULL};
-
-    info.baseansw = (VOID *)&infostart[bsptrcnt];
-    bsptrcnt += bsinfo.m.banswlen;
-
-    //SBC_external_mem_print_bin("Base Answer", (UINT8 *)info.baseansw,  bsinfo.m.banswlen );
-
-    info.fwinfo = (VOID *)&infostart[bsptrcnt];
-    bsptrcnt += bsinfo.m.fwinfolen;
-
-    //SBC_external_mem_print_bin("FW Info", (UINT8 *)info.fwinfo,  bsinfo.m.fwinfolen );
-
-    info.certi = (VOID *)&infostart[bsptrcnt];
-    bsptrcnt += bsinfo.m.certlen;
-
-    //SBC_external_mem_print_bin("Certificate", (UINT8 *)info.certi,  bsinfo.m.certlen );
-
-    info.signature = (VOID *)&infostart[bsptrcnt];
-    bsptrcnt += bsinfo.m.siglen;
-
-    //SBC_external_mem_print_bin("Signature", (UINT8 *)info.signature,  bsinfo.m.siglen );
-#if 0
-    BOOLEAN retbool = TRUE;
-    retbool = EcGetPublicKeyFromX509((CONST UINT8  *)info.certi, (UINTN)bsinfo.m.certlen,  &EcPubKey);
-    if (retbool != TRUE) {
-      eprint("EcGetPublicKeyFromX509 fail");
-      ret = SBCFAIL;
-      goto errdone;
-    }
-
-    dprint("FSBL image len : %d", fsbl_len);
-    ret = SBC_HashCompute(
-                         NULL, /* Not yet used */
-                         rdlv.value,
-                         fsbl_len,
-                         HashValue
-                      ) ; 
-
-
-    HashSize = 32;
-
-    retbool = EcDsaVerify(
-        EcPubKey,
-        CRYPTO_NID_SHA256,
-        HashValue,
-        HashSize,
-        info.signature,
-        bsinfo.m.siglen
-        );
-
-    if (retbool != TRUE) {
-      eprint("FSBL Verify fail");
-      ret = SBCFAIL;
-      goto errdone;
-    }
-
-    sbc_err_sysprn(SBC_LOG_CMN_PRIO_INFO, 2, L"SBC", L"FSBL", L"CSC-01", 23, L"VERIFY", L"FSBL Integrate check is Done\n");
-    Print(L"FSBL Verify Success !!!\n");
-#endif
-    ((LV_t *)ansr)->value = AllocateZeroPool(bsinfo.m.banswlen);
-    if (((LV_t *)ansr)->value == NULL) {
-      //sbc_err_sysprn(SBC_LOG_CMN_PRIO_INFO, 2, L"SBC", L"FSBL", L"CSC-01", 23, L"VERIFY", L"FSBL Integrate check is Done\n");
-      eprint("Base Answer buffer allocate fail");
-      ret = SBCNULLP;
-      goto errdone;
-    }
-
-    ((LV_t *)ansr)->length = bsinfo.m.banswlen;
-    CopyMem(((LV_t *)ansr)->value, info.baseansw, bsinfo.m.banswlen);
-
-//    switch (bootmode) {
-//    case BOOT_MODE_FACTORY:
-//      break;
-//    default:
-//      // Base Answer Validate
-//      ret = SBC_BaseAnswerValidate(blkhnd, (UINT8 *)info.baseansw, bsinfo.m.banswlen );
-////    switch (ret) {
-////    case SBCBSANSWNOTFND:
-////      ((LV_t *)ansr)->value = AllocateZeroPool(bsinfo.m.banswlen);
-////      if (((LV_t *)ansr)->value == NULL) {
-////        ret = SBCNULLP;
-////        Print(L"Base Answer object create fail \n");
-////        goto errdone;
-////      }
-////      CopyMem(((LV_t *)ansr)->value, info.baseansw, bsinfo.m.banswlen);
-////      //goto errdone;
-////      break;
-////    case SBCOK:
-////      break;
-////    default:
-////      goto errdone;
-////      break;
-////    }
-//      break;
-//    }
-
-
-
-
-
-
-    //ret = SBCOK;
-
-errdone:
-#if 0
-    if (EcPubKey != NULL) {
-      EcFree(EcPubKey);
-    }
-#endif
-    if (blob.value != NULL) {
-      FreePool(blob.value);
-      blob.value = NULL;
-
-    }
-    return ret;
-
-}
-
 
 SBCStatus SBC_GenDeviceID(UINT8 *devid)
 {
@@ -1958,8 +1562,10 @@ errdone:
 
 }
 
-SBCStatus SBC_GenFWID(EFI_HANDLE *h_image, UINT8 *devid, UINT8 *fwid)
+extern VOID *h_blkio;
+SBCStatus SBC_GenFWID(EFI_HANDLE *h_image, UINT8 *devid, UINT8 *fwid, UINTN normbank, UINTN bm)
 {
+
   SBCStatus ret       = SBCOK;
   UINT8 *temp = NULL;
   //UINT8 *rdbuf = NULL;
@@ -1970,9 +1576,12 @@ SBCStatus SBC_GenFWID(EFI_HANDLE *h_image, UINT8 *devid, UINT8 *fwid)
   lv.value = NULL;
   lv.length = 0;
 
-  ret = _ssbl_image_load(h_image, &lv);
+  ret = _ssbl_image_load(h_blkio, &lv, normbank, bm);
   SBC_RET_VALIDATE_ERRCODEMSG((ret == SBCOK), ret, "SSB Image load fail");
   SBC_RET_VALIDATE_ERRCODEMSG((lv.length > 0), SBCZEROL, "SSB Image length 0");
+
+  lv.value = hash_ssbl;
+  lv.length = SBC_AT_HASH_LEN;
 
   // Added the Hash for SSBL
   ret = SBC_HashCompute( NULL, 
@@ -1997,13 +1606,17 @@ SBCStatus SBC_GenFWID(EFI_HANDLE *h_image, UINT8 *devid, UINT8 *fwid)
   SBC_mem_print_bin("FW ID", fwid, 32);
 errdone:
 
+  dprint();
   if (temp != NULL) {
+    dprint();
     FreePool(temp);
   }
 
   if (lv.value != NULL) {
-    FreePool(lv.value);
+    dprint();
+    //FreePool(lv.value);
   }
+  dprint();
   return ret;
 
 
@@ -2029,6 +1642,7 @@ SBCStatus SBC_GenOSID(EFI_HANDLE *h_image, UINT8 *fwid, UINT8 *osid)
     Print(L"Kernel Image load fail \n");
     goto errdone;
   }
+
 
     // Added the Hash for SSBL
   ret = SBC_HashCompute( NULL, 
@@ -2195,54 +1809,57 @@ errdone:
 }
 
 // FSBL Integrity check 
-SBCStatus  SBC_FSBLIntgCheck(EFI_HANDLE *h_image , VOID *blkio)
+SBCStatus  SBC_FSBLIntgCheck([[gnu::unused]]EFI_HANDLE *h_image , VOID *blkio, VOID *cert, UINTN certle, UINTN nrombank, UINTN mode)
 {
     SBCStatus ret = SBCOK;
 
-    UINT8 rdbuf[SBC_BLKDEV_BLKSZ << 2] = {0,};
-    UINT32 rdlen = 532 + 529;
+    UINTN   startlba = 0;
+    UINT32  imglen = SBC_RAWPRT_DFLT_BLK_SZ;
+    [[maybe_unused]] UINT8   imghdr[SBC_RAWPRT_DFLT_BLK_SZ] = { 0, };
+    UINT8 *imgbuf = NULL;
 //  VOID *blkio;
+    UINT8 *cabuf =  NULL;
     UINTN calen = 0;
     UINTN certlen = 0;
 
-//  ret = SBC_FindBlkIoHandle(&blkio);
-//  if (ret != SBCOK) {
-//    Print(L"Find Block I/O handle fail \n");
-//    goto errdone;
-//  }
-
-
-    rdlen = SBC_BLKDEV_BLKSZ;
-    ret = SBC_RawPrtReadBlock(blkio, rdbuf, &rdlen, SBC_INTG_BLOCK_LAB);
-    if (ret != SBCOK) {
-      Print(L"Raw Partition Read behavior fail \n");
+    switch (mode) {
+    case BOOT_MODE_NORMAL:
+    case BOOT_MODE_UPDATE:
+      startlba = (SYS_CONF_START_OFS >> SBC_RAWPRT_DFLT_SHIFT);
+      imglen = ALIGN_VALUE(SYS_SETTING_STORAGE_LEN, ((EFI_BLOCK_IO_PROTOCOL *)blkio)->Media->BlockSize);
+      break;
+    case BOOT_MODE_FACTORY:
+      startlba = (SYS_CONF_START_OFS >> SBC_RAWPRT_DFLT_SHIFT);
+      imglen = ALIGN_VALUE(SYS_SETTING_STORAGE_LEN, ((EFI_BLOCK_IO_PROTOCOL *)blkio)->Media->BlockSize);
+      break;
+    default:
+      eprint("Invalid argument ");
+      ret = SBCINVPARAM;
       goto errdone;
+      break;
     }
 
-    rdlen = SBC_BLKDEV_BLKSZ;
-    ret = SBC_RawPrtReadBlock(blkio, &rdbuf[rdlen], &rdlen, SBC_INTG_BLOCK_LAB + 1);
-    if (ret != SBCOK) {
-      Print(L"Raw Partition Read behavior fail \n");
-      goto errdone;
-    }
+    imgbuf = AllocateZeroPool(imglen);
+    SBC_RET_VALIDATE_ERRCODEMSG((imgbuf != NULL), SBCNULLP, "RooTCA load buf allocate fail");
 
-    rdlen = SBC_BLKDEV_BLKSZ;
-    ret = SBC_RawPrtReadBlock(blkio, &rdbuf[rdlen*2], &rdlen, SBC_INTG_BLOCK_LAB + 2);
-    if (ret != SBCOK) {
-      Print(L"Raw Partition Read behavior fail \n");
-      goto errdone;
-    }
-    // TO DO : certificatoin lengt read, and than, SHOULD be check  whether read more the data from device 
-    // At the June 10,  fixed it ( as follows : ROOT CA -c> 532 , Intermidnate CA -> 529 
 
-    //SBC_mem_print_bin("cRT", &rdbuf[SBC_INTG_CRET_SKIP], 532 + 529);
-    certlen = calen = 532;
+    ret = SBC_RawPrtReadBlock(blkio, 
+                              (void *)imgbuf, 
+                              &imglen, 
+                              startlba);
+    SBC_RET_VALIDATE_ERRCODEMSG((ret == SBCOK), ret, "RooTCA load fail");
+
+    // Pointing the RooTCA Address
+    CopyMem((void *)&calen, (void *)&imgbuf[SYS_CONF_ROOT_CA_OFS], LEN_DFLT_OFS);
+    cabuf = &imgbuf[SYS_CONF_ROOT_CA_OFS + LEN_DFLT_OFS];
+    
+
+
     ret = SBC_X509VerifyCert(
-                      (CONST UINT8 *)&rdbuf[SBC_INTG_CRET_SKIP],  // CA Cert
-                      calen,
-                      (CONST UINT8 *)&rdbuf[SBC_INTG_CRET_SKIP], // Signed Cert
-                      certlen
-
+                      (CONST UINT8 *)cert,  //  Cert
+                      certlen,
+                      cabuf, // CA
+                      calen
         );
 
     if (ret != SBCOK) {
@@ -2251,74 +1868,13 @@ SBCStatus  SBC_FSBLIntgCheck(EFI_HANDLE *h_image , VOID *blkio)
     }
 
 
-    intgreen_dprint("!!! FSBL Integrity Check Success !!!");
-
-    calen = 532;
-    certlen =  529;
-
-   
-   // SBC_mem_print_bin("Int cRT", &rdbuf[SBC_INTG_CRET_SKIP + calen], 529);
-    ret = SBC_X509VerifyCert(
-                      (CONST UINT8 *)&rdbuf[SBC_INTG_CRET_SKIP + calen],
-                      certlen,
-                      (CONST UINT8 *)&rdbuf[SBC_INTG_CRET_SKIP],
-                      calen
-
-        );
-
     
-    if (ret != SBCOK) {
-      int_eprint("SSBL Verify fail ^^ \n");
-      goto errdone;
+
+errdone:
+    if (imgbuf != NULL) {
+        FreePool(imgbuf);
+        imgbuf=  NULL;
     }
-
-    intgreen_dprint("SSBL Integrity Check Success !!!");
-
-    ret = SBCOK;
-
-    
-
-errdone:
-    return ret;
-
-}
-
-SBCStatus  SBC_ProtSWDec(VOID *blkio, VOID *priv)
-{
-    SBCStatus ret = SBCOK;
-
-    sw_info_t *p = (sw_info_t *)priv;
-    UINT8 nodechk[SBC_BLKDEV_BLKSZ] = {0, };
-    UINT32 cpycnt =  0;;
-
-    SBC_RET_VALIDATE_ERRCODEMSG((p != NULL), SBCNULLP, "Invalid argument");
-
-    // TO DO : Read the SW information for encypted data 
-
-    // Memory allocate for Ecnrypt
-    CopyMem((void *)&p->enclv.length, (void *)&nodechk[cpycnt], 4);
-    p->enclv.value = AllocateZeroPool(p->enclv.length);
-    SBC_RET_VALIDATE_ERRCODEMSG((p->enclv.value != NULL), SBCNULLP, "Allocate Fail");
-
-    cpycnt += 4;
-    CopyMem((void *)p->enclv.value, (void *)&nodechk[cpycnt], p->enclv.length);
-
-    cpycnt += p->enclv.length;
-    CopyMem((void *)p->iv, (void *)&nodechk[cpycnt],PROT_SW_IV_LEN);
-
-    cpycnt += PROT_SW_IV_LEN;
-    CopyMem((void *)p->tag, (void *)&nodechk[cpycnt],PROT_SW_TAG_LEN);
-
-    // TO DO : Decryptt the data 
-
-
-
-
-
-
-    
-
-errdone:
     return ret;
 
 }
@@ -2447,4 +2003,3 @@ errdone:
 //    return ret;
 //
 //}
-

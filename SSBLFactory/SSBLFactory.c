@@ -67,6 +67,9 @@
 #include "SBC_SystemControl.h"
 
 
+VOID *h_blkio;               // Block I/O handle
+CHAR16 mrgmsg[8192];
+
 extern SBCStatus SBC_SSBL_LoadAndStart(EFI_HANDLE ImageHandle);
 
 #ifdef LEO_EMUPKG
@@ -100,7 +103,7 @@ RETURN_STATUS EFIAPI SerialPortInitialize(VOID)
 
 
 
-SBCStatus  SBC_DiceKeysGen(EFI_HANDLE ImageHandle, VOID *p)
+SBCStatus  SBC_DiceKeysGen(EFI_HANDLE ImageHandle, VOID *p,UINTN normbank, UINTN bm)
 {
     SBCStatus ret = SBCOK;
     atp_ident_t *h = NULL;
@@ -115,7 +118,7 @@ SBCStatus  SBC_DiceKeysGen(EFI_HANDLE ImageHandle, VOID *p)
 
     //SBC_mem_print_bin("Device ID", h->devid, sizeof h->devid);SBC_mem_print_bin("Device ID", h->devid, sizeof h->devid);
 
-    ret = SBC_GenFWID(ImageHandle, h->devid, h->fwid);
+    ret = SBC_GenFWID(ImageHandle, h->devid, h->fwid, normbank, bm);
     if (ret != SBCOK) {
         Print(L"FW ID generate fail \n");
         goto errdone;
@@ -359,7 +362,7 @@ extern SBCStatus SBC_GRUB_LoadAndStart(EFI_HANDLE ImageHandle);
     EFI_STATUS retval = EFI_SUCCESS;
     SBCStatus  ret = SBCOK;
     rawprt_hdr_t h_rawptrheader;    // Raw Partition Header handle
-    VOID *h_blkio;               // Block I/O handle
+    //VOID *h_blkio;               // Block I/O handle
     UINT32 pres_hi = 0;
     UINT32 pres_low = 0;
     UINT32 currbank_id = 0;
@@ -413,8 +416,8 @@ extern SBCStatus SBC_GRUB_LoadAndStart(EFI_HANDLE ImageHandle);
     }
 
 
-    btproc.bm = h_rawptrheader.bm;
-    btproc.km = h_rawptrheader.km;
+    btproc.bm = h_rawptrheader.bootmode;
+    btproc.km = h_rawptrheader.keymode;
     btproc.curr_sw_bnk = currbank_id;
     btproc.pvs_sw_bnk = prevbank_id;
     btproc.blkhnd = h_blkio;
@@ -437,7 +440,7 @@ extern SBCStatus SBC_GRUB_LoadAndStart(EFI_HANDLE ImageHandle);
           goto errdone;
     }
 
-    ret = SBC_DiceKeysGen(ImageHandle, &diceid);
+    ret = SBC_DiceKeysGen(ImageHandle, &diceid,BOOT_MODE_NORMAL, currbank_id);
     if (ret != SBCOK) {
         sbc_err_sysprn(SBC_LOG_CMN_PRIO_ERR, 2, L"SBC", L"FSBL", L"Weapon System", 4, L"EVT", L"Dice Key creation fail\n");
         retval = EFI_INVALID_PARAMETER;
@@ -454,8 +457,8 @@ extern SBCStatus SBC_GRUB_LoadAndStart(EFI_HANDLE ImageHandle);
     //bootmd = SBC_ReadBootMode();
 
 
-    dprint("Boot Mode is %d", h_rawptrheader.bm);
-    switch (h_rawptrheader.bm) {
+    dprint("Boot Mode is %d", h_rawptrheader.bootmode);
+    switch (h_rawptrheader.bootmode) {
     case BOOT_MODE_NORMAL:
        dprint("Boot Mode is BOOT_MODE_NORMAL");
        SBC_SecureBootCheck((VOID *)&btproc);

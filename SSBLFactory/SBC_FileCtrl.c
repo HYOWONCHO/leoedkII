@@ -12,6 +12,8 @@
 //#include <Protocol/DevicePathToText.h>
 #include <string.h>
 
+#include <Library/DevicePathLib.h>
+
 #include "SBC_Util.h"
 #include "SBC_FileCtrl.h"
 
@@ -59,6 +61,36 @@ errdone:
 
 }
 
+SBCStatus  SBC_FindFileBufHndl(UINT16 *f_path, UINTN *hndlcnt, VOID **hndl)
+{
+    EFI_STATUS  retval = EFI_SUCCESS;
+    SBCStatus   ret = SBCOK;
+    UINTN       idx = 0;
+
+    SBC_RET_VALIDATE_ERRCODEMSG((f_path != NULL), SBCNULLP, "File Path obj Nill");
+    SBC_RET_VALIDATE_ERRCODEMSG((*hndl != NULL), SBCNULLP, "Handle Obj Nill");
+
+    for ( idx = 0; idx < *hndlcnt; idx++) {
+        retval = SBC_IsFlieAccess(hndl[idx], f_path);
+        if (EFI_ERROR(retval)) {
+            continue;
+        }
+
+        break;
+    }
+
+    if (EFI_ERROR(retval)) {
+        ret = SBCNOTFND;
+        goto errdone;
+    }
+
+    *hndlcnt = idx;
+
+errdone:
+    return ret;
+
+}
+
 
 
 //SBCStatus  SBC_GetFileSize(IN CHAR16 *FileName, OUT *FileSize)
@@ -72,16 +104,35 @@ SBCStatus  SBC_GetFileSize(CHAR16 *FileName, UINTN  *FileSize)
     EFI_FILE_PROTOCOL *File;
     UINTN              InfoSize = 0;
     EFI_FILE_INFO     *FileInfo;
-    UINTN           hndlcnt;
+    UINTN               hndlcnt;
+    UINTN               idx;
+
 
     hndlcnt = SBC_FindEfiFileSystemProtocol(&ImageHandle);
     Print(L"Hndl Count :%d \n", hndlcnt);
     if (hndlcnt <= 0) {
         Print(L"File Sys handle find fail : %d \n", hndlcnt);
+        return SBCFAIL;
         //sbc_err_sysprn()
     }
 
-    Status = gBS->HandleProtocol(ImageHandle[--hndlcnt],
+    for (idx = 0; idx < hndlcnt; idx++) {
+        Status = SBC_IsFlieAccess(ImageHandle[idx], FileName);
+        if (EFI_ERROR(Status)) {
+            //eprint("Is File (%r)", Status);
+            continue;
+        }
+
+        break;
+    }
+
+    if (EFI_ERROR(Status)) {
+        eprint("File %r", Status);
+        return SBCFAIL;
+    }
+
+
+    Status = gBS->HandleProtocol(ImageHandle[idx],
                                    &gEfiSimpleFileSystemProtocolGuid,
                                    (VOID **)&FileSystem);
     if(EFI_ERROR(Status)) {
@@ -130,6 +181,8 @@ SBCStatus  SBC_GetFileSize(CHAR16 *FileName, UINTN  *FileSize)
     } else {
         *FileSize = FileInfo->FileSize;
     }
+
+    dprint("File Size : %d", *FileSize);
 
     // Clean up allocated memory and open handles.
     FreePool(FileInfo);
@@ -211,6 +264,7 @@ EFI_STATUS SBC_WriteFile(EFI_HANDLE ImageHandle, CHAR16 *FileNames, LV_t *out)
   //UINTN BufferSize = 128;
   //CHAR8 Buffer[128];
 
+  //dprint();
 
   //TODO
   // out buffer nill check
@@ -219,12 +273,14 @@ EFI_STATUS SBC_WriteFile(EFI_HANDLE ImageHandle, CHAR16 *FileNames, LV_t *out)
   Status = gBS->HandleProtocol(ImageHandle,
                                &gEfiSimpleFileSystemProtocolGuid,
                                (VOID **)&FileSystem);
+  //dprint();
   if(EFI_ERROR(Status)) {
     DEBUG((DEBUG_ERROR, " %a:%d Locate File Systam fail (%r) \r\n",
            __FUNCTION__, __LINE__, Status));
     return Status;
   }
 
+  //dprint();
   // Open the roor directory
   Status = FileSystem->OpenVolume(FileSystem, &RootDir);
   if (EFI_ERROR(Status)) {
@@ -233,23 +289,32 @@ EFI_STATUS SBC_WriteFile(EFI_HANDLE ImageHandle, CHAR16 *FileNames, LV_t *out)
     return Status;
   }
 
+  //dprint();
   // Open the file
   Status = RootDir->Open(RootDir, &File, FileNames, EFI_FILE_MODE_READ | EFI_FILE_MODE_WRITE | EFI_FILE_MODE_CREATE, 0);
   if (EFI_ERROR(Status)) {
       DEBUG((DEBUG_ERROR, " %a:%d RootDir->Open fail (%r) \r\n",
      __FUNCTION__, __LINE__, Status));
+      //dprint();
+      RootDir->Close(RootDir);
     return Status;
   }
 
+  //dprint();
   // Read the file
   Status = File->Write(File, (UINTN *)&out->length, out->value);
   if (EFI_ERROR(Status)) {
-      DEBUG((DEBUG_ERROR, " %a:%d File->Read fail (%r) \r\n",
+      //dprint();
+      DEBUG((DEBUG_ERROR, " %a:%d File->Write fail (%r) \r\n",
               __FUNCTION__, __LINE__, Status));
       //Print(L"File Content: %a\n", Buffer);
+
+      File->Close(File);
+      RootDir->Close(RootDir);
       return Status;
   }
 
+  //dprint();
 
 
   // Close the file
@@ -298,39 +363,101 @@ errdone:
     
 }
 
-EFI_STATUS SBC_IsDirExist(EFI_HANDLE ImageHandle, CHAR16 *DirName)
+BOOLEAN SBC_IsDirExist(EFI_HANDLE ImageHandle, CHAR16 *DirectoryName)
 {
-    EFI_STATUS  retval = EFI_SUCCESS;
-    EFI_SIMPLE_FILE_SYSTEM_PROTOCOL *FileSystem;
-    EFI_FILE_PROTOCOL *RootDir = NULL;
-    EFI_FILE_PROTOCOL *DirHandle = NULL;
+  EFI_STATUS                 Status;
+  EFI_SIMPLE_FILE_SYSTEM_PROTOCOL *FileSystem;
+  EFI_FILE_PROTOCOL          *RootFile;
+  EFI_FILE_PROTOCOL          *TargetDirectory;
+  EFI_FILE_INFO              *FileInfo;
+  BOOLEAN                    Exists = FALSE;
+  UINTN                      FileInfoSize;
 
-    //gImageHandle = NULL:
 
-    retval = gBS->HandleProtocol(ImageHandle,
+  
+    Status = gBS->HandleProtocol(ImageHandle,
                                  &gEfiSimpleFileSystemProtocolGuid,
                                  (VOID **)&FileSystem);
-    
-    if (EFI_ERROR(retval)) {
-        eprint("Locate file system handle fail (%r)", retval);
-        goto errdone;
+
+    if (EFI_ERROR(Status)) {
+        eprint("Locate file system handle fail (%r)", Status);
+        return FALSE;
+        //goto errdone;
     }
 
-    retval = FileSystem->OpenVolume(FileSystem, &RootDir);
-    if (EFI_ERROR(retval)) {
-        eprint("OpenVolume fail (%r)", retval);
-        goto errdone;
+  // 1. Open the root directory of the file system volume
+  Status = FileSystem->OpenVolume (FileSystem, &RootFile);
+  if (EFI_ERROR(Status)) {
+    DEBUG ((DEBUG_ERROR, "DirectoryExists: Failed to open volume. Status: %r\n", Status));
+    return FALSE;
+  }
+
+  // 2. Try to open the target directory
+  //    EFI_FILE_MODE_READ for read access
+  //    EFI_FILE_DIRECTORY if we expect it to be a directory
+  Status = RootFile->Open (
+                       RootFile,
+                       &TargetDirectory,
+                       DirectoryName,
+                       EFI_FILE_MODE_READ,
+                       EFI_FILE_DIRECTORY // Expecting a directory
+                       );
+
+  if (EFI_ERROR(Status)) {
+    // If opening failed, it likely doesn't exist or isn't a directory
+    DEBUG ((DEBUG_INFO, "DirectoryExists: Failed to open '%s'. Status: %r\n", DirectoryName, Status));
+    // Close the RootFile handle before returning
+    RootFile->Close (RootFile);
+    return FALSE;
+  }
+
+  // 3. If opened successfully, get its information to confirm it's a directory
+  //    First call with NULL buffer to get required size
+  FileInfoSize = 0;
+  Status = TargetDirectory->GetInfo (
+                             TargetDirectory,
+                             &gEfiFileInfoGuid,
+                             &FileInfoSize,
+                             NULL
+                             );
+
+  if (Status == EFI_BUFFER_TOO_SMALL) {
+    FileInfo = AllocatePool (FileInfoSize);
+    if (FileInfo == NULL) {
+      DEBUG ((DEBUG_ERROR, "DirectoryExists: Failed to allocate FileInfo buffer.\n"));
+      // Close handles before returning
+      TargetDirectory->Close (TargetDirectory);
+      RootFile->Close (RootFile);
+      return FALSE;
     }
 
-    retval = RootDir->Open(RootDir, &DirHandle, DirName, EFI_FILE_MODE_READ,  0);
-
-
-
-errdone:
-    if (DirHandle != NULL) {
-        DirHandle->Close(DirHandle);
+    Status = TargetDirectory->GetInfo (
+                               TargetDirectory,
+                               &gEfiFileInfoGuid,
+                               &FileInfoSize,
+                               FileInfo
+                               );
+    if (EFI_ERROR(Status)) {
+      DEBUG ((DEBUG_ERROR, "DirectoryExists: Failed to get file info. Status: %r\n", Status));
+    } else {
+      // 4. Check if the EFI_FILE_DIRECTORY attribute is set
+      if ((FileInfo->Attribute & EFI_FILE_DIRECTORY) == EFI_FILE_DIRECTORY) {
+          dprint("FNAME : %s", FileInfo->FileName);
+        Exists = TRUE;
+      } else {
+        DEBUG ((DEBUG_INFO, "DirectoryExists: '%s' exists but is not a directory.\n", DirectoryName));
+      }
     }
-    return retval; 
+    FreePool (FileInfo);
+  } else {
+    DEBUG ((DEBUG_ERROR, "DirectoryExists: Failed to get file info size. Status: %r\n", Status));
+  }
+
+  // 5. Close all opened handles
+  TargetDirectory->Close (TargetDirectory);
+  RootFile->Close (RootFile);
+
+  return Exists;
     
 }
 
@@ -758,10 +885,13 @@ SBCStatus SBC_RawPrtReadBlock(VOID *blkhnd, VOID *rdbuf,  UINT32 *rdlen, UINTN r
 //    UINTN   blklen = 0LU;
 
     //Print(L"%a:%d \n",__FUNCTION__, __LINE__);
+    SBC_RET_VALIDATE_ERRCODEMSG((blkhnd != NULL), SBCNULLP, "Block IO Handle Nill");
     SBC_RET_VALIDATE_ERRCODEMSG(((rdbuf != NULL) || (rdlen != NULL)), SBCNULLP, "Invalid parameter");
     SBC_RET_VALIDATE_ERRCODEMSG((*rdlen != 0), SBCZEROL, "Invalid parameter");
 
     blkio  = (EFI_BLOCK_IO_PROTOCOL *)blkhnd;
+
+    
 
 //  blklen = ALIGN_VALUE(*rdlen, blkio->Media->BlockSize);
 //  //Print(L"BLK Len : %d \n", blklen);
@@ -772,6 +902,13 @@ SBCStatus SBC_RawPrtReadBlock(VOID *blkhnd, VOID *rdbuf,  UINT32 *rdlen, UINTN r
 //      goto errdone;
 //  }
 
+
+//  dprint("Handle %p, Media Id, %ld, lba : %ld, Len : %ld, rdbuf : %p",
+//         blkio,
+//         blkio->Media->MediaId,
+//         rlba,
+//         *rdlen,
+//         rdbuf);
 
     retval = blkio->ReadBlocks(
                 blkio,
@@ -797,7 +934,6 @@ SBCStatus SBC_RawPrtReadBlock(VOID *blkhnd, VOID *rdbuf,  UINT32 *rdlen, UINTN r
     //_sfc_init_info_parse(readbuf, rdbuf);
 
 
-    
 
 errdone:
 //  if (readbuf != NULL) {
@@ -1215,55 +1351,6 @@ EFI_STATUS SBCGetDirFile(VOID)
   gBS->FreePool (HandleBuffer);
   return EFI_SUCCESS;
 
-}
-
-SBCStatus SBC_LoadSSBLImage(VOID *h_blk, UINTN bnkid, VOID *ldbuf)
-{
-    SBCStatus ret = SBCOK;
-    UINTN   startlba  = 0UL;
-
-
-    UINT32  imglen = SBC_RAWPRT_DFLT_BLK_SZ;
-    UINT8   imghdr[SBC_RAWPRT_DFLT_BLK_SZ] = {0, };
-    [[maybe_unused]] UINT8   *loadimg = NULL;
-    UINTN   bsofs = 0;
-
-    SBC_RET_VALIDATE_ERRCODEMSG(((h_blk != NULL) || (ldbuf != NULL)) , 
-            SBCNULLP, 
-            "Handle Object is pointing to NULL");
-
-
-    bsofs = (BOOT_SECTOR1_OFS | ((bnkid - 1)<< 20));
-    startlba = ((bsofs | BOOT_SSBL_OFS) >> SBC_RAWPRT_DFLT_SHIFT);
-
-
-    ret = SBC_RawPrtReadBlock(h_blk, (void *)imghdr, &imglen, startlba);
-    SBC_RET_VALIDATE_ERRCODEMSG((ret == SBCOK), ret, "SSBL Image header read fail");
-
-    CopyMem((void *)&imglen, &imghdr[0], sizeof imglen );
-
-    imglen = ALIGN_VALUE(imglen, SBC_RAWPRT_DFLT_BLK_SZ);
-
-    ((LV_t *)ldbuf)->value = AllocateZeroPool(imglen);
-    SBC_RET_VALIDATE_ERRCODEMSG(
-            (((LV_t *)ldbuf)->value != NULL), 
-            SBCNULLP, 
-            "Image Handle Object is pointing to NULL");
-
-    ret = SBC_RawPrtReadBlock(h_blk, ((LV_t *)ldbuf)->value, &imglen, startlba);
-    SBC_RET_VALIDATE_ERRCODEMSG(
-            (ret == SBCOK), 
-            ret, 
-            "SSBL Image load fail");
-
-    ((LV_t *)ldbuf)->length = imglen;
-
-errdone:
-
-    return ret;
-
-
-     
 }
 
 VOID SBC_FileCtrlTestMain(VOID)

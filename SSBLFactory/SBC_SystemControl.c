@@ -29,8 +29,8 @@ SBCStatus SBC_BootKeyModeChange(UINT32 newbm, UINT32 newkey, VOID *priv)
 
     hdr = (rawprt_hdr_t *)bp->rawprt_hdr;
 
-    hdr->bm = newbm;
-    hdr->km = newkey;
+    hdr->bootmode = newbm;
+    hdr->keymode = newkey;
 
 
     SBC_RET_VALIDATE_ERRCODEMSG((bp->blkhnd != NULL), SBCNULLP, "Raw Partition Block IO Handle Nill");

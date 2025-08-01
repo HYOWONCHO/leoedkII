@@ -3,23 +3,25 @@
 
 #include "SBC_ErrorType.h"
 
+#define BOOT_VENDOR_BASEDIR     L"\\EFI\\rocky"
+
 #define BOOT_MODE_FNAME         L"\\EFI\\BOOT\\bootmode"
 #define BOOT_MODE_STRNRORMAL    "normal"
 #define BOOT_MODE_STRUPDATE     "update"
 #define BOOT_MODE_STRFACTORY    "factory"
 
 typedef enum _t_boot_mode {
-    BOOT_MODE_NONE = 0,
-    BOOT_MODE_NORMAL,               /// Normal Boot Mode
-    BOOT_MODE_UPDATE,               /// Image update
+    BOOT_MODE_NONE      = 0,
+    BOOT_MODE_NORMAL,                     /// Normal Boot Mode
+    BOOT_MODE_UPDATE,                     /// Image update
     BOOT_MODE_RECOVERY,
-    BOOT_MODE_FACTORY,              /// Factory mode boot 
-    BOOT_MODE_UNKNOWN
+    BOOT_MODE_FACTORY,                    /// Factory mode boot 
+    BOOT_MODE_UNKNOWN 
 }boot_mode_t;
 
 typedef enum _t_key_mode {
     KEY_MODE_NONE = 0,
-    KEY_MODE_NORMAL,
+    KEY_MODE_NORMAL, 
     KEY_MODE_BOOT,
     KEY_MODE_UPDATE,
     KEY_MODE_UNKNOWN
@@ -66,6 +68,11 @@ typedef struct _t_bm_lookup_table {
 /*! Boot pres length */
 #define SBC_BOOT_PRES_LEN                   8
 
+/*! Boot Mode */
+#define SBC_BOOT_MODE_LEN                   2
+#define SBC_KEY_MODE_LEN                    2
+#define SBC_RECOVERY_LEN                    2
+
 #pragma pack(1)
 /*!
     \brief Raw Partition Header  structure
@@ -74,8 +81,9 @@ typedef struct _rawprt_hdr_t {
     UINT32      magicid;                        /**< Identifier for SBC Raw-Partition */
     UINT8       prtinfo[SBC_PRTNIFO_LEN];       /**< Partition information */
     UINT8       reserv[SBC_HDR_SKIP_LEN];
-    UINT16      bm;                             /*!< Boot Mode */
-    UINT16      km;                             /*!< Key Mode*/
+    UINT16      bootmode;                        /**< Boot Mode */   
+    UINT16      keymode;                        /*! Key Mode*/
+    UINT16      rcvmode;                        /*! Recover mode */     
     UINT8       bootpres[SBC_BOOT_PRES_LEN];    /**< Boot pres */
 }rawprt_hdr_t;
 
@@ -141,34 +149,8 @@ typedef union _boot_fw_inf_t {
 
 #pragma pack()
 
-/*! \brief Protected SW Repository Data Structure */
-#pragma pack(1)
 
-#define PROT_SW_SLOT_LEN            32
-#define PROT_SW_NODE_INFO_LEN       (25 << 10)
-
-typedef union  _sw_slot_info_t {
-    struct {
-        UINT8       slotinfo[4];
-        UINT8       reserved[12];
-        UINT8       sw1_off[8];
-        UINT8       sw2_off[8];
-    }field;
-
-    UINT8 value[PROT_SW_SLOT_LEN];
-}sw_slot_info_t;
-
-
-#define PROT_SW_IV_LEN          12
-#define PROT_SW_TAG_LEN         16
-typedef struct _sw_info_t {
-    LV_t enclv;
-    UINT8 iv[PROT_SW_IV_LEN];
-    UINT8 tag[PROT_SW_TAG_LEN];
-}sw_info_t;
-
-
-#pragma pack()
+#define LEN_DFLT_OFS                    0x04
 
 #define SYS_CONF_START_OFS              (0x18000000 | BOOT_FW_SRTOFS)
 #define SYS_CONF_OSID_OFS               0x00000000
@@ -179,8 +161,6 @@ typedef struct _sw_info_t {
 #define SYS_CONF_OSID_CRT_OFS           0x00001880
 #define SYS_CONF_SW_LIST_OFS            0x00002080
 
-#define SYS_CONF_PROT_SW_SLOT_OFS            (0x18004400)
-#define SYS_CONF_PROT_SW_INFO_OFS            (0x1800AA00)
 
 #define SYS_OSID_LEN                    4
 #define SYS_OSID_KEY_LEN                32
@@ -232,29 +212,6 @@ typedef union _sys_pres_t  {
 
 #pragma pack()
 
-#pragma pack(1)
-/*! 
-    \defgroup ProtectedSW Repository
-    \{
- */
-
-#define PROT_SW_LIST_SATOFS             (0x18002080)
-#define PROT_SW_RAWPRT_LAB              (PROT_SW_LIST_SATOFS >> SBC_RAWPRT_DFLT_SHIFT)
-
-/*!
- * Adds the recovery information regards to Protected SW 
- * 
- * \author leoc (7/21/25)
- */
-typedef struct _t_protsw_nodeinfo_t {
-    UINT32  slot;
-    UINT8   reserved[12];
-    UINTN   sw1ofs;
-    UINTN   sw2ofs;
-}protsw_nodeinfo_t;
-
-/*! \}*/
-#pragma pack()
       
 /*! \} */                                                                                                       
                                                                                                                                                                                
@@ -431,6 +388,12 @@ UINT32  SBC_ReadBootMode(VOID);
 EFI_STATUS SBC_WriteFile(EFI_HANDLE ImageHandle, CHAR16 *FileNames, LV_t *out);
 
 UINTN SBC_FindEfiFileSystemProtocol(EFI_HANDLE **handle);
-SBCStatus SBC_LoadSSBLImage(VOID *h_blk, UINTN bnkid, VOID *ldbuf);
 
+EFI_STATUS SBC_IsFlieAccess(EFI_HANDLE ImageHandle, CHAR16 *FileNames);
+
+BOOLEAN SBC_IsDirExist(EFI_HANDLE ImageHandle, CHAR16 *DirectoryName);
+
+SBCStatus  SBC_FindFileBufHndl(UINT16 *f_path, UINTN *hndlcnt, VOID **hndl);
+
+EFI_STATUS SBC_LogWriteFile(EFI_HANDLE ImageHandle, CHAR16 *FileNames, LV_t *out);
 #endif

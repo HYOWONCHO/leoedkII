@@ -1,3 +1,4 @@
+
 #ifndef __SBCLOG__
 #define __SBCLOG__
 
@@ -62,7 +63,7 @@ VOID SBC_LogMsg(CHAR8* logmsg, CONST CHAR8 *funcname, UINTN linenumber,
     DEBUG((DEBUG_INFO, "(%a:%d) : "fmt"\n",__FUNCTION__, __LINE__,##__VA_ARGS__))
 
 #define eprint(fmt,...) \
-    DEBUG((DEBUG_ERROR, "(ERROR %a:%d) : "fmt"\n",__FUNCTION__, __LINE__,##__VA_ARGS__))
+    DEBUG((DEBUG_ERROR, "(ERROR %a:%a:%d) : "fmt"\n",__FILE__,__FUNCTION__, __LINE__,##__VA_ARGS__))
 
 
 #define intgreen_dprint(fmt,...) \
@@ -85,14 +86,67 @@ extern VOID  SBC_LogWrite(UINT32 prio, CHAR16 *ver, CHAR16 *host,
 
 UINTN
 AsciiPrintToBuffer (
-  IN  CONST CHAR16 *Format,
+  IN  CONST CHAR8 *Format,
   ...
   );
+
+UINTN SBC_LogFmtOut(OUT CHAR16 *outbuf, IN CONST CHAR16 *fmt, ...);
+UINTN SBC_LogFmtOutNoraml(IN CONST CHAR16 *fmt, ...);
+EFI_STATUS SBC_CustomPrint (
+  IN CONST CHAR16 *Format,
+  ...
+  );
+
+
+EFI_STATUS
+EFIAPI
+SBC_LogCustomPrint (
+  OUT CHAR16 *OutFormat,
+  IN CONST CHAR16 *Format,
+  ...
+  );
+
+extern CHAR16 mrgmsg[8192]; 
+
+CHAR16 *SBC_LogMrg(CONST CHAR16 *fmt, ...);
 
 VOID  SBC_LogPrint(CONST CHAR16* func, UINT32 funcline, UINT32 prio, UINT32 ver, CHAR16 *host, 
                         CHAR16 *appname, CHAR16 *csc,
                         UINT32 sfrid, CHAR16 *evtype,
                         CHAR16 *format, ...);
+
+
 #define sbc_err_sysprn(prio, ver, host, appname, csc, sfrid, evtype, fmt,...)                                  \
-    SBC_LogPrint((CONST CHAR16 *)__FUNCTION__, (UINT32)__LINE__, prio, ver, host, appname, csc, sfrid, evtype, fmt "\n", ##__VA_ARGS__)
+    SBC_LogPrint((CONST CHAR16 *)__FUNCTION__, (UINT32)__LINE__, prio, ver, host, appname, csc, sfrid, evtype, fmt, ##__VA_ARGS__)
+
+typedef enum {
+    LOG_LEVEL_DEBUG,    // 디버그 정보 (가장 상세)
+    LOG_LEVEL_INFO,     // 일반 정보
+    LOG_LEVEL_NOTICE,   // 일반적이지만 중요한 조건
+    LOG_LEVEL_WARNING,  // 경고 조건
+    LOG_LEVEL_ERROR,    // 에러 조건
+    LOG_LEVEL_CRITICAL, // 치명적인 에러 (시스템 중단 가능성)
+    LOG_LEVEL_ALERT,    // 즉시 조치가 필요한 조건
+    LOG_LEVEL_EMERGENCY // 시스템 사용 불가 (가장 심각)
+} LOG_LEVEL;
+
+//
+// 이벤트/카테고리 정의
+// 로그 메시지가 어떤 종류의 이벤트에 속하는지 나타냅니다.
+//
+typedef enum {
+    LOG_EVENT_GENERIC,      // 일반 이벤트
+    LOG_EVENT_BOOT_INIT,    // 부팅 초기화
+    LOG_EVENT_DRIVER_LOAD,  // 드라이버 로드
+    LOG_EVENT_FS_OPERATION, // 파일 시스템 작업
+    LOG_EVENT_NETWORK,      // 네트워크 관련
+    LOG_EVENT_SECURITY,     // 보안 관련
+    LOG_EVENT_CONFIG,       // 설정 관련
+    LOG_EVENT_NVRAM,        // NVRAM 관련
+    LOG_EVENT_REBOOT,       // 재부팅 관련
+    // ... 필요한 이벤트 추가
+} LOG_EVENT;
+
+VOID UefiLog(LOG_LEVEL Level, LOG_EVENT Event, CONST CHAR16 *Format, ...);
 #endif
+
