@@ -81,6 +81,8 @@ VOID SBC_RecoveryBootProcessing(VOID *priv)
     sb_rcv_proc_t *p = NULL;
     boot_proc_t   *bt_proc = NULL; // BOot process
     UINT8 sk[BASE_ANS_KEY_STR] = {0,}; // Secret key for Protected SW 
+    LV_t sysconf;
+    sw_whitelist_t  auth_list; 
 
     p = (sb_rcv_proc_t *)priv;
     bt_proc = (boot_proc_t *)p->handle;
@@ -109,8 +111,15 @@ VOID SBC_RecoveryBootProcessing(VOID *priv)
     ret = SBC_HashCompute(NULL, p->osid, BASE_ANS_KEY_STR, sk);
     SBC_RET_VALIDATE_ERRCODEMSG((ret == SBCOK), ret, "Secret key create fail");
 
-    // Load protected SW 
+    // Load protected SW  List
+    ret = SBC_LoadSystemConfig(bt_proc->blkhnd, (VOID *)&sysconf);
+    SBC_RET_VALIDATE_ERRCODEMSG((ret == SBCOK),
+                                ret,
+                                "Load System Setting repository fail");
 
+    CopyMem((void *)auth_list, 
+            *((UINT8 *)sysconf.value)[SYS_CONF_SW_LIST_OFS],
+            sizeof auth_list);
     return;
 
 errdone:

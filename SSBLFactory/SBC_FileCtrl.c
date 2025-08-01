@@ -1353,6 +1353,41 @@ EFI_STATUS SBCGetDirFile(VOID)
 
 }
 
+SBCStatus SBC_LoadSystemConfig(VOID *blkio, VOID *blob)
+{
+    SBCStatus ret = SBCOK;
+    UINTN lba = 0;
+    UINTN ldlen = 0;
+
+
+    lba = SYS_CONF_START_OFS >> SBC_RAWPRT_DFLT_SHIFT;
+    ldlen = ALIGN_VALUE(SYS_SETTING_STORAGE_LEN, 
+                        ((EFI_BLOCK_IO_PROTOCOL *)blkio)->Media->BlockSize);
+
+    ((LV_t *)blob)->value = AllocateZeroPool(ldlen);
+    SBC_RET_VALIDATE_ERRCODEMSG((((LV_t *)blob)->value != NULL), 
+                                SBCNULLP,
+                                "Memory Allocate Fail");
+
+    
+    ret = SBC_RawPrtReadBlock(
+        blkio,
+        ((LV_t *)blob)->value,
+        &ldlen,
+        lba
+        );
+
+    SBC_RET_VALIDATE_ERRCODEMSG((ret == SBCOK),
+                                ret,
+                                "Block IO Load fail");
+
+    ((LV_t *)blob)->length = ldlen;
+
+
+errdone:
+    return ret;
+}
+
 VOID SBC_FileCtrlTestMain(VOID)
 {
     SBCStatus ret = SBCOK;
