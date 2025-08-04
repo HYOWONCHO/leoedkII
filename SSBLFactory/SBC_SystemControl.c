@@ -2,13 +2,39 @@
 #include <Library/UefiRuntimeServicesTableLib.h>
 #include <Library/BaseLib.h>
 #include <Library/ResetSystemLib.h>
+#include <Library/BaseMemoryLib.h>
 
 #include "SBC_SystemControl.h"
+#include "SBC_AntiTampering.h"
+#include "SBC_Hashing.h"
+#include "SBC_CryptAES.h"
+#include "SBC_EccSignVerify.h"
 
 #include "SBC_BootProc.h"
 #include "SBC_FileCtrl.h"
 
 //EFI_GUID g_sbc_guid  = {0x1F3F7E80, 0xDB6B, 0x93FA, {0x9E, 0x61, 0x4C, 0x31, 0x3D, 0x3A}};
+
+SBCStatus SBC_FindPrtoSWAndProcessing(UINT8 *deckey, UINT8 *buf, UINTN buflen, UINT8 *decbuf, UINT32 *declen)
+{
+    UINTN enclen = 0;
+    UINT8 *encbuf = NULL;
+    UINT8 *iv;
+    UINT8 *tag;
+    
+    CopyMem((void *)&enclen, (void *)&buf[0], 4);
+    encbuf = &buf[4];
+    iv = &buf[4 + enclen];
+    tag = &buf[4 + enclen + SBC_AT_IV_LEN];
+
+    //decrypt sw white list 
+
+
+    return SBCOK;
+
+
+
+}
 
 static BOOLEAN _check_prev_fw(UINTN prev_bnk_id)
 {
@@ -112,13 +138,13 @@ VOID SBC_RecoveryBootProcessing(VOID *priv)
     SBC_RET_VALIDATE_ERRCODEMSG((ret == SBCOK), ret, "Secret key create fail");
 
     // Load protected SW  List
-    ret = SBC_LoadSystemConfig(bt_proc->blkhnd, (VOID *)&sysconf);
+    ret = SBC_LoadSystemSetting(bt_proc->blkhnd, (VOID *)&sysconf);
     SBC_RET_VALIDATE_ERRCODEMSG((ret == SBCOK),
                                 ret,
                                 "Load System Setting repository fail");
 
-    CopyMem((void *)auth_list, 
-            *((UINT8 *)sysconf.value)[SYS_CONF_SW_LIST_OFS],
+    CopyMem((void *)&auth_list, 
+            (void *)&((UINT8 *)sysconf.value)[SYS_CONF_SW_LIST_OFS],
             sizeof auth_list);
     return;
 
@@ -134,7 +160,26 @@ SBCStatus  SBC_SecureBootCheck(VOID *priv)
     //VOID        *new_hnd = NULL;
     //BOOLEAN   bret = FALSE;
 
+    LV_t        blob; 
     boot_proc_t *bp = (boot_proc_t *)priv;
+    sb_rcv_proc_t srp;
+    UINTN         swcnt = 0;
+
+    ZeroMem((VOID *)&blob, sizeof blob);
+    ZeroMem((VOID *)&srp, sizeof srp);
+
+    ret = SBC_LoadSystemSetting(bp->blkhnd, (VOID *)&blob);
+    SBC_RET_VALIDATE_ERRCODEMSG((ret == SBCOK), ret, "System Setting Load fail");
+
+    srp.osid = ((atp_ident_t *)bp->keyinfo)->osid;
+    srp.migkey = ((atp_ident_t *)bp->keyinfo)->migid;
+    srp.baseans = bp->baseansr;
+    srp.handle = bp->blkhnd;
+    // Referencing the address of a buffer regarding the SW LIST 
+    //srp.whitels = &((UINT8 *)blob.value)[SYS_CONF_SW_LIST_OFS];;
+    srp.whitels = (UINT8 *)(blob.value) + SYS_CONF_SW_LIST_OFS;
+    swcnt = ((LV_t *)srp.whitels)->length / sizeof(sw_whitels_t);
+
 
     switch(bp->bm) {
     case BOOT_MODE_NORMAL:
@@ -149,6 +194,9 @@ SBCStatus  SBC_SecureBootCheck(VOID *priv)
         break;
     case BOOT_MODE_RECOVERY:
         
+        break;
+
+    case BOOT_MODE_UPDATE:
         break;
     default:
       goto errdone;

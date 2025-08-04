@@ -1353,11 +1353,11 @@ EFI_STATUS SBCGetDirFile(VOID)
 
 }
 
-SBCStatus SBC_LoadSystemConfig(VOID *blkio, VOID *blob)
+SBCStatus SBC_LoadSystemSetting(VOID *blkio, VOID *blob)
 {
     SBCStatus ret = SBCOK;
     UINTN lba = 0;
-    UINTN ldlen = 0;
+    UINT32 ldlen = 0;
 
 
     lba = SYS_CONF_START_OFS >> SBC_RAWPRT_DFLT_SHIFT;
@@ -1382,7 +1382,6 @@ SBCStatus SBC_LoadSystemConfig(VOID *blkio, VOID *blob)
                                 "Block IO Load fail");
 
     ((LV_t *)blob)->length = ldlen;
-
 
 errdone:
     return ret;

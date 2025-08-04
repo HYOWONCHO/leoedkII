@@ -5,6 +5,8 @@
 
 #define STR_FSBL_F_NAME             L"FS1:\\EFI\\BOOT\\FSBL.efi"
 #define SBC_AT_HASH_LEN             32
+#define SBC_AT_IV_LEN               12
+#define SBC_AT_TAG_LEN              16
 #define SBC_BLKDEV_BLKSZ            512
 
 /*!
