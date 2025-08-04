@@ -73,6 +73,10 @@ typedef struct _aes_context_t {
 
 
 
+#define SBC_AES_KEY_STRENGTH          32
+#define SBC_AES_IV_STRENGTH           12
+#define SBC_AES_TAG_STRENGTH          16
+
 #define SBC_KEY_STRENGTH_256      256
 #define SBC_KEY_LEN_256           (SBC_KEY_STRENGTH_256 >> 3)
 
@@ -86,5 +90,5 @@ SBCStatus SBC_AESDecrypt(SBC_AESContext *ctx);
 
 SBCStatus SBC_AESGcmDecrypt(SBC_AESContext *ctx);
 SBCStatus SBC_AESGcmEncrypt(SBC_AESContext *ctx);
-
+void SBC_AESGcmSetContext(VOID *ctx, VOID *key, VOID *iv, VOID *tag);
 #endif

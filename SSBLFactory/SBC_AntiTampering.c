@@ -995,8 +995,6 @@ errdone:
 
 }
 
-
-
 SBCStatus  SBC_BaseAnswerValidate(VOID *blkhnd, UINT8 *answer, UINTN answerl, UINT8 *key, UINTN keylen)
 {
     SBCStatus ret = SBCOK;

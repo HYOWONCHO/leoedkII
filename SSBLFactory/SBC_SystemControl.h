@@ -26,6 +26,17 @@ typedef struct _sb_rcv_proc_t {
     VOID *whitels;          /*! Software List */
 }sb_rcv_proc_t;
 
+
+typedef struct _sw_node_t {
+    UINT8 status;
+    UINT8 pos;
+    UINT8 sw0;
+    UINT8 sw1;
+    UINT8 reserved[12];
+    off_t sw0_off;
+    off_t sw1_off;
+}sw_node_t;
+
 #pragma pack()
 VOID SBC_ShutdownSystem(VOID);
 VOID SBC_RebootSystem(VOID);

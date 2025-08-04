@@ -2,8 +2,10 @@
 #define __SBCErrorType
 
 #include <Library/UefiLib.h>
+//#include <Library/CrtLibSupport.h>
+
+
 #include "SBC_TypeDefs.h"
-#include "SBC_Log.h"
 
 typedef enum {
    SBCOK                = 0,

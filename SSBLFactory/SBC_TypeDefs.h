@@ -3,6 +3,9 @@
 
 #include "SBC_Log.h"
 
+#ifndef  off_t
+typedef UINTN   off_t;
+#endif
 
 /**<! X_RET_VALIDATE_ERRCODE set errno and return error code*/
 #define SBC_RET_VALIDATE_ERRCODE( expr , errorcode )							\

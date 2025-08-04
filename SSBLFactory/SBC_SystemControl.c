@@ -17,20 +17,43 @@
 
 SBCStatus SBC_FindPrtoSWAndProcessing(UINT8 *deckey, UINT8 *buf, UINTN buflen, UINT8 *decbuf, UINT32 *declen)
 {
+    SBCStatus ret = SBCOK;
     UINTN enclen = 0;
-    UINT8 *encbuf = NULL;
+    [[gnu::unused]] UINT8 *encbuf = NULL;
     UINT8 *iv;
     UINT8 *tag;
-    
+    SBC_AESContext aesctx;
+    SBC_AESGcmCtx  ctx;
+    [[gnu::unused]]  UINT8 shared_secret[SBC_AT_HASH_LEN] = {0, };
+    [[gnu::unused]] sw_node_t node_info;
+
     CopyMem((void *)&enclen, (void *)&buf[0], 4);
     encbuf = &buf[4];
     iv = &buf[4 + enclen];
     tag = &buf[4 + enclen + SBC_AT_IV_LEN];
 
+
+    if(SBC_HashCompute(NULL, deckey, SBC_AT_HASH_LEN, shared_secret) != SBCOK) {
+        eprint("Shared secret key creation is  fail");
+        ret = SBCFAIL;
+        goto errdone;
+    }
+
+
+    ctx.out.value = (void *)decbuf;
+    ctx.out.length = *declen;
+    aesctx.gcm = &ctx;
+    aesctx.algoid = SBC_CIPHER_AES_GCM;
     //decrypt sw white list 
+    SBC_AESGcmSetContext((void *)aesctx.gcm, (void *)shared_secret, (void *)iv, (void *)tag);
+    if (SBC_AESGcmDecrypt(&aesctx) != SBCOK) {
+        eprint("Protected SW List decrypt fail");
+        ret = SBCFAIL;
+        goto errdone;
+    }
+errdone:
 
-
-    return SBCOK;
+    return ret;
 
 
 
@@ -108,7 +131,7 @@ VOID SBC_RecoveryBootProcessing(VOID *priv)
     boot_proc_t   *bt_proc = NULL; // BOot process
     UINT8 sk[BASE_ANS_KEY_STR] = {0,}; // Secret key for Protected SW 
     LV_t sysconf;
-    sw_whitelist_t  auth_list; 
+    sw_whitels_t  auth_list; 
 
     p = (sb_rcv_proc_t *)priv;
     bt_proc = (boot_proc_t *)p->handle;
@@ -163,7 +186,7 @@ SBCStatus  SBC_SecureBootCheck(VOID *priv)
     LV_t        blob; 
     boot_proc_t *bp = (boot_proc_t *)priv;
     sb_rcv_proc_t srp;
-    UINTN         swcnt = 0;
+    [[gnu::unused]] UINTN         swcnt = 0;
 
     ZeroMem((VOID *)&blob, sizeof blob);
     ZeroMem((VOID *)&srp, sizeof srp);

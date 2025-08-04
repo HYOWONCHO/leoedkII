@@ -211,20 +211,6 @@ typedef union _sys_pres_t  {
 }sys_pres_t;
 
 #pragma pack()
-
-#pragma pack(1)
-
-/*!
- * \brief Protected Software List structure
- * 
- * \author leonc (8/1/25)
- */
-typedef struct _t_sw_whitelist_t {
-    UINT8 name[256];
-    UINT8 version[256];
-    UINTN offset;
-}sw_whitelist_t;
-
       
 /*! \} */                                                                                                       
                                                                                                                                                                                
