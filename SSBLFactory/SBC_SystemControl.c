@@ -124,6 +124,59 @@ errdone:
 
 }
 
+static SBCStatus _update_behavior_for_km(void *priv)
+{
+    SBCStatus ret = SBCOK;
+    boot_proc_t *bp = (boot_proc_t *)priv;
+
+    switch(bp->bootst) {
+    case SB_PROC_ST_ABNRAM:
+        break;
+    case SB_PROC_ST_NRMA:
+        // Base answer re-encrypt using Migration Key 
+        ret = SBC_BaseAnswerEncryptStore(bp->blkhnd, 
+                                         ((LV_t *)bp->baseansr)->value,
+                                         ((LV_t *)bp->baseansr)->length,
+                                         ((atp_ident_t *)bp->keyinfo)->migid,
+                                         ATP_IDENT_KEY_STG);
+
+        break;
+    default:
+        ret = SBCINVPARAM;
+        goto errdone;
+    }
+
+
+errdone:
+
+    return ret;
+}
+
+static SBCStatus  SBC_UpdateBootPorcsesing(void *priv)
+{
+    SBCStatus ret = SBCOK;
+    boot_proc_t *bp = (boot_proc_t *)priv;
+    
+    switch(bp->km) {
+    case KEY_MODE_NORMAL:
+        break;
+    case KEY_MODE_BOOT:
+        break;
+    case KEY_MODE_UPDATE:
+        ret = _update_behavior_for_km(priv);
+        break;
+    case KEY_MODE_NONE:
+        break;
+    default:
+        eprint("Unknown Key mode over the Update Boot Mode");
+        ret = SBCINVPARAM;
+        goto errdone;
+    }
+
+errdone:
+    return ret;
+}
+
 VOID SBC_RecoveryBootProcessing(VOID *priv)
 {
     SBCStatus ret = SBCOK;
@@ -177,6 +230,59 @@ errdone:
 }
 
 
+static void _update_reset_check_and_behavior(VOID *priv)
+{
+    boot_proc_t *bp = (boot_proc_t *)priv;
+    switch(bp->km) {
+    case KEY_MODE_NORMAL:
+        switch(bp->bootst) {
+        case SB_PROC_ST_NRMA:
+            SBC_BootKeyModeChange(BOOT_MODE_NORMAL, KEY_MODE_NORMAL, priv);
+            break;
+        case SB_PROC_ST_ABNRAM:
+            if(bp->pvs_sw_bnk) {
+                // if existense the previously firmware 
+                SBC_BootKeyModeChange(BOOT_MODE_RECOVERY, KEY_MODE_UPDATE, priv);
+            }
+            else {
+                SBC_BootKeyModeChange(BOOT_MODE_FACTORY, KEY_MODE_UPDATE, priv);
+            }
+            break;
+        default:
+            eprint("Unknown Boot Status");
+            break;
+        }
+
+        SBC_RebootSystem();
+        
+        break;
+    default:
+        break;
+    }
+
+
+    return;
+}
+
+VOID SBC_ResetScenario(VOID *priv)
+{
+    boot_proc_t *bp = (boot_proc_t *)priv;
+    switch(bp->bm) {
+    case BOOT_MODE_UPDATE:
+        {   
+            _update_reset_check_and_behavior(priv);
+        }
+        break;
+    default:
+        break;
+    }
+
+
+    return;
+
+}
+
+
 SBCStatus  SBC_SecureBootCheck(VOID *priv)
 {
     SBCStatus ret = SBCOK;
@@ -191,18 +297,22 @@ SBCStatus  SBC_SecureBootCheck(VOID *priv)
     ZeroMem((VOID *)&blob, sizeof blob);
     ZeroMem((VOID *)&srp, sizeof srp);
 
+#ifdef SAT_PROT_SW_ENABLE
+#error "x1"
     ret = SBC_LoadSystemSetting(bp->blkhnd, (VOID *)&blob);
     SBC_RET_VALIDATE_ERRCODEMSG((ret == SBCOK), ret, "System Setting Load fail");
-
+#endif
     srp.osid = ((atp_ident_t *)bp->keyinfo)->osid;
     srp.migkey = ((atp_ident_t *)bp->keyinfo)->migid;
     srp.baseans = bp->baseansr;
     srp.handle = bp->blkhnd;
+#ifdef SAT_PROT_SW_ENABLE
+#error "x2"
     // Referencing the address of a buffer regarding the SW LIST 
     //srp.whitels = &((UINT8 *)blob.value)[SYS_CONF_SW_LIST_OFS];;
     srp.whitels = (UINT8 *)(blob.value) + SYS_CONF_SW_LIST_OFS;
     swcnt = ((LV_t *)srp.whitels)->length / sizeof(sw_whitels_t);
-
+#endif
 
     switch(bp->bm) {
     case BOOT_MODE_NORMAL:
@@ -220,6 +330,7 @@ SBCStatus  SBC_SecureBootCheck(VOID *priv)
         break;
 
     case BOOT_MODE_UPDATE:
+        ret = SBC_UpdateBootPorcsesing(priv);
         break;
     default:
       goto errdone;
@@ -230,6 +341,7 @@ SBCStatus  SBC_SecureBootCheck(VOID *priv)
 
 
 errdone:
+    SBC_ResetScenario(priv);
     return ret;
 
 }

@@ -18,7 +18,7 @@
   VERSION_STRING                 = 1.0
   ENTRY_POINT                    = UefiMain
 
-  DEFINE DEBUG_ON_SERIAL_PORT = TRUE
+  DEFINE DEBUG_ON_SERIAL_PORT   = TRUE
 
 #
 # The following information is for reference only and not required by the build tools.
@@ -117,6 +117,10 @@
 
 [UserExtensions.TianoCore."ExtraFiles"]
   leo_test_extra.uni
+
+[BuildOptions]
+    #*_*_*_CC_FLAGS = -D_ON_TABLE_
+    
 
 #[BuildOptions.X64]
 #GCC:DEBUG_GCC5_X64_CC_FLAGS = -flto
