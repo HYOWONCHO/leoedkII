@@ -1,6 +1,8 @@
 #ifndef _SBC_ANTITAMPERING_
 #define _SBC_ANTITAMPERING_
 
+#define OSID_KERNEL_PATH            L"\\boot\\vmlinuz-5.14.0-284.11.1.el9_2.x86_64"            
+
 #define STR_FSBL_F_NAME             L"FS1:\\EFI\\BOOT\\FSBL.efi"
 #define SBC_AT_HASH_LEN             32
 #define SBC_BLKDEV_BLKSZ            512
@@ -195,14 +197,14 @@ SBCStatus  SBC_BaseAnswerValidate(VOID *blkhnd, UINT8 *answer, UINTN answerl, UI
  * @return On Success, return the SBCOK, otherwise, return the apporiate error
  *         value.
  */
-SBCStatus SBC_GenFWID(EFI_HANDLE *h_image, UINT8 *devid, UINT8 *fwid);
+SBCStatus SBC_GenFWID(EFI_HANDLE *h_image, UINT8 *devid, UINT8 *fwid, UINTN normbank, UINTN bm);
 
 SBCStatus SBC_GenOSID(EFI_HANDLE *h_image, UINT8 *fwid, UINT8 *osid);
 
 
-SBCStatus  SBC_FSBLIntgCheck(EFI_HANDLE *h_image , VOID *blkio);
+SBCStatus  SBC_FSBLIntgCheck(EFI_HANDLE *h_image , VOID *blkio, VOID *cert, UINTN certle, UINTN nrombank, UINTN mode);
 
-SBCStatus  SBC_FSBL_Verify(VOID *blkhnd, VOID *ansr);
+SBCStatus  SBC_FSBL_Verify(VOID *blkhnd, VOID *ansr, UINTN normbank, UINTN bm);
 
 SBCStatus  SBC_BlkIoHandleInit(OUT VOID **hblk, OUT VOID *hdr);
 
