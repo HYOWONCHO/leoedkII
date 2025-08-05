@@ -177,17 +177,26 @@ errdone:
     return ret;
 }
 
-VOID SBC_RecoveryBootProcessing(VOID *priv)
+void SBC_RecoveryBootProcessing(VOID *priv)
 {
     SBCStatus ret = SBCOK;
     sb_rcv_proc_t *p = NULL;
     boot_proc_t   *bt_proc = NULL; // BOot process
-    UINT8 sk[BASE_ANS_KEY_STR] = {0,}; // Secret key for Protected SW 
-    LV_t sysconf;
-    sw_whitels_t  auth_list; 
+    [[gnu::unused]] UINT8 sk[BASE_ANS_KEY_STR] = {0,}; // Secret key for Protected SW 
+    [[gnu::unused]] LV_t sysconf;
+    [[gnu::unused]] sw_whitels_t  auth_list; 
 
     p = (sb_rcv_proc_t *)priv;
     bt_proc = (boot_proc_t *)p->handle;
+
+    // Boot Mode is Recovery and Boot Status is abnormal 
+    // Boot Mode is change from Recovery to Factory
+    // Than, Key mode is Boot
+    if(bt_proc->bootst == SB_PROC_ST_ABNRAM) {
+        SBC_BootKeyModeChange(BOOT_MODE_FACTORY, KEY_MODE_BOOT, priv);
+        SBC_RebootSystem();
+        return;
+    }
 
     if(_check_prev_fw(bt_proc->pvs_sw_bnk) != FALSE) {
         // System Shutdown
@@ -207,8 +216,13 @@ VOID SBC_RecoveryBootProcessing(VOID *priv)
     );
 
 
-    SBC_RET_VALIDATE_ERRCODEMSG((ret == SBCOK),ret, "Base Answer re-write faie");
+    SBC_RET_VALIDATE_ERRCODEMSG((ret == SBCOK)
+                                ,ret, 
+                                "Detection SBC_tamper_OSID derived answer "
+                                "mismatched known answer");
 
+
+#ifdef SAT_PROT_SW_ENABLE
     // Create the secret key
     ret = SBC_HashCompute(NULL, p->osid, BASE_ANS_KEY_STR, sk);
     SBC_RET_VALIDATE_ERRCODEMSG((ret == SBCOK), ret, "Secret key create fail");
@@ -222,11 +236,39 @@ VOID SBC_RecoveryBootProcessing(VOID *priv)
     CopyMem((void *)&auth_list, 
             (void *)&((UINT8 *)sysconf.value)[SYS_CONF_SW_LIST_OFS],
             sizeof auth_list);
+#endif
+
+    switch(bt_proc->bootst) {
+    case SB_PROC_ST_NRMA:
+        switch(bt_proc->km) {
+        case KEY_MODE_BOOT:
+            ret = SBC_BootKeyModeChange(BOOT_MODE_NORMAL, KEY_MODE_NORMAL, priv);
+            break;
+        default:
+            eprint("Not support key mode for Recovery Normal Boot");
+            goto errdone;
+        }
+
+        break;
+    case SB_PROC_ST_ABNRAM:
+        ret = SBC_BootKeyModeChange(BOOT_MODE_FACTORY, KEY_MODE_BOOT, priv);
+        break;
+    default:
+        eprint("Unknown Secure Boot status");
+        goto errdone;
+    }
+
+    if(ret != SBCOK) {
+        eprint("Boot and Key mode change fail");
+        goto errdone;
+    }
+
+    SBC_RebootSystem();
     return;
 
 errdone:
     SBC_ShutdownSystem();
-    return;
+    return ;
 }
 
 
@@ -326,7 +368,7 @@ SBCStatus  SBC_SecureBootCheck(VOID *priv)
 
         break;
     case BOOT_MODE_RECOVERY:
-        
+        SBC_RecoveryBootProcessing(priv);
         break;
 
     case BOOT_MODE_UPDATE:

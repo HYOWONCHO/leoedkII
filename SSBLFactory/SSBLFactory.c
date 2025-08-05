@@ -461,7 +461,7 @@ extern SBCStatus SBC_GRUB_LoadAndStart(EFI_HANDLE ImageHandle);
     switch (h_rawptrheader.bootmode) {
     case BOOT_MODE_NORMAL:
        dprint("Boot Mode is BOOT_MODE_NORMAL");
-       SBC_SecureBootCheck((VOID *)&btproc);
+       ret = SBC_SecureBootCheck((VOID *)&btproc);
 
        break;
     case BOOT_MODE_FACTORY:
@@ -483,10 +483,16 @@ extern SBCStatus SBC_GRUB_LoadAndStart(EFI_HANDLE ImageHandle);
       dprint("Boot Mode is BOOT_MODE_UPDATE");
       break;
     case BOOT_MODE_RECOVERY:
+
+        ret = SBC_SecureBootCheck((VOID *)&btproc);
         break;
     default:
       Print(L"Unknown Boot Mode ... SHOULD go to Abort\n");
       break;
+    }
+
+    if (ret != SBCOK) {
+        goto errdone;
     }
 
     ret = SBC_GRUB_LoadAndStart(ImageHandle);
@@ -511,8 +517,9 @@ extern SBCStatus SBC_GRUB_LoadAndStart(EFI_HANDLE ImageHandle);
 
 
 errdone:
- 
-   SBC_SecureBootCheck((VOID *)&btproc);
+    if (ret != SBCOK) {
+        SBC_ShutdownSystem();
+    }
    return retval;
 }
 
