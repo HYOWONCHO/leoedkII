@@ -345,7 +345,8 @@ UINT32 FindPreviouslyBank(UINT32 bankid)
     return ret;
 }
 
-
+extern SBCStatus SBC_GRUB_LoadAndStart(EFI_HANDLE ImageHandle);
+extern SBCStatus SBC_BootKeyModeChange(UINT32 newbm, UINT32 newkey, VOID *priv);
 
 EFI_STATUS
 EFIAPI
@@ -355,7 +356,6 @@ UefiMain (
   )
 {
 
-extern SBCStatus SBC_GRUB_LoadAndStart(EFI_HANDLE ImageHandle);
 
 
     atp_ident_t diceid;
@@ -466,7 +466,20 @@ extern SBCStatus SBC_GRUB_LoadAndStart(EFI_HANDLE ImageHandle);
        break;
     case BOOT_MODE_FACTORY:
        dprint("Boot Mode is BOOT_MODE_FACTORY");
-      //Print(L"Factory Boot Mode !!! \n");
+
+       ret = SBC_BootKeyModeChange(BOOT_MODE_FACTORY, KEY_MODE_NORMAL, NULL);
+       if (ret != SBCOK) {
+           btproc.bootst = SB_PROC_ST_NRMA;
+       }
+
+
+       // If boot status is abnromal, system should be shutdown.
+       if (btproc.bootst != SB_PROC_ST_NRMA) {
+           ret = SBCFAIL;
+           goto errdone;
+       }
+      
+       //Print(L"Factory Boot Mode !!! \n");
       break;
     case BOOT_MODE_UPDATE:
 
