@@ -140,6 +140,18 @@ static SBCStatus _update_behavior_for_km(void *priv)
                                          ((atp_ident_t *)bp->keyinfo)->migid,
                                          ATP_IDENT_KEY_STG);
 
+        if(ret != SBCOK) {
+            eprint("Detection SBC_tamper_OSID derived answer "
+                            "mismatched known answer");
+            goto errdone;
+        }
+
+        ret = SBC_BootKeyModeChange(BOOT_MODE_NORMAL, KEY_MODE_NORMAL, priv);
+        if(ret != SBCOK) {
+            eprint("Boot Mode and Key Mode change fail");
+            goto errdone;
+        }
+
         break;
     default:
         ret = SBCINVPARAM;
@@ -159,6 +171,7 @@ static SBCStatus  SBC_UpdateBootPorcsesing(void *priv)
     
     switch(bp->km) {
     case KEY_MODE_NORMAL:
+        ret = _update_behavior_for_km(priv);
         break;
     case KEY_MODE_BOOT:
         break;
@@ -174,6 +187,8 @@ static SBCStatus  SBC_UpdateBootPorcsesing(void *priv)
     }
 
 errdone:
+    if(ret != SBCOK) {
+    }
     return ret;
 }
 
@@ -242,6 +257,7 @@ void SBC_RecoveryBootProcessing(VOID *priv)
     case SB_PROC_ST_NRMA:
         switch(bt_proc->km) {
         case KEY_MODE_BOOT:
+        case KEY_MODE_UPDATE:
             ret = SBC_BootKeyModeChange(BOOT_MODE_NORMAL, KEY_MODE_NORMAL, priv);
             break;
         default:
