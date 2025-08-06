@@ -759,27 +759,8 @@ UefiMain (
          L"Determine Firmare Tampering ",
          mrgmsg);
   
-    ret = SBC_SSBL_Verify(h_blkio, NULL, currbank_id);
-    if (ret != SBCOK) {
-          sbc_err_sysprn(SBC_LOG_CMN_PRIO_ERR, 2,
-                 L"SBC",
-                 L"FSBL",
-                 L"Weapon System",
-                 8,
-                 L"Determine Firmare Tampering ",
-                 L"FSBL tampering check fail");
-          is_boot_status = FALSE;
-          retval = EFI_INVALID_PARAMETER;
-          //goto errdone;
-    }
+    
 
-   sbc_err_sysprn(SBC_LOG_CMN_PRIO_ERR, 2,
-     L"SBC",
-     L"FSBL",
-     L"Weapon System",
-     8,
-     L"Determine Firmare Tampering ",
-     L"FSBL tampering check Done");
 
     ret = SBC_DiceKeysGen(ImageHandle, &diceid,BOOT_MODE_NORMAL, currbank_id);
     if (ret != SBCOK) {
@@ -788,6 +769,7 @@ UefiMain (
         is_boot_status = FALSE;
         goto errdone;
     }
+    
 
 
     //switch (h_rawprtheader.bootmode)
@@ -796,6 +778,28 @@ UefiMain (
     case BOOT_MODE_NORMAL:
       dprint("Boot Mode is BOOT_MODE_NORMAL");
 #ifdef _SBC_DEVID_VERIFY_
+      ret = SBC_SSBL_Verify(h_blkio, NULL, currbank_id);
+      if (ret != SBCOK) {
+            sbc_err_sysprn(SBC_LOG_CMN_PRIO_ERR, 2,
+                   L"SBC",
+                   L"FSBL",
+                   L"Weapon System",
+                   8,
+                   L"Determine Firmare Tampering ",
+                   L"FSBL tampering check fail");
+            is_boot_status = FALSE;
+            retval = EFI_INVALID_PARAMETER;
+            //goto errdone;
+      }
+
+     sbc_err_sysprn(SBC_LOG_CMN_PRIO_ERR, 2,
+       L"SBC",
+       L"FSBL",
+       L"Weapon System",
+       8,
+       L"Determine Firmare Tampering ",
+       L"FSBL tampering check Done");
+
       ret =  SBC_DeviceIdKyeVerify(h_blkio, diceid.devid, diceid.osid);
       if (ret != SBCOK) {
               sbc_err_sysprn(SBC_LOG_CMN_PRIO_ERR, 2, 
@@ -863,6 +867,29 @@ UefiMain (
       break;
     case BOOT_MODE_UPDATE:
 #ifdef _SBC_DEVID_VERIFY_
+
+            ret = SBC_SSBL_Verify(h_blkio, NULL, currbank_id);
+      if (ret != SBCOK) {
+            sbc_err_sysprn(SBC_LOG_CMN_PRIO_ERR, 2,
+                   L"SBC",
+                   L"FSBL",
+                   L"Weapon System",
+                   8,
+                   L"Determine Firmare Tampering ",
+                   L"FSBL tampering check fail");
+            is_boot_status = FALSE;
+            retval = EFI_INVALID_PARAMETER;
+            //goto errdone;
+      }
+
+     sbc_err_sysprn(SBC_LOG_CMN_PRIO_ERR, 2,
+       L"SBC",
+       L"FSBL",
+       L"Weapon System",
+       8,
+       L"Determine Firmare Tampering ",
+       L"FSBL tampering check Done");
+
       ret =  SBC_DeviceIdKyeVerify(h_blkio, diceid.devid, diceid.migid);
       if (ret != SBCOK) {
 //            sbc_err_sysprn(SBC_LOG_CMN_PRIO_ERR, 2,
@@ -888,6 +915,44 @@ UefiMain (
       break;
     case BOOT_MODE_RECOVERY:
 
+#ifdef _SBC_DEVID_VERIFY_
+
+      ret = SBC_SSBL_Verify(h_blkio, NULL, prevbank_id);
+      if (ret != SBCOK) {
+            sbc_err_sysprn(SBC_LOG_CMN_PRIO_ERR, 2,
+                   L"SBC",
+                   L"FSBL",
+                   L"Weapon System",
+                   8,
+                   L"Determine Firmare Tampering ",
+                   L"FSBL tampering check fail");
+            is_boot_status = FALSE;
+            retval = EFI_INVALID_PARAMETER;
+            //goto errdone;
+      }
+
+     sbc_err_sysprn(SBC_LOG_CMN_PRIO_ERR, 2,
+       L"SBC",
+       L"FSBL",
+       L"Weapon System",
+       8,
+       L"Determine Firmare Tampering ",
+       L"FSBL tampering check Done");
+
+      ret =  SBC_DeviceIdKyeVerify(h_blkio, diceid.devid, diceid.migid);
+      if (ret != SBCOK) {
+//            sbc_err_sysprn(SBC_LOG_CMN_PRIO_ERR, 2,
+//                   L"SBC",
+//                   L"FSBL",
+//                   L"Weapon System",
+//                   8,
+//                   L"EVT",
+//                   L"Device ID verify fail ");
+              retval = EFI_INVALID_PARAMETER;
+              is_boot_status = FALSE;
+              goto errdone;
+      }
+#endif  
       ret = SBC_BootModeNormalAndpUdate(h_blkio, ImageHandle, prevbank_id);
       if (ret != SBCOK) {
           eprint("Normal Boot Fail");
