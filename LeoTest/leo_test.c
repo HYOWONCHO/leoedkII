@@ -667,6 +667,9 @@ Exit:
     gST->ConOut->OutputString(gST->ConOut, Buffer); // 부분적으로라도 출력 시도
   }
 
+
+
+
   return Status;
 }
 
