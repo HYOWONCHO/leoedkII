@@ -206,14 +206,18 @@ errdone:
 void SBC_RecoveryBootProcessing(VOID *priv)
 {
     SBCStatus ret = SBCOK;
-    sb_rcv_proc_t *p = NULL;
+    //sb_rcv_proc_t *p = NULL;
     boot_proc_t   *bt_proc = NULL; // BOot process
     [[gnu::unused]] UINT8 sk[BASE_ANS_KEY_STR] = {0,}; // Secret key for Protected SW 
     [[gnu::unused]] LV_t sysconf;
     [[gnu::unused]] sw_whitels_t  auth_list; 
 
-    p = (sb_rcv_proc_t *)priv;
-    bt_proc = (boot_proc_t *)p->handle;
+
+    // bug -->
+    //p = (sb_rcv_proc_t *)priv;
+    bt_proc = (boot_proc_t *)priv;
+
+    //p->baseans  = bt_porc
 
     // Boot Mode is Recovery and Boot Status is abnormal 
     // Boot Mode is change from Recovery to Factory
@@ -225,6 +229,7 @@ void SBC_RecoveryBootProcessing(VOID *priv)
     }
 
     if(_check_prev_fw(bt_proc->pvs_sw_bnk) != FALSE) {
+        eprint("Previously Boot Firmware not existense");
         // System Shutdown
         goto errdone;
        
@@ -235,9 +240,9 @@ void SBC_RecoveryBootProcessing(VOID *priv)
     // Baseanswer Ecnrypt and Store
     ret = SBC_BaseAnswerEncryptStore(
                     bt_proc->blkhnd,
-                    ((LV_t *)p->baseans)->value,
-                    ((LV_t *)p->baseans)->length,
-                    (UINT8 *)p->osid,
+                    ((LV_t *)bt_proc->baseansr)->value,
+                    ((LV_t *)bt_proc->baseansr)->length,
+                    ((atp_ident_t *)bt_proc->keyinfo)->osid,
                     BASE_ANS_KEY_STR
     );
 
@@ -405,11 +410,11 @@ SBCStatus  SBC_SecureBootCheck(VOID *priv)
 
         break;
     case BOOT_MODE_RECOVERY:
+        dprint("Block  I/O Handle : 0x%lx",bp->blkhnd);
         SBC_RecoveryBootProcessing(priv);
         break;
 
     case BOOT_MODE_UPDATE:
-        dprint();
         ret = SBC_UpdateBootPorcsesing(priv);
         dprint();
         break;
@@ -431,7 +436,7 @@ errdone:
 
 VOID SBC_RebootSystem(VOID)
 {
-  //Print(L"Rebooting ... \n");
+    Print(L"System Reset ... \n");
     gRT->ResetSystem(EfiResetCold, EFI_SUCCESS, 0, NULL);
     while(TRUE) { };
 
@@ -440,7 +445,7 @@ VOID SBC_RebootSystem(VOID)
 
 VOID SBC_ShutdownSystem(VOID)
 {
-  //Print(L"Shutting down ... \n");
+    Print(L"System Shutdown ... \n");
     gRT->ResetSystem(EfiResetShutdown, EFI_SUCCESS, 0, NULL);
     while(TRUE) { };
 }

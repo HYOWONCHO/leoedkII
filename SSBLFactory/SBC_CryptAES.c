@@ -197,7 +197,11 @@ SBCStatus SBC_AESEncrypt(SBC_AESContext *ctx)
       }
       break;
     case SBC_CIPHER_AES_GCM:
-      SBC_AESGcmEncrypt(ctx);
+      ret = SBC_AESGcmEncrypt(ctx);
+      if(ret != SBCOK) {
+        // TODO : syslog write
+        goto ErrorDone;
+      }
       break;
     default:
       ret = SBCINVPARAM;

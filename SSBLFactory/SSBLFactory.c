@@ -390,6 +390,8 @@ UefiMain (
 
     SBC_mem_print_bin("Raw Prt Header", (UINT8 *)&h_rawptrheader, sizeof h_rawptrheader);
 
+
+    
     //Print(L"Find Raw Partition (0x%x)...\n", h_rawptrheader.magicid);
     dprint("Partition Info (%a) \n", h_rawptrheader.prtinfo);
 
@@ -427,7 +429,11 @@ UefiMain (
     btproc.blkhnd = h_blkio;
     btproc.keyinfo = (VOID *)&diceid;
     btproc.rawprt_hdr = &h_rawptrheader;
-
+    btproc.baseansr = (void *)&baseansr;
+#if 0
+    SBC_BootKeyModeChange(BOOT_MODE_UPDATE, KEY_MODE_NORMAL, (void *)&btproc);
+    goto errdone;
+#endif
     dprint("Currently Valid FW Bank ID : %d , Previously Bank ID : %d \n", currbank_id, prevbank_id);
 
     ret = SBC_SSBL_Verify(h_blkio, &baseansr, btproc.curr_sw_bnk );
@@ -443,6 +449,8 @@ UefiMain (
           btproc.bootst = SB_PROC_ST_ABNRAM;
           goto errdone;
     }
+
+    
 
     sbc_err_sysprn(SBC_LOG_CMN_PRIO_ERR, 2,
          L"SBC",
@@ -481,6 +489,7 @@ UefiMain (
     case BOOT_MODE_NORMAL:
 #if defined(_FILE_RD_BM_)
         h_rawptrheader.keymode = KEY_MODE_NORMAL;
+        SBC_BootKeyModeChange(BOOT_MODE_NORMAL, KEY_MODE_NORMAL, (void *)&btproc);
 #endif
        dprint("Boot Mode is BOOT_MODE_NORMAL");
        ret = SBC_SecureBootCheck((VOID *)&btproc);
@@ -505,6 +514,7 @@ UefiMain (
        //Print(L"Factory Boot Mode !!! \n");
       break;
     case BOOT_MODE_UPDATE:
+        dprint("Boot Mode BOOT_MODE_UPDATE");
 #ifdef _FILE_RD_BM_
         btproc.bm = BOOT_MODE_UPDATE;
         btproc.km = KEY_MODE_NORMAL;
@@ -530,7 +540,7 @@ UefiMain (
       dprint("Boot Mode is BOOT_MODE_UPDATE");
       break;
     case BOOT_MODE_RECOVERY:
-
+        dprint("Boot Mode BOOT_MODE_RECOVERY");
         ret = SBC_SecureBootCheck((VOID *)&btproc);
         break;
     default:
