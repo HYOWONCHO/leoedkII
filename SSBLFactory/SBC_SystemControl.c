@@ -274,6 +274,7 @@ void SBC_RecoveryBootProcessing(VOID *priv)
         switch(bt_proc->km) {
         case KEY_MODE_BOOT:
         case KEY_MODE_UPDATE:
+        case KEY_MODE_NOAMRL:
             ret = SBC_BootKeyModeChange(BOOT_MODE_NORMAL, KEY_MODE_NORMAL, priv);
             break;
         default:
