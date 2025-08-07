@@ -820,8 +820,8 @@ static SBCStatus _baseboard_sn(hw_uniqueinfo_t *p)
             //CHAR8 *SerialNumberString = (CHAR8 *)(Record);
             CHAR8 *SerialNumberString = (((CHAR8 *)Record) + Record->Length);
             SBC_external_mem_print_bin("_baseboard record", (UINT8 *)SerialNumberString, 0x79 - Record->Length);
-            dprint("serial number index : %d (Record Length : 0x%x)",
-                   SerialNumberIndex, Record->Length);
+            //dprint("serial number index : %d (Record Length : 0x%x)",
+            //       SerialNumberIndex, Record->Length);
             if (SerialNumberIndex > 0) {
 #if 0
                 for (UINT8 i = 1; i < SerialNumberIndex; i++) {
@@ -897,7 +897,7 @@ static SBCStatus _memorydevice_sn(hw_uniqueinfo_t *p)
             Type2Record = (SMBIOS_TABLE_TYPE17 *)Record;
             // Extract Serial Number (this is an index into the string table)
             UINT8 SerialNumberIndex = Type2Record->SerialNumber;
-            dprint("serial number index : %d", SerialNumberIndex);
+            //dprint("serial number index : %d", SerialNumberIndex);
             CHAR8 *SerialNumberString = (((CHAR8 *)Record) + Record->Length);
             SBC_external_mem_print_bin("_memorydevice_sn record", (UINT8 *)SerialNumberString, 0x8B -  Record->Length);
             if (SerialNumberIndex > 0) {
