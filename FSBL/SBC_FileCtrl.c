@@ -982,7 +982,7 @@ SBCStatus  SBC_BlkIoHandleInit(OUT VOID **hblk, OUT VOID *hdr)
 #define     SBC_MAGIC_LEN           0x04
 #define     SBC_MAGIC_ID            0xAA55AA55
 
-    SBCStatus                       ret;
+    SBCStatus                       ret = SBCFAIL;
     EFI_STATUS                      Status;
     EFI_HANDLE                      *HandleBuffer = NULL;
     UINTN                           NumberOfHandles;
@@ -1061,7 +1061,7 @@ SBCStatus  SBC_BlkIoHandleInit(OUT VOID **hblk, OUT VOID *hdr)
 
         FreePool(ReadBuffer);      
 
-        ((rawprt_hdr_t *)hdr)->magicid  = SBC_SWAP_ENDIAN_32(((rawprt_hdr_t *)hdr)->magicid);
+        //((rawprt_hdr_t *)hdr)->magicid  = SBC_SWAP_ENDIAN_32(((rawprt_hdr_t *)hdr)->magicid);
         //Print(L"%d Magic ID : 0x%x \n", idx, ((rawprt_hdr_t *)hdr)->magicid);
 
         
