@@ -309,7 +309,7 @@ static void _update_reset_check_and_behavior(VOID *priv)
         switch(bp->bootst) {
         case SB_PROC_ST_NRMA:
             dprint();
-            SBC_BootKeyModeChange(BOOT_MODE_NORMAL, KEY_MODE_NORMAL, priv);
+            SBC_BootKeyModeChange(BOOT_MODE_RECOVERY, KEY_MODE_NORMAL, priv);
             break;
         case SB_PROC_ST_ABNRAM:
             if(bp->pvs_sw_bnk) {
