@@ -228,7 +228,7 @@ void SBC_RecoveryBootProcessing(VOID *priv)
         return;
     }
 
-    if(_check_prev_fw(bt_proc->pvs_sw_bnk) != FALSE) {
+    if(_check_prev_fw(bt_proc->pvs_sw_bnk) != TRUE) {
         eprint("Previously Boot Firmware not existense");
         // System Shutdown
         goto errdone;

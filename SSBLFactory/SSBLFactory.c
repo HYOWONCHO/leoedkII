@@ -338,7 +338,7 @@ UINT32 FindPreviouslyBank(UINT32 bankid)
         ret = 1;
         break;
     default:
-        ret = 0xFFFFFFFF;
+        ret = 0x0;
         break;
     }
 
@@ -415,11 +415,17 @@ UefiMain (
     }
 
     prevbank_id = FindPreviouslyBank(currbank_id);
-    if (prevbank_id < 1) {
-        eprint("Currently Valid FW Bank ID : %d , Previously Bank ID : %d \n", currbank_id, prevbank_id);
-        retval = EFI_INVALID_PARAMETER;
-        goto errdone;
-    }
+
+
+    // Used from Recovery and Update 
+    btproc.curr_sw_bnk = currbank_id;
+    btproc.pvs_sw_bnk = prevbank_id;
+//  if (prevbank_id < 1) {
+//      eprint("Currently Valid FW Bank ID : %d , Previously Bank ID : %d \n", currbank_id, prevbank_id);
+//      btproc.pvs_sw_bnk =
+//      //retval = EFI_INVALID_PARAMETER;
+//      //goto errdone;
+//  }
 
 
     btproc.bm = h_rawptrheader.bootmode;
@@ -430,6 +436,8 @@ UefiMain (
     btproc.keyinfo = (VOID *)&diceid;
     btproc.rawprt_hdr = &h_rawptrheader;
     btproc.baseansr = (void *)&baseansr;
+
+
 #if 0
     SBC_BootKeyModeChange(BOOT_MODE_UPDATE, KEY_MODE_NORMAL, (void *)&btproc);
     goto errdone;
