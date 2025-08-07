@@ -75,17 +75,22 @@ SBCStatus SBC_BootKeyModeChange(UINT32 newbm, UINT32 newkey, VOID *priv)
     SBCStatus ret = SBCOK;
     boot_proc_t *bp = (boot_proc_t *)priv;
     rawprt_hdr_t *hdr = NULL;
+    UINT8 wrbuf[512] = {0,};
 
     hdr = (rawprt_hdr_t *)bp->rawprt_hdr;
 
     hdr->bootmode = newbm;
     hdr->keymode = newkey;
 
-
+    dprint();
     SBC_RET_VALIDATE_ERRCODEMSG((bp->blkhnd != NULL), SBCNULLP, "Raw Partition Block IO Handle Nill");
 
+    dprint();
+    CopyMem(wrbuf, (void *)hdr, sizeof *hdr);
+    SBC_mem_print_bin("Mode Change", wrbuf, 512);
     // Boot Mode write
-    ret = SBC_RawPrtBlockWrite(bp->blkhnd,(UINT8 *)hdr, sizeof(*hdr),0);
+    dprint();
+    ret = SBC_RawPrtBlockWrite(bp->blkhnd,(UINT8 *)wrbuf, 512,0);
     SBC_RET_VALIDATE_ERRCODEMSG((ret == SBCOK), ret, "Boot and Key mode write fail");
 
 
@@ -133,6 +138,7 @@ static SBCStatus _update_behavior_for_km(void *priv)
     case SB_PROC_ST_ABNRAM:
         break;
     case SB_PROC_ST_NRMA:
+        dprint("Base Answer re-encrypt and write in Update Mode");
         // Base answer re-encrypt using Migration Key 
         ret = SBC_BaseAnswerEncryptStore(bp->blkhnd, 
                                          ((LV_t *)bp->baseansr)->value,
@@ -146,11 +152,12 @@ static SBCStatus _update_behavior_for_km(void *priv)
             goto errdone;
         }
 
-        ret = SBC_BootKeyModeChange(BOOT_MODE_NORMAL, KEY_MODE_NORMAL, priv);
-        if(ret != SBCOK) {
-            eprint("Boot Mode and Key Mode change fail");
-            goto errdone;
-        }
+        dprint();
+//      ret = SBC_BootKeyModeChange(BOOT_MODE_RECOVERY, KEY_MODE_NORMAL, priv);
+//      if(ret != SBCOK) {
+//          eprint("Boot Mode and Key Mode change fail");
+//          goto errdone;
+//      }
 
         break;
     default:
@@ -171,12 +178,16 @@ static SBCStatus  SBC_UpdateBootPorcsesing(void *priv)
     
     switch(bp->km) {
     case KEY_MODE_NORMAL:
+        dprint();
         ret = _update_behavior_for_km(priv);
+        dprint();
         break;
     case KEY_MODE_BOOT:
         break;
     case KEY_MODE_UPDATE:
+        dprint();
         ret = _update_behavior_for_km(priv);
+        dprint();
         break;
     case KEY_MODE_NONE:
         break;
@@ -291,18 +302,23 @@ errdone:
 static void _update_reset_check_and_behavior(VOID *priv)
 {
     boot_proc_t *bp = (boot_proc_t *)priv;
+    dprint("Key mode : %d", bp->km);
     switch(bp->km) {
     case KEY_MODE_NORMAL:
+        dprint("Boot State : %d", bp->bootst);
         switch(bp->bootst) {
         case SB_PROC_ST_NRMA:
+            dprint();
             SBC_BootKeyModeChange(BOOT_MODE_NORMAL, KEY_MODE_NORMAL, priv);
             break;
         case SB_PROC_ST_ABNRAM:
             if(bp->pvs_sw_bnk) {
+                dprint();
                 // if existense the previously firmware 
                 SBC_BootKeyModeChange(BOOT_MODE_RECOVERY, KEY_MODE_UPDATE, priv);
             }
             else {
+                dprint();
                 SBC_BootKeyModeChange(BOOT_MODE_FACTORY, KEY_MODE_UPDATE, priv);
             }
             break;
@@ -311,12 +327,14 @@ static void _update_reset_check_and_behavior(VOID *priv)
             break;
         }
 
-        SBC_RebootSystem();
+        //SBC_RebootSystem();
         
         break;
     default:
+        dprint("Unknown Key Mode");
         break;
     }
+    dprint();
 
 
     return;
@@ -325,13 +343,16 @@ static void _update_reset_check_and_behavior(VOID *priv)
 VOID SBC_ResetScenario(VOID *priv)
 {
     boot_proc_t *bp = (boot_proc_t *)priv;
+    dprint("Boot Mode : %d", bp->bm);
     switch(bp->bm) {
     case BOOT_MODE_UPDATE:
         {   
+            dprint();
             _update_reset_check_and_behavior(priv);
         }
         break;
     default:
+        dprint("Unknown Boot Mode");
         break;
     }
 
@@ -388,7 +409,9 @@ SBCStatus  SBC_SecureBootCheck(VOID *priv)
         break;
 
     case BOOT_MODE_UPDATE:
+        dprint();
         ret = SBC_UpdateBootPorcsesing(priv);
+        dprint();
         break;
     default:
       goto errdone;

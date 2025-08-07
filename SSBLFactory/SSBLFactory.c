@@ -372,19 +372,23 @@ UefiMain (
 
     boot_proc_t       btproc;
  
-
+#ifdef _SBC_DEBUG_ON_
+//#warning   "Enable to the SBC debugmode is on"
     intgreen_dprint("------------- SSBL Factory System START -------------\n");
-
-    btproc.bootst = SB_PROC_ST_NRMA;
+#endif
 
     ZeroMem(&btproc, sizeof btproc);
     ZeroMem(&h_rawptrheader, sizeof h_rawptrheader);
+
+    btproc.bootst = SB_PROC_ST_NRMA;
     // Get the NVMe SSD Raw Partiton handle and Header information
     ret = SBC_BlkIoHandleInit(&h_blkio, &h_rawptrheader);
     if (ret != SBCOK) {
       Print(L"Raw Partitino find fail !!! \n");
-      ASSERT((ret != SBCOK));
+      goto errdone;
     }
+
+    SBC_mem_print_bin("Raw Prt Header", (UINT8 *)&h_rawptrheader, sizeof h_rawptrheader);
 
     //Print(L"Find Raw Partition (0x%x)...\n", h_rawptrheader.magicid);
     dprint("Partition Info (%a) \n", h_rawptrheader.prtinfo);
@@ -440,6 +444,14 @@ UefiMain (
           goto errdone;
     }
 
+    sbc_err_sysprn(SBC_LOG_CMN_PRIO_ERR, 2,
+         L"SBC",
+         L"FSBL",
+         L"Weapon System",
+         8,
+         L"Determine Firmare Tampering ",
+         L"FSBL tampering check Done");
+
     ret = SBC_DiceKeysGen(ImageHandle, &diceid,BOOT_MODE_NORMAL, currbank_id);
     if (ret != SBCOK) {
         sbc_err_sysprn(SBC_LOG_CMN_PRIO_ERR, 2, L"SBC", L"FSBL", L"Weapon System", 4, L"EVT", L"Dice Key creation fail\n");
@@ -451,15 +463,25 @@ UefiMain (
     // FWID and OSID certificate verify
 
 
-    
 
     // TODO : Read Key Mode 
-    //bootmd = SBC_ReadBootMode();
-
-
-    dprint("Boot Mode is %d", h_rawptrheader.bootmode);
+    dprint("Chaeck Boot Mode read from BlkIO is %d", h_rawptrheader.bootmode);
+#if defined(_FILE_RD_BM_)
+//#warning   "SBC Boot Mode Read from File"
+    UINT32 bootmd = SBC_ReadBootMode();
+    dprint("Boot Mode read from File %d" , bootmd);
+    if (h_rawptrheader.bootmode != 0) {
+        bootmd = h_rawptrheader.bootmode;
+    }
+    switch (bootmd) {
+#else
+    dprint("Boot Mode read from BlkIO is %d", h_rawptrheader.bootmode);
     switch (h_rawptrheader.bootmode) {
+#endif
     case BOOT_MODE_NORMAL:
+#if defined(_FILE_RD_BM_)
+        h_rawptrheader.keymode = KEY_MODE_NORMAL;
+#endif
        dprint("Boot Mode is BOOT_MODE_NORMAL");
        ret = SBC_SecureBootCheck((VOID *)&btproc);
 
@@ -475,6 +497,7 @@ UefiMain (
 
        // If boot status is abnromal, system should be shutdown.
        if (btproc.bootst != SB_PROC_ST_NRMA) {
+           eprint("Factory Boot Mode is Abnormal, so, it goes to shutdown state");
            ret = SBCFAIL;
            goto errdone;
        }
@@ -482,17 +505,28 @@ UefiMain (
        //Print(L"Factory Boot Mode !!! \n");
       break;
     case BOOT_MODE_UPDATE:
-
+#ifdef _FILE_RD_BM_
+        btproc.bm = BOOT_MODE_UPDATE;
+        btproc.km = KEY_MODE_NORMAL;
+#endif
       ret = SBC_GenMigrationKey(h_blkio, currbank_id, prevbank_id, diceid.migid);
       if (ret != SBCOK) {
           sbc_err_sysprn(SBC_LOG_CMN_PRIO_ERR, 2, L"SBC", L"FSBL", L"Weapon System", 4, L"EVT", L"Migration Key creation fail\n");
           retval = EFI_INVALID_PARAMETER;
+          btproc.bootst = SB_PROC_ST_ABNRAM;
           goto errdone;
       }
 
       SBC_external_mem_print_bin("Migraiotn Key", diceid.migid, 32);
 
       sbc_err_sysprn(SBC_LOG_CMN_PRIO_INFO, 2, L"SBC", L"FSBL", L"Weapon System", 4, L"EVT", L"Migration Key creation Success\n");
+
+      dprint("Boot State : 0x%x",btproc.bootst);
+      ret = SBC_SecureBootCheck((VOID *)&btproc);
+      if (ret != SBCOK) {
+          eprint("Secure Boot check fail for BOOT_MODE_UPDATE");
+          goto errdone;
+      }
       dprint("Boot Mode is BOOT_MODE_UPDATE");
       break;
     case BOOT_MODE_RECOVERY:

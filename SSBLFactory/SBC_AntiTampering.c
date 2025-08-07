@@ -1083,7 +1083,7 @@ errdone:
     return ret;
 
 }
-
+#if 0
 SBCStatus  SBC_SSBL_Verify(VOID *blkhnd, VOID *ansr,  UINTN nrombank)
 {
     SBCStatus       ret = SBCOK;
@@ -1243,13 +1243,14 @@ errdone:
     return ret;
 
 }
+#endif
 
-SBCStatus  SBC_FSBL_Verify(VOID *blkhnd, VOID *ansr, UINTN normbank, UINTN bm)
+SBCStatus  SBC_SSBL_Verify(VOID *blkhnd, VOID *ansr, UINTN normbank)
 {
     SBCStatus       ret = SBCOK;
     EFI_STATUS      retval = EFI_SUCCESS;
     EFI_HANDLE      *hndl = NULL;
-    UINT16          *fblpath = L"\\EFI\\rocky\\FSBL.efi";
+    UINT16          *fblpath = L"\\EFI\\boot\\FSBL.efi";
     //UINT16          *fblpath = L"\\boot\\vmlinuz-5.14.0-284.11.1.el9_2.x86_64" ;
     UINT8           *infostart = NULL;
     UINT32          last_of_fsbl = 0;

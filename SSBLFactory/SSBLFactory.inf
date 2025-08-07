@@ -119,7 +119,7 @@
   leo_test_extra.uni
 
 [BuildOptions]
-    #*_*_*_CC_FLAGS = -D_ON_TABLE_
+    *_*_*_CC_FLAGS = -D_FILE_RD_BM_ -D_SBC_DEBUG_ON_
     
 
 #[BuildOptions.X64]
