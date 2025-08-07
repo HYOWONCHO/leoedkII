@@ -327,7 +327,7 @@ static void _update_reset_check_and_behavior(VOID *priv)
             break;
         }
 
-        //SBC_RebootSystem();
+        SBC_RebootSystem();
         
         break;
     default:
