@@ -677,6 +677,7 @@ CHAR16 mrgmsg[8192];
 
 
 extern VOID SBC_ShutdownSystem(VOID);
+extern SBCStatus SBC_GRUB_LoadAndStart(EFI_HANDLE ImageHandle);
 EFI_STATUS
 EFIAPI
 UefiMain (
@@ -857,7 +858,8 @@ UefiMain (
         SBC_RawPrtBlockWrite(h_blkio, (UINT8 *)&tmp_prtheader, sizeof(rawprt_hdr_t), 0);
       }
 
-      ret = SBC_SSBL_LoadAndStart(ssbl_img_hndl);
+      //ret = SBC_SSBL_LoadAndStart(ssbl_img_hndl);
+      ret = SBC_GRUB_LoadAndStart(ssbl_img_hndl);
       if (ret != SBCOK) {
         goto errdone;
       }
@@ -867,7 +869,7 @@ UefiMain (
     case BOOT_MODE_UPDATE:
 #ifdef _SBC_DEVID_VERIFY_
 
-            ret = SBC_SSBL_Verify(h_blkio, NULL, currbank_id);
+      ret = SBC_SSBL_Verify(h_blkio, NULL, currbank_id);
       if (ret != SBCOK) {
             sbc_err_sysprn(SBC_LOG_CMN_PRIO_ERR, 2,
                    L"SBC",

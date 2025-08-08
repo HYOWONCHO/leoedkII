@@ -9,6 +9,9 @@
 #define SBC_AT_TAG_LEN              16
 #define SBC_BLKDEV_BLKSZ            512
 
+#define SBC_BASE_ANSR_LEN           16
+#define SBC_OSID_KEY_LEN            32
+
 /*!
     \defgroup DigestSystem
     \{

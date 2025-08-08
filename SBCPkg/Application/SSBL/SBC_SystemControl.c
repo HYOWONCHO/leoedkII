@@ -401,6 +401,18 @@ SBCStatus  SBC_SecureBootCheck(VOID *priv)
 
     switch(bp->bm) {
     case BOOT_MODE_NORMAL:
+
+        // TODO : Baseanswer verify
+        ret = SBC_BaseAnswerValidate(bp->blkhnd,
+                                     bp->baseansr,
+                                     SBC_BASE_ANSR_LEN,
+                                     ((atp_ident_t *)bp->keyinfo)->osid,
+                                     SBC_OSID_KEY_LEN);
+        if(ret != SBCOK) {
+            //TODO : SysLog
+            bp->bootst = SB_PROC_ST_ABNRAM;
+        }
+
         if(bp->bootst == SB_PROC_ST_ABNRAM) {
 
             // In case of the Boot Mode is Normal and Boot State is Abnormal.

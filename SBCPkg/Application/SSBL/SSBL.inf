@@ -13,7 +13,7 @@
   INF_VERSION                    = 1.25
   BASE_NAME                      = SSBL
   MODULE_UNI_FILE                = SSBL.uni
-  FILE_GUID                      = 637d1855-fc44-49c3-a6d2-4f684865124d
+  FILE_GUID                      = 4fc81bc4-741f-11f0-929e-77b9e5ed9c33
   MODULE_TYPE                    = UEFI_APPLICATION
   VERSION_STRING                 = 1.0
   ENTRY_POINT                    = UefiMain
