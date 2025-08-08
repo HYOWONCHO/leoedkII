@@ -1,5 +1,6 @@
 import os
 import array
+import sys
 
 
 import filectrl
@@ -9,7 +10,7 @@ import fwcrypt
 base_answer = "rlwlekqdksrlfdl."
 fw_info = "bjadnpdjwjdqhrlf"
 
-fwfname     = "FFSBL.efi"
+#fwfname     = "FSBL.efi"
 rootcaf     = "root_ca_ecc.crt.der"
 rootkeyf    = "root_ca_ecc.key"
 
@@ -56,7 +57,7 @@ def make_fsbl_image():
     print(f"Signature len : {len(signature)}")
     print(f"Signature return : {signature}")
 
-    fwcrypt.compute_ec_dsa_verify(pubkey, signature,digest)
+    #fwcrypt.compute_ec_dsa_verify(pubkey, signature,digest)
 
 
 
@@ -78,6 +79,15 @@ def make_fsbl_image():
 
 
 if __name__ == "__main__":
+
+    if len(sys.argv) < 2:
+        print(f"Usage : fw_sign.py firmware_file_name")
+        sys.exit(1)
+
+    
+    fwfname = sys.argv[1]
+    print(f"Sign Firmware Name : ${fwfname}")
+    make_fsbl_image()
 
 
 

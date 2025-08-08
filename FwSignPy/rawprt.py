@@ -37,9 +37,11 @@ def make_fw_image():
     #print(f"contounst fwimgcontents len is {hex(len(fwimg_array))}")
 
     fsbl_len = filectrl.get_image_size(fsbl_path)
+    print(f"fsbl image size ${fsbl_len} bytes")
     fsbl_content =  filectrl.read_image(fsbl_path)
 
     ssbl_len = filectrl.get_image_size(ssbl_path)
+    print(f"ssbl image size ${ssbl_len} bytes")
     ssbl_content =  filectrl.read_image(ssbl_path)
 
 
@@ -57,22 +59,22 @@ def make_fw_image():
     fwimg_array[copy_cnt : fsbl_len] = fsbl_content
     copy_cnt += fsbl_sector - 4
 
-    #print(f"ssbl address : {hex(copy_cnt + 512)}")
+    print(f"ssbl address : {hex(copy_cnt + 512)}")
     fwimg_array[copy_cnt : 4] = ssbl_len.to_bytes(4, byteorder='little', signed=False)
     copy_cnt += 4
 
-    fwimg_array[copy_cnt : ssbl_len] = fsbl_content
+    fwimg_array[copy_cnt : ssbl_len] = ssbl_content
     copy_cnt += fsbl_sector - 4 
 
 
-    #print(f"os address : {hex(copy_cnt + 512)}")
+    print(f"os address : {hex(copy_cnt + 512)}")
     fwimg_array[copy_cnt : 4] = os_len.to_bytes(4, byteorder='little', signed=False)
     copy_cnt += 4
 
     fwimg_array[copy_cnt : os_len] = os_content
     copy_cnt += os_sector - 4
 
-    #print(f"sw address : {hex(copy_cnt + 512)}")
+    print(f"sw address : {hex(copy_cnt + 512)}")
     fwimg_array[copy_cnt : 4] = sw_len.to_bytes(4, byteorder='little', signed=False)
     copy_cnt += 4
 
