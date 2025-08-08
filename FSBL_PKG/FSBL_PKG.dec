@@ -1,0 +1,20 @@
+#
+#
+#
+
+[Defines]
+  DEC_SPECIFICATION            = 0x00010005
+  PACKAGE_NAME                 = FSBL
+  PACKAGE_GUID                 = caa589a5-261e-4cec-9acd-cd1b186657ab
+  PACKAGE_VERSION              = 1.0
+
+[Includes]
+  Include/
+
+[LibraryClasses]
+  
+
+[Guids]
+
+[Protocols]
+  
