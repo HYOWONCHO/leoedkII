@@ -30,10 +30,12 @@
 #!include MdeModulePkg/MdeModulePkg.dsc.inc
 
 [LibraryClasses]
-  IntrinsicLib|CryptoPkg/Library/IntrinsicLib/IntrinsicLib.inf
+	IntrinsicLib|CryptoPkg/Library/IntrinsicLib/IntrinsicLib.inf
 #  RngLib|MdeModulePkg/Library/BaseRngLibTimerLib/BaseRngLibTimerLib.inf
 #  BaseCryptLib|CryptoPkg/Library/BaseCryptLib/BaseCryptLib.inf
 #  OpensslLib|CryptoPkg/Library/OpensslLib/OpensslLibFull.inf
+#
+    ResetSystemLib|MdeModulePkg/Library/RuntimeResetSystemLib/RuntimeResetSystemLib.inf
 !ifdef $(DEBUG_ON_SERIAL_PORT)
   DebugLib|MdePkg/Library/BaseDebugLibSerialPort/BaseDebugLibSerialPort.inf
 !else
@@ -162,7 +164,7 @@
   ShellPkg/Library/UefiShellNetwork1CommandsLib/UefiShellNetwork1CommandsLib.inf
   ShellPkg/Library/UefiShellNetwork2CommandsLib/UefiShellNetwork2CommandsLib.inf
 
-  LeoTest/leo_test.inf {
+  FSBL/FSBL.inf {
 #	<PcdsFixedAtBuild>
 #		gEfiMdePkgTokenSpaceGuid.PcdDebugPropertyMask|0x1F
 #		gEfiMedPkgTokenSpaceGuid.PcdDebugPrintErrorLevel|0x80000045
@@ -171,7 +173,6 @@
 		RngLib|MdeModulePkg/Library/BaseRngLibTimerLib/BaseRngLibTimerLib.inf
 		BaseCryptLib|CryptoPkg/Library/BaseCryptLib/BaseCryptLib.inf
 		OpensslLib|CryptoPkg/Library/OpensslLib/OpensslLibFull.inf
-
   }
 
   SSBLFactory/SSBLFactory.inf {

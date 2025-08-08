@@ -69,6 +69,7 @@
 
 VOID *h_blkio;               // Block I/O handle
 static rawprt_hdr_t tmp_prtheader;    // Raw Partition Header handle
+static BOOLEAN        is_boot_status; 
 
 extern SBCStatus SBC_SSBL_LoadAndStart(EFI_HANDLE ImageHandle);
 
@@ -176,6 +177,8 @@ SBCStatus SBC_BootModeFactory(VOID *blkhnd, VOID *ImageHandle)
   }
 
 
+
+
   CopyMem((void *)&imglen, &imghdr[0], sizeof imglen);
 
  
@@ -275,7 +278,7 @@ SBCStatus SBC_BootModeNormalAndpUdate(VOID *blkhnd, VOID *ImageHandle, UINTN nro
   [[maybe_unused]]UINTN endlba = 0;
   [[maybe_unused]]INTN       hndlcnt = 0;
   __attribute__((unused))EFI_STATUS retval;
-  [[gnu::unused]]CHAR16 *fname = L"\\EFI\\rocky\\SSBL.efi";
+  [[gnu::unused]]CHAR16 *fname = L"\\EFI\\boot\\SSBL.efi";
   int idx;
 
 
@@ -677,6 +680,7 @@ extern VOID SBC_ShutdownSystem(VOID);
 EFI_STATUS
 EFIAPI
 UefiMain (
+//EntryPoint(
   IN EFI_HANDLE        ImageHandle,
   IN EFI_SYSTEM_TABLE  *SystemTable
   )
@@ -695,10 +699,14 @@ UefiMain (
     __attribute__((unused)) UINT32 bootmd = 0; // Boot Mode
     LV_t baseansr;
     [[maybe_unused]] UINTN testid = 0xAA55AA55;
+
+    EFI_HANDLE ssbl_img_hndl = NULL;
     
  
 
     dprint("------------- FSBL START -------------\n");
+
+    is_boot_status = TRUE;
 
 
 
@@ -739,7 +747,7 @@ UefiMain (
 
     ret = SBC_FSBL_Verify(h_blkio, &baseansr, currbank_id, h_rawprtheader.bootmode);
     if (ret != SBCOK) {
-
+          is_boot_status = FALSE;
           retval = EFI_INVALID_PARAMETER;
           goto errdone;
     }
@@ -754,41 +762,43 @@ UefiMain (
          L"Determine Firmare Tampering ",
          mrgmsg);
   
-    ret = SBC_SSBL_Verify(h_blkio, NULL, currbank_id);
-    if (ret != SBCOK) {
-          sbc_err_sysprn(SBC_LOG_CMN_PRIO_ERR, 2,
-                 L"SBC",
-                 L"FSBL",
-                 L"Weapon System",
-                 8,
-                 L"Determine Firmare Tampering ",
-                 L"FSBL tampering check fail");
-          retval = EFI_INVALID_PARAMETER;
-          //goto errdone;
-    }
+    
 
-   sbc_err_sysprn(SBC_LOG_CMN_PRIO_ERR, 2,
-     L"SBC",
-     L"FSBL",
-     L"Weapon System",
-     8,
-     L"Determine Firmare Tampering ",
-     L"FSBL tampering check Done");
 
     ret = SBC_DiceKeysGen(ImageHandle, &diceid,BOOT_MODE_NORMAL, currbank_id);
     if (ret != SBCOK) {
         //sbc_err_sysprn(SBC_LOG_CMN_PRIO_ERR, 2, L"SBC", L"FSBL", L"Weapon System", 4, L"EVT", L"Dice Key creation fail\n");
         retval = EFI_INVALID_PARAMETER;
+        is_boot_status = FALSE;
         goto errdone;
     }
-
-
-    //switch (h_rawprtheader.bootmode)
-    switch (BOOT_MODE_NORMAL) {
-    //switch (h_rawprtheader.bootmode) {
+    
+    switch (h_rawprtheader.bootmode) {
     case BOOT_MODE_NORMAL:
       dprint("Boot Mode is BOOT_MODE_NORMAL");
 #ifdef _SBC_DEVID_VERIFY_
+      ret = SBC_SSBL_Verify(h_blkio, NULL, currbank_id);
+      if (ret != SBCOK) {
+            sbc_err_sysprn(SBC_LOG_CMN_PRIO_ERR, 2,
+                   L"SBC",
+                   L"FSBL",
+                   L"Weapon System",
+                   8,
+                   L"Determine Firmare Tampering ",
+                   L"FSBL tampering check fail");
+            is_boot_status = FALSE;
+            retval = EFI_INVALID_PARAMETER;
+            //goto errdone;
+      }
+
+      sbc_err_sysprn(SBC_LOG_CMN_PRIO_ERR, 2,
+       L"SBC",
+       L"FSBL",
+       L"Weapon System",
+       8,
+       L"Determine Firmare Tampering ",
+       L"FSBL tampering check Done");
+
       ret =  SBC_DeviceIdKyeVerify(h_blkio, diceid.devid, diceid.osid);
       if (ret != SBCOK) {
               sbc_err_sysprn(SBC_LOG_CMN_PRIO_ERR, 2, 
@@ -799,6 +809,7 @@ UefiMain (
                      L"EVT", 
                      L"Device ID verify fail ");
               retval = EFI_INVALID_PARAMETER;
+              is_boot_status = FALSE;
               goto errdone;
       }
 #endif         
@@ -807,6 +818,7 @@ UefiMain (
       if (ret != SBCOK) {
           eprint("Normal Boot Fail");
           retval = EFI_INVALID_PARAMETER;
+          is_boot_status = FALSE;
           goto errdone;
       }
       break;
@@ -824,23 +836,59 @@ UefiMain (
 //                   L"EVT",
 //                   L"Device ID verify fail ");
               retval = EFI_INVALID_PARAMETER;
+              is_boot_status = FALSE;
               goto errdone;
       }
 #endif     
 
-
-      dprint("Base Answer Encrypt is Done");
-
-      ret = SBC_BootModeFactory(h_blkio, ImageHandle);
-      if (ret != SBCOK) {
-          eprint("Factory Boot Fail");
-          retval = EFI_INVALID_PARAMETER;
-          goto errdone;
+//    ret = SBC_BootModeFactory(h_blkio, ImageHandle);
+//    if (ret != SBCOK) {
+//        eprint("Factory Boot Fail");
+//        retval = EFI_INVALID_PARAMETER;
+//        is_boot_status = FALSE;
+//        goto errdone;
+//    }
+      if (is_boot_status != TRUE) {
+        goto errdone;
       }
+        // Change the key mode to normal based on key mode behavior scenario.
+      if (tmp_prtheader.keymode != KEY_MODE_NORMAL) {
+        tmp_prtheader.keymode = KEY_MODE_NORMAL;
+        SBC_RawPrtBlockWrite(h_blkio, (UINT8 *)&tmp_prtheader, sizeof(rawprt_hdr_t), 0);
+      }
+
+      ret = SBC_SSBL_LoadAndStart(ssbl_img_hndl);
+      if (ret != SBCOK) {
+        goto errdone;
+      }
+
       //Print(L"Factory BOot Mode end !!! \n");
       break;
     case BOOT_MODE_UPDATE:
 #ifdef _SBC_DEVID_VERIFY_
+
+            ret = SBC_SSBL_Verify(h_blkio, NULL, currbank_id);
+      if (ret != SBCOK) {
+            sbc_err_sysprn(SBC_LOG_CMN_PRIO_ERR, 2,
+                   L"SBC",
+                   L"FSBL",
+                   L"Weapon System",
+                   8,
+                   L"Determine Firmare Tampering ",
+                   L"FSBL tampering check fail");
+            is_boot_status = FALSE;
+            retval = EFI_INVALID_PARAMETER;
+            //goto errdone;
+      }
+
+     sbc_err_sysprn(SBC_LOG_CMN_PRIO_ERR, 2,
+       L"SBC",
+       L"FSBL",
+       L"Weapon System",
+       8,
+       L"Determine Firmare Tampering ",
+       L"FSBL tampering check Done");
+
       ret =  SBC_DeviceIdKyeVerify(h_blkio, diceid.devid, diceid.migid);
       if (ret != SBCOK) {
 //            sbc_err_sysprn(SBC_LOG_CMN_PRIO_ERR, 2,
@@ -851,21 +899,70 @@ UefiMain (
 //                   L"EVT",
 //                   L"Device ID verify fail ");
               retval = EFI_INVALID_PARAMETER;
+              is_boot_status = FALSE;
               goto errdone;
       }
 #endif     
+      ret = SBC_BootModeNormalAndpUdate(h_blkio, ImageHandle, currbank_id);
+      if (ret != SBCOK) {
+          eprint("Normal Boot Fail");
+          retval = EFI_INVALID_PARAMETER;
+          is_boot_status = FALSE;
+          goto errdone;
+      }
+
       break;
     case BOOT_MODE_RECOVERY:
 
+#ifdef _SBC_DEVID_VERIFY_
+
+      ret = SBC_SSBL_Verify(h_blkio, NULL, prevbank_id);
+      if (ret != SBCOK) {
+            sbc_err_sysprn(SBC_LOG_CMN_PRIO_ERR, 2,
+                   L"SBC",
+                   L"FSBL",
+                   L"Weapon System",
+                   8,
+                   L"Determine Firmare Tampering ",
+                   L"FSBL tampering check fail");
+            is_boot_status = FALSE;
+            retval = EFI_INVALID_PARAMETER;
+            //goto errdone;
+      }
+
+     sbc_err_sysprn(SBC_LOG_CMN_PRIO_ERR, 2,
+       L"SBC",
+       L"FSBL",
+       L"Weapon System",
+       8,
+       L"Determine Firmare Tampering ",
+       L"FSBL tampering check Done");
+
+      ret =  SBC_DeviceIdKyeVerify(h_blkio, diceid.devid, diceid.migid);
+      if (ret != SBCOK) {
+//            sbc_err_sysprn(SBC_LOG_CMN_PRIO_ERR, 2,
+//                   L"SBC",
+//                   L"FSBL",
+//                   L"Weapon System",
+//                   8,
+//                   L"EVT",
+//                   L"Device ID verify fail ");
+              retval = EFI_INVALID_PARAMETER;
+              is_boot_status = FALSE;
+              goto errdone;
+      }
+#endif  
       ret = SBC_BootModeNormalAndpUdate(h_blkio, ImageHandle, prevbank_id);
       if (ret != SBCOK) {
           eprint("Normal Boot Fail");
           retval = EFI_INVALID_PARAMETER;
+          is_boot_status = FALSE;
           goto errdone;
       }
       break;
     default:
       Print(L"Unknown Boot Mode ... SHOULD go to Abort\n");
+      is_boot_status = FALSE;
       break;
     }
 
@@ -883,20 +980,21 @@ errdone:
 
 
   // In terms of the Abnormal behavior on Factory Mode 
-  if ((h_rawprtheader.bootmode == BOOT_MODE_FACTORY) && (retval != EFI_SUCCESS)) {
-    // Change the key mode to normal based on key mode behavior scenario.
-    if (tmp_prtheader.keymode != KEY_MODE_NORMAL) {
-      tmp_prtheader.keymode = KEY_MODE_NORMAL;
+    if ((h_rawprtheader.bootmode == BOOT_MODE_FACTORY) && (is_boot_status != TRUE)) {
+      // Change the key mode to normal based on key mode behavior scenario.
+      if (tmp_prtheader.keymode != KEY_MODE_NORMAL) {
+        tmp_prtheader.keymode = KEY_MODE_NORMAL;
 
-      SBC_RawPrtBlockWrite(h_blkio, (UINT8 *)&tmp_prtheader, sizeof(rawprt_hdr_t), 0);
+        SBC_RawPrtBlockWrite(h_blkio, (UINT8 *)&tmp_prtheader, sizeof(rawprt_hdr_t), 0);
+      }
+
+
+      // Log write
+      SBC_ShutdownSystem();
+
+
     }
 
-
-    // Log write 
-    SBC_ShutdownSystem();
-
-
-  }
-   return retval;
+    return retval;
 }
 

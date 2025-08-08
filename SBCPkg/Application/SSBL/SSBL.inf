@@ -11,14 +11,14 @@
 
 [Defines]
   INF_VERSION                    = 1.25
-  BASE_NAME                      = LeoTest
-  MODULE_UNI_FILE                 = leo_test.uni
-  FILE_GUID                      = 2eb48e1b-aaea-4557-bc78-bbe9e5c04328
+  BASE_NAME                      = SSBL
+  MODULE_UNI_FILE                = SSBL.uni
+  FILE_GUID                      = 637d1855-fc44-49c3-a6d2-4f684865124d
   MODULE_TYPE                    = UEFI_APPLICATION
   VERSION_STRING                 = 1.0
   ENTRY_POINT                    = UefiMain
 
-  DEFINE DEBUG_ON_SERIAL_PORT = TRUE
+  DEFINE DEBUG_ON_SERIAL_PORT   = TRUE
 
 #
 # The following information is for reference only and not required by the build tools.
@@ -29,7 +29,7 @@
 #!include MdePkg/MdeLibs.dsc.inc
 
 [Sources]
-  leo_test.c
+  SSBL.c
   SBC_Log.c
   SBC_CryptAES.c
   SBC_SystemControl.c
@@ -70,6 +70,7 @@
   DevicePathLib
   IoLib
   UefiBootManagerLib
+  #ResetSystemLib
   #SerialPortLib
   #PlatformHookLib
   #PciLib
@@ -118,7 +119,8 @@
   leo_test_extra.uni
 
 [BuildOptions]
-   *_GCC_*_DLINK_FLAGS = -Wl,--gc-section
+    *_*_*_CC_FLAGS = -D_FILE_RD_BM_ -D_SBC_DEBUG_ON_
+    
 
 #[BuildOptions.X64]
 #GCC:DEBUG_GCC5_X64_CC_FLAGS = -flto
