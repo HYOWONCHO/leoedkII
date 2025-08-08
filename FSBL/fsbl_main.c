@@ -771,11 +771,7 @@ UefiMain (
         goto errdone;
     }
     
-
-
-    //switch (h_rawprtheader.bootmode)
-    switch (BOOT_MODE_NORMAL) {
-    //switch (h_rawprtheader.bootmode) {
+    switch (h_rawprtheader.bootmode) {
     case BOOT_MODE_NORMAL:
       dprint("Boot Mode is BOOT_MODE_NORMAL");
 #ifdef _SBC_DEVID_VERIFY_
@@ -793,7 +789,7 @@ UefiMain (
             //goto errdone;
       }
 
-     sbc_err_sysprn(SBC_LOG_CMN_PRIO_ERR, 2,
+      sbc_err_sysprn(SBC_LOG_CMN_PRIO_ERR, 2,
        L"SBC",
        L"FSBL",
        L"Weapon System",

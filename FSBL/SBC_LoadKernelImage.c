@@ -335,7 +335,7 @@ SBCStatus SBC_SSBL_LoadAndStart(EFI_HANDLE ImageHandle)
 
   for (UINTN i = 0; i < HandleCount; i++) {
  
-    DevicePath = FileDevicePath(Handles[i], L"\\EFI\\rocky\\SSBL.efi");
+    DevicePath = FileDevicePath(Handles[i], L"\\EFI\\boot\\SSBL.efi");
 //    DevicePath = FileDevicePath(Handles[i], L"\\EFI\\BOOT\\SSBLFactory.efi");
     PathStr = ConvertDevicePathToText(DevicePath, TRUE, TRUE);
     if (PathStr != NULL) {
