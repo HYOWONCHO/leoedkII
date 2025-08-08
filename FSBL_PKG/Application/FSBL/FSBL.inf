@@ -12,7 +12,7 @@
 [Defines]
   INF_VERSION                    = 1.25
   BASE_NAME                      = FSBL
-  MODULE_UNI_FILE                 = leo_test.uni
+  MODULE_UNI_FILE                = leo_test.uni
   FILE_GUID                      = 2eb48e1b-aaea-4557-bc78-bbe9e5c04328
   MODULE_TYPE                    = UEFI_APPLICATION
   VERSION_STRING                 = 1.0
