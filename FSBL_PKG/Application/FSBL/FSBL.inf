@@ -1,16 +1,16 @@
 ## @file
-#  Brief Description of UEFI MyHelloWorld
+#  Brief Description of UEFI Software Antitampering
 #
 #  Detailed Description of UEFI MyWizardDriver
 #
-#  Copyright for UEFI  MyHelloWorld
+#  Copyright for UEFI  Software Antitampering
 #
-#  License for UEFI  MyHelloWorld
+#  License for UEFI  Software Antitampering
 #
 ##
 
 [Defines]
-  INF_VERSION                    = 1.25
+  INF_VERSION                    = 0x00010006
   BASE_NAME                      = FSBL
   MODULE_UNI_FILE                = leo_test.uni
   FILE_GUID                      = 2eb48e1b-aaea-4557-bc78-bbe9e5c04328
