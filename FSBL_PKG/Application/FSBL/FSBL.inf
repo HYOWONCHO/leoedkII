@@ -25,7 +25,70 @@
  
 [Packages]
   MdePkg/MdePkg.dec
+  MdeModulePkg/MdeModulePkg.dec
+  CryptoPkg/CryptoPkg.dec
+  SecurityPkg/SecurityPkg.dec
+  UefiPayloadPkg/UefiPayloadPkg.dec
+  ShellPkg/ShellPkg.dec
 
 [LibraryClasses]
   UefiApplicationEntryPoint
-  UefiLib 
+  BaseLib
+  BaseMemoryLib
+  UefiBootServicesTableLib
+  UefiRuntimeServicesTableLib
+  DebugLib
+  UefiLib
+  MemoryAllocationLib
+  DxeServicesLib
+  PrintLib
+  RngLib
+  BaseCryptLib
+  ShellLib
+  HandleParsingLib
+  ShellCommandLib
+  PcdLib
+  DevicePathLib
+  IoLib
+  UefiBootManagerLib
+
+[Guids]
+  gEfiFileInfoGuid
+  ## SOMETIMES_CONSUMES   ## GUID # Locate protocol
+  ## SOMETIMES_CONSUMES   ## GUID # SmiHandlerRegister
+
+  ##gEdkiiMemoryProfileGuid
+  ##gEdkiiPiSmmCommunicationRegionTableGuid    ## SOMETIMES_CONSUMES ## SystemTable
+  ##gEfiFileSystemVolumeLabelInfoIdGuid           # SOMETIMES_CONSUMED
+  ##gEfiFileInfoGuid                              # SOMETIMES_CONSUMED
+  ##gEfiFileSystemInfoGuid                        # SOMETIMES_CONSUME
+
+[Ppis]
+
+[Protocols]
+  gEfiSimpleFileSystemProtocolGuid
+  gEfiBlockIoProtocolGuid
+  gEfiSerialIoProtocolGuid
+  gEfiNvmExpressPassThruProtocolGuid
+  gEfiDevicePathToTextProtocolGuid
+
+
+[FeaturePcd]
+
+[Pcd]
+  gEfiMdeModulePkgTokenSpaceGuid.PcdSerialRegisterBase
+  gEfiMdePkgTokenSpaceGuid.PcdUefiLibMaxPrintBufferSize
+	
+
+[FixedPcd]
+  gEfiMdePkgTokenSpaceGuid.PcdUartDefaultBaudRate
+  gEfiMdePkgTokenSpaceGuid.PcdUartDefaultDataBits
+  gEfiMdePkgTokenSpaceGuid.PcdUartDefaultParity
+  gEfiMdePkgTokenSpaceGuid.PcdUartDefaultStopBits
+
+
+[UserExtensions.TianoCore."ExtraFiles"]
+  leo_test_extra.uni
+
+#[BuildOptions.X64]
+#GCC:DEBUG_GCC5_X64_CC_FLAGS = -flto
