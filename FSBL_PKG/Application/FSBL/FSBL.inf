@@ -21,7 +21,15 @@
 
 [Sources]
   FSBL.c
- 
+  SBC_Log.c
+  SBC_CryptAES.c
+  SBC_SystemControl.c
+  SBC_FileCtrl.c
+  SBC_EccSignVeriify.c
+  SBC_Hashing.c
+  SBC_AntiTampering.c
+  SBC_X509.c
+  SBC_LoadKernelImage.c 
  
 [Packages]
   MdePkg/MdePkg.dec
