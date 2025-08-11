@@ -63,13 +63,14 @@
   PrintLib
   RngLib
   BaseCryptLib
-  ShellLib
   HandleParsingLib
-  ShellCommandLib
   PcdLib
   DevicePathLib
   IoLib
   UefiBootManagerLib
+
+  #ShellLib
+  #ShellCommandLib
   #ResetSystemLib
   #SerialPortLib
   #PlatformHookLib
