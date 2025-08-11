@@ -19,7 +19,7 @@
 #include <malloc.h>
 #include <Register/Intel/Cpuid.h>
 
-#include <Library/ShellLib.h>
+//#include <Library/ShellLib.h>
 #include <Library/MemoryAllocationLib.h>
 #include <Protocol/Smbios.h>
 
@@ -703,6 +703,7 @@ UefiMain (
     EFI_HANDLE ssbl_img_hndl = NULL;
     
  
+
 
     dprint("------------- FSBL START -------------\n");
 

@@ -28,6 +28,7 @@
    TimerLib|MdePkg/Library/SecPeiDxeTimerLibCpu/SecPeiDxeTimerLibCpu.inf
 
 
+
 [LibraryClasses.common]
    UefiApplicationEntryPoint|MdePkg/Library/UefiApplicationEntryPoint/UefiApplicationEntryPoint.inf
    UefiDriverEntryPoint|MdePkg/Library/UefiDriverEntryPoint/UefiDriverEntryPoint.inf
@@ -60,12 +61,12 @@
    ReportStatusCodeLib|MdePkg/Library/BaseReportStatusCodeLibNull/BaseReportStatusCodeLibNull.inf
 
    PeCoffGetEntryPointLib|MdePkg/Library/BasePeCoffGetEntryPointLib/BasePeCoffGetEntryPointLib.inf
-   BcfgCommandLib|ShellPkg/Library/UefiShellBcfgCommandLib/UefiShellBcfgCommandLib.inf
-   AcpiViewCommandLib|ShellPkg/Library/UefiShellAcpiViewCommandLib/UefiShellAcpiViewCommandLib.inf
+   #BcfgCommandLib|ShellPkg/Library/UefiShellBcfgCommandLib/UefiShellBcfgCommandLib.inf
+   #AcpiViewCommandLib|ShellPkg/Library/UefiShellAcpiViewCommandLib/UefiShellAcpiViewCommandLib.inf
    IoLib|MdePkg/Library/BaseIoLibIntrinsic/BaseIoLibIntrinsic.inf
 
-   ShellLib|ShellPkg/Library/UefiShellLib/UefiShellLib.inf
-   ShellCommandLib|ShellPkg/Library/UefiShellCommandLib/UefiShellCommandLib.inf
+   #ShellLib|ShellPkg/Library/UefiShellLib/UefiShellLib.inf
+   #ShellCommandLib|ShellPkg/Library/UefiShellCommandLib/UefiShellCommandLib.inf
    HandleParsingLib|ShellPkg/Library/UefiHandleParsingLib/UefiHandleParsingLib.inf
 
 [PcdsFixedAtBuild]
@@ -121,7 +122,7 @@
 
 [Components]
    SBCPkg/Application/FSBL/FSBL.inf
-   SBCPkg/Application/SSBL/SSBL.inf
+   #SBCPkg/Application/SSBL/SSBL.inf
 
    ShellPkg/Library/UefiShellLib/UefiShellLib.inf
    FtdiUsbSerialDxe/FtdiUsbSerialDxe.inf

@@ -17,32 +17,33 @@
 [Guids]
 
 [Protocols]
+  #gEfiShellEnvironment2Guid           = {0x47c7b221, 0xc42a, 0x11d2, {0x8e, 0x57, 0x00, 0xa0, 0xc9, 0x69, 0x72, 0x3b}}
   
 [PcdsFeatureFlag]
   ## This flag is used to control whether the shell includes NT32 platform Guids
   #  and thereby prevents dependancy on that Pkg
-  gEfiShellPkgTokenSpaceGuid.PcdShellIncludeNtGuids|TRUE|BOOLEAN|0x0000000E
+  #gEfiShellPkgTokenSpaceGuid.PcdShellIncludeNtGuids|TRUE|BOOLEAN|0x0000000E
 
   ## This flag is used to control HII required by the shell
-  gEfiShellPkgTokenSpaceGuid.PcdShellRequireHiiPlatform|TRUE|BOOLEAN|0x00000003
+  3gEfiShellPkgTokenSpaceGuid.PcdShellRequireHiiPlatform|TRUE|BOOLEAN|0x00000003
 
   ## This flag is used to control HII required by the shell
-  gEfiShellPkgTokenSpaceGuid.PcdShellSupportFrameworkHii|FALSE|BOOLEAN|0x00000004
+  #gEfiShellPkgTokenSpaceGuid.PcdShellSupportFrameworkHii|FALSE|BOOLEAN|0x00000004
 
   ## This flag forces the shell to present a user console.  Allows for earlier debugging of platforms.
-  gEfiShellPkgTokenSpaceGuid.PcdShellForceConsole|FALSE|BOOLEAN|0x0000000F
+  #gEfiShellPkgTokenSpaceGuid.PcdShellForceConsole|FALSE|BOOLEAN|0x0000000F
 
 [PcdsFixedAtBuild]
   ## This flag is used to control initialization of the shell library
   #  This should be FALSE for compiling the shell application itself only.
   #  This should be FALSE for compiling the dynamic command drivers.
-  gEfiShellPkgTokenSpaceGuid.PcdShellLibAutoInitialize|TRUE|BOOLEAN|0x00000005
+  #gEfiShellPkgTokenSpaceGuid.PcdShellLibAutoInitialize|TRUE|BOOLEAN|0x00000005
 
   ## This is the max buffer for ShellLib and internal Shell printings.
-  gEfiShellPkgTokenSpaceGuid.PcdShellPrintBufferSize|16000|UINT32|0x0000000C
+  #gEfiShellPkgTokenSpaceGuid.PcdShellPrintBufferSize|16000|UINT32|0x0000000C
 
   ## This flag is used to control the commands available in the shell
-  gEfiShellPkgTokenSpaceGuid.PcdShellSupportLevel|3|UINT8|0x00000001
+  #gEfiShellPkgTokenSpaceGuid.PcdShellSupportLevel|3|UINT8|0x00000001
 
   ## This flag is used to control the profiles available in the shell
   #  don't forget to update the text file if you change this.
@@ -51,16 +52,16 @@
   #  bit 2 = Install1
   #  bit 3 = Network1
   #  bit 4 = Network2
-  gEfiShellPkgTokenSpaceGuid.PcdShellProfileMask|0xFF|UINT8|0x0000000D
+  #gEfiShellPkgTokenSpaceGuid.PcdShellProfileMask|0xFF|UINT8|0x0000000D
 
   ## This is the character count for allocation for consistent mappings
-  gEfiShellPkgTokenSpaceGuid.PcdShellMapNameLength|50|UINT8|0x00000009
+  #gEfiShellPkgTokenSpaceGuid.PcdShellMapNameLength|50|UINT8|0x00000009
 
   ## This determines how many bytes are read out of files at a time for file operations (type, copy, etc...)
-  gEfiShellPkgTokenSpaceGuid.PcdShellFileOperationSize|0x1000|UINT32|0x0000000A
+  #gEfiShellPkgTokenSpaceGuid.PcdShellFileOperationSize|0x1000|UINT32|0x0000000A
 
   ## This determines the max count of history commands
-  gEfiShellPkgTokenSpaceGuid.PcdShellMaxHistoryCommandCount|0x0020|UINT16|0x00000014
+  #gEfiShellPkgTokenSpaceGuid.PcdShellMaxHistoryCommandCount|0x0020|UINT16|0x00000014
 
   # Base address of the UART controller (e.g., COM2)
   #gEfiMdeModulePkgTokenSpaceGuid.PcdSerialPortBaseAddress|0x2F8
@@ -68,33 +69,33 @@
 [PcdsFixedAtBuild, PcdsPatchableInModule, PcdsDynamic, PcdsDynamicEx]
   ## This flag is used to control the protocols produced by the shell
   #  If TRUE the shell will produce EFI_SHELL_ENVIRONMENT2 and EFI_SHELL_INTERFACE
-  gEfiShellPkgTokenSpaceGuid.PcdShellSupportOldProtocols|FALSE|BOOLEAN|0x00000002
+  #gEfiShellPkgTokenSpaceGuid.PcdShellSupportOldProtocols|FALSE|BOOLEAN|0x00000002
 
   ## this flag determines whether Page Break (-b) defaults to on or off in the shell
-  gEfiShellPkgTokenSpaceGuid.PcdShellPageBreakDefault|FALSE|BOOLEAN|0x00000006
+  #gEfiShellPkgTokenSpaceGuid.PcdShellPageBreakDefault|FALSE|BOOLEAN|0x00000006
 
   ## this flag determines whether insert mode for typing is default (FALSE means typeover)
-  gEfiShellPkgTokenSpaceGuid.PcdShellInsertModeDefault|TRUE|BOOLEAN|0x00000007
+  #gEfiShellPkgTokenSpaceGuid.PcdShellInsertModeDefault|TRUE|BOOLEAN|0x00000007
 
   ## this flag determines the default number of screens kept for history log.
   #  the spec defines 3 as the minimum
-  gEfiShellPkgTokenSpaceGuid.PcdShellScreenLogCount|3|UINT8|0x00000008
+  #gEfiShellPkgTokenSpaceGuid.PcdShellScreenLogCount|3|UINT8|0x00000008
 
   ## Unicode string of the shell supplier
-  gEfiShellPkgTokenSpaceGuid.PcdShellSupplier|L"EDK II"|VOID*|0x00000010
+  #gEfiShellPkgTokenSpaceGuid.PcdShellSupplier|L"EDK II"|VOID*|0x00000010
 
   ## Do extended decode of USB for determining media type
-  gEfiShellPkgTokenSpaceGuid.PcdUsbExtendedDecode|TRUE|BOOLEAN|0x00000011
+  #gEfiShellPkgTokenSpaceGuid.PcdUsbExtendedDecode|TRUE|BOOLEAN|0x00000011
 
   ## Do iSCSI decode for map names.
   # This is disabled by default due to the length of generated strings
-  gEfiShellPkgTokenSpaceGuid.PcdShellDecodeIScsiMapNames|FALSE|BOOLEAN|0x00000012
+  #gEfiShellPkgTokenSpaceGuid.PcdShellDecodeIScsiMapNames|FALSE|BOOLEAN|0x00000012
 
   ## Controls Extended decode for Vendor device path nodes for map names.
   # Up to this many bytes of vendor specific data will be used. Default is 0
   # (disabled).
-  gEfiShellPkgTokenSpaceGuid.PcdShellVendorExtendedDecode|0|UINT32|0x00000013
+  #gEfiShellPkgTokenSpaceGuid.PcdShellVendorExtendedDecode|0|UINT32|0x00000013
 
   ## Controls the default delay the shell will offer to the user at the
   # start to check if the user wishes to cancel the script autostart
-  gEfiShellPkgTokenSpaceGuid.PcdShellDefaultDelay|5|UINT32|0x00000015  
+  #gEfiShellPkgTokenSpaceGuid.PcdShellDefaultDelay|5|UINT32|0x00000015  
