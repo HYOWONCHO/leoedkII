@@ -782,7 +782,7 @@ UefiMain (
 
    // Step 1-1 )  FSBL, self sign and verify
 
-    return EFI_SUCCESS; 
+    //return EFI_SUCCESS; 
 
 
 
