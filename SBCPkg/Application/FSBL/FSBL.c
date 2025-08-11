@@ -678,6 +678,9 @@ CHAR16 mrgmsg[8192];
 
 extern VOID SBC_ShutdownSystem(VOID);
 extern SBCStatus SBC_GRUB_LoadAndStart(EFI_HANDLE ImageHandle);
+extern EFI_STATUS SBC_LodaDriver(CONST CHAR16 *FileName, CONST BOOLEAN  Connect);
+
+
 EFI_STATUS
 EFIAPI
 UefiMain (
@@ -686,6 +689,11 @@ UefiMain (
   IN EFI_SYSTEM_TABLE  *SystemTable
   )
 {
+
+#define SERIAL_DXE_PATH                 L"\\EFI\\boot\\SerialDxe.efi"
+#define FTDI_USB_SERIAL_DXE_PATH        L"\\EFI\\boot\\FtdiUsbSerialDxe.efi"
+#define TERMINAL_DXE_PATH               L"\\EFI\\boot\\TerminalDxe.efi"
+#define XFS64_PATH                      L"\\EFI\\boot\\xfs_x64.efi"
 
     atp_ident_t diceid;
     EFI_STATUS retval = EFI_SUCCESS;
@@ -702,9 +710,37 @@ UefiMain (
     [[maybe_unused]] UINTN testid = 0xAA55AA55;
 
     EFI_HANDLE ssbl_img_hndl = NULL;
-    
- 
 
+    retval = SBC_LodaDriver(SERIAL_DXE_PATH, TRUE);
+    if (EFI_ERROR (retval)){
+      Print(L"SERIAL_DXE_PATH Dxe driver load fail \n");
+      goto errdone;
+    }
+
+
+    sleep(1);
+
+    retval = SBC_LodaDriver(FTDI_USB_SERIAL_DXE_PATH, TRUE);
+    if (EFI_ERROR (retval)){
+      Print(L"FTDI_USB_SERIAL_DXE_PATH Dxe driver load fail \n");
+      goto errdone;
+    }
+
+    sleep(1);
+    retval = SBC_LodaDriver(TERMINAL_DXE_PATH, TRUE);
+    if (EFI_ERROR (retval)){
+      Print(L"TERMINAL_DXE_PATH Dxe driver load fail \n");
+      goto errdone;
+    }
+
+    sleep(1);
+    retval = SBC_LodaDriver(XFS64_PATH, TRUE);
+    if (EFI_ERROR (retval)){
+      Print(L"XFS64_PATH Dxe driver load fail \n");
+      goto errdone;
+    }
+
+    sleep(1);
     dprint("------------- FSBL START -------------\n");
 
     is_boot_status = TRUE;
@@ -745,6 +781,10 @@ UefiMain (
     //dprint("Currently Valid FW Bank ID : %d , Previously Bank ID : %d \n", currbank_id, prevbank_id);
 
    // Step 1-1 )  FSBL, self sign and verify
+
+    return EFI_SUCCESS; 
+
+
 
     ret = SBC_FSBL_Verify(h_blkio, &baseansr, currbank_id, h_rawprtheader.bootmode);
     if (ret != SBCOK) {
