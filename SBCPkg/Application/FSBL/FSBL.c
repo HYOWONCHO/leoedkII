@@ -778,7 +778,7 @@ UefiMain (
         retval = EFI_INVALID_PARAMETER;
         goto errdone;
     }
-    //dprint("Currently Valid FW Bank ID : %d , Previously Bank ID : %d \n", currbank_id, prevbank_id);
+    dprint("Currently Valid FW Bank ID : %d , Previously Bank ID : %d \n", currbank_id, prevbank_id);
 
    // Step 1-1 )  FSBL, self sign and verify
 
