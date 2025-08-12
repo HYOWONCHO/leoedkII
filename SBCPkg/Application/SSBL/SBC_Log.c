@@ -921,7 +921,7 @@ SBC_LogPrint(
     nxtofs += UnicodeSPrint(
                 full_log_msg + nxtofs,
                 remaining_buffer_bytes,
-                L"%d %d %04d-%02d-%02dT%02d:%02d:%02d %s %s %s R-SAT-PWT-SFR-%03d %s ",
+                L"<%d> %d %04d-%02d-%02dT%02d:%02d:%02d %s %s %s R-SAT-PWT-SFR-%03d %s ",
                 prio, ver,
                 logtime.Year, logtime.Month, logtime.Day,
                 logtime.Hour, logtime.Minute, logtime.Second,

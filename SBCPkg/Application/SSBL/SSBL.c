@@ -377,6 +377,14 @@ UefiMain (
     intgreen_dprint("------------- SSBL Factory System START -------------\n");
 #endif
 
+    sbc_err_sysprn(SBC_LOG_CMN_PRIO_INFO, 2,
+       L"AT_BOOT",
+       L"SSBL",
+       L"SAT",
+       8,
+       L"Decetion",
+       L"SSBL Starting");
+
     ZeroMem(&btproc, sizeof btproc);
     ZeroMem(&h_rawptrheader, sizeof h_rawptrheader);
 
@@ -455,7 +463,7 @@ UefiMain (
     
 
   sbc_err_sysprn(SBC_LOG_CMN_PRIO_INFO, 2,
-       L"SBC",
+       L"AT_BOOT",
        L"SSBL",
        L"SAT",
        8,
