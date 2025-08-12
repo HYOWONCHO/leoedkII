@@ -109,7 +109,6 @@ SBCStatus  SBC_GetFileSize(CHAR16 *FileName, UINTN  *FileSize)
 
 
     hndlcnt = SBC_FindEfiFileSystemProtocol(&ImageHandle);
-    Print(L"Hndl Count :%d \n", hndlcnt);
     if (hndlcnt <= 0) {
         Print(L"File Sys handle find fail : %d \n", hndlcnt);
         return SBCFAIL;
@@ -264,7 +263,7 @@ EFI_STATUS SBC_WriteFile(EFI_HANDLE ImageHandle, CHAR16 *FileNames, LV_t *out)
   //UINTN BufferSize = 128;
   //CHAR8 Buffer[128];
 
-  //dprint();
+  ////dprint();
 
   //TODO
   // out buffer nill check
@@ -273,14 +272,14 @@ EFI_STATUS SBC_WriteFile(EFI_HANDLE ImageHandle, CHAR16 *FileNames, LV_t *out)
   Status = gBS->HandleProtocol(ImageHandle,
                                &gEfiSimpleFileSystemProtocolGuid,
                                (VOID **)&FileSystem);
-  //dprint();
+  ////dprint();
   if(EFI_ERROR(Status)) {
     DEBUG((DEBUG_ERROR, " %a:%d Locate File Systam fail (%r) \r\n",
            __FUNCTION__, __LINE__, Status));
     return Status;
   }
 
-  //dprint();
+  ////dprint();
   // Open the roor directory
   Status = FileSystem->OpenVolume(FileSystem, &RootDir);
   if (EFI_ERROR(Status)) {
@@ -289,22 +288,22 @@ EFI_STATUS SBC_WriteFile(EFI_HANDLE ImageHandle, CHAR16 *FileNames, LV_t *out)
     return Status;
   }
 
-  //dprint();
+  ////dprint();
   // Open the file
   Status = RootDir->Open(RootDir, &File, FileNames, EFI_FILE_MODE_READ | EFI_FILE_MODE_WRITE | EFI_FILE_MODE_CREATE, 0);
   if (EFI_ERROR(Status)) {
       DEBUG((DEBUG_ERROR, " %a:%d RootDir->Open fail (%r) \r\n",
      __FUNCTION__, __LINE__, Status));
-      //dprint();
+      ////dprint();
       RootDir->Close(RootDir);
     return Status;
   }
 
-  //dprint();
+  ////dprint();
   // Read the file
   Status = File->Write(File, (UINTN *)&out->length, out->value);
   if (EFI_ERROR(Status)) {
-      //dprint();
+      ////dprint();
       DEBUG((DEBUG_ERROR, " %a:%d File->Write fail (%r) \r\n",
               __FUNCTION__, __LINE__, Status));
       //Print(L"File Content: %a\n", Buffer);
@@ -314,7 +313,7 @@ EFI_STATUS SBC_WriteFile(EFI_HANDLE ImageHandle, CHAR16 *FileNames, LV_t *out)
       return Status;
   }
 
-  //dprint();
+  ////dprint();
 
 
   // Close the file
@@ -1062,7 +1061,7 @@ SBCStatus  SBC_BlkIoHandleInit(OUT VOID **hblk, OUT VOID *hdr)
         FreePool(ReadBuffer);      
 
         //((rawprt_hdr_t *)hdr)->magicid  = SBC_SWAP_ENDIAN_32(((rawprt_hdr_t *)hdr)->magicid);
-        Print(L"%d Magic ID : 0x%x \n", idx, ((rawprt_hdr_t *)hdr)->magicid);
+        //Print(L"%d Magic ID : 0x%x \n", idx, ((rawprt_hdr_t *)hdr)->magicid);
 
         
         

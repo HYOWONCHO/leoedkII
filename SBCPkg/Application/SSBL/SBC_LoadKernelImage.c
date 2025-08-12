@@ -14,10 +14,150 @@
 #include <Guid/FileInfo.h>
 
 #include "SBC_FileCtrl.h"
+#include "SBC_AntiTampering.h"
 
 // Define the path to grubx64.efi relative to the root of the file system
 // Adjust this path if your grubx64.efi is located elsewhere (e.g., "\EFI\ubuntu\grubx64.efi")
 #define GRUB_EFI_PATH L"\\EFI\\rocky\\grubx64.efi"
+
+
+EFI_STATUS
+SBC_ConnectAllEfi (
+  VOID
+  )
+{
+  EFI_STATUS  Status;
+  UINTN       HandleCount;
+  EFI_HANDLE  *HandleBuffer;
+  UINTN       Index;
+
+  Status = gBS->LocateHandleBuffer (
+                  AllHandles,
+                  NULL,
+                  NULL,
+                  &HandleCount,
+                  &HandleBuffer
+                  );
+  if (EFI_ERROR (Status)) {
+    return Status;
+  }
+
+  for (Index = 0; Index < HandleCount; Index++) {
+    Status = gBS->ConnectController (HandleBuffer[Index], NULL, NULL, TRUE);
+  }
+
+  if (HandleBuffer != NULL) {
+    FreePool (HandleBuffer);
+  }
+
+  return EFI_SUCCESS;
+}
+
+/*!
+ * \fn EFI_STATUS SBC_LodaDriver(CONST CHAR16 *FileName, CONST BOOLEAN  Connect)
+ * 
+ * Function to Load a .EFI driver into memory and possible connect the driver 
+ * 
+ * \author leoc (8/12/25)
+ * 
+ * \param FileName File name of the driver to load
+ * \param Connect  Not yet support 
+ * 
+ * \return On success, return the EFI_SUCCESS, otherwise, it is ERROR 
+ */
+EFI_STATUS SBC_LodaDriver(CONST CHAR16 *FileName, CONST BOOLEAN  Connect)
+{
+  EFI_HANDLE                 LoadedDriverHandle;
+  EFI_HANDLE *Handles;
+  UINTN HandleCount;
+  [[maybe_unused]]EFI_STATUS                 Status;
+  EFI_DEVICE_PATH_PROTOCOL   *DevicePath;
+  [[maybe_unused]]EFI_LOADED_IMAGE_PROTOCOL  *LoadedDriverImage;
+  CHAR16 *PathStr;
+
+  LoadedDriverImage  = NULL;
+  DevicePath           = NULL;
+  LoadedDriverHandle = NULL;
+  Status             = EFI_SUCCESS;
+
+  ASSERT (FileName != NULL);
+
+  gBS->LocateHandleBuffer(ByProtocol, 
+                          &gEfiSimpleFileSystemProtocolGuid, 
+                          NULL, 
+                          &HandleCount, 
+                          &Handles);
+
+  //for (UINTN i = 0; i < HandleCount; i++) {
+ 
+    DevicePath = FileDevicePath(Handles[0], FileName);
+//    DevicePath = FileDevicePath(Handles[i], L"\\EFI\\BOOT\\SSBLFactory.efi");
+    PathStr = ConvertDevicePathToText(DevicePath, TRUE, TRUE);
+    if (PathStr != NULL) {
+      Print(L"Device Path: %s\n", PathStr);
+      FreePool(PathStr);
+    } else {
+      Print(L"Failed to convert device path to string.\n");
+      //return SBCFAIL;
+    }
+    Status = gBS->LoadImage(FALSE, 
+                                       gImageHandle, 
+                                       DevicePath, 
+                                       NULL, 
+                                       0, 
+                                       &LoadedDriverHandle);
+
+    if (Status == EFI_SECURITY_VIOLATION) {
+      gBS->UnloadImage (LoadedDriverHandle);
+     Print(L"Image '%s' is not an image \r\n",  FileName);
+    }
+
+    if (!EFI_ERROR(Status)) {
+      Status = gBS->HandleProtocol (LoadedDriverHandle, &gEfiLoadedImageProtocolGuid, (VOID *)&LoadedDriverImage);
+      ASSERT (LoadedDriverImage != NULL);
+
+      if (  EFI_ERROR (Status)
+         || (  (LoadedDriverImage->ImageCodeType != EfiBootServicesCode)
+            && (LoadedDriverImage->ImageCodeType != EfiRuntimeServicesCode))
+            )
+      {
+        Print(L"Image '%s' is not a driver \r\n",  FileName);
+
+        //
+        // Exit and unload the non-driver image
+        //
+        gBS->Exit (LoadedDriverHandle, EFI_INVALID_PARAMETER, 0, NULL);
+        Status = EFI_INVALID_PARAMETER;
+      }
+    }
+
+    if (!EFI_ERROR(Status)) {
+      Status = gBS->StartImage(LoadedDriverHandle, NULL, NULL);
+      if (EFI_ERROR (Status)) {
+        Print(L"Imasge '%s' error in StartImage: %r \r\n", FileName, Status);
+      }
+      else {
+        Print(L"Image '%s' loaded at %p - %r \r\n", 
+              FileName,
+              LoadedDriverImage->ImageBase,
+              Status );
+        //return SBCOK;
+      }
+
+    }
+  //}
+
+    if (!EFI_ERROR (Status) && Connect) {
+      Status = SBC_ConnectAllEfi();
+    }
+
+
+    Print(L"Last status : %r \r\n", Status);
+
+
+  return Status;
+
+}
 
 /**
   The user Entry Point for Application.
@@ -264,7 +404,7 @@ VOID LoadFile(EFI_HANDLE        ImageHandle,VOID **rdout, UINTN *rdlen)
 
   EFI_STATUS retval;
   EFI_HANDLE h_img =NULL;
-  CHAR16 *ssblpath = L"\\EFI\\boot\\SSBL.efi";
+  CHAR16 *ssblpath = EFI_BOOT_SSBL_PATH;
   
   UINTN len;
   LV_t lvout;
@@ -374,7 +514,7 @@ SSBL_Load (
 //LoadFile(ImageHandle, &rdbuf, &rdlen);
   // 1. Get the device path to the target EFI executable
   // Assuming TargetApp.efi is in the same directory as MyLauncher.efi
-  Status = LocateDevicePathForFile(ImageHandle, L"\\EFI\\boot\\SSBL.efi", &TargetAppDevicePath);
+  Status = LocateDevicePathForFile(ImageHandle, EFI_BOOT_SSBL_PATH, &TargetAppDevicePath);
   Print(L"Return code : %d \n", Status);
   if (EFI_ERROR(Status)) {
     Print(L"Failed to locate device path for TargetApp.efi: %r\n", Status);

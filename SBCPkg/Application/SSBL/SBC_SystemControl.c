@@ -82,14 +82,13 @@ SBCStatus SBC_BootKeyModeChange(UINT32 newbm, UINT32 newkey, VOID *priv)
     hdr->bootmode = newbm;
     hdr->keymode = newkey;
 
-    dprint();
+    //dprint();
     SBC_RET_VALIDATE_ERRCODEMSG((bp->blkhnd != NULL), SBCNULLP, "Raw Partition Block IO Handle Nill");
 
-    dprint();
+    //dprint();
     CopyMem(wrbuf, (void *)hdr, sizeof *hdr);
-    SBC_mem_print_bin("Mode Change", wrbuf, 512);
+    SBC_mem_print_bin("Mode Change", wrbuf, 128);
     // Boot Mode write
-    dprint();
     ret = SBC_RawPrtBlockWrite(bp->blkhnd,(UINT8 *)wrbuf, 512,0);
     SBC_RET_VALIDATE_ERRCODEMSG((ret == SBCOK), ret, "Boot and Key mode write fail");
 
@@ -152,7 +151,6 @@ static SBCStatus _update_behavior_for_km(void *priv)
             goto errdone;
         }
 
-        dprint();
 //      ret = SBC_BootKeyModeChange(BOOT_MODE_RECOVERY, KEY_MODE_NORMAL, priv);
 //      if(ret != SBCOK) {
 //          eprint("Boot Mode and Key Mode change fail");
@@ -178,16 +176,16 @@ static SBCStatus  SBC_UpdateBootPorcsesing(void *priv)
     
     switch(bp->km) {
     case KEY_MODE_NORMAL:
-        dprint();
+        //dprint();
         ret = _update_behavior_for_km(priv);
-        dprint();
+        //dprint();
         break;
     case KEY_MODE_BOOT:
         break;
     case KEY_MODE_UPDATE:
-        dprint();
+        //dprint();
         ret = _update_behavior_for_km(priv);
-        dprint();
+        //dprint();
         break;
     case KEY_MODE_NONE:
         break;
@@ -314,17 +312,17 @@ static void _update_reset_check_and_behavior(VOID *priv)
         dprint("Boot State : %d", bp->bootst);
         switch(bp->bootst) {
         case SB_PROC_ST_NRMA:
-            dprint();
+            //dprint();
             SBC_BootKeyModeChange(BOOT_MODE_RECOVERY, KEY_MODE_NORMAL, priv);
             break;
         case SB_PROC_ST_ABNRAM:
             if(bp->pvs_sw_bnk) {
-                dprint();
+                //dprint();
                 // if existense the previously firmware 
                 SBC_BootKeyModeChange(BOOT_MODE_RECOVERY, KEY_MODE_UPDATE, priv);
             }
             else {
-                dprint();
+                //dprint();
                 SBC_BootKeyModeChange(BOOT_MODE_FACTORY, KEY_MODE_UPDATE, priv);
             }
             break;
@@ -340,7 +338,7 @@ static void _update_reset_check_and_behavior(VOID *priv)
         dprint("Unknown Key Mode");
         break;
     }
-    dprint();
+    //dprint();
 
 
     return;
@@ -353,7 +351,7 @@ VOID SBC_ResetScenario(VOID *priv)
     switch(bp->bm) {
     case BOOT_MODE_UPDATE:
         {   
-            dprint();
+            //dprint();
             _update_reset_check_and_behavior(priv);
         }
         break;
@@ -404,7 +402,7 @@ SBCStatus  SBC_SecureBootCheck(VOID *priv)
 
         // TODO : Baseanswer verify
         ret = SBC_BaseAnswerValidate(bp->blkhnd,
-                                     bp->baseansr,
+                                     ((LV_t *)bp->baseansr)->value,
                                      SBC_BASE_ANSR_LEN,
                                      ((atp_ident_t *)bp->keyinfo)->osid,
                                      SBC_OSID_KEY_LEN);
@@ -429,7 +427,7 @@ SBCStatus  SBC_SecureBootCheck(VOID *priv)
 
     case BOOT_MODE_UPDATE:
         ret = SBC_UpdateBootPorcsesing(priv);
-        dprint();
+        //dprint();
         break;
     default:
       goto errdone;

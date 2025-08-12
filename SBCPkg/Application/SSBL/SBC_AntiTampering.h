@@ -3,7 +3,9 @@
 
 #define OSID_KERNEL_PATH            L"\\boot\\vmlinuz-5.14.0-284.11.1.el9_2.x86_64"            
 
-#define STR_FSBL_F_NAME             L"FS1:\\EFI\\BOOT\\FSBL.efi"
+#define EFI_BOOT_FSBL_PATH          L"\\EFI\\boot\\FSBL.efi"
+#define EFI_BOOT_SSBL_PATH          L"\\EFI\\boot\\SSBL.efi"
+
 #define SBC_AT_HASH_LEN             32
 #define SBC_AT_IV_LEN               12
 #define SBC_AT_TAG_LEN              16

@@ -157,7 +157,7 @@ SBCStatus SBC_BootModeFactory(VOID *blkhnd, VOID *ImageHandle)
   [[maybe_unused]]UINTN endlba = 0;
   [[maybe_unused]]INTN       hndlcnt = 0;
   __attribute__((unused))EFI_STATUS retval;
-  [[gnu::unused]]CHAR16 *fname = L"\\EFI\\rocky\\SSBL.efi";
+  [[gnu::unused]]CHAR16 *fname = EFI_BOOT_SSBL_PATH;
 
 
   LV_t wrlv;
@@ -495,11 +495,25 @@ UefiMain (
     switch (h_rawptrheader.bootmode) {
 #endif
     case BOOT_MODE_NORMAL:
+        dprint("Boot Mode is BOOT_MODE_NORMAL");
 #if defined(_FILE_RD_BM_)
         h_rawptrheader.keymode = KEY_MODE_NORMAL;
         SBC_BootKeyModeChange(BOOT_MODE_NORMAL, KEY_MODE_NORMAL, (void *)&btproc);
 #endif
-       dprint("Boot Mode is BOOT_MODE_NORMAL");
+
+//      dprint("Base Answer verifing starting !!!");
+//      SBC_mem_print_bin("Base Answer", (UINT8 *)baseansr.value, baseansr.length);
+//      ret = SBC_BaseAnswerValidate(h_blkio,
+//                                   (UINT8 *)baseansr.value,
+//                                   (UINTN)baseansr.length,
+//                                   diceid.osid,
+//                                   BASE_ANS_KEY_STR);
+//      if (ret != SBCOK) {
+//          btproc.bootst = SB_PROC_ST_ABNRAM;
+//          eprint("Base Answer verification fail !!!");
+//      }
+
+       
        ret = SBC_SecureBootCheck((VOID *)&btproc);
 
        break;
@@ -534,6 +548,18 @@ UefiMain (
           btproc.bootst = SB_PROC_ST_ABNRAM;
           goto errdone;
       }
+
+        dprint("Base Answer verifing starting !!!");
+        SBC_mem_print_bin("Base Answer", (UINT8 *)baseansr.value, baseansr.length);
+        ret = SBC_BaseAnswerValidate(h_blkio, 
+                                     (UINT8 *)baseansr.value, 
+                                     (UINTN)baseansr.length, 
+                                     diceid.osid, 
+                                     BASE_ANS_KEY_STR);
+        if (ret != SBCOK) {
+            btproc.bootst = SB_PROC_ST_ABNRAM;
+            eprint("Base Answer verification fail !!!");
+        }
 
       SBC_external_mem_print_bin("Migraiotn Key", diceid.migid, 32);
 

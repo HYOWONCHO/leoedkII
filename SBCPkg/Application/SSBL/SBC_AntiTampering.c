@@ -55,16 +55,16 @@ SBCStatus _kernel_image_load(EFI_HANDLE ImageHandle, LV_t *lv)
     EFI_HANDLE          *hndl;
 
 
-    dprint();
+    //dprint();
     ret = SBC_GetFileSize( OSID_KERNEL_PATH, &len_of_kernel);
     SBC_RET_VALIDATE_ERRCODEMSG((ret == SBCOK), ret, "File Not Found");
-    dprint();
+    //dprint();
     hndlcnt = SBC_FindEfiFileSystemProtocol(&hndl);
     if (hndlcnt <= 0) {
       eprint("File System Handle find fail : %d", hndlcnt);
       return SBCFAIL;
     }
-    dprint();
+    //dprint();
     for (idx = 0; idx < hndlcnt; idx++) {
       Status = SBC_IsFlieAccess(hndl[idx], OSID_KERNEL_PATH);
       if (EFI_ERROR(Status)) {
@@ -73,20 +73,20 @@ SBCStatus _kernel_image_load(EFI_HANDLE ImageHandle, LV_t *lv)
 
       break;
     }
-    dprint();
+    //dprint();
 
     if (EFI_ERROR(Status)) {
         eprint("%s  : %r", OSID_KERNEL_PATH, Status);
         return SBCFAIL;
     }
 
-    dprint();
+    //dprint();
     lv->value = AllocateZeroPool(len_of_kernel);
     lv->length = len_of_kernel;
     dprint("%s size %d", OSID_KERNEL_PATH, lv->length);
     SBC_RET_VALIDATE_ERRCODEMSG((lv->value != NULL), SBCNULLP, "Out of Memory");
 
-    dprint();
+    //dprint();
 
     Status = SBC_ReadFile(hndl[idx], OSID_KERNEL_PATH, lv);
     if (EFI_ERROR(Status)) {
@@ -96,7 +96,7 @@ SBCStatus _kernel_image_load(EFI_HANDLE ImageHandle, LV_t *lv)
     }
 
 
-    dprint();
+    //dprint();
 errdone:
     return ret;
 }
@@ -115,7 +115,7 @@ SBCStatus _ssbl_image_load(VOID *blkhnd, LV_t *lv,  UINTN normbank, UINTN bm)
     bsofs = (BOOT_SECTOR1_OFS | ((normbank - 1) << 20));
     startlba = ((bsofs | BOOT_SSBL_OFS) >> SBC_RAWPRT_DFLT_SHIFT);
 
-    dprint("BSOFS:  0x%lx, StartLBA: %lu", bsofs, startlba);
+    //dprint("BSOFS:  0x%lx, StartLBA: %lu", bsofs, startlba);
 
     ret = SBC_RawPrtReadBlock(blkhnd, (void *)imghdr, &imglen, startlba);
     if (ret != SBCOK) {
@@ -124,10 +124,10 @@ SBCStatus _ssbl_image_load(VOID *blkhnd, LV_t *lv,  UINTN normbank, UINTN bm)
     }
 
     CopyMem((void *)&imglen, &imghdr[0], sizeof imglen);
-    dprint("SSBL image len : %ld", imglen);
+    //dprint("SSBL image len : %ld", imglen);
     imglen = ALIGN_VALUE(imglen, SBC_RAWPRT_DFLT_BLK_SZ);
 
-    dprint("Align SSBL image len : %ld", imglen);
+    //dprint("Align SSBL image len : %ld", imglen);
 
 
     lv->value = AllocatePool(imglen);
@@ -184,13 +184,13 @@ EFI_STATUS efi_boot_fsbl_load(LV_t *lv)
   // For simplicity, we'll try the first one here.
   for (UINTN Index = 0; Index < NumberOfHandles; Index++) {
 
-    DevicePath = FileDevicePath(HandleBuffer[Index], L"\\EFI\\rocky\\FSBL.efi");
+    DevicePath = FileDevicePath(HandleBuffer[Index], EFI_BOOT_FSBL_PATH);
     if (DevicePath == NULL) {
       eprint("FSBL Device path not found ");
       continue;
     }
 
-    dprint("Discover the device path for FSBL~~~");
+    //dprint("Discover the device path for FSBL~~~");
 
     Status = gBS->HandleProtocol (
                     HandleBuffer[Index],
@@ -353,8 +353,7 @@ SBCStatus  _read_fsbl_image(LV_t *lv)
     SBCStatus           ret = SBCOK;
     //UINT16              *fname = L"LeoTest.efi";
     EFI_HANDLE          handle = NULL;
-    UINT16              *fsblid  = STRING_TOKEN(STR_FSBL_F_NAME);
-
+    UINT16              *fsblid  = STRING_TOKEN(EFI_BOOT_FSBL_PATH);
     SBC_RET_VALIDATE_ERRCODEMSG((lv != NULL), SBCNULLP, "Output buffer is Nill");
 
     //Investigate file size
@@ -1006,6 +1005,8 @@ SBCStatus  SBC_BaseAnswerValidate(VOID *blkhnd, UINT8 *answer, UINTN answerl, UI
 
     UINT8 decbuf[BASE_ANS_STREAM_LEN] = {0,};
 
+    dprint("Base Answer verifing starting !!!");
+
     SBC_RET_VALIDATE_ERRCODEMSG((answer != NULL), SBCNULLP, "Answer is Nill");
 
 
@@ -1049,35 +1050,33 @@ SBCStatus  SBC_BaseAnswerValidate(VOID *blkhnd, UINT8 *answer, UINTN answerl, UI
       goto errdone;
     }
 
-//  SBC_external_mem_print_bin("plain msg", answer, answerl);
-//  SBC_external_mem_print_bin("decrypt msg", decbuf, ctx.out.length);
+  SBC_external_mem_print_bin("plain msg", answer, answerl);
+  SBC_external_mem_print_bin("decrypt msg", decbuf, ctx.out.length);
 
     if (CompareMem((const void *)decbuf, (const void *)answer, answerl) != 0) {
       //Print(L"Base Answer validate Fail \n");
 
 
-        ZeroMem(mrgmsg, sizeof mrgmsg);
-        UnicodeSPrint(mrgmsg, sizeof mrgmsg, L"Base Answer validate fail(%s:%s) \n",answer,decbuf);
-        sbc_err_sysprn(SBC_LOG_CMN_PRIO_ERR, 2,
-             L"SBC",
-             L"FSBL",
-             L"Weapon System",
-             8,
-             L"Determine Firmare Tampering ",
-             mrgmsg);
+//      ZeroMem(mrgmsg, sizeof mrgmsg);
+//      UnicodeSPrint(mrgmsg, sizeof mrgmsg, L"Base Answer validate fail(%s:%s) \n",answer,decbuf);
+//      sbc_err_sysprn(SBC_LOG_CMN_PRIO_ERR, 2,
+//           L"SBC",
+//           L"FSBL",
+//           L"Weapon System",
+//           8,
+//           L"Determine Firmare Tampering ");
           ret = SBCFAIL;
           goto errdone;
     }
 
-    ZeroMem(mrgmsg, sizeof mrgmsg);
-    UnicodeSPrint(mrgmsg, sizeof mrgmsg, L"Base Answer validate Success (%s:%s) \n",answer,decbuf);
-    sbc_err_sysprn(SBC_LOG_CMN_PRIO_ERR, 2,
-         L"SBC",
-         L"FSBL",
-         L"Weapon System",
-         8,
-         L"Determine Firmare Tampering ",
-         mrgmsg);
+//  ZeroMem(mrgmsg, sizeof mrgmsg);
+//  UnicodeSPrint(mrgmsg, sizeof mrgmsg, L"Base Answer validate Success (%s:%s) \n",answer,decbuf);
+//  sbc_err_sysprn(SBC_LOG_CMN_PRIO_ERR, 2,
+//       L"SBC",
+//       L"FSBL",
+//       L"Weapon System",
+//       8,
+//       L"Determine Firmare Tampering ");
 
 errdone:
     return ret;
@@ -1250,7 +1249,7 @@ SBCStatus  SBC_SSBL_Verify(VOID *blkhnd, VOID *ansr, UINTN normbank)
     SBCStatus       ret = SBCOK;
     EFI_STATUS      retval = EFI_SUCCESS;
     EFI_HANDLE      *hndl = NULL;
-    UINT16          *fblpath = L"\\EFI\\boot\\FSBL.efi";
+    UINT16          *fblpath = EFI_BOOT_SSBL_PATH;
     //UINT16          *fblpath = L"\\boot\\vmlinuz-5.14.0-284.11.1.el9_2.x86_64" ;
     UINT8           *infostart = NULL;
     UINT32          last_of_fsbl = 0;
@@ -1301,7 +1300,7 @@ SBCStatus  SBC_SSBL_Verify(VOID *blkhnd, VOID *ansr, UINTN normbank)
 
     ////SBC_external_mem_print_bin("BSINFO", (UINT8 *)&bsinfo, sizeof bsinfo);
 
-    dprint("----------- FSBL Boot Service Informmtion ------------");
+    dprint("----------- SSBL Boot Service Informmtion ------------");
     dprint("Signature Len     : %d", bsinfo.m.siglen );
     dprint("Firmware Info Len : %d", bsinfo.m.fwinfolen );
     dprint("Certificate Len   : %d", bsinfo.m.certlen );
@@ -1355,7 +1354,7 @@ SBCStatus  SBC_SSBL_Verify(VOID *blkhnd, VOID *ansr, UINTN normbank)
       goto errdone;
     }
 
-    dprint("FSBL image len : %d", fsbl_len);
+    dprint("SSBL image len : %d", fsbl_len);
     ret = SBC_HashCompute(
                          NULL, /* Not yet used */
                          rdlv.value,
@@ -1605,17 +1604,17 @@ SBCStatus SBC_GenFWID(EFI_HANDLE *h_image, UINT8 *devid, UINT8 *fwid, UINTN norm
   SBC_mem_print_bin("FW ID", fwid, 32);
 errdone:
 
-  dprint();
+  //dprint();
   if (temp != NULL) {
-    dprint();
+    //dprint();
     FreePool(temp);
   }
 
   if (lv.value != NULL) {
-    dprint();
+    //dprint();
     //FreePool(lv.value);
   }
-  dprint();
+  //dprint();
   return ret;
 
 
