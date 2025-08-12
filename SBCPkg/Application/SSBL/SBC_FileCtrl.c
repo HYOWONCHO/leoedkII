@@ -987,8 +987,6 @@ SBCStatus  SBC_BlkIoHandleInit(OUT VOID **hblk, OUT VOID *hdr)
     UINTN                           NumberOfHandles;
     VOID                            *ReadBuffer = NULL; // Buffer for raw block data
     EFI_BLOCK_IO_PROTOCOL           *BlockIo = NULL;
-    UINT32                           magicid = 0UL;
-   // UINT64                           blkiosz;
 
     SBC_RET_VALIDATE_ERRCODEMSG((hblk != NULL), SBCNULLP, "Invalid Parameter");
 
@@ -1070,7 +1068,7 @@ SBCStatus  SBC_BlkIoHandleInit(OUT VOID **hblk, OUT VOID *hdr)
         }
 
         *hblk = (VOID *)BlockIo;
-        Print(L"Found %p Block I/O Protocol Address Magci ID : 0x%x.\n", BlockIo, magicid);
+        //Print(L"Found %p Block I/O Protocol Address Magci ID : 0x%x.\n", BlockIo, magicid);
         //Print(L"0x%p SBC Raw Buffer MagicID found !!! \n", *hblk);
 
 

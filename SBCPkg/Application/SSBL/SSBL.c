@@ -446,13 +446,7 @@ UefiMain (
 
     ret = SBC_SSBL_Verify(h_blkio, &baseansr, btproc.curr_sw_bnk );
     if (ret != SBCOK) {
-          sbc_err_sysprn(SBC_LOG_CMN_PRIO_ERR, 2,
-                 L"SBC",
-                 L"FSBL",
-                 L"Weapon System",
-                 8,
-                 L"Determine Firmare Tampering ",
-                 L"FSBL tampering check fail");
+
           retval = EFI_INVALID_PARAMETER;
           btproc.bootst = SB_PROC_ST_ABNRAM;
           goto errdone;
@@ -460,13 +454,13 @@ UefiMain (
 
     
 
-    sbc_err_sysprn(SBC_LOG_CMN_PRIO_ERR, 2,
-         L"SBC",
-         L"FSBL",
-         L"Weapon System",
-         8,
-         L"Determine Firmare Tampering ",
-         L"FSBL tampering check Done");
+  sbc_err_sysprn(SBC_LOG_CMN_PRIO_INFO, 2,
+       L"SBC",
+       L"SSBL",
+       L"SAT",
+       8,
+       L"Validation",
+       L"SBC_Integrity_All boot components passed signature verification");
 
     ret = SBC_DiceKeysGen(ImageHandle, &diceid,BOOT_MODE_NORMAL, currbank_id);
     if (ret != SBCOK) {
@@ -481,17 +475,17 @@ UefiMain (
 
 
     // TODO : Read Key Mode 
-    dprint("Chaeck Boot Mode read from BlkIO is %d", h_rawptrheader.bootmode);
+    //dprint("Chaeck Boot Mode read from BlkIO is %d", h_rawptrheader.bootmode);
 #if defined(_FILE_RD_BM_)
 //#warning   "SBC Boot Mode Read from File"
     UINT32 bootmd = SBC_ReadBootMode();
-    dprint("Boot Mode read from File %d" , bootmd);
+    //dprint("Boot Mode read from File %d" , bootmd);
     if (h_rawptrheader.bootmode != 0) {
         bootmd = h_rawptrheader.bootmode;
     }
     switch (bootmd) {
 #else
-    dprint("Boot Mode read from BlkIO is %d", h_rawptrheader.bootmode);
+    //dprint("Boot Mode read from BlkIO is %d", h_rawptrheader.bootmode);
     switch (h_rawptrheader.bootmode) {
 #endif
     case BOOT_MODE_NORMAL:

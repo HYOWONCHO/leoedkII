@@ -1050,8 +1050,8 @@ SBCStatus  SBC_BaseAnswerValidate(VOID *blkhnd, UINT8 *answer, UINTN answerl, UI
       goto errdone;
     }
 
-  SBC_external_mem_print_bin("plain msg", answer, answerl);
-  SBC_external_mem_print_bin("decrypt msg", decbuf, ctx.out.length);
+//SBC_external_mem_print_bin("plain msg", answer, answerl);
+//SBC_external_mem_print_bin("decrypt msg", decbuf, ctx.out.length);
 
     if (CompareMem((const void *)decbuf, (const void *)answer, answerl) != 0) {
       //Print(L"Base Answer validate Fail \n");
@@ -1059,24 +1059,26 @@ SBCStatus  SBC_BaseAnswerValidate(VOID *blkhnd, UINT8 *answer, UINTN answerl, UI
 
 //      ZeroMem(mrgmsg, sizeof mrgmsg);
 //      UnicodeSPrint(mrgmsg, sizeof mrgmsg, L"Base Answer validate fail(%s:%s) \n",answer,decbuf);
-//      sbc_err_sysprn(SBC_LOG_CMN_PRIO_ERR, 2,
-//           L"SBC",
-//           L"FSBL",
-//           L"Weapon System",
-//           8,
-//           L"Determine Firmare Tampering ");
+      sbc_err_sysprn(SBC_LOG_CMN_PRIO_ERR, 2,
+           L"SBC",
+           L"SSBL",
+           L"SAT",
+           3,
+           L"Detection",
+           L"SBC_tamper_OSID derived answer mismatched known answer");
           ret = SBCFAIL;
           goto errdone;
     }
 
 //  ZeroMem(mrgmsg, sizeof mrgmsg);
 //  UnicodeSPrint(mrgmsg, sizeof mrgmsg, L"Base Answer validate Success (%s:%s) \n",answer,decbuf);
-//  sbc_err_sysprn(SBC_LOG_CMN_PRIO_ERR, 2,
-//       L"SBC",
-//       L"FSBL",
-//       L"Weapon System",
-//       8,
-//       L"Determine Firmare Tampering ");
+    sbc_err_sysprn(SBC_LOG_CMN_PRIO_INFO, 2,
+         L"SBC",
+         L"SSBL",
+         L"SAT",
+         3,
+         L"Validation",
+         L"SBC_Integrity_OSID derived answer matched known answer");
 
 errdone:
     return ret;
@@ -1300,14 +1302,14 @@ SBCStatus  SBC_SSBL_Verify(VOID *blkhnd, VOID *ansr, UINTN normbank)
 
     ////SBC_external_mem_print_bin("BSINFO", (UINT8 *)&bsinfo, sizeof bsinfo);
 
-    dprint("----------- SSBL Boot Service Informmtion ------------");
-    dprint("Signature Len     : %d", bsinfo.m.siglen );
-    dprint("Firmware Info Len : %d", bsinfo.m.fwinfolen );
-    dprint("Certificate Len   : %d", bsinfo.m.certlen );
-    dprint("BaseAnswer Len    : %d", bsinfo.m.banswlen );
-    dprint("BSinfo verdion    : %d", bsinfo.m.bsinfv );
-    dprint("Spec.1 Value      : %d", bsinfo.m.reserv1 );
-    dprint("Spec.2 Value      : %d", bsinfo.m.reserv2 );
+//  dprint("----------- SSBL Boot Service Informmtion ------------");
+//  dprint("Signature Len     : %d", bsinfo.m.siglen );
+//  dprint("Firmware Info Len : %d", bsinfo.m.fwinfolen );
+//  dprint("Certificate Len   : %d", bsinfo.m.certlen );
+//  dprint("BaseAnswer Len    : %d", bsinfo.m.banswlen );
+//  dprint("BSinfo verdion    : %d", bsinfo.m.bsinfv );
+//  dprint("Spec.1 Value      : %d", bsinfo.m.reserv1 );
+//  dprint("Spec.2 Value      : %d", bsinfo.m.reserv2 );
 
     bsinfolen = bsinfo.m.siglen + bsinfo.m.fwinfolen + bsinfo.m.certlen  + bsinfo.m.banswlen;
 
@@ -1375,13 +1377,19 @@ SBCStatus  SBC_SSBL_Verify(VOID *blkhnd, VOID *ansr, UINTN normbank)
         );
 
     if (retbool != TRUE) {
-      eprint("FSBL Verify fail");
+      sbc_err_sysprn(SBC_LOG_CMN_PRIO_ERR, 2,
+           L"SBC",
+           L"SSBL",
+           L"SAT",
+           8,
+           L"Detection",
+           L"SBC_tamper_ SSBL signature verification faied");
       ret = SBCFAIL;
       goto errdone;
     }
 
     //sbc_err_sysprn(SBC_LOG_CMN_PRIO_INFO, 2, L"SBC", L"FSBL", L"CSC-01", 23, L"VERIFY", L"FSBL Integrate check is Done\n");
-    Print(L"FSBL Verify Success !!!\n");
+    //Print(L"FSBL Verify Success !!!\n");
 
     ((LV_t *)ansr)->value = AllocateZeroPool(bsinfo.m.banswlen);
     if (((LV_t *)ansr)->value == NULL) {

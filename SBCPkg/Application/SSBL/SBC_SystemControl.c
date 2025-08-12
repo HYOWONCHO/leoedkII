@@ -235,6 +235,12 @@ void SBC_RecoveryBootProcessing(VOID *priv)
 
     // Create the OSID
 
+    // TODO : 
+    // A. BaseAnswer load from System Setting block of Block IO 
+    // B. Decrypt the BaseAnswer using Migration Key
+    // C. Re-encrypt the decrypted baseanswer using OSID
+    // D. Re-write the baseanswer in System Setting block of Block IO
+
     // Baseanswer Ecnrypt and Store
     ret = SBC_BaseAnswerEncryptStore(
                     bt_proc->blkhnd,
@@ -347,14 +353,25 @@ static void _update_reset_check_and_behavior(VOID *priv)
 VOID SBC_ResetScenario(VOID *priv)
 {
     boot_proc_t *bp = (boot_proc_t *)priv;
-    dprint("Boot Mode : %d", bp->bm);
+    //dprint("Boot Mode : %d", bp->bm);
     switch(bp->bm) {
+    case BOOT_MODE_NORMAL:
+        dprint("Boot Mode BOOT_MODE_NORMAL");
+        break;
     case BOOT_MODE_UPDATE:
         {   
+             dprint("Boot Mode BOOT_MODE_UPDATE");
             //dprint();
             _update_reset_check_and_behavior(priv);
         }
         break;
+    case BOOT_MODE_FACTORY:
+        dprint("Boot Mode BOOT_MODE_FACTORY");
+        break;
+    case BOOT_MODE_RECOVERY:
+        dprint("Boot Mode BOOT_MODE_RECOVERY");
+        break;
+
     default:
         dprint("Unknown Boot Mode");
         break;
