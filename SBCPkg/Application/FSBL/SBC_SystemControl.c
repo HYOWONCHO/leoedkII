@@ -5,7 +5,6 @@
 #include "SBC_SystemControl.h"
 
 
-
 VOID SBC_RebootSystem(VOID)
 {
   //Print(L"Rebooting ... \n");
