@@ -58,6 +58,7 @@ VOID SBC_LogMsg(CHAR8* logmsg, CONST CHAR8 *funcname, UINTN linenumber,
 #define SBCLOGMSG(logmsg) \
   SBC_LogMsg(#logmsg, __func__, __LINE__ , __FILE__)
 
+#if defined(_SBC_DEBUG_ON_)
 #define dprint(fmt,...) \
     DEBUG((DEBUG_INFO, "(%a:%d) : "fmt"\n",__FUNCTION__, __LINE__,##__VA_ARGS__))
 
@@ -73,6 +74,13 @@ VOID SBC_LogMsg(CHAR8* logmsg, CONST CHAR8 *funcname, UINTN linenumber,
 
 #define int_eprint(fmt,...) \
     Print(ANSI_COLOR_RED_BOLD L"(%a:%d) : "fmt" \n" ANSI_COLOR_RESET, __FUNCTION__, __LINE__,##__VA_ARGS__)
+#else
+#define dprint(fmt,...)
+#define eprint(fmt,...)
+#define intgreen_dprint(fmt,...)
+#define int_dprint(fmt,...) 
+#define int_eprint(fmt,...)
+#endif
 
 /*
 extern VOID  SBC_LogWrite(UINT32 prio, CHAR16 *ver, CHAR16 *host,                                                

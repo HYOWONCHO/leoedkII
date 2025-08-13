@@ -709,7 +709,7 @@ UefiMain (
     LV_t baseansr;
     [[maybe_unused]] UINTN testid = 0xAA55AA55;
 
-    EFI_HANDLE ssbl_img_hndl = NULL;
+    [[gnu::unused]] EFI_HANDLE ssbl_img_hndl = NULL;
 
     retval = SBC_LodaDriver(SERIAL_DXE_PATH, TRUE);
     if (EFI_ERROR (retval)){
@@ -882,27 +882,27 @@ UefiMain (
       }
 #endif     
 
-//    ret = SBC_BootModeFactory(h_blkio, ImageHandle);
-//    if (ret != SBCOK) {
-//        eprint("Factory Boot Fail");
-//        retval = EFI_INVALID_PARAMETER;
-//        is_boot_status = FALSE;
-//        goto errdone;
-//    }
-      if (is_boot_status != TRUE) {
-        goto errdone;
-      }
-        // Change the key mode to normal based on key mode behavior scenario.
-      if (tmp_prtheader.keymode != KEY_MODE_NORMAL) {
-        tmp_prtheader.keymode = KEY_MODE_NORMAL;
-        SBC_RawPrtBlockWrite(h_blkio, (UINT8 *)&tmp_prtheader, sizeof(rawprt_hdr_t), 0);
-      }
-
-      //ret = SBC_SSBL_LoadAndStart(ssbl_img_hndl);
-      ret = SBC_GRUB_LoadAndStart(ssbl_img_hndl);
+      ret = SBC_BootModeFactory(h_blkio, ImageHandle);
       if (ret != SBCOK) {
-        goto errdone;
+          eprint("Factory Boot Fail");
+          retval = EFI_INVALID_PARAMETER;
+          is_boot_status = FALSE;
+          goto errdone;
       }
+//    if (is_boot_status != TRUE) {
+//      goto errdone;
+//    }
+//      // Change the key mode to normal based on key mode behavior scenario.
+//    if (tmp_prtheader.keymode != KEY_MODE_NORMAL) {
+//      tmp_prtheader.keymode = KEY_MODE_NORMAL;
+//      SBC_RawPrtBlockWrite(h_blkio, (UINT8 *)&tmp_prtheader, sizeof(rawprt_hdr_t), 0);
+//    }
+//
+//    //ret = SBC_SSBL_LoadAndStart(ssbl_img_hndl);
+//    ret = SBC_GRUB_LoadAndStart(ssbl_img_hndl);
+//    if (ret != SBCOK) {
+//      goto errdone;
+//    }
 
       //Print(L"Factory BOot Mode end !!! \n");
       break;
@@ -994,6 +994,8 @@ UefiMain (
               goto errdone;
       }
 #endif  
+
+      // Previously Boot FW loading 
       ret = SBC_BootModeNormalAndpUdate(h_blkio, ImageHandle, prevbank_id);
       if (ret != SBCOK) {
           eprint("Normal Boot Fail");

@@ -3,6 +3,14 @@
 #include <string.h>
 #include "SBC_Log.h"
 
+#define SBC_SAFE_FREE(x)  \
+  do {                                \
+    if ((x) != NULL) {                \
+      FreePool((x));                  \
+      (x) = NULL;                     \
+    }                                 \
+  } while(0)
+
 
 #define SBC_SWAP_ENDIAN_16(val) \
     (((UINT16)(val) & 0xFF00) >> 8) | \
