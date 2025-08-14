@@ -89,6 +89,8 @@ typedef struct _rawprt_hdr_t {
 
 #pragma pack()
 
+#define BOOT_BLKIO_DFTSZ                    0x00000200
+
 #define BOOT_FW_SRTOFS                      0x00000200
 
 #define BOOT_FSBL_OFS                       0x00000000      /**< FSBL Offset */
@@ -121,6 +123,9 @@ typedef struct _rawprt_hdr_t {
 
 #define BOOT_FW_IMG_MB                      128
 #define BOOT_FW_IMGMAX                      (BOOT_FW_IMG_MB << 20)
+
+/*! \brief Addresss of Protected Software    */
+#define BOOT_FW_PROT_SW_POS                 (0x01C00000 | BOOT_FW_SRTOFS)       
 
 
 #define BOOT_FW_LBA_BLOCKS                  (BOOT_FW_IMGMAX / SBC_RAWPRT_BLK_SZ)

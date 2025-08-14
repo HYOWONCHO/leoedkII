@@ -976,6 +976,38 @@ errdone:
 
 }
 
+SBCStatus SBC_ProtectedSWRead(VOID *blkio, 
+                              VOID **buf, UINT32 *len, 
+                              UINT32 bnkid)
+{
+    UINT32 rdlen = 0;
+    UINT8 rdbuf[SBC_RAWPRT_DFLT_BLK_SZ] = {0, };
+
+    UINTN   rdlba = 0;
+
+    SBC_RET_VALIDATE_ERRCODEMSG((blkio != NULL), SBCNULLP, "Object NULL");
+    SBC_RET_VALIDATE_ERRCODEMSG((buf != NULL), SBCNULLP, "Object NULL");
+    SBC_RET_VALIDATE_ERRCODEMSG((len != NULL), SBCNULLP, "Object NULL");
+
+
+    rdlen = *(UINT32 *)len;
+
+    rdlba = (BOOT_FW_PROT_SW_POS + (BOOT_FW_LBA_BLOCKS * (bnkid - 1)));
+    rdlba <<= SBC_RAWPRT_DFLT_SHIFT;
+
+    rdlba = SBC_RawPrtReadBlock(blkio,
+                                rdbuf, SBC_RAWPRT_DFLT_BLK_SZ,
+                                BOOT_FW_PROT_SW_POS 
+                                )
+
+
+    *(UINT32 *)len = rdlen;
+errdone:
+
+    return ret;
+
+}
+
 SBCStatus  SBC_BlkIoHandleInit(OUT VOID **hblk, OUT VOID *hdr)
 {
 #define     SBC_MAGIC_LEN           0x04

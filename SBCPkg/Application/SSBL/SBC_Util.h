@@ -4,6 +4,15 @@
 #include "SBC_Log.h"
 
 
+#define SBC_OFFSET_OF(type, member)     ((UINTN) & (((type *)0)->member))
+
+#define SBC_CONTAINER_OF(ptr, type, member)     \
+  ({      \
+      const typeof ( ((type *)0)->member) *__mptr = (ptr);      \
+      (type *)( (UINT8 *)__mptr - SBC_OFFSET_OF(type, member));      \
+  })    
+
+
 #define SBC_SWAP_ENDIAN_16(val) \
     (((UINT16)(val) & 0xFF00) >> 8) | \
     (((UINT16)(val) & 0x00FF) << 8)

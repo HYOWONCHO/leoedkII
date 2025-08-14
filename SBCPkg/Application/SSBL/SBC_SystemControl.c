@@ -347,6 +347,32 @@ errdone:
     return ;
 }
 
+static SBCStatus _update_protected_software(VOID *priv)
+{
+    SBCStatus ret = SBCOK;
+    UINT8 secret_key[SBC_OSID_KEY_LEN] = {0, };
+    boot_proc_t *bp = (boot_proc_t *)priv;
+
+    //VOID *tmp = NULL;
+    SBC_RET_VALIDATE_ERRCODEMSG((bp != NULL), SBCNULLP, "Boot Proc Nill");
+
+    // Compute the Update Secret Key
+   // SBC_CONTAINER_OF(priv, )
+    ret = SBC_HashCompute(NULL, 
+                          ((atp_ident_t *)bp->keyinfo)->migid,
+                          secret_key);
+    SBC_RET_VALIDATE_ERRCODEMSG((ret == SBCOK), ret, "Secret key create fail for Migration Key");
+    
+     
+
+    return ret;
+errdone:
+
+    return ret;
+
+
+}
+
 
 static void _update_reset_check_and_behavior(VOID *priv)
 {
