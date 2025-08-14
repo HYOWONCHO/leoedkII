@@ -14,6 +14,8 @@
 #include "SBC_FileCtrl.h"
 
 //EFI_GUID g_sbc_guid  = {0x1F3F7E80, 0xDB6B, 0x93FA, {0x9E, 0x61, 0x4C, 0x31, 0x3D, 0x3A}};
+static SBCStatus _update_protected_software(VOID *priv);
+
 
 SBCStatus SBC_FindPrtoSWAndProcessing(UINT8 *deckey, UINT8 *buf, UINTN buflen, UINT8 *decbuf, UINT32 *declen)
 {
@@ -149,6 +151,8 @@ static SBCStatus _update_behavior_for_km(void *priv)
 //                                KEY_MODE_UPDATE,
 //                                priv);
 //      }
+
+        _update_protected_software(priv);
         break;
     case SB_PROC_ST_NRMA:
         dprint("Base Answer re-encrypt and write in Update Mode");
@@ -360,6 +364,7 @@ static SBCStatus _update_protected_software(VOID *priv)
    // SBC_CONTAINER_OF(priv, )
     ret = SBC_HashCompute(NULL, 
                           ((atp_ident_t *)bp->keyinfo)->migid,
+                          SBC_OSID_KEY_LEN,
                           secret_key);
     SBC_RET_VALIDATE_ERRCODEMSG((ret == SBCOK), ret, "Secret key create fail for Migration Key");
     

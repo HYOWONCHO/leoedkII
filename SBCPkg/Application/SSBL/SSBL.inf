@@ -124,5 +124,5 @@
     
 
 #[BuildOptions.X64]
-#GCC:DEBUG_GCC5_X64_CC_FLAGS = -flto
+#GCC:DEBUG_GCC5_X64_CC_FLAGS = -flto -Werror=int-conversion
 

@@ -976,10 +976,65 @@ errdone:
 
 }
 
+
+SBCStatus SBC_ProtectedSWWrite(VOID *blkio, 
+                              VOID *buf, UINT32 *len, 
+                              UINT32 bnkid)
+{
+    SBCStatus ret = SBCOK;
+    UINT32 wrlen = 0;
+    //UINT8 wrbuf[SBC_RAWPRT_DFLT_BLK_SZ] = {0, };
+    UINT8 *w_buf = NULL;
+
+    UINTN   wrlba = 0;
+
+    SBC_RET_VALIDATE_ERRCODEMSG((blkio != NULL), SBCNULLP, "Object NULL");
+    SBC_RET_VALIDATE_ERRCODEMSG((buf != NULL), SBCNULLP, "Object NULL");
+    SBC_RET_VALIDATE_ERRCODEMSG((len != NULL), SBCNULLP, "Object NULL");
+
+
+    wrlen = *(UINT32 *)len;
+
+    wrlba = (BOOT_FW_PROT_SW_POS + (BOOT_FW_LBA_BLOCKS * (bnkid - 1)));
+    dprint("%d bank Protected SW Address (0x%x)", bnkid, wrlba);
+    wrlba <<= SBC_RAWPRT_DFLT_SHIFT;
+
+    wrlen = ALIGN_VALUE(wrlen + 4, 512);
+
+    dprint("%d bank Protected SW Len %ld", bnkid, wrlen);
+
+    w_buf = AllocateZeroPool(wrlen + 4);
+    SBC_RET_VALIDATE_ERRCODEMSG((w_buf != NULL), 
+                                SBCNULLP,
+                                "Protect SW write buffer Nill");
+
+
+    CopyMem(&w_buf[0], &wrlen, 4);
+    CopyMem(&w_buf[4], buf, (UINTN)len);
+
+
+   
+    ret = SBC_RawPrtBlockWrite(blkio,
+                               buf,
+                               wrlen,
+                               wrlba);
+
+    SBC_RET_VALIDATE_ERRCODEMSG((ret == SBCOK),
+                                ret,
+                                "Protected SW write fail");
+
+    *(UINT32 *)len = wrlen;
+errdone:
+
+    return ret;
+
+}
+
 SBCStatus SBC_ProtectedSWRead(VOID *blkio, 
                               VOID **buf, UINT32 *len, 
                               UINT32 bnkid)
 {
+    SBCStatus ret = SBCOK;
     UINT32 rdlen = 0;
     UINT8 rdbuf[SBC_RAWPRT_DFLT_BLK_SZ] = {0, };
 
@@ -990,19 +1045,59 @@ SBCStatus SBC_ProtectedSWRead(VOID *blkio,
     SBC_RET_VALIDATE_ERRCODEMSG((len != NULL), SBCNULLP, "Object NULL");
 
 
-    rdlen = *(UINT32 *)len;
+    rdlen = SBC_RAWPRT_DFLT_BLK_SZ;
 
     rdlba = (BOOT_FW_PROT_SW_POS + (BOOT_FW_LBA_BLOCKS * (bnkid - 1)));
+    dprint("%d bank Protected SW Address (0x%x)", bnkid, rdlba);
     rdlba <<= SBC_RAWPRT_DFLT_SHIFT;
 
-    rdlba = SBC_RawPrtReadBlock(blkio,
-                                rdbuf, SBC_RAWPRT_DFLT_BLK_SZ,
-                                BOOT_FW_PROT_SW_POS 
-                                )
+    ret = SBC_RawPrtReadBlock(blkio,
+                                rdbuf, 
+                                &rdlen,
+                                rdlba);
 
+    SBC_RET_VALIDATE_ERRCODEMSG((ret == SBCOK), 
+                                ret , 
+                                "Protected SW header read fail");
+
+    CopyMem((void *)&rdlen, rdbuf, sizeof(rdlba));
+
+    if (rdlen <= 0) {
+        // It is error and Protected SW is not exist in Raw Partition
+        ret = SBCZEROL;
+        goto errdone;
+    }
+
+    dprint("%d bank Protected SW Len %ld", bnkid, rdlen);
+
+    rdlen = ALIGN_VALUE(*(UINT32 *)len, 512);
+    *buf = AllocateZeroPool(rdlen);
+    SBC_RET_VALIDATE_ERRCODEMSG((*buf != NULL), 
+                                SBCNULLP, 
+                                "Read Buff Nill");
+
+
+    
+    ret = SBC_RawPrtReadBlock(blkio,
+                              *buf,
+                              &rdlen,
+                              rdlba);
+
+    SBC_RET_VALIDATE_ERRCODEMSG((ret == SBCOK), 
+                                ret , 
+                                "Protected SW  read fail");
 
     *(UINT32 *)len = rdlen;
+
+    return ret;
 errdone:
+
+    *(UINT32 *)len = 0;
+
+    if (*buf != NULL) {
+        FreePool(*buf);
+        *buf = NULL;
+    }
 
     return ret;
 

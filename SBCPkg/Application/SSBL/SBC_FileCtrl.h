@@ -128,7 +128,7 @@ typedef struct _rawprt_hdr_t {
 #define BOOT_FW_PROT_SW_POS                 (0x01C00000 | BOOT_FW_SRTOFS)       
 
 
-#define BOOT_FW_LBA_BLOCKS                  (BOOT_FW_IMGMAX / SBC_RAWPRT_BLK_SZ)
+#define BOOT_FW_LBA_BLOCKS                  (BOOT_FW_IMGMAX / SBC_RAWPRT_DFLT_BLK_SZ)
 
 
 /**
@@ -388,6 +388,44 @@ SBCStatus  SBC_RawPrtBlockWrite(VOID *blkio, UINT8 *wrbuf, UINT32 wrlen, UINT32 
  * \return UINT32 
  */
 UINT32  SBC_ReadBootMode(VOID);
+
+
+/*!
+ * \fn SBCStatus SBC_ProtectedSWWrite(VOID *blkio, 
+                              VOID *buf, UINT32 *len, 
+                              UINT32 bnkid)
+ * \brief Protected SW blob write to Raw Partition
+ * 
+ * \author leonc (8/14/25)
+ * 
+ * \param blkio  
+ * \param buf    
+ * \param len    
+ * \param bnkid  
+ * 
+ * \return SBCStatus 
+ */
+SBCStatus SBC_ProtectedSWWrite(VOID *blkio, 
+                              VOID *buf, UINT32 *len, 
+                              UINT32 bnkid);
+
+/*!
+ * \fn SBCStatus SBC_ProtectedSWRead(VOID *blkio, 
+                              VOID **buf, UINT32 *len, 
+                              UINT32 bnkid)
+ * \brief Protected SW read from Raw Partition 
+ * \author leonc (8/14/25)
+ * 
+ * \param blkio  
+ * \param buf    
+ * \param len    
+ * \param bnkid  
+ * 
+ * \return SBCStatus 
+ */
+SBCStatus SBC_ProtectedSWRead(VOID *blkio, 
+                              VOID **buf, UINT32 *len, 
+                              UINT32 bnkid);
 
 EFI_STATUS SBC_WriteFile(EFI_HANDLE ImageHandle, CHAR16 *FileNames, LV_t *out);
 
