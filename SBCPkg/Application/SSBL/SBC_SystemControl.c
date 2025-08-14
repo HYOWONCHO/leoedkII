@@ -135,6 +135,20 @@ static SBCStatus _update_behavior_for_km(void *priv)
 
     switch(bp->bootst) {
     case SB_PROC_ST_ABNRAM:
+        // Operation for this is processing in 
+        // _update_reset_check_scenario function
+
+//      if(_check_prev_fw(bp->pvs_sw_bnk) == TRUE) {
+//          // Previously exist in Raw Part.
+//          SBC_BootKeyModeChange(BOOT_MODE_RECOVERY,
+//                                KEY_MODE_UPDATE,
+//                                priv);
+//      }
+//      else {
+//          SBC_BootKeyModeChange(BOOT_MODE_FACTORY,
+//                                KEY_MODE_UPDATE,
+//                                priv);
+//      }
         break;
     case SB_PROC_ST_NRMA:
         dprint("Base Answer re-encrypt and write in Update Mode");
@@ -227,9 +241,12 @@ void SBC_RecoveryBootProcessing(VOID *priv)
     }
 
     if(_check_prev_fw(bt_proc->pvs_sw_bnk) != TRUE) {
-        eprint("Previously Boot Firmware not existense");
-        // System Shutdown
-        goto errdone;
+        SBC_BootKeyModeChange(BOOT_MODE_FACTORY, KEY_MODE_BOOT, priv);
+        SBC_RebootSystem();
+        return;
+//      eprint("Previously Boot Firmware not existense");
+//      // System Shutdown
+//      goto errdone;
        
     }
 
@@ -241,20 +258,7 @@ void SBC_RecoveryBootProcessing(VOID *priv)
     // C. Re-encrypt the decrypted baseanswer using OSID
     // D. Re-write the baseanswer in System Setting block of Block IO
 
-    // Baseanswer Ecnrypt and Store
-    ret = SBC_BaseAnswerEncryptStore(
-                    bt_proc->blkhnd,
-                    ((LV_t *)bt_proc->baseansr)->value,
-                    ((LV_t *)bt_proc->baseansr)->length,
-                    ((atp_ident_t *)bt_proc->keyinfo)->osid,
-                    BASE_ANS_KEY_STR
-    );
 
-
-    SBC_RET_VALIDATE_ERRCODEMSG((ret == SBCOK)
-                                ,ret, 
-                                "Detection SBC_tamper_OSID derived answer "
-                                "mismatched known answer");
 
 
 #ifdef SAT_PROT_SW_ENABLE
@@ -275,20 +279,55 @@ void SBC_RecoveryBootProcessing(VOID *priv)
 
     switch(bt_proc->bootst) {
     case SB_PROC_ST_NRMA:
+        // later need to create the New API
         switch(bt_proc->km) {
         case KEY_MODE_BOOT:
+        //case KEY_MODE_NORMAL:
+            // Baseanswer Ecnrypt and Store
+            ret = SBC_BaseAnswerEncryptStore(
+                            bt_proc->blkhnd,
+                            ((LV_t *)bt_proc->baseansr)->value,
+                            ((LV_t *)bt_proc->baseansr)->length,
+                            ((atp_ident_t *)bt_proc->keyinfo)->osid,
+                            BASE_ANS_KEY_STR
+            );
+
+
+            SBC_RET_VALIDATE_ERRCODEMSG((ret == SBCOK)
+                                        ,ret, 
+                                        "Detection SBC_tamper_OSID derived answer "
+                                "mismatched known answer");
+            ret = SBC_BootKeyModeChange(BOOT_MODE_NORMAL, KEY_MODE_NORMAL, priv);
+            break;
         case KEY_MODE_UPDATE:
-        case KEY_MODE_NORMAL:
+            ret = SBC_BaseAnswerEncryptStore(
+                            bt_proc->blkhnd,
+                            ((LV_t *)bt_proc->baseansr)->value,
+                            ((LV_t *)bt_proc->baseansr)->length,
+                            ((atp_ident_t *)bt_proc->keyinfo)->migid,
+                            BASE_ANS_KEY_STR
+            );
+
+
+            SBC_RET_VALIDATE_ERRCODEMSG((ret == SBCOK)
+                                        ,ret, 
+                                        "Detection SBC_tamper_OSID derived answer "
+                                        "mismatched known answer");
             ret = SBC_BootKeyModeChange(BOOT_MODE_NORMAL, KEY_MODE_NORMAL, priv);
             break;
         default:
-            eprint("Not support key mode for Recovery Normal Boot");
+            eprint("Not support this key mode in Recovery Boot");
             goto errdone;
         }
 
         break;
     case SB_PROC_ST_ABNRAM:
-        ret = SBC_BootKeyModeChange(BOOT_MODE_FACTORY, KEY_MODE_BOOT, priv);
+        // later need to create the New API
+        if(bt_proc->km != KEY_MODE_UPDATE) {
+            eprint("Not support this key mode in Recovery Boot");
+            goto errdone;
+        }
+        ret = SBC_BootKeyModeChange(BOOT_MODE_FACTORY, KEY_MODE_UPDATE, priv);
         break;
     default:
         eprint("Unknown Secure Boot status");
@@ -319,7 +358,8 @@ static void _update_reset_check_and_behavior(VOID *priv)
         switch(bp->bootst) {
         case SB_PROC_ST_NRMA:
             //dprint();
-            SBC_BootKeyModeChange(BOOT_MODE_RECOVERY, KEY_MODE_NORMAL, priv);
+            // bug fixed at 20250814 
+            SBC_BootKeyModeChange(BOOT_MODE_NORMAL, KEY_MODE_NORMAL, priv);
             break;
         case SB_PROC_ST_ABNRAM:
             if(bp->pvs_sw_bnk) {
@@ -438,7 +478,7 @@ SBCStatus  SBC_SecureBootCheck(VOID *priv)
 
         break;
     case BOOT_MODE_RECOVERY:
-        dprint("Block  I/O Handle : 0x%lx",bp->blkhnd);
+        //dprint("Block  I/O Handle : 0x%lx",bp->blkhnd);
         SBC_RecoveryBootProcessing(priv);
         break;
 

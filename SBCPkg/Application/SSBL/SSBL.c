@@ -600,6 +600,16 @@ UefiMain (
         retval = EFI_INVALID_PARAMETER;
     }
 
+    sbc_err_sysprn(SBC_LOG_CMN_PRIO_INFO, 2,
+        L"AT_BOOT",
+        L"SSBL",
+        L"SAT",
+        8,
+        L"Validation",
+        L"SBC_Boot Jump to Grub");
+
+    
+
     //ret = SBC_FSBL_Verify(h_blkio, &baseansr);
 
   // Read SSBL from
@@ -611,6 +621,13 @@ UefiMain (
 
 errdone:
     if (ret != SBCOK) {
+        sbc_err_sysprn(SBS_LOG_CMN_PRIO_ALERT, 2,
+            L"AT_BOOT",
+            L"SSBL",
+            L"SAT",
+            8,
+            L"Detection",
+            L"SSBL system is shutdown because BOOT Status is abnormal");
         SBC_ShutdownSystem();
     }
    return retval;
