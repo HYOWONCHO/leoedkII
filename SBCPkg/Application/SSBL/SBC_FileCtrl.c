@@ -995,7 +995,7 @@ SBCStatus SBC_ProtectedSWWrite(VOID *blkio,
 
     wrlen = *(UINT32 *)len;
 
-    wrlba = (BOOT_FW_PROT_SW_POS + (BOOT_FW_LBA_BLOCKS * (bnkid - 1)));
+    wrlba = (BOOT_FW_PROT_SW_POS << (bnkid - 1)) >> SBC_RAWPRT_DFLT_SHIFT;
     dprint("%d bank Protected SW Address (0x%x)", bnkid, wrlba);
     wrlba <<= SBC_RAWPRT_DFLT_SHIFT;
 
@@ -1047,7 +1047,11 @@ SBCStatus SBC_ProtectedSWRead(VOID *blkio,
 
     rdlen = SBC_RAWPRT_DFLT_BLK_SZ;
 
-    rdlba = (BOOT_FW_PROT_SW_POS + (BOOT_FW_LBA_BLOCKS * (bnkid - 1)));
+    // ((0x01C0_0200 << ( Validate Bank - 1 )) >> 9
+    //Bank 1 Lba = 57345
+    //Bank 2 Lba  = 114690
+
+    rdlba = (BOOT_FW_PROT_SW_POS << (bnkid - 1)) >> SBC_RAWPRT_DFLT_SHIFT;
     dprint("%d bank Protected SW Address (0x%x)", bnkid, rdlba);
     rdlba <<= SBC_RAWPRT_DFLT_SHIFT;
 
