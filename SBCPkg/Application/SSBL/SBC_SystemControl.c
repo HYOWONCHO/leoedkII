@@ -3,6 +3,7 @@
 #include <Library/BaseLib.h>
 #include <Library/ResetSystemLib.h>
 #include <Library/BaseMemoryLib.h>
+#include <Library/MemoryAllocationLib.h>
 
 #include "SBC_SystemControl.h"
 #include "SBC_AntiTampering.h"
@@ -17,7 +18,14 @@
 static SBCStatus _update_protected_software(VOID *priv);
 
 
-SBCStatus SBC_FindPrtoSWAndProcessing(UINT8 *deckey, UINT8 *buf, UINTN buflen, UINT8 *decbuf, UINT32 *declen)
+static 
+SBCStatus 
+__attribute__((unused))
+SBC_FindPrtoSWAndProcessing(UINT8 *deckey, 
+                            UINT8 *buf, 
+                            UINTN buflen, 
+                            UINT8 *decbuf, 
+                            UINT32 *declen)
 {
     SBCStatus ret = SBCOK;
     UINTN enclen = 0;
@@ -186,6 +194,55 @@ errdone:
 
     return ret;
 }
+
+
+static SBCStatus __attribute__((unused)) _protected_sw_rewrite(VOID *priv) 
+{
+
+    SBCStatus ret = SBCOK;
+    UINT8 secret_key[SYS_OSID_KEY_LEN] = {0, };
+    boot_proc_t *bp = NULL; 
+    UINT8   *blob = NULL;       // Binary or Byte Large Object
+    UINT32  blob_len = 0;
+
+    SBC_RET_VALIDATE_ERRCODEMSG((priv != NULL), 
+                                SBCNULLP,
+                                "Invalid Blob Parameter");
+
+    bp = (boot_proc_t *)priv;
+
+    ret = SBC_HashCompute(NULL, 
+                          ((atp_ident_t *)bp->keyinfo)->migid,
+                          SYS_OSID_KEY_LEN,
+                          secret_key);
+
+    SBC_RET_VALIDATE_ERRCODEMSG((ret == SBCOK),
+                                ret,
+                                "Secret Key create fail");
+
+    ret = SBC_ProtectedSWRead(bp->blkhnd,
+                              (void **)&blob,
+                              &blob_len,
+                              bp->curr_sw_bnk);
+
+
+    SBC_RET_VALIDATE_ERRCODEMSG((ret == SBCOK),
+                                ret,
+                                "Protected SW Read fail");
+
+    // 
+
+
+errdone:
+
+    if(blob != NULL) {
+        FreePool(blob);
+        blob = NULL;
+    }
+
+    return ret;
+}
+                                       
 
 static SBCStatus  SBC_UpdateBootPorcsesing(void *priv)
 {
