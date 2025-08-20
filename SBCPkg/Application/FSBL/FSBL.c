@@ -826,7 +826,7 @@ UefiMain (
                    L"Weapon System",
                    8,
                    L"Determine Firmare Tampering ",
-                   L"FSBL tampering check fail");
+                   L"SSBL tampering check fail");
             is_boot_status = FALSE;
             retval = EFI_INVALID_PARAMETER;
             //goto errdone;
@@ -838,7 +838,7 @@ UefiMain (
        L"Weapon System",
        8,
        L"Determine Firmare Tampering ",
-       L"FSBL tampering check Done");
+       L"SSBL tampering check Done");
 
       ret =  SBC_DeviceIdKyeVerify(h_blkio, diceid.devid, diceid.osid);
       if (ret != SBCOK) {
