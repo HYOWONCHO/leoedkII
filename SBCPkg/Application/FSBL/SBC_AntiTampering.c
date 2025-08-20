@@ -105,12 +105,15 @@ SBCStatus _ssbl_image_load(VOID *blkhnd, LV_t *lv,  UINTN normbank, UINTN bm)
 {
 
     SBCStatus           ret = SBCOK;
+
+
+
+#ifndef _FSBL_TEST_
     UINTN               bsofs = 0; // Boot Sector Offset
     UINTN               startlba = 0;
 
     UINT32          imglen = SBC_RAWPRT_DFLT_BLK_SZ;
     UINT8           imghdr[SBC_RAWPRT_DFLT_BLK_SZ] = {0, };
-
 
     bsofs = (BOOT_SECTOR1_OFS | ((normbank - 1) << 20));
     startlba = ((bsofs | BOOT_SSBL_OFS) >> SBC_RAWPRT_DFLT_SHIFT);
@@ -140,7 +143,43 @@ SBCStatus _ssbl_image_load(VOID *blkhnd, LV_t *lv,  UINTN normbank, UINTN bm)
     lv->length = imglen - FSBL_BNIFO_SIZE;
     // skip the image header ( for Length )
     lv->value += 4;
+#else
 
+    UINTN   f_size;
+    UINTN   hndlcnt;
+    EFI_HANDLE *hndl;
+    EFI_STATUS retval = EFI_SUCCESS;
+    UINTN idx = 0;
+
+    ret = SBC_GetFileSize(L"\\EFI\\BOOT\\SSBL.efi.bin", &f_size);
+    SBC_RET_VALIDATE_ERRCODEMSG((ret == SBCOK), ret, "SSBL File Not Found");
+    hndlcnt = SBC_FindEfiFileSystemProtocol(&hndl);
+
+    for (idx = 0; idx < hndlcnt; idx++) {
+      retval = SBC_IsFlieAccess(hndl[idx], L"\\EFI\\BOOT\\SSBL.efi.bin");
+      if (EFI_ERROR(retval)) {
+        dprint("\\EFI\\BOOT\\SSBL.efi.bin not found in index %d", idx);
+        continue;
+      }
+
+      break;
+    }
+
+    if (EFI_ERROR(retval)) {
+      dprint("\\EFI\\BOOT\\SSBL.efi.bin not found in index %d", idx);
+      ret = SBCNOTFND;
+
+      goto errdone;
+    }
+
+    lv->value = AllocatePool(f_size);
+    lv->length = f_size;
+
+    ret = SBC_ReadFile(hndl[idx],  L"\\EFI\\BOOT\\SSBL.efi.bin", lv);
+    SBC_RET_VALIDATE_ERRCODEMSG((ret == SBCOK), ret, "SSBL Read File Not Found");
+
+
+#endif
 errdone:
 
     return ret;
@@ -258,7 +297,7 @@ EFI_STATUS efi_boot_fsbl_load(LV_t *lv)
                      0 // Not creating, so attributes are 0
                      );
   if (EFI_ERROR (Status)) {
-    Print(L"Failed to open X64.efi: %r\n", Status);
+    Print(L"Failed to open FSBL.efi: %r\n", Status);
     goto Exit;
   }
 
@@ -1089,20 +1128,16 @@ errdone:
 SBCStatus  SBC_SSBL_Verify(VOID *blkhnd, VOID *ansr,  UINTN nrombank)
 {
     SBCStatus       ret = SBCOK;
-
-    UINTN           startlba = 0;
-  
-
     UINT32          imglen = SBC_RAWPRT_DFLT_BLK_SZ;
-    UINT8           imghdr[SBC_RAWPRT_DFLT_BLK_SZ] = {0, };
     UINT8           *loadimg = NULL;
-    [[gnu::unused]]UINT8           *temp = NULL;
-    UINTN           bsofs = 0; // Boot Sector Offset
+
+    
     UINT32          last_of_fsbl = 0;
     UINT8           *infostart = NULL;
     UINT32          bsinfolen = 0;
     fsbl_bsinfo_t   bsinfo;
 
+    [[gnu::unused]]UINT8           *temp = NULL;
     [[maybe_unused]]UINT32          bsptrcnt = 0;
     [[maybe_unused]]UINT8           HashValue[256];
     [[maybe_unused]]UINT32          HashSize =0;
@@ -1117,7 +1152,14 @@ SBCStatus  SBC_SSBL_Verify(VOID *blkhnd, VOID *ansr,  UINTN nrombank)
             .length = 0,
             .value = NULL
     };
+
+#ifndef _FSBL_TEST_
+    UINTN           startlba = 0;
+    UINTN           bsofs = 0; // Boot Sector Offset
+    UINT8           imghdr[SBC_RAWPRT_DFLT_BLK_SZ] = {0, };
+
     bsofs = (BOOT_SECTOR1_OFS | ((nrombank - 1) << 20));
+
     startlba = ((bsofs | BOOT_SSBL_OFS) >> SBC_RAWPRT_DFLT_SHIFT);
 
     ret = SBC_RawPrtReadBlock(blkhnd, (void *)imghdr, &imglen, startlba);
@@ -1129,12 +1171,51 @@ SBCStatus  SBC_SSBL_Verify(VOID *blkhnd, VOID *ansr,  UINTN nrombank)
     CopyMem((void *)&imglen, &imghdr[0], sizeof imglen);
     imglen = ALIGN_VALUE(imglen, SBC_RAWPRT_DFLT_BLK_SZ);
 
-    loadimg = AllocateReservedZeroPool(imglen);
+    loadimg = AllocateZeroPool(imglen);
     SBC_RET_VALIDATE_ERRCODEMSG((loadimg != NULL), SBCNULLP, "Allocate Memory Fail");
 
     ret = SBC_RawPrtReadBlock(blkhnd, (void *)loadimg, &imglen, startlba);
     SBC_RET_VALIDATE_ERRCODEMSG((ret == SBCOK), ret, "SSBL Factory Block Read Fail ");
+#else
+//#warning "FSBL Test Mode ..... "
+    UINTN   f_size;
+    UINTN   hndlcnt;
+    EFI_HANDLE *hndl;
+    EFI_STATUS retval = EFI_SUCCESS;
+    UINTN idx = 0;
 
+    ret = SBC_GetFileSize(L"\\EFI\\BOOT\\SSBL.efi.bin", &f_size);
+    SBC_RET_VALIDATE_ERRCODEMSG((ret == SBCOK), ret, "SSBL File Not Found");
+    hndlcnt = SBC_FindEfiFileSystemProtocol(&hndl);
+
+    for (idx = 0; idx < hndlcnt; idx++) {
+      retval = SBC_IsFlieAccess(hndl[idx], L"\\EFI\\BOOT\\SSBL.efi.bin");
+      if (EFI_ERROR(retval)) {
+        dprint("\\EFI\\BOOT\\SSBL.efi.bin not found in index %d", idx);
+        continue;
+      }
+
+      break;
+    }
+
+    if (EFI_ERROR(retval)) {
+      dprint("\\EFI\\BOOT\\SSBL.efi.bin not found in index %d", idx);
+      ret = SBCNOTFND;
+
+      goto errdone;
+    }
+
+    rdlv.value = AllocatePool(f_size);
+    rdlv.length = f_size;
+
+    ret = SBC_ReadFile(hndl[idx],  L"\\EFI\\BOOT\\SSBL.efi.bin", &rdlv);
+    SBC_RET_VALIDATE_ERRCODEMSG((ret == SBCOK), ret, "SSBL Read File Not Found");
+
+
+
+
+
+#endif
     rdlv.value = (UINT8 *)&loadimg[4];
     rdlv.length = imglen;
     last_of_fsbl =  rdlv.length - FSBL_BNIFO_SIZE;
@@ -1233,10 +1314,10 @@ errdone:
 //  if (EcPubKey != NULL) {
 //    EcFree(EcPubKey);
 //  }
-//  if (rdlv.value != NULL) {
-//    FreePool(rdlv.value);
-//    rdlv.value = NULL;
-//  }
+    if (rdlv.value != NULL) {
+      FreePool(rdlv.value);
+      rdlv.value = NULL;
+    }
 
 //  if (ret != SBCOK) {
 //      sbc_err_sysprn(SBC_LOG_CMN_PRIO_INFO, 2, L"SBC", L"FSBL", L"CSC-01", 23, L"VERIFY", L"SSBL Integrate check is Fail\n");

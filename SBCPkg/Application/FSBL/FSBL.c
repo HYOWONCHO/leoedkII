@@ -374,7 +374,7 @@ SBCStatus SBC_BootModeNormalAndpUdate(VOID *blkhnd, VOID *ImageHandle, UINTN nro
   
   ret = SBC_SSBL_LoadAndStart(ImageHandle);
   if (ret != SBCOK) {
-    Print(L"SSBL Factory Running Fail \n");
+    Print(L"SSBL  Running Fail \n");
     goto errdone;
   }
 #else
