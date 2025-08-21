@@ -56,11 +56,12 @@ EFI_STATUS SBC_LodaDriver(CONST CHAR16 *FileName, CONST BOOLEAN  Connect)
 {
   EFI_HANDLE                 LoadedDriverHandle;
   EFI_HANDLE *Handles;
+  EFI_STATUS  retval = EFI_SUCCESS;
   UINTN HandleCount;
   [[maybe_unused]]EFI_STATUS                 Status;
   EFI_DEVICE_PATH_PROTOCOL   *DevicePath;
   [[maybe_unused]]EFI_LOADED_IMAGE_PROTOCOL  *LoadedDriverImage;
-  CHAR16 *PathStr;
+  [[maybe_unused]]CHAR16 *PathStr;
 
   LoadedDriverImage  = NULL;
   DevicePath           = NULL;
@@ -69,24 +70,33 @@ EFI_STATUS SBC_LodaDriver(CONST CHAR16 *FileName, CONST BOOLEAN  Connect)
 
   ASSERT (FileName != NULL);
 
-  gBS->LocateHandleBuffer(ByProtocol, 
+  Print(L"Load %s driver \r\n", FileName);
+
+  retval = gBS->LocateHandleBuffer(ByProtocol, 
                           &gEfiSimpleFileSystemProtocolGuid, 
                           NULL, 
                           &HandleCount, 
                           &Handles);
 
+  if (EFI_ERROR(retval)) {
+    Print(L"Load handle buffer loacte failed (%r) \r\n", retval);
+  }
+
   //for (UINTN i = 0; i < HandleCount; i++) {
  
     DevicePath = FileDevicePath(Handles[0], FileName);
-//    DevicePath = FileDevicePath(Handles[i], L"\\EFI\\BOOT\\SSBLFactory.efi");
-    PathStr = ConvertDevicePathToText(DevicePath, TRUE, TRUE);
-    if (PathStr != NULL) {
-      Print(L"Device Path: %s\n", PathStr);
-      FreePool(PathStr);
-    } else {
-      Print(L"Failed to convert device path to string.\n");
-      //return SBCFAIL;
+    if (DevicePath == NULL) {
+      Print(L"%s Device Path not found \r\n", FileName);
     }
+//    DevicePath = FileDevicePath(Handles[i], L"\\EFI\\BOOT\\SSBLFactory.efi");
+//  PathStr = ConvertDevicePathToText(DevicePath, TRUE, TRUE);
+//  if (PathStr != NULL) {
+//    Print(L"Device Path: %s\n", PathStr);
+//    FreePool(PathStr);
+//  } else {
+//    Print(L"Failed to convert device path to string.\n");
+//    //return SBCFAIL;
+//  }
     Status = gBS->LoadImage(FALSE, 
                                        gImageHandle, 
                                        DevicePath, 

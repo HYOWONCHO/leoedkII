@@ -1,7 +1,11 @@
 #ifndef _SBC_ANTITAMPERING_
 #define _SBC_ANTITAMPERING_
 
+#ifndef _FSBL_TEST_
 #define OSID_KERNEL_PATH            L"\\boot\\vmlinuz-5.14.0-284.11.1.el9_2.x86_64"            
+#else
+#define OSID_KERNEL_PATH            L"\\efi\\rocky\\vmlinuz" 
+#endif
 
 #define STR_FSBL_F_NAME             L"FS1:\\EFI\\BOOT\\FSBL.efi"
 #define SBC_AT_HASH_LEN             32

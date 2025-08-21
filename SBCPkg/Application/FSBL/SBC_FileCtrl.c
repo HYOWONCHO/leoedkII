@@ -988,7 +988,6 @@ SBCStatus  SBC_BlkIoHandleInit(OUT VOID **hblk, OUT VOID *hdr)
     UINTN                           NumberOfHandles;
     VOID                            *ReadBuffer = NULL; // Buffer for raw block data
     EFI_BLOCK_IO_PROTOCOL           *BlockIo = NULL;
-    UINT32                           magicid = 0UL;
    // UINT64                           blkiosz;
 
     SBC_RET_VALIDATE_ERRCODEMSG((hblk != NULL), SBCNULLP, "Invalid Parameter");
@@ -1007,7 +1006,7 @@ SBCStatus  SBC_BlkIoHandleInit(OUT VOID **hblk, OUT VOID *hdr)
         SBC_RET_VALIDATE_ERRCODEMSG((Status != EFI_SUCCESS), SBCFAIL, "ERROR: Failed to locate BlockIoProtocol handles");
     }
 
-    //Print(L"Found %d Block I/O Protocol handles.\n", NumberOfHandles);
+    Print(L"Found %d Block I/O Protocol handles.\n", NumberOfHandles);
 
     for (int idx = 0; idx < NumberOfHandles; idx++) {
 
@@ -1046,10 +1045,12 @@ SBCStatus  SBC_BlkIoHandleInit(OUT VOID **hblk, OUT VOID *hdr)
                          );
 
         if (EFI_ERROR(Status)) {
-            Print(L"ERROR: Failed to read LBA 0: %r\n", Status);
+            Print(L"ERROR: Failed (Handle Count :%d) to read LBA 0: %r\n", 
+                  idx,Status);
             SBC_RET_VALIDATE_ERRCODEMSG((Status != EFI_SUCCESS), SBCFAIL, "ERROR: Could not open BlockIoProtocol");
             ret = SBCFAIL;
-            goto errdone;
+            //goto errdone;
+            continue;
         }
 
         //SBC_mem_print_bin("Read Block", (UINT8 *)ReadBuffer, SBC_MAGIC_LEN);
@@ -1071,7 +1072,7 @@ SBCStatus  SBC_BlkIoHandleInit(OUT VOID **hblk, OUT VOID *hdr)
         }
 
         *hblk = (VOID *)BlockIo;
-        Print(L"Found %p Block I/O Protocol Address Magci ID : 0x%x.\n", BlockIo, magicid);
+        Print(L"Found %p Block I/O Protocol Address Magci ID : 0x%x.\n", BlockIo, ((rawprt_hdr_t *)hdr)->magicid);
         //Print(L"0x%p SBC Raw Buffer MagicID found !!! \n", *hblk);
 
 

@@ -55,16 +55,13 @@ SBCStatus _kernel_image_load(EFI_HANDLE ImageHandle, LV_t *lv)
     EFI_HANDLE          *hndl;
 
 
-    dprint();
     ret = SBC_GetFileSize( OSID_KERNEL_PATH, &len_of_kernel);
     SBC_RET_VALIDATE_ERRCODEMSG((ret == SBCOK), ret, "File Not Found");
-    dprint();
     hndlcnt = SBC_FindEfiFileSystemProtocol(&hndl);
     if (hndlcnt <= 0) {
       eprint("File System Handle find fail : %d", hndlcnt);
       return SBCFAIL;
     }
-    dprint();
     for (idx = 0; idx < hndlcnt; idx++) {
       Status = SBC_IsFlieAccess(hndl[idx], OSID_KERNEL_PATH);
       if (EFI_ERROR(Status)) {
@@ -73,20 +70,17 @@ SBCStatus _kernel_image_load(EFI_HANDLE ImageHandle, LV_t *lv)
 
       break;
     }
-    dprint();
 
     if (EFI_ERROR(Status)) {
         eprint("%s  : %r", OSID_KERNEL_PATH, Status);
         return SBCFAIL;
     }
 
-    dprint();
     lv->value = AllocateZeroPool(len_of_kernel);
     lv->length = len_of_kernel;
     dprint("%s size %d", OSID_KERNEL_PATH, lv->length);
     SBC_RET_VALIDATE_ERRCODEMSG((lv->value != NULL), SBCNULLP, "Out of Memory");
 
-    dprint();
 
     Status = SBC_ReadFile(hndl[idx], OSID_KERNEL_PATH, lv);
     if (EFI_ERROR(Status)) {
@@ -96,7 +90,6 @@ SBCStatus _kernel_image_load(EFI_HANDLE ImageHandle, LV_t *lv)
     }
 
 
-    dprint();
 errdone:
     return ret;
 }
@@ -107,8 +100,8 @@ SBCStatus _ssbl_image_load(VOID *blkhnd, LV_t *lv,  UINTN normbank, UINTN bm)
     SBCStatus           ret = SBCOK;
 
 
+#ifndef _FSBL_TEST_ 
 
-#ifndef _FSBL_TEST_
     UINTN               bsofs = 0; // Boot Sector Offset
     UINTN               startlba = 0;
 
@@ -143,6 +136,7 @@ SBCStatus _ssbl_image_load(VOID *blkhnd, LV_t *lv,  UINTN normbank, UINTN bm)
     lv->length = imglen - FSBL_BNIFO_SIZE;
     // skip the image header ( for Length )
     lv->value += 4;
+
 #else
 
     UINTN   f_size;
@@ -830,6 +824,60 @@ errdone:
   return ret;
 }
 
+SBCStatus SBC_DeviceSecuirtyKeyCreate(VOID *key)
+{
+    SBCStatus ret = SBCOK;
+    hw_uniqueinfo_t info;
+    UINT8   *blob = NULL;
+    UINTN   offset = 0;
+    UINTN   allocate_len = 0;
+
+    SBC_RET_VALIDATE_ERRCODEMSG((key != NULL), SBCNULLP, "Output Nill");
+
+    _baseboard_sn(&info);
+    _memorydevice_sn(&info);
+    _nvme_get_serial(&info);
+
+
+    allocate_len = info.mbsnl + info.mmsnl + info.nvmesnl;
+    blob = AllocatePool(allocate_len);
+    SBC_RET_VALIDATE_ERRCODEMSG((blob != NULL),
+                                SBCNULLP, 
+                                "Blob buffer Nill");
+
+    offset = 0;
+    CopyMem((void *)&blob[0], info.mbsn, info.mbsnl);
+    offset = info.mbsnl;
+
+    CopyMem((void *)&blob[offset], info.mmsn, info.mmsnl);
+    offset += info.mmsnl;
+
+    CopyMem((void *)&blob[offset], info.nvmesn, info.nvmesnl);
+    offset += info.nvmesnl;
+
+    SBC_external_mem_print_bin("Device ID", blob, allocate_len);
+
+    ret = SBC_HashCompute(NULL,
+                          blob,
+#ifndef _FSBL_TEST_ 
+                          offset,
+#else
+                          32,
+#endif
+                          key);
+
+
+    SBC_RET_VALIDATE_ERRCODEMSG((ret == SBCOK),
+                                ret, 
+                                "Device Secret Key create fail");
+
+
+errdone:
+
+    return ret;
+
+}
+
 
 SBCStatus  SBC_DeviceIdKyeVerify(VOID *blkio, UINT8 *devid, UINT8 *deckey)
 {
@@ -843,7 +891,7 @@ SBCStatus  SBC_DeviceIdKyeVerify(VOID *blkio, UINT8 *devid, UINT8 *deckey)
     UINTN pubkeyl = 0;
     UINT8 *loadbuf;
     UINT32 ldlen = BASE_ANS_BLK_LEN;
-    UINTN baseansr_lba = 0;
+    UINTN systm_lba = 0;
     SBC_AESGcmCtx  decctx;
     SBC_AESContext  aesctx;
 
@@ -851,15 +899,22 @@ SBCStatus  SBC_DeviceIdKyeVerify(VOID *blkio, UINT8 *devid, UINT8 *deckey)
     UINTN calen = 0;
 
     UINT8 decbuf[2048] = {0,};
+    UINT8 secret_key[SYS_OSID_KEY_LEN] = {0, };
+
+    dprint("Starting !!!");
 
 
     // Generate the Public Key
     ret = SBC_DICESeedKeyPair(devid, &key_pair);
     SBC_RET_VALIDATE_ERRCODEMSG((ret == SBCOK), SBCINVPARAM, "Device ID Key-pair gen fail");
 
+    SBC_external_mem_print_bin("Org. Priv", key_pair.d, sizeof key_pair.d);
+    SBC_external_mem_print_bin("Org. Pub", key_pair.q.value , sizeof key_pair.q);
 
     // Device ID certificate Load 
-    baseansr_lba = (SYS_CONF_START_OFS >> SBC_RAWPRT_DFLT_SHIFT);
+    systm_lba = (SYS_CONF_START_OFS >> SBC_RAWPRT_DFLT_SHIFT);
+    dprint("Sys Conf offset (402653696) %d", SYS_CONF_START_OFS);
+    dprint("System Setting Start LBA (768433) : %lu (0x%lx)", systm_lba, systm_lba);
     ldlen = ALIGN_VALUE(SYS_SETTING_STORAGE_LEN, ((EFI_BLOCK_IO_PROTOCOL *)blkio)->Media->BlockSize);
     loadbuf = AllocateZeroPool(ldlen);
     SBC_RET_VALIDATE_ERRCODEMSG((loadbuf != NULL), SBCNULLP, "Buffer invalid object");
@@ -867,30 +922,93 @@ SBCStatus  SBC_DeviceIdKyeVerify(VOID *blkio, UINT8 *devid, UINT8 *deckey)
     ret = SBC_RawPrtReadBlock(blkio, 
                               (VOID *)loadbuf, 
                               &ldlen, 
-                              baseansr_lba);
+                              systm_lba);
     if (ret != SBCOK) {
         Print(L"SBC_RawPrtReadBlock fail (%p)\n", blkio);
         goto errdone;
     }
 
+    //SBC_mem_print_bin("12 Device ID cert", (UINT8 *)loadbuf, ldlen);
+#ifndef _FSBL_TEST_ 
     offset = SYS_CONF_DEVID_CRT_OFS;
+#else
+
+    UINT8 rawData[428] = {                                           
+    	0x8C, 0x01, 0x00, 0x00, 0xD9, 0xFA, 0xCB, 0x23, 0x89, 0xBA, 0xE4, 0x9A,
+    	0xCB, 0x75, 0xB2, 0x8B, 0x3D, 0xC2, 0x5C, 0x9E, 0xA7, 0xF2, 0x94, 0x66,
+    	0x70, 0x22, 0x4A, 0xDF, 0x2D, 0x70, 0x36, 0xAB, 0xA7, 0x6C, 0xE0, 0xC3,
+    	0x3D, 0xDD, 0xB4, 0xBD, 0x85, 0xD0, 0x86, 0xC4, 0x53, 0x2F, 0xBE, 0x7E,
+    	0x73, 0x83, 0x23, 0x0B, 0x15, 0xA5, 0x65, 0xE3, 0xB0, 0x84, 0x0A, 0x4A,
+    	0x3F, 0xC6, 0xED, 0xD7, 0xED, 0x5A, 0x5A, 0x53, 0x80, 0xA8, 0xAB, 0x02,
+    	0xA2, 0xE8, 0x48, 0x4D, 0x4C, 0x2E, 0x27, 0x5D, 0xF8, 0xF3, 0xAC, 0x06,
+    	0x21, 0xFE, 0xA4, 0x7F, 0xE6, 0x2A, 0x4D, 0xC9, 0x7B, 0x73, 0x33, 0xEF,
+    	0xB3, 0xD8, 0x6E, 0xA7, 0xB4, 0x4C, 0xD4, 0xB5, 0x5E, 0x06, 0xA4, 0x87,
+    	0xCF, 0x44, 0xA0, 0xE1, 0x6F, 0x00, 0x62, 0xA5, 0xC1, 0x51, 0x27, 0x89,
+    	0xD0, 0xFF, 0x40, 0x56, 0xAF, 0x29, 0x57, 0x45, 0x22, 0x3B, 0x2A, 0xE1,
+    	0xBF, 0x32, 0x59, 0x05, 0xC3, 0x05, 0x19, 0x62, 0x9D, 0x79, 0x56, 0x70,
+    	0xDC, 0x30, 0xE0, 0xFE, 0x5F, 0x1D, 0x2F, 0xB8, 0x16, 0x71, 0x3B, 0x2B,
+    	0x03, 0x8A, 0x0B, 0x29, 0x67, 0x97, 0x42, 0x08, 0x0D, 0x9D, 0xD0, 0x20,
+    	0xE1, 0x80, 0x0A, 0x29, 0xE3, 0xC7, 0x46, 0x2C, 0xFE, 0xC3, 0xC0, 0x81,
+    	0xC9, 0x33, 0x3F, 0x81, 0xAC, 0x7D, 0x9A, 0xC2, 0xBE, 0x8A, 0x4E, 0xD1,
+    	0x76, 0xFB, 0x25, 0xB3, 0x07, 0x17, 0x08, 0x5B, 0x5C, 0x67, 0x06, 0xDB,
+    	0x02, 0xF5, 0xFC, 0x09, 0x10, 0xD4, 0x06, 0xB9, 0xAD, 0xAE, 0x4F, 0xF7,
+    	0x16, 0x80, 0x7F, 0x21, 0x0A, 0x56, 0x48, 0xA1, 0x32, 0x69, 0xA9, 0xDB,
+    	0x52, 0x5B, 0x43, 0x87, 0xBD, 0x08, 0x8E, 0x06, 0x91, 0x88, 0x9E, 0x66,
+    	0x82, 0x47, 0x6B, 0x69, 0xE7, 0x12, 0x9A, 0xDE, 0xB9, 0x61, 0x2F, 0xE3,
+    	0xDC, 0x71, 0x8E, 0x61, 0xE9, 0x5A, 0x8E, 0x17, 0x90, 0xBF, 0x35, 0x9B,
+    	0x4D, 0x16, 0xAF, 0x72, 0x16, 0x54, 0x0D, 0xA6, 0xCD, 0x0A, 0xFF, 0x76,
+    	0xB8, 0x49, 0x0C, 0xF2, 0x8E, 0x29, 0x04, 0x77, 0x43, 0x5C, 0x69, 0x83,
+    	0x34, 0xA8, 0xA4, 0x6B, 0xD6, 0x52, 0x8A, 0x93, 0x2D, 0x23, 0x46, 0x8F,
+    	0xBD, 0x08, 0x84, 0x2C, 0x3F, 0xA5, 0x52, 0x5B, 0x90, 0x75, 0x10, 0xF7,
+    	0xF6, 0x93, 0x97, 0x89, 0xA9, 0xC1, 0x41, 0x6A, 0xD9, 0xA2, 0xC0, 0x9A,
+    	0x3D, 0xDB, 0x41, 0x00, 0xA3, 0x8D, 0x89, 0xCD, 0x41, 0x71, 0x7B, 0x31,
+    	0xE6, 0x90, 0x5A, 0x9D, 0x33, 0x79, 0x02, 0xC6, 0xDD, 0xB0, 0x49, 0x96,
+    	0x92, 0xD5, 0xE6, 0xD9, 0xE5, 0x4C, 0x8D, 0xC8, 0x0C, 0x8C, 0x7F, 0x0D,
+    	0xEA, 0x7B, 0xD4, 0xA2, 0x52, 0xC2, 0x95, 0x81, 0x5B, 0x11, 0xFB, 0x6D,
+    	0x75, 0x9F, 0xD8, 0xEE, 0x0E, 0x19, 0x5A, 0xFE, 0xA0, 0xC2, 0x3D, 0x01,
+    	0x80, 0x38, 0xBF, 0xC2, 0xBC, 0x8A, 0xAA, 0x30, 0x47, 0xC6, 0x34, 0x8B,
+    	0x16, 0x62, 0x7D, 0x39, 0x46, 0x66, 0x58, 0x8C, 0x75, 0x4B, 0x37, 0x87,
+    	0xCE, 0x53, 0x4A, 0x35, 0xEE, 0x9B, 0x9E, 0x30, 0xF2, 0xD3, 0xB4, 0xA5,
+    	0x85, 0x85, 0xF8, 0x2B, 0x90, 0xB4, 0xFE, 0xF7                         
+    };                                                                       
+
+    loadbuf = rawData;
+    offset = 0;
+#endif
+
     CopyMem((void *)&calen, (void *)&loadbuf[offset], 4);
+
+    dprint("Device ID CA Len : %d ", calen);
     offset += 4;
     // Decrypt 
+
+    SBC_mem_print_bin("Device ID cert", (UINT8 *)&loadbuf[offset], calen);
 
     decctx.msg.value = &loadbuf[offset];
     decctx.msg.length = calen;
 
     offset += calen;
     decctx.iv.value = &loadbuf[offset];
-    decctx.iv.length = BASE_ANS_IV_KEY_STR; 
+    decctx.iv.length = BASE_ANS_IV_KEY_STR;
+    SBC_mem_print_bin("Device ID IV", (UINT8 *)&loadbuf[offset], BASE_ANS_IV_KEY_STR);
+
     
     offset += BASE_ANS_IV_KEY_STR;
     decctx.tag.value = &loadbuf[offset];
     decctx.tag.length = BASE_ANS_TAG_LEN;
+    SBC_mem_print_bin("Device ID TAG", (UINT8 *)&loadbuf[offset], BASE_ANS_TAG_LEN);
 
-    decctx.key.value = deckey;
+    // Device Secret Key Create 
+    ret = SBC_DeviceSecuirtyKeyCreate(secret_key);
+    SBC_RET_VALIDATE_ERRCODEMSG((ret == SBCOK), 
+                                SBCINVPARAM, 
+                                "Device ID Key-pair gen fail");
+
+
+    SBC_mem_print_bin("Device Secert Key", secret_key, BASE_ANS_KEY_STR);
+    decctx.key.value = secret_key;
     decctx.key.length = BASE_ANS_KEY_STR;
+    //SBC_mem_print_bin("Dec Key", (UINT8 *)deckey, BASE_ANS_KEY_STR);
 
     decctx.aad.value = NULL;
     decctx.aad.length = 0;
@@ -1128,8 +1246,7 @@ errdone:
 SBCStatus  SBC_SSBL_Verify(VOID *blkhnd, VOID *ansr,  UINTN nrombank)
 {
     SBCStatus       ret = SBCOK;
-    UINT32          imglen = SBC_RAWPRT_DFLT_BLK_SZ;
-    UINT8           *loadimg = NULL;
+
 
     
     UINT32          last_of_fsbl = 0;
@@ -1154,6 +1271,8 @@ SBCStatus  SBC_SSBL_Verify(VOID *blkhnd, VOID *ansr,  UINTN nrombank)
     };
 
 #ifndef _FSBL_TEST_
+    UINT32          imglen = SBC_RAWPRT_DFLT_BLK_SZ;
+    UINT8           *loadimg = NULL;
     UINTN           startlba = 0;
     UINTN           bsofs = 0; // Boot Sector Offset
     UINT8           imghdr[SBC_RAWPRT_DFLT_BLK_SZ] = {0, };
@@ -1176,6 +1295,10 @@ SBCStatus  SBC_SSBL_Verify(VOID *blkhnd, VOID *ansr,  UINTN nrombank)
 
     ret = SBC_RawPrtReadBlock(blkhnd, (void *)loadimg, &imglen, startlba);
     SBC_RET_VALIDATE_ERRCODEMSG((ret == SBCOK), ret, "SSBL Factory Block Read Fail ");
+
+    rdlv.value = (UINT8 *)&loadimg[4];
+    rdlv.length = imglen;
+
 #else
 //#warning "FSBL Test Mode ..... "
     UINTN   f_size;
@@ -1211,13 +1334,10 @@ SBCStatus  SBC_SSBL_Verify(VOID *blkhnd, VOID *ansr,  UINTN nrombank)
     ret = SBC_ReadFile(hndl[idx],  L"\\EFI\\BOOT\\SSBL.efi.bin", &rdlv);
     SBC_RET_VALIDATE_ERRCODEMSG((ret == SBCOK), ret, "SSBL Read File Not Found");
 
-
-
-
+    dprint("SSBL Testing File Size %d", rdlv.length);
 
 #endif
-    rdlv.value = (UINT8 *)&loadimg[4];
-    rdlv.length = imglen;
+
     last_of_fsbl =  rdlv.length - FSBL_BNIFO_SIZE;
     infostart = &((UINT8 *)rdlv.value)[last_of_fsbl];
 

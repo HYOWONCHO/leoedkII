@@ -557,7 +557,7 @@ SBCStatus  SBC_DICESeedKeyPair(UINT8 *dice_seed, at_key_t *key)
     SBC_RET_VALIDATE_ERRCODEMSG((ecret != 0), SBCFAIL, "EC_KEY_set_public_key fail");
 
     HalfSize = (EC_GROUP_get_degree (group) + 7) / 8;
-    dprint("Half size : %d", HalfSize);
+    //dprint("Half size : %d", HalfSize);
 
     key->dl = HalfSize;
     key->ql = HalfSize * 2;
@@ -585,7 +585,7 @@ SBCStatus  SBC_DICESeedKeyPair(UINT8 *dice_seed, at_key_t *key)
         goto errdone;
     }
 
-    dprint("XSize : %d YSize :%d ", XSize, YSize);
+    //dprint("XSize : %d YSize :%d ", XSize, YSize);
 
     ZeroMem (key->q.value, key->ql);
     BN_bn2bin(BnX, key->q.qxy.qx);

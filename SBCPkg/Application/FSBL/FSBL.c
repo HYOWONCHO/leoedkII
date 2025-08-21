@@ -120,22 +120,22 @@ SBCStatus  SBC_DiceKeysGen(EFI_HANDLE ImageHandle, VOID *p,UINTN normbank, UINTN
         goto errdone;
     }
 //
-//  //SBC_mem_print_bin("Device ID", h->devid, sizeof h->devid);SBC_mem_print_bin("Device ID", h->devid, sizeof h->devid);
-//  ret = SBC_GenFWID(ImageHandle, h->devid, h->fwid, normbank, bm);
-//  if (ret != SBCOK) {
-//      Print(L"FW ID generate fail \n");
-//      goto errdone;
-//  }
-//
-//  //SBC_mem_print_bin("Firmware ID", h->fwid, sizeof h->fwid);
-//
-//  ret = SBC_GenOSID(ImageHandle,  h->fwid, h->osid);
-//  if (ret != SBCOK) {
-//      Print(L"FW ID generate fail \n");
-//      goto errdone;
-//  }
-//
-    //SBC_mem_print_bin("Firmware ID", h->fwid, sizeof h->fwid);
+    SBC_mem_print_bin("Device ID", h->devid, sizeof h->devid);SBC_mem_print_bin("Device ID", h->devid, sizeof h->devid);
+    ret = SBC_GenFWID(ImageHandle, h->devid, h->fwid, normbank, bm);
+    if (ret != SBCOK) {
+        Print(L"FW ID generate fail \n");
+        goto errdone;
+    }
+
+    SBC_mem_print_bin("Firmware ID", h->fwid, sizeof h->fwid);
+
+    ret = SBC_GenOSID(ImageHandle,  h->fwid, h->osid);
+    if (ret != SBCOK) {
+        Print(L"FW ID generate fail \n");
+        goto errdone;
+    }
+
+    SBC_mem_print_bin("Firmware ID", h->fwid, sizeof h->fwid);
     ret = SBCOK;
 
 errdone:
@@ -690,10 +690,10 @@ UefiMain (
   )
 {
 
-#define SERIAL_DXE_PATH                 L"\\EFI\\boot\\SerialDxe.efi"
-#define FTDI_USB_SERIAL_DXE_PATH        L"\\EFI\\boot\\FtdiUsbSerialDxe.efi"
-#define TERMINAL_DXE_PATH               L"\\EFI\\boot\\TerminalDxe.efi"
-#define XFS64_PATH                      L"\\EFI\\boot\\xfs_x64.efi"
+#define SERIAL_DXE_PATH                 L"\\EFI\\BOOT\\SerialDxe.efi"
+#define FTDI_USB_SERIAL_DXE_PATH        L"\\EFI\\BOOT\\FtdiUsbSerialDxe.efi"
+#define TERMINAL_DXE_PATH               L"\\EFI\\BOOT\\TerminalDxe.efi"
+#define XFS64_PATH                      L"\\EFI\\BOOT\\xfs_x64.efi"
 
     atp_ident_t diceid;
     EFI_STATUS retval = EFI_SUCCESS;
@@ -711,37 +711,42 @@ UefiMain (
 
     [[gnu::unused]] EFI_HANDLE ssbl_img_hndl = NULL;
 
-    retval = SBC_LodaDriver(SERIAL_DXE_PATH, TRUE);
-    if (EFI_ERROR (retval)){
-      Print(L"SERIAL_DXE_PATH Dxe driver load fail \n");
-      goto errdone;
-    }
+//  retval = SBC_LodaDriver(SERIAL_DXE_PATH, TRUE);
+//  if (EFI_ERROR (retval)){
+//    Print(L"SERIAL_DXE_PATH Dxe driver load fail \n");
+//    goto errdone;
+//  }
+//
+//
+//  //sleep(1);
+//
+//  retval = SBC_LodaDriver(FTDI_USB_SERIAL_DXE_PATH, TRUE);
+//  if (EFI_ERROR (retval)){
+//    Print(L"FTDI_USB_SERIAL_DXE_PATH Dxe driver load fail \n");
+//    goto errdone;
+//  }
+//
+//  //sleep(1);
+//  retval = SBC_LodaDriver(TERMINAL_DXE_PATH, TRUE);
+//  if (EFI_ERROR (retval)){
+//    Print(L"TERMINAL_DXE_PATH Dxe driver load fail \n");
+//    goto errdone;
+//  }
+//
+//  //sleep(1);
+//  retval = SBC_LodaDriver(XFS64_PATH, TRUE);
+//  if (EFI_ERROR (retval)){
+//    Print(L"XFS64_PATH Dxe driver load fail \n");
+//    goto errdone;
+//  }
 
+    //sleep(3);
 
-    sleep(1);
-
-    retval = SBC_LodaDriver(FTDI_USB_SERIAL_DXE_PATH, TRUE);
-    if (EFI_ERROR (retval)){
-      Print(L"FTDI_USB_SERIAL_DXE_PATH Dxe driver load fail \n");
-      goto errdone;
-    }
-
-    sleep(1);
-    retval = SBC_LodaDriver(TERMINAL_DXE_PATH, TRUE);
-    if (EFI_ERROR (retval)){
-      Print(L"TERMINAL_DXE_PATH Dxe driver load fail \n");
-      goto errdone;
-    }
-
-    sleep(1);
-    retval = SBC_LodaDriver(XFS64_PATH, TRUE);
-    if (EFI_ERROR (retval)){
-      Print(L"XFS64_PATH Dxe driver load fail \n");
-      goto errdone;
-    }
-
-    sleep(1);
+#ifndef _FSBL_TEST_ 
     dprint("------------- FSBL START -------------\n");
+#else
+    dprint("------------- FSBL Test Mode START -------------\n");
+#endif    
 
     is_boot_status = TRUE;
 
@@ -1005,7 +1010,7 @@ UefiMain (
       }
       break;
     default:
-      Print(L"Unknown Boot Mode ... SHOULD go to Abort\n");
+      Print(L"Unknown (%d)  Boot Mode ... SHOULD go to Abort\n",h_rawprtheader.bootmode);
       is_boot_status = FALSE;
       break;
     }
@@ -1022,7 +1027,7 @@ UefiMain (
 
 errdone:
 
-
+#ifndef _FSBL_TEST_ 
   // In terms of the Abnormal behavior on Factory Mode 
     if ((h_rawprtheader.bootmode == BOOT_MODE_FACTORY) && (is_boot_status != TRUE)) {
       // Change the key mode to normal based on key mode behavior scenario.
@@ -1034,10 +1039,13 @@ errdone:
 
 
       // Log write
-      SBC_ShutdownSystem();
+     
 
 
     }
+
+    SBC_ShutdownSystem();
+#endif
 
     return retval;
 }
