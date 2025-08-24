@@ -491,6 +491,9 @@ UefiMain (
     if (h_rawptrheader.bootmode != 0) {
         bootmd = h_rawptrheader.bootmode;
     }
+#ifdef _SSBL_FACTORY_TEST_
+    bootmd = BOOT_MODE_FACTORY;
+#endif
     switch (bootmd) {
 #else
     //dprint("Boot Mode read from BlkIO is %d", h_rawptrheader.bootmode);
@@ -521,12 +524,14 @@ UefiMain (
        break;
     case BOOT_MODE_FACTORY:
        dprint("Boot Mode is BOOT_MODE_FACTORY");
-
+#ifndef _SSBL_TEST_
        ret = SBC_BootKeyModeChange(BOOT_MODE_FACTORY, KEY_MODE_NORMAL, NULL);
        if (ret != SBCOK) {
            btproc.bootst = SB_PROC_ST_NRMA;
        }
-
+#else
+       btproc.bootst = SB_PROC_ST_NRMA;
+#endif
 
        // If boot status is abnromal, system should be shutdown.
        if (btproc.bootst != SB_PROC_ST_NRMA) {

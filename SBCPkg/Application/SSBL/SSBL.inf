@@ -120,9 +120,14 @@
   leo_test_extra.uni
 
 [BuildOptions]
-    *_*_*_CC_FLAGS = -D_FILE_RD_BM_ -D_SBC_DEBUG_ON_
+    #*_*_*_CC_FLAGS = -D_FILE_RD_BM_ -D_SBC_DEBUG_ON_
+    #Test Mode 
+    *_*_*_CC_FLAGS = -D_FILE_RD_BM_ -D_SSBL_FACTORY_TEST_ -D_SSBL_TEST_
+
+    #Debug On
+    *_*_*_CC_FLAGS = -D_SBC_DEBUG_ON_ 
     
 
-#[BuildOptions.X64]
-#GCC:DEBUG_GCC5_X64_CC_FLAGS = -flto -Werror=int-conversion
+[BuildOptions.X64]
+    GCC:DEBUG_GCC5_X64_CC_FLAGS = -flto=4
 
