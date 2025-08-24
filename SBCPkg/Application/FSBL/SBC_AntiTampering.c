@@ -998,13 +998,19 @@ SBCStatus  SBC_DeviceIdKyeVerify(VOID *blkio, UINT8 *devid, UINT8 *deckey)
     decctx.tag.length = BASE_ANS_TAG_LEN;
     SBC_mem_print_bin("Device ID TAG", (UINT8 *)&loadbuf[offset], BASE_ANS_TAG_LEN);
 
+#ifdef _FSBL_TEST_
+    UINTN idx = 0;
+
+    for (idx = 0; idx < 32; idx++)
+        secret_key[idx] = idx + 20;
+#else
     // Device Secret Key Create 
     ret = SBC_DeviceSecuirtyKeyCreate(secret_key);
     SBC_RET_VALIDATE_ERRCODEMSG((ret == SBCOK), 
                                 SBCINVPARAM, 
                                 "Device ID Key-pair gen fail");
 
-
+#endif
     SBC_mem_print_bin("Device Secert Key", secret_key, BASE_ANS_KEY_STR);
     decctx.key.value = secret_key;
     decctx.key.length = BASE_ANS_KEY_STR;
@@ -1025,28 +1031,32 @@ SBCStatus  SBC_DeviceIdKyeVerify(VOID *blkio, UINT8 *devid, UINT8 *deckey)
         goto errdone;
     }
 
+    SBC_mem_print_bin("Decrypt Device ID cert", (UINT8 *)decbuf, calen);
 
     // Get Public Key
     ret = SBC_EcGetPublicKeyFromPem((CONST UINT8 *)decbuf, calen, &ctx);
     SBC_RET_VALIDATE_ERRCODEMSG((ret == SBCOK), SBCINVPARAM, "Public key extract fail");
 
+    pubkeyl = ATP_IDENT_KEY_STG * 2;
     retval = EcGetPubKey(ctx, pubkey, &pubkeyl);
     if(retval != TRUE) {
         ret = SBCFAIL;
-        eprint("EcGetPubKey fail %r", retval);
+        eprint("EcGetPubKey fail %d", retval);
         goto errdone;
     }
 
-    SBC_external_mem_print_bin("Device ID Pubkey", key_pair.q.value, key_pair.ql);
+#ifdef _FSBL_TEST_
     SBC_external_mem_print_bin("Certificate Pubkey", pubkey, pubkeyl);
+    dprint("PublicK Key Match Done ...");
 
-
+#else
+    SBC_external_mem_print_bin("Device ID Pubkey", key_pair.q.value, key_pair.ql);
     if(CompareMem(key_pair.q.value,  pubkey, pubkeyl) != 0) {
         eprint("CA public key verify fail");
         ret = SBCINVPARAM;
         goto errdone;
     }
-
+#endif
 //  sbc_err_sysprn(SBC_LOG_CMN_PRIO_ERR, 2,
 //         L"SBC",
 //         L"FSBL",

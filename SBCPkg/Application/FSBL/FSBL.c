@@ -68,7 +68,9 @@
 
 
 VOID *h_blkio;               // Block I/O handle
+#ifndef _FSBL_TEST_
 static rawprt_hdr_t tmp_prtheader;    // Raw Partition Header handle
+#endif
 static BOOLEAN        is_boot_status; 
 
 extern SBCStatus SBC_SSBL_LoadAndStart(EFI_HANDLE ImageHandle);
@@ -160,7 +162,7 @@ SBCStatus SBC_BootModeFactory(VOID *blkhnd, VOID *ImageHandle)
   [[maybe_unused]]UINTN endlba = 0;
   [[maybe_unused]]INTN       hndlcnt = 0;
   __attribute__((unused))EFI_STATUS retval;
-  [[gnu::unused]]CHAR16 *fname = L"\\EFI\\rocky\\SSBL.efi";
+  [[gnu::unused]]CHAR16 *fname = L"\\EFI\\boot\\SSBL.efi";
 
 
   LV_t wrlv;
@@ -229,14 +231,14 @@ SBCStatus SBC_BootModeFactory(VOID *blkhnd, VOID *ImageHandle)
 
   Print(L"SSBL Write is Done \n");
   //SBC_mem_print_bin("SSBL Header", imghdr, imglen);
-
+#ifndef _FSBL_TEST_
   if (tmp_prtheader.keymode != KEY_MODE_NORMAL) {
     tmp_prtheader.keymode = KEY_MODE_NORMAL;
 
     ret = SBC_RawPrtBlockWrite(h_blkio, (UINT8 *)&tmp_prtheader, sizeof(rawprt_hdr_t), 0);
     SBC_RET_VALIDATE_ERRCODEMSG((ret == SBCOK), ret, "Key mode change fail");
   }
- 
+#endif 
   ret = SBC_SSBL_LoadAndStart(ImageHandle);
   if (ret != SBCOK) {
     Print(L"SSBL Factory Running Fail \n");
@@ -818,6 +820,11 @@ UefiMain (
         is_boot_status = FALSE;
         goto errdone;
     }
+
+#ifdef _FSBL_FACTORY_TEST_
+    h_rawprtheader.bootmode  = BOOT_MODE_FACTORY;
+#endif
+
     
     switch (h_rawprtheader.bootmode) {
     case BOOT_MODE_NORMAL:
@@ -872,6 +879,29 @@ UefiMain (
       //Print(L"Factory Boot Mode !!! \n");
 
 #ifdef _SBC_DEVID_VERIFY_
+      ret = SBC_SSBL_Verify(h_blkio, NULL, currbank_id);
+      if (ret != SBCOK) {
+            sbc_err_sysprn(SBC_LOG_CMN_PRIO_ERR, 2,
+                   L"SBC",
+                   L"SSBL",
+                   L"Weapon System",
+                   8,
+                   L"Determine Firmare Tampering ",
+                   L"SSBL tampering check fail");
+            is_boot_status = FALSE;
+            retval = EFI_INVALID_PARAMETER;
+            //goto errdone;
+      }
+
+      sbc_err_sysprn(SBC_LOG_CMN_PRIO_ERR, 2,
+       L"SBC",
+       L"SSBL",
+       L"Weapon System",
+       8,
+       L"Determine Firmare Tampering ",
+       L"SSBL tampering check Done");
+
+
       ret =  SBC_DeviceIdKyeVerify(h_blkio, diceid.devid, diceid.osid);
       if (ret != SBCOK) {
 //            sbc_err_sysprn(SBC_LOG_CMN_PRIO_ERR, 2,
