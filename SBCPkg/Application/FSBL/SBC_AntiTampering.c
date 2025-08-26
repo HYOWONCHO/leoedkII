@@ -931,7 +931,7 @@ SBCStatus  SBC_DeviceIdKyeVerify(VOID *blkio, UINT8 *devid, UINT8 *deckey)
     }
 
     //SBC_mem_print_bin("12 Device ID cert", (UINT8 *)loadbuf, ldlen);
-#ifndef _FSBL_TEST_ 
+#if 1 //ndef _FSBL_TEST_ 
     offset = SYS_CONF_DEVID_CRT_OFS;
 #else
 
