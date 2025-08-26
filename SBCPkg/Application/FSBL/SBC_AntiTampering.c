@@ -217,7 +217,7 @@ EFI_STATUS efi_boot_fsbl_load(LV_t *lv)
   // For simplicity, we'll try the first one here.
   for (UINTN Index = 0; Index < NumberOfHandles; Index++) {
 
-    DevicePath = FileDevicePath(HandleBuffer[Index], L"\\EFI\\rocky\\FSBL.efi");
+    DevicePath = FileDevicePath(HandleBuffer[Index], STR_FSBL_F_NAME);
     if (DevicePath == NULL) {
       eprint("FSBL Device path not found ");
       continue;
@@ -328,7 +328,7 @@ EFI_STATUS efi_boot_fsbl_load(LV_t *lv)
   }
 
   lv->length = FileInfo->FileSize;
-  //Print(L"X64.efi file size: %lu bytes\n", lv->length);
+  dprint("%s file  size: %lu bytes\n", STR_FSBL_F_NAME, lv->length);
 
   // 6. Read the File Contents
   Status = gBS->AllocatePool (
@@ -350,6 +350,8 @@ EFI_STATUS efi_boot_fsbl_load(LV_t *lv)
     Print(L"Failed to read X64.efi: %r\n", Status);
     goto Exit;
   }
+
+  SBC_external_mem_print_bin("FSBL Rawe Buff", lv->value, 512);
 
   //Print(L"Successfully read X64.efi into memory at address 0x%lx. Read %lu bytes.\n", (UINTN)lv->value, lv->length);
 
@@ -1462,7 +1464,7 @@ SBCStatus  SBC_FSBL_Verify(VOID *blkhnd, VOID *ansr, UINTN normbank, UINTN bm)
     SBCStatus       ret = SBCOK;
     EFI_STATUS      retval = EFI_SUCCESS;
     EFI_HANDLE      *hndl = NULL;
-    UINT16          *fblpath = L"\\EFI\\rocky\\FSBL.efi";
+    UINT16          *fblpath = STR_FSBL_F_NAME;
     //UINT16          *fblpath = L"\\boot\\vmlinuz-5.14.0-284.11.1.el9_2.x86_64" ;
     UINT8           *infostart = NULL;
     UINT32          last_of_fsbl = 0;
@@ -1722,6 +1724,8 @@ SBCStatus SBC_GenDeviceID(UINT8 *devid)
       goto errdone;
     }
 
+    SBC_external_mem_print_bin("FSBL File Hash", (UINT8 *)devidhsah, 32);
+
 
     rdlv.length = SBC_AT_HASH_LEN;
 
@@ -1741,12 +1745,12 @@ SBCStatus SBC_GenDeviceID(UINT8 *devid)
     CopyMem((void *)&computebuf[cnt], info.nvmesn, info.nvmesnl);
     cnt += info.nvmesnl;
 
+    dprint("DICE message   : %a", computebuf);
         //Print(L"Next Next cnt : %d \n", cnt);
-    CopyMem((void *)&computebuf[cnt], rdlv.value, rdlv.length);
+    CopyMem((void *)&computebuf[cnt], devidhsah, rdlv.length);
     cnt += rdlv.length;
 
-    dprint("DICE message length  : %d", cnt);
-    Print(L"DICE message length  : %d \n", cnt);
+    
     //SBC_mem_print_bin("Device ID Raw Fmt", computebuf, cnt);
     ret = SBC_HashCompute(
                              NULL, /* Not yet used */

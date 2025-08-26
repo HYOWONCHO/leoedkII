@@ -173,7 +173,7 @@ SBCStatus SBC_BootModeFactory(VOID *blkhnd, VOID *ImageHandle)
 
   ret = SBC_RawPrtReadBlock(blkhnd, (void *)imghdr, &imglen, startlba);
   if (ret != SBCOK) {
-    Print(L"SSBL Factory Block Read Fail \n");
+    eprint(L"SSBL Factory Block Read Fail \n");
     goto errdone;
   }
   //SBC_RET_VALIDATE_ERRCODEMSG((ret != SBCOK), SBCIO, "SSBL Factory Block Read Fail");
@@ -204,7 +204,7 @@ SBCStatus SBC_BootModeFactory(VOID *blkhnd, VOID *ImageHandle)
 
   ret = SBC_RawPrtReadBlock(blkhnd, (void *)loadimg, &imglen, startlba);
   if (ret != SBCOK) {
-    Print(L"SSBL Factory Block Read Fail \n");
+    eprint(L"SSBL Factory Block Read Fail \n");
     goto errdone;
   }
 
@@ -395,9 +395,17 @@ UefiMain (
       Print(L"Raw Partitino find fail !!! \n");
       goto errdone;
     }
-
+#if 1
+    btproc.blkhnd = h_blkio;
+    btproc.rawprt_hdr = &h_rawptrheader;
     SBC_mem_print_bin("Raw Prt Header", (UINT8 *)&h_rawptrheader, sizeof h_rawptrheader);
 
+
+    SBC_BootKeyModeChange(BOOT_MODE_UPDATE, KEY_MODE_NORMAL, (void *)&btproc);
+
+
+    return EFI_SUCCESS;
+#endif
 
     
     //Print(L"Find Raw Partition (0x%x)...\n", h_rawptrheader.magicid);

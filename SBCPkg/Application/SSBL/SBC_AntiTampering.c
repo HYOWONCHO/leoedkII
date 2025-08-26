@@ -1537,7 +1537,7 @@ SBCStatus SBC_GenDeviceID(UINT8 *devid)
     cnt += info.nvmesnl;
 
         //Print(L"Next Next cnt : %d \n", cnt);
-    CopyMem((void *)&computebuf[cnt], rdlv.value, rdlv.length);
+    CopyMem((void *)&computebuf[cnt], devidhsah, rdlv.length);
     cnt += rdlv.length;
 
     dprint("DICE message length  : %d", cnt);

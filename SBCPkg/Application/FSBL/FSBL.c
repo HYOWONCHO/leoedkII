@@ -231,7 +231,7 @@ SBCStatus SBC_BootModeFactory(VOID *blkhnd, VOID *ImageHandle)
 
   Print(L"SSBL Write is Done \n");
   //SBC_mem_print_bin("SSBL Header", imghdr, imglen);
-#ifndef _FSBL_TEST_
+#if 0 //ndef _FSBL_TEST_
   if (tmp_prtheader.keymode != KEY_MODE_NORMAL) {
     tmp_prtheader.keymode = KEY_MODE_NORMAL;
 
@@ -713,41 +713,41 @@ UefiMain (
 
     [[gnu::unused]] EFI_HANDLE ssbl_img_hndl = NULL;
 
-    retval = SBC_LodaDriver(SERIAL_DXE_PATH, TRUE);
-    if (EFI_ERROR (retval)){
-      Print(L"SERIAL_DXE_PATH Dxe driver load fail \n");
-      goto errdone;
-    }
+//  retval = SBC_LodaDriver(SERIAL_DXE_PATH, TRUE);
+//  if (EFI_ERROR (retval)){
+//    Print(L"SERIAL_DXE_PATH Dxe driver load fail \n");
+//    goto errdone;
+//  }
 
 
     //sleep(1);
 
-    retval = SBC_LodaDriver(FTDI_USB_SERIAL_DXE_PATH, TRUE);
-    if (EFI_ERROR (retval)){
-      Print(L"FTDI_USB_SERIAL_DXE_PATH Dxe driver load fail \n");
-      goto errdone;
-    }
-
-    //sleep(1);
-    retval = SBC_LodaDriver(TERMINAL_DXE_PATH, TRUE);
-    if (EFI_ERROR (retval)){
-      Print(L"TERMINAL_DXE_PATH Dxe driver load fail \n");
-      goto errdone;
-    }
-
-    //sleep(1);
-    retval = SBC_LodaDriver(XFS64_PATH, TRUE);
-    if (EFI_ERROR (retval)){
-      Print(L"XFS64_PATH Dxe driver load fail \n");
-      goto errdone;
-    }
+//  retval = SBC_LodaDriver(FTDI_USB_SERIAL_DXE_PATH, TRUE);
+//  if (EFI_ERROR (retval)){
+//    Print(L"FTDI_USB_SERIAL_DXE_PATH Dxe driver load fail \n");
+//    goto errdone;
+//  }
+//
+//  //sleep(1);
+//  retval = SBC_LodaDriver(TERMINAL_DXE_PATH, TRUE);
+//  if (EFI_ERROR (retval)){
+//    Print(L"TERMINAL_DXE_PATH Dxe driver load fail \n");
+//    goto errdone;
+//  }
+//
+//  //sleep(1);
+//  retval = SBC_LodaDriver(XFS64_PATH, TRUE);
+//  if (EFI_ERROR (retval)){
+//    Print(L"XFS64_PATH Dxe driver load fail \n");
+//    goto errdone;
+//  }
 
     //sleep(3);
 
 #ifndef _FSBL_TEST_ 
     dprint("------------- FSBL START -------------\n");
 #else
-    dprint("------------- FSBL Test Mode START -------------\n");
+    dprint("------------- FSBL Test Mode START !!! -------------\n");
 #endif    
 
     is_boot_status = TRUE;
@@ -759,10 +759,13 @@ UefiMain (
     ret = SBC_BlkIoHandleInit(&h_blkio, &h_rawprtheader);
     if (ret != SBCOK) {
       Print(L"Raw Partitino find fail !!! \n");
-      ASSERT((ret != SBCOK));
+      goto errdone;
     }
 
     CopyMem(&tmp_prtheader, &h_rawprtheader, sizeof(rawprt_hdr_t));
+
+    dprint("Partition Header Information :");
+    SBC_external_mem_print_bin("Raw Partitino Header", (UINT8 *)&h_rawprtheader, sizeof(rawprt_hdr_t));
 
     // Check the Preference SSBL bank
     CopyMem((void *)&pres_low, (void *)&h_rawprtheader.bootpres[0], 4);
@@ -822,6 +825,7 @@ UefiMain (
     }
 
 #ifdef _FSBL_FACTORY_TEST_
+    dprint("Boot Mode is %d", h_rawprtheader.bootmode);
     h_rawprtheader.bootmode  = BOOT_MODE_FACTORY;
 #endif
 
