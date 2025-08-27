@@ -2,9 +2,9 @@
 #define _SBC_ANTITAMPERING_
 
 #ifndef _FSBL_TEST_
-#   define OSID_KERNEL_PATH            L"\\vmlinuz-5.14.0-284.11.1.el9_2.x86_64"            
+#   define OSID_KERNEL_PATH            L"\\vmlinuz"            
 #else
-#   define OSID_KERNEL_PATH            L"\\vmlinuz-5.14.0-570.17.1.el9_6.x86_64" 
+#   define OSID_KERNEL_PATH            L"\\vmlinuz" 
 #endif
 
 #ifndef _FSBL_TEST_
@@ -231,5 +231,5 @@ SBCStatus  SBC_GenMigrationKey(VOID *priv, UINT32 currbankid, UINT32 prevbankid,
  */
 SBCStatus  SBC_DeviceIdKyeVerify(VOID *blkio, UINT8 *devid, UINT8 *deckey);
 
-SBCStatus  SBC_SSBL_Verify(VOID *blkhnd, VOID *ansr,  UINTN nrombank);
+SBCStatus  SBC_SSBL_Verify(VOID *blkhnd, VOID *ansr,  UINTN nrombank, UINTN bm);
 #endif

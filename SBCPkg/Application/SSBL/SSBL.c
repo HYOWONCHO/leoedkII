@@ -173,7 +173,7 @@ SBCStatus SBC_BootModeFactory(VOID *blkhnd, VOID *ImageHandle)
 
   ret = SBC_RawPrtReadBlock(blkhnd, (void *)imghdr, &imglen, startlba);
   if (ret != SBCOK) {
-    eprint(L"SSBL Factory Block Read Fail \n");
+    eprint("SSBL Factory Block Read Fail \n");
     goto errdone;
   }
   //SBC_RET_VALIDATE_ERRCODEMSG((ret != SBCOK), SBCIO, "SSBL Factory Block Read Fail");
@@ -204,7 +204,7 @@ SBCStatus SBC_BootModeFactory(VOID *blkhnd, VOID *ImageHandle)
 
   ret = SBC_RawPrtReadBlock(blkhnd, (void *)loadimg, &imglen, startlba);
   if (ret != SBCOK) {
-    eprint(L"SSBL Factory Block Read Fail \n");
+    eprint("SSBL Factory Block Read Fail \n");
     goto errdone;
   }
 
@@ -401,7 +401,7 @@ UefiMain (
     SBC_mem_print_bin("Raw Prt Header", (UINT8 *)&h_rawptrheader, sizeof h_rawptrheader);
 
 
-    SBC_BootKeyModeChange(BOOT_MODE_UPDATE, KEY_MODE_NORMAL, (void *)&btproc);
+    SBC_BootKeyModeChange(BOOT_MODE_FACTORY, KEY_MODE_NORMAL, (void *)&btproc);
 
 
     return EFI_SUCCESS;

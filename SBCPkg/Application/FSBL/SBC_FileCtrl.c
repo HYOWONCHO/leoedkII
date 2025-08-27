@@ -1045,14 +1045,15 @@ SBCStatus  SBC_BlkIoHandleInit(OUT VOID **hblk, OUT VOID *hdr)
 
         if (EFI_ERROR(Status)) {
             // How do i process in case of error is EFI_NO_MEDIA
-            Print(L"ERROR: Failed to read LBA 0: %r\n", Status);
-#ifndef _FSBL_TEST_
-            SBC_RET_VALIDATE_ERRCODEMSG((Status != EFI_SUCCESS), SBCFAIL, "ERROR: Could not open BlockIoProtocol");
-            ret = SBCFAIL;
-            goto errdone;
-#else
-            continue;
-#endif
+//            Print(L"ERROR: Failed to read LBA 0: %r\n", Status);
+//#ifndef _FSBL_TEST_
+//            SBC_RET_VALIDATE_ERRCODEMSG((Status != EFI_SUCCESS), SBCFAIL, "ERROR: Could not open BlockIoProtocol");
+//            ret = SBCFAIL;
+//            goto errdone;
+//#else
+//            continue;
+//#endif
+              continue;
         }
 
         //SBC_mem_print_bin("Read Block", (UINT8 *)ReadBuffer, SBC_MAGIC_LEN);

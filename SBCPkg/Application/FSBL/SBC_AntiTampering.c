@@ -108,8 +108,14 @@ SBCStatus _ssbl_image_load(VOID *blkhnd, LV_t *lv,  UINTN normbank, UINTN bm)
     UINT32          imglen = SBC_RAWPRT_DFLT_BLK_SZ;
     UINT8           imghdr[SBC_RAWPRT_DFLT_BLK_SZ] = {0, };
 
-    bsofs = (BOOT_SECTOR1_OFS | ((normbank - 1) << 20));
-    startlba = ((bsofs | BOOT_SSBL_OFS) >> SBC_RAWPRT_DFLT_SHIFT);
+    if (bm != BOOT_MODE_FACTORY) {
+      bsofs = (BOOT_SECTOR1_OFS | ((normbank - 1) << 20));
+      startlba = ((bsofs | BOOT_SSBL_OFS) >> SBC_RAWPRT_DFLT_SHIFT);
+    }
+    else {
+      bsofs = BOOT_SECTOR3_OFS;
+      startlba = ((bsofs | BOOT_SSBL_OFS) >> SBC_RAWPRT_DFLT_SHIFT);
+    }
 
     dprint("BSOFS:  0x%lx, StartLBA: %lu", bsofs, startlba);
 
@@ -120,8 +126,19 @@ SBCStatus _ssbl_image_load(VOID *blkhnd, LV_t *lv,  UINTN normbank, UINTN bm)
     }
 
     CopyMem((void *)&imglen, &imghdr[0], sizeof imglen);
+
+    // If imglen is zero, assumed that image not existense in Raw partition
+    if (imglen <= 0) {
+      eprint("Boot Mode (%d) Image not existense", bm);
+      ret = SBCZEROL;
+      goto errdone;
+    }
     dprint("SSBL image len : %ld", imglen);
     imglen = ALIGN_VALUE(imglen, SBC_RAWPRT_DFLT_BLK_SZ);
+
+
+
+
 
     dprint("Align SSBL image len : %ld", imglen);
 
@@ -830,8 +847,8 @@ SBCStatus SBC_DeviceSecuirtyKeyCreate(VOID *key)
 {
     SBCStatus ret = SBCOK;
     hw_uniqueinfo_t info;
-    UINT8   *blob = NULL;
-    UINTN   offset = 0;
+    UINT8 *computebuf = NULL;
+    UINTN cnt = 0;
     UINTN   allocate_len = 0;
 
     SBC_RET_VALIDATE_ERRCODEMSG((key != NULL), SBCNULLP, "Output Nill");
@@ -842,27 +859,31 @@ SBCStatus SBC_DeviceSecuirtyKeyCreate(VOID *key)
 
 
     allocate_len = info.mbsnl + info.mmsnl + info.nvmesnl;
-    blob = AllocatePool(allocate_len);
-    SBC_RET_VALIDATE_ERRCODEMSG((blob != NULL),
+    computebuf = AllocatePool(allocate_len);
+    SBC_RET_VALIDATE_ERRCODEMSG((computebuf != NULL),
                                 SBCNULLP, 
                                 "Blob buffer Nill");
 
-    offset = 0;
-    CopyMem((void *)&blob[0], info.mbsn, info.mbsnl);
-    offset = info.mbsnl;
+    cnt = 0;
+     //Print(L" cnt : %d \n", cnt);
+    CopyMem((void *)&computebuf[0], info.mbsn, info.mbsnl);
+    cnt = info.mbsnl;
 
-    CopyMem((void *)&blob[offset], info.mmsn, info.mmsnl);
-    offset += info.mmsnl;
+     //Print(L"Next cnt : %d \n", cnt);
+    CopyMem((void *)&computebuf[cnt], info.mmsn, info.mmsnl);
+    cnt += info.mmsnl;
 
-    CopyMem((void *)&blob[offset], info.nvmesn, info.nvmesnl);
-    offset += info.nvmesnl;
+     //Print(L"Next Next cnt : %d \n", cnt);
+    CopyMem((void *)&computebuf[cnt], info.nvmesn, info.nvmesnl);
+    cnt += info.nvmesnl;
 
-    SBC_external_mem_print_bin("Device ID", blob, allocate_len);
+    dprint("Security Key Message : %s", computebuf);
+    SBC_external_mem_print_bin("Security Key", computebuf, cnt);
 
     ret = SBC_HashCompute(NULL,
-                          blob,
+                          computebuf,
 #ifndef _FSBL_TEST_ 
-                          offset,
+                          cnt,
 #else
                           32,
 #endif
@@ -1255,7 +1276,7 @@ errdone:
 
 }
 
-SBCStatus  SBC_SSBL_Verify(VOID *blkhnd, VOID *ansr,  UINTN nrombank)
+SBCStatus  SBC_SSBL_Verify(VOID *blkhnd, VOID *ansr,  UINTN nrombank, UINTN bm)
 {
     SBCStatus       ret = SBCOK;
 
@@ -1289,10 +1310,13 @@ SBCStatus  SBC_SSBL_Verify(VOID *blkhnd, VOID *ansr,  UINTN nrombank)
     UINTN           bsofs = 0; // Boot Sector Offset
     UINT8           imghdr[SBC_RAWPRT_DFLT_BLK_SZ] = {0, };
 
-    bsofs = (BOOT_SECTOR1_OFS | ((nrombank - 1) << 20));
-
-    startlba = ((bsofs | BOOT_SSBL_OFS) >> SBC_RAWPRT_DFLT_SHIFT);
-
+    if (bm != BOOT_MODE_FACTORY) {
+      bsofs = (BOOT_SECTOR1_OFS | ((nrombank - 1) << 20));
+      startlba = ((bsofs | BOOT_SSBL_OFS) >> SBC_RAWPRT_DFLT_SHIFT);
+    }
+    else {
+      startlba = ((BOOT_SECTOR3_OFS | BOOT_SSBL_OFS) >> SBC_RAWPRT_DFLT_SHIFT);
+    }
     ret = SBC_RawPrtReadBlock(blkhnd, (void *)imghdr, &imglen, startlba);
     if (ret != SBCOK) {
         eprint("SSBL Factory Block Read Fail \n");
@@ -1446,10 +1470,10 @@ errdone:
 //  if (EcPubKey != NULL) {
 //    EcFree(EcPubKey);
 //  }
-    if (rdlv.value != NULL) {
-      FreePool(rdlv.value);
-      rdlv.value = NULL;
-    }
+//  if (rdlv.value != NULL) {
+//    FreePool(rdlv.value);
+//    rdlv.value = NULL;
+//  }
 
 //  if (ret != SBCOK) {
 //      sbc_err_sysprn(SBC_LOG_CMN_PRIO_INFO, 2, L"SBC", L"FSBL", L"CSC-01", 23, L"VERIFY", L"SSBL Integrate check is Fail\n");

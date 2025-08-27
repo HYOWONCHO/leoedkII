@@ -231,7 +231,7 @@ SBCStatus SBC_BootModeFactory(VOID *blkhnd, VOID *ImageHandle)
 
   Print(L"SSBL Write is Done \n");
   //SBC_mem_print_bin("SSBL Header", imghdr, imglen);
-#if 0 //ndef _FSBL_TEST_
+#ifndef _FSBL_TEST_
   if (tmp_prtheader.keymode != KEY_MODE_NORMAL) {
     tmp_prtheader.keymode = KEY_MODE_NORMAL;
 
@@ -789,6 +789,7 @@ UefiMain (
         goto errdone;
     }
     dprint("Currently Valid FW Bank ID : %d , Previously Bank ID : %d \n", currbank_id, prevbank_id);
+    dprint("Boot Mode : %d", h_rawprtheader.bootmode);
 
    // Step 1-1 )  FSBL, self sign and verify
 
@@ -816,7 +817,7 @@ UefiMain (
     
 
 
-    ret = SBC_DiceKeysGen(ImageHandle, &diceid,BOOT_MODE_NORMAL, currbank_id);
+    ret = SBC_DiceKeysGen(ImageHandle, &diceid, currbank_id, h_rawprtheader.bootmode);
     if (ret != SBCOK) {
         //sbc_err_sysprn(SBC_LOG_CMN_PRIO_ERR, 2, L"SBC", L"FSBL", L"Weapon System", 4, L"EVT", L"Dice Key creation fail\n");
         retval = EFI_INVALID_PARAMETER;
@@ -834,7 +835,7 @@ UefiMain (
     case BOOT_MODE_NORMAL:
       dprint("Boot Mode is BOOT_MODE_NORMAL");
 #ifdef _SBC_DEVID_VERIFY_
-      ret = SBC_SSBL_Verify(h_blkio, NULL, currbank_id);
+      ret = SBC_SSBL_Verify(h_blkio, NULL, currbank_id, BOOT_MODE_NORMAL);
       if (ret != SBCOK) {
             sbc_err_sysprn(SBC_LOG_CMN_PRIO_ERR, 2,
                    L"SBC",
@@ -883,7 +884,7 @@ UefiMain (
       //Print(L"Factory Boot Mode !!! \n");
 
 #ifdef _SBC_DEVID_VERIFY_
-      ret = SBC_SSBL_Verify(h_blkio, NULL, currbank_id);
+      ret = SBC_SSBL_Verify(h_blkio, NULL, currbank_id, BOOT_MODE_FACTORY);
       if (ret != SBCOK) {
             sbc_err_sysprn(SBC_LOG_CMN_PRIO_ERR, 2,
                    L"SBC",
@@ -948,7 +949,7 @@ UefiMain (
     case BOOT_MODE_UPDATE:
 #ifdef _SBC_DEVID_VERIFY_
 
-      ret = SBC_SSBL_Verify(h_blkio, NULL, currbank_id);
+      ret = SBC_SSBL_Verify(h_blkio, NULL, currbank_id, BOOT_MODE_UPDATE);
       if (ret != SBCOK) {
             sbc_err_sysprn(SBC_LOG_CMN_PRIO_ERR, 2,
                    L"SBC",
@@ -997,7 +998,7 @@ UefiMain (
 
 #ifdef _SBC_DEVID_VERIFY_
 
-      ret = SBC_SSBL_Verify(h_blkio, NULL, prevbank_id);
+      ret = SBC_SSBL_Verify(h_blkio, NULL, prevbank_id, BOOT_MODE_RECOVERY);
       if (ret != SBCOK) {
             sbc_err_sysprn(SBC_LOG_CMN_PRIO_ERR, 2,
                    L"SBC",
