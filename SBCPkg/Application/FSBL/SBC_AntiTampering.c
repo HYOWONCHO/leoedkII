@@ -877,16 +877,12 @@ SBCStatus SBC_DeviceSecuirtyKeyCreate(VOID *key)
     CopyMem((void *)&computebuf[cnt], info.nvmesn, info.nvmesnl);
     cnt += info.nvmesnl;
 
-    dprint("Security Key Message : %s", computebuf);
+    dprint("Security Key Message : %a", computebuf);
     SBC_external_mem_print_bin("Security Key", computebuf, cnt);
 
     ret = SBC_HashCompute(NULL,
-                          computebuf,
-#ifndef _FSBL_TEST_ 
-                          cnt,
-#else
+                          computebuf, 
                           32,
-#endif
                           key);
 
 
