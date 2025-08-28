@@ -162,7 +162,7 @@ SBCStatus SBC_BootModeFactory(VOID *blkhnd, VOID *ImageHandle)
   [[maybe_unused]]UINTN endlba = 0;
   [[maybe_unused]]INTN       hndlcnt = 0;
   __attribute__((unused))EFI_STATUS retval;
-  [[gnu::unused]]CHAR16 *fname = L"\\EFI\\boot\\SSBL.efi";
+  CHAR16 *fname = L"\\EFI\\BOOT\\SSBL.efi";
 
 
   LV_t wrlv;
@@ -210,16 +210,16 @@ SBCStatus SBC_BootModeFactory(VOID *blkhnd, VOID *ImageHandle)
   _lv_set_data(&wrlv,&loadimg[4], imglen - 4);
 
 #if 1
-  for (int idx = 0; idx < hndlcnt; idx++) {
-    retval = SBC_WriteFile(ssbl_img_hndl[idx], fname, &wrlv);
-    if (EFI_ERROR(retval)) {
-        ret = SBCIO;
-        continue;
-        //goto errdone;
-    }
+  //for (int idx = 0; idx < hndlcnt; idx++) {
+    retval = SBC_WriteFile(ssbl_img_hndl[0], fname, &wrlv);
+  //  if (EFI_ERROR(retval)) {
+  //      ret = SBCIO;
+  //      continue;
+  //      //goto errdone;
+  //  }
 
-    break;
-  }
+  //  break;
+  //}
 
   if (EFI_ERROR(retval)) {
     eprint("%s file write fail %r", fname, retval);
@@ -280,7 +280,7 @@ SBCStatus SBC_BootModeNormalAndpUdate(VOID *blkhnd, VOID *ImageHandle, UINTN nro
   [[maybe_unused]]UINTN endlba = 0;
   [[maybe_unused]]INTN       hndlcnt = 0;
   __attribute__((unused))EFI_STATUS retval;
-  [[gnu::unused]]CHAR16 *fname = L"\\EFI\\boot\\SSBL.efi";
+  [[gnu::unused]]CHAR16 *fname = L"\\EFI\\BOOT\\SSBL.efi";
   int idx;
 
 
@@ -713,36 +713,39 @@ UefiMain (
 
     [[gnu::unused]] EFI_HANDLE ssbl_img_hndl = NULL;
 
-//  retval = SBC_LodaDriver(SERIAL_DXE_PATH, TRUE);
-//  if (EFI_ERROR (retval)){
-//    Print(L"SERIAL_DXE_PATH Dxe driver load fail \n");
-//    goto errdone;
-//  }
+#ifdef _SBC_DRIVER_LOAD_
+    retval = SBC_LodaDriver(SERIAL_DXE_PATH, TRUE);
+    if (EFI_ERROR (retval)){
+      Print(L"SERIAL_DXE_PATH Dxe driver load fail \n");
+      goto errdone;
+    }
 
 
     //sleep(1);
 
-//  retval = SBC_LodaDriver(FTDI_USB_SERIAL_DXE_PATH, TRUE);
-//  if (EFI_ERROR (retval)){
-//    Print(L"FTDI_USB_SERIAL_DXE_PATH Dxe driver load fail \n");
-//    goto errdone;
-//  }
-//
-//  //sleep(1);
-//  retval = SBC_LodaDriver(TERMINAL_DXE_PATH, TRUE);
-//  if (EFI_ERROR (retval)){
-//    Print(L"TERMINAL_DXE_PATH Dxe driver load fail \n");
-//    goto errdone;
-//  }
-//
-//  //sleep(1);
-//  retval = SBC_LodaDriver(XFS64_PATH, TRUE);
-//  if (EFI_ERROR (retval)){
-//    Print(L"XFS64_PATH Dxe driver load fail \n");
-//    goto errdone;
-//  }
+    retval = SBC_LodaDriver(FTDI_USB_SERIAL_DXE_PATH, TRUE);
+    if (EFI_ERROR (retval)){
+      Print(L"FTDI_USB_SERIAL_DXE_PATH Dxe driver load fail \n");
+      goto errdone;
+    }
+
+    //sleep(1);
+    retval = SBC_LodaDriver(TERMINAL_DXE_PATH, TRUE);
+    if (EFI_ERROR (retval)){
+      Print(L"TERMINAL_DXE_PATH Dxe driver load fail \n");
+      goto errdone;
+    }
+
+    //sleep(1);
+    retval = SBC_LodaDriver(XFS64_PATH, TRUE);
+    if (EFI_ERROR (retval)){
+      Print(L"XFS64_PATH Dxe driver load fail \n");
+      goto errdone;
+    }
 
     //sleep(3);
+#endif
+
 
 #ifndef _FSBL_TEST_ 
     dprint("------------- FSBL START -------------\n");
