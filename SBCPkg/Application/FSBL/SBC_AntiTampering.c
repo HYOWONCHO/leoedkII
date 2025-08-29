@@ -843,59 +843,59 @@ errdone:
   return ret;
 }
 
-SBCStatus SBC_DeviceSecuirtyKeyCreate(VOID *key)
-{
-    SBCStatus ret = SBCOK;
-    hw_uniqueinfo_t info;
-    UINT8 *computebuf = NULL;
-    UINTN cnt = 0;
-    UINTN   allocate_len = 0;
-
-    SBC_RET_VALIDATE_ERRCODEMSG((key != NULL), SBCNULLP, "Output Nill");
-
-    _baseboard_sn(&info);
-    _memorydevice_sn(&info);
-    _nvme_get_serial(&info);
-
-
-    allocate_len = info.mbsnl + info.mmsnl + info.nvmesnl;
-    computebuf = AllocatePool(allocate_len);
-    SBC_RET_VALIDATE_ERRCODEMSG((computebuf != NULL),
-                                SBCNULLP, 
-                                "Blob buffer Nill");
-
-    cnt = 0;
-     //Print(L" cnt : %d \n", cnt);
-    CopyMem((void *)&computebuf[0], info.mbsn, info.mbsnl);
-    cnt = info.mbsnl;
-
-     //Print(L"Next cnt : %d \n", cnt);
-    CopyMem((void *)&computebuf[cnt], info.mmsn, info.mmsnl);
-    cnt += info.mmsnl;
-
-     //Print(L"Next Next cnt : %d \n", cnt);
-    CopyMem((void *)&computebuf[cnt], info.nvmesn, info.nvmesnl);
-    cnt += info.nvmesnl;
-
-    dprint("Security Key Message : %a", computebuf);
-    SBC_external_mem_print_bin("Security Key", computebuf, cnt);
-
-    ret = SBC_HashCompute(NULL,
-                          computebuf, 
-                          32,
-                          key);
-
-
-    SBC_RET_VALIDATE_ERRCODEMSG((ret == SBCOK),
-                                ret, 
-                                "Device Secret Key create fail");
-
-
-errdone:
-
-    return ret;
-
-}
+//SBCStatus SBC_DeviceSecuirtyKeyCreate(VOID *key)
+//{
+//    SBCStatus ret = SBCOK;
+//    hw_uniqueinfo_t info;
+//    UINT8 *computebuf = NULL;
+//    UINTN cnt = 0;
+//    UINTN   allocate_len = 0;
+//
+//    SBC_RET_VALIDATE_ERRCODEMSG((key != NULL), SBCNULLP, "Output Nill");
+//
+//    _baseboard_sn(&info);
+//    _memorydevice_sn(&info);
+//    _nvme_get_serial(&info);
+//
+//
+//    allocate_len = info.mbsnl + info.mmsnl + info.nvmesnl;
+//    computebuf = AllocatePool(allocate_len);
+//    SBC_RET_VALIDATE_ERRCODEMSG((computebuf != NULL),
+//                                SBCNULLP,
+//                                "Blob buffer Nill");
+//
+//    cnt = 0;
+//     //Print(L" cnt : %d \n", cnt);
+//    CopyMem((void *)&computebuf[0], info.mbsn, info.mbsnl);
+//    cnt = info.mbsnl;
+//
+//     //Print(L"Next cnt : %d \n", cnt);
+//    CopyMem((void *)&computebuf[cnt], info.mmsn, info.mmsnl);
+//    cnt += info.mmsnl;
+//
+//     //Print(L"Next Next cnt : %d \n", cnt);
+//    CopyMem((void *)&computebuf[cnt], info.nvmesn, info.nvmesnl);
+//    cnt += info.nvmesnl;
+//
+//    dprint("Security Key Message : %a", computebuf);
+//    SBC_external_mem_print_bin("Security Key", computebuf, cnt);
+//
+//    ret = SBC_HashCompute(NULL,
+//                          computebuf,
+//                          32,
+//                          key);
+//
+//
+//    SBC_RET_VALIDATE_ERRCODEMSG((ret == SBCOK),
+//                                ret,
+//                                "Device Secret Key create fail");
+//
+//
+//errdone:
+//
+//    return ret;
+//
+//}
 
 SBCStatus SBC_RootCAVerify(VOID *blkio)
 {
@@ -906,8 +906,14 @@ SBCStatus SBC_RootCAVerify(VOID *blkio)
     //UINTN f_size;
     //EFI_SIMPLE_FILE_SYSTEM_PROTOCO *Fs;
     EFI_DEVICE_PATH_PROTOCOL *DevicePath;
+    UINTN systm_lba = 0;
+    UINT8 *loadbuf;
+    UINT32 ldlen = BASE_ANS_BLK_LEN;
+    UINTN offset = 0;
+    UINTN calen = 0;
+    UINTN idx;
 
-    ret = SBC_GetFileSize(L"\\EFI\\RootCA.crt", &rdlv.length);
+    ret = SBC_GetFileSize(L"\\EFI\\RootCA.crt", (UINTN *)&rdlv.length);
     SBC_RET_VALIDATE_ERRCODEMSG((ret == SBCOK), ret, "RootCA open fail");
 
     gBS->LocateHandleBuffer(ByProtocol, 
@@ -916,7 +922,7 @@ SBCStatus SBC_RootCAVerify(VOID *blkio)
                             &HandleCount,
                             &Handles);
 
-    for (UINTN idx = 0; idx < HandleCount; idx++) {
+    for (idx = 0; idx < HandleCount; idx++) {
       DevicePath = FileDevicePath(Handles[idx], L"\\EFI\\RootCA.crt");
       if (DevicePath != NULL) {
         break;
@@ -932,8 +938,34 @@ SBCStatus SBC_RootCAVerify(VOID *blkio)
     SBC_RET_VALIDATE_ERRCODEMSG((rdlv.value != NULL), SBCNULLP, "RootCA Memry Allocation fail");
 
     ret = SBC_ReadFile(Handles[idx], L"\\EFI\\RootCA.crt", &rdlv); 
+    SBC_RET_VALIDATE_ERRCODEMSG((ret == SBCOK), SBCNULLP,  "RootCA.crt read fail");
+
+    systm_lba = (SYS_CONF_START_OFS >> SBC_RAWPRT_DFLT_SHIFT);
+    ldlen = ALIGN_VALUE(SYS_SETTING_STORAGE_LEN, ((EFI_BLOCK_IO_PROTOCOL *)blkio)->Media->BlockSize);
+    loadbuf = AllocateZeroPool(ldlen);
+    SBC_RET_VALIDATE_ERRCODEMSG((loadbuf != NULL), SBCNULLP, "Buffer invalid object");
+
+    ret = SBC_RawPrtReadBlock(blkio, 
+                              (VOID *)loadbuf, 
+                              &ldlen, 
+                              systm_lba);
+    if (ret != SBCOK) {
+        Print(L"SBC_RawPrtReadBlock fail (%p)\n", blkio);
+        goto errdone;
+    }
+
+    offset = SYS_CONF_ROOT_CA_OFS;
+    CopyMem((void *)&calen, (void *)&loadbuf[offset], 4);
+
+    offset += 4;
+
+    if (CompareMem((const void *)rdlv.value, (const void *)&loadbuf[offset], calen) != 0) {
+      ret = SBCFAIL;
+      goto errdone;
+    }
 
 
+    ret = SBCOK;
 
 errdone:
 
