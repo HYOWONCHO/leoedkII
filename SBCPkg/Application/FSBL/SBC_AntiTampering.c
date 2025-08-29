@@ -897,6 +897,49 @@ errdone:
 
 }
 
+SBCStatus SBC_RootCAVerify(VOID *blkio)
+{
+    SBCStatus ret = SBCOK;
+    EFI_HANDLE *Handles;
+    UINTN HandleCount;
+    LV_t rdlv;
+    //UINTN f_size;
+    //EFI_SIMPLE_FILE_SYSTEM_PROTOCO *Fs;
+    EFI_DEVICE_PATH_PROTOCOL *DevicePath;
+
+    ret = SBC_GetFileSize(L"\\EFI\\RootCA.crt", &rdlv.length);
+    SBC_RET_VALIDATE_ERRCODEMSG((ret == SBCOK), ret, "RootCA open fail");
+
+    gBS->LocateHandleBuffer(ByProtocol, 
+                            &gEfiSimpleFileSystemProtocolGuid,
+                            NULL,
+                            &HandleCount,
+                            &Handles);
+
+    for (UINTN idx = 0; idx < HandleCount; idx++) {
+      DevicePath = FileDevicePath(Handles[idx], L"\\EFI\\RootCA.crt");
+      if (DevicePath != NULL) {
+        break;
+      }
+    }
+
+    if (DevicePath == NULL) {
+      eprint("Not found the device path for RootCA.crt");
+      goto errdone;
+    }
+
+    rdlv.value = AllocateZeroPool(rdlv.length);
+    SBC_RET_VALIDATE_ERRCODEMSG((rdlv.value != NULL), SBCNULLP, "RootCA Memry Allocation fail");
+
+    ret = SBC_ReadFile(Handles[idx], L"\\EFI\\RootCA.crt", &rdlv); 
+
+
+
+errdone:
+
+    return ret;
+}
+
 
 SBCStatus SBC_DeviceSecuirtyKeyCreate(VOID *key)
 {
