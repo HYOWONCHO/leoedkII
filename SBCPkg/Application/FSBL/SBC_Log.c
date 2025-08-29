@@ -183,7 +183,7 @@ CHAR16 *SBC_LogMrg(CONST CHAR16 *fmt, ...)
                   than MaxSize and no Null-terminator is found.
 **/
 UINTN
-MyUnicodeStrnLenS (
+SBC_UnicodeStrnLenS (
   IN CONST CHAR16  *String,
   IN UINTN         MaxSize
   )
@@ -191,7 +191,7 @@ MyUnicodeStrnLenS (
   UINTN Length;
 
   if (String == NULL) {
-    DEBUG ((DEBUG_ERROR, "MyUnicodeStrnLenS: Input String is NULL.\n"));
+    DEBUG ((DEBUG_ERROR, "SBC_UnicodeStrnLenS: Input String is NULL.\n"));
     return 0;
   }
 
@@ -214,7 +214,7 @@ MyUnicodeStrnLenS (
           Truncates if Source is too long.
 **/
 UINTN
-MyUnicodeStrToAsciiStrS (
+SBC_UnicodeStrToAsciiStrS (
   OUT CHAR8        *Destination,
   IN  UINTN        DestinationSize, // Size in bytes
   IN  CONST CHAR16 *Source
@@ -973,7 +973,7 @@ SBC_LogPrint(
     CHAR8  AsciiLogBuffer[PcdGet32 (PcdUefiLibMaxPrintBufferSize) + 1]; // One byte per CHAR16 (safe for ASCII range)
     UINTN  AsciiConvertedLen;
 
-    AsciiConvertedLen = MyUnicodeStrToAsciiStrS(AsciiLogBuffer, sizeof(AsciiLogBuffer), full_log_msg);
+    AsciiConvertedLen = SBC_UnicodeStrToAsciiStrS(AsciiLogBuffer, sizeof(AsciiLogBuffer), full_log_msg);
     if (AsciiConvertedLen == 0 && full_log_msg[0] != L'\0') {
         DEBUG ((DEBUG_ERROR, "SBC_LogPrint: Failed to convert Unicode log to ASCII or buffer too small.\n"));
         // Handle conversion error, maybe log truncated msg or error to console
@@ -982,7 +982,7 @@ SBC_LogPrint(
     }
 
     // Now wrlog points to a proper ASCII string
-    CHAR8 *wrlog_ptr = AsciiLogBuffer; 
+    //CHAR8 *wrlog_ptr = AsciiLogBuffer; 
     
     // Print for debug (both Unicode and ASCII for comparison)
     //dprint("SBC_LogPrint: Full Unicode Log msg : %s \n", full_log_msg);
@@ -991,12 +991,12 @@ SBC_LogPrint(
     // Call your remove_all_space function (expects ASCII CHAR8*)
     // It should modify wrlog_ptr in place and return the new length.
     // Make sure remove_all_space works on a null-terminated string and updates length correctly.
-    UINTN final_ascii_len = remove_all_space(wrlog_ptr, AsciiConvertedLen); // Pass converted length, not full buffer size
+    //UINTN final_ascii_len = remove_all_space(wrlog_ptr, AsciiConvertedLen); // Pass converted length, not full buffer size
 
     //dprint("SBC_LogPrint: ASCII Log msg after space removal: %a (Final Length: %d)\n", wrlog_ptr, final_ascii_len);
 
     // _sbc_write_log_file expects CHAR8* and its strlen.
-    _sbc_write_log_file(wrlog_ptr, final_ascii_len);
+    _sbc_write_log_file(AsciiLogBuffer, AsciiConvertedLen);
 
 ExitLog:
     return;
@@ -1024,13 +1024,14 @@ UINTN remove_all_space(CHAR8 *buffer, UINTN buffer_size_in_bytes) {
 }
 
 // Replace with your actual implementation for writing to a log file or sending over network
-EFI_STATUS _sbc_write_log_file(CHAR8 *log_data, UINTN length_in_bytes) {
+EFI_STATUS _sbc_write_log_file(CHAR8 *log_data, UINTN length_in_bytes) 
+{
     if (log_data == NULL || length_in_bytes == 0) {
         DEBUG ((DEBUG_ERROR, "SysLog: No data to write or invalid length.\n"));
         return EFI_INVALID_PARAMETER;
     }
     // For demonstration, just print to console as ASCII
-    Print(L"SysLog_OUTPUT (ASCII): %a\n", log_data);
+    Print(L"%a\n", log_data);
 
     // --- Placeholder for actual network (UDP) sending ---
     // EFI_STATUS Status;
@@ -2452,7 +2453,7 @@ extern EFI_STATUS _sbc_write_log_file(CHAR8 *log_data, UINTN length_in_bytes);
                   than MaxSize and no Null-terminator is found.
 **/
 UINTN
-MyUnicodeStrnLenS (
+SBC_UnicodeStrnLenS (
   IN CONST CHAR16  *String,
   IN UINTN         MaxSize
   )
@@ -2460,7 +2461,7 @@ MyUnicodeStrnLenS (
   UINTN Length;
 
   if (String == NULL) {
-    DEBUG ((DEBUG_ERROR, "MyUnicodeStrnLenS: Input String is NULL.\n"));
+    DEBUG ((DEBUG_ERROR, "SBC_UnicodeStrnLenS: Input String is NULL.\n"));
     return 0;
   }
 

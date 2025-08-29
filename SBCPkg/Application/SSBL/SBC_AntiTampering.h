@@ -237,5 +237,16 @@ SBCStatus  SBC_GenMigrationKey(VOID *priv, UINT32 currbankid, UINT32 prevbankid,
  */
 SBCStatus  SBC_DeviceIdKyeVerify(VOID *blkio, UINT8 *devid, UINT8 *deckey);
 
+/*!
+ * System Setting infomation is encrypt and decrypt 
+ * 
+ * \author leonc (8/28/25)
+ * 
+ * \param key    
+ * 
+ * \return SBCStatus 
+ */
+SBCStatus SBC_DeviceSecuirtyKeyCreate(VOID *key);
+
 SBCStatus  SBC_SSBL_Verify(VOID *blkhnd, VOID *ansr,  UINTN nrombank);
 #endif

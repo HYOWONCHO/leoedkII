@@ -13,6 +13,7 @@
 
 #include "SBC_BootProc.h"
 #include "SBC_FileCtrl.h"
+#include "SBC_Kdf.h"
 
 //EFI_GUID g_sbc_guid  = {0x1F3F7E80, 0xDB6B, 0x93FA, {0x9E, 0x61, 0x4C, 0x31, 0x3D, 0x3A}};
 static SBCStatus _update_protected_software(VOID *priv);
@@ -50,12 +51,16 @@ SBC_FindPrtoSWAndProcessing(UINT8 *deckey,
     }
 
 
+
     ctx.out.value = (void *)decbuf;
     ctx.out.length = *declen;
     aesctx.gcm = &ctx;
     aesctx.algoid = SBC_CIPHER_AES_GCM;
     //decrypt sw white list 
-    SBC_AESGcmSetContext((void *)aesctx.gcm, (void *)shared_secret, (void *)iv, (void *)tag);
+    SBC_AESGcmSetContext((void *)aesctx.gcm, 
+                         (void *)shared_secret, 
+                         (void *)iv, 
+                         (void *)tag);
     if (SBC_AESGcmDecrypt(&aesctx) != SBCOK) {
         eprint("Protected SW List decrypt fail");
         ret = SBCFAIL;
@@ -276,6 +281,174 @@ errdone:
     return ret;
 }
 
+static SBCStatus _store_fw_os_keypair_store(VOID *priv, VOID *fwid, VOID *osid)
+{ 
+    SBCStatus ret = SBCOK;
+
+    UINT8 *buf = NULL;
+    UINT32 id_len = 0;
+    UINT32 cpy_offset = 0;
+
+    UINT8 *enckey[SYS_OSID_KEY_LEN] = {0,};
+    SBC_AESContext aesctx;
+    SBC_AESGcmCtx  ctx;
+
+    UINT8 auth_iv[SBC_AT_IV_LEN] = {0, };
+    UINT8 auth_tag[SBC_AT_TAG_LEN] = {0, };
+
+    UINT8 encbuf[SBC_AT_TAG_LEN] = {0, };
+
+    at_key_t fw_key;
+    at_key_t os_key;
+    boot_proc_t *bp = (boot_proc_t *)priv;
+    UINT32 rdlen = 0;
+
+    UINTN lba = 0;
+
+
+    ret = SBC_DICESeedKeyPair((UINT8 *)fwid, &fw_key);
+    SBC_RET_VALIDATE_ERRCODEMSG((ret == SBCOK), ret, "FWID key pair create fail");
+
+    ret = SBC_DICESeedKeyPair((UINT8 *)osid, &os_key);
+    SBC_RET_VALIDATE_ERRCODEMSG((ret == SBCOK), ret, "OSID key pair create fail");
+
+
+    // Getting the security key to encrypting.
+    ret = SBC_DeviceSecuirtyKeyCreate((VOID *)enckey);
+    SBC_RET_VALIDATE_ERRCODEMSG((ret == SBCOK),
+                                ret,
+                                "Security Key Create fail");
+
+    buf = AllocateZeroPool(ALIGN_VALUE(SYS_SETTING_STORAGE_LEN,512));
+    SBC_RET_VALIDATE_ERRCODEMSG((buf != NULL),
+                                SBCNULLP,
+                                "Allocate Fail");
+
+    lba = (SYS_CONF_START_OFS >> SBC_RAWPRT_DFLT_SHIFT);
+    rdlen = ALIGN_VALUE(SYS_SETTING_STORAGE_LEN,512);
+    ret = SBC_RawPrtReadBlock(bp->blkhnd,
+                              buf,
+                              &rdlen,
+                              lba);
+    SBC_RET_VALIDATE_ERRCODEMSG((ret == SBCOK),
+                                ret,
+                                "System Setting repository read fail");
+
+
+    // Encrypt
+    ctx.out.value = encbuf;
+    ctx.out.length = sizeof encbuf;
+    aesctx.gcm = &ctx;
+    aesctx.algoid = SBC_CIPHER_AES_GCM;
+
+    SBC_RngGeneration((UINT8 *)osid, 
+                      SYS_OSID_KEY_LEN,
+                      SBC_AT_IV_LEN,
+                      auth_iv);
+
+    SBC_AESGcmSetContext((void *)aesctx.gcm,
+                         (void *)enckey,
+                         (void *)auth_iv,
+                         (void *)auth_tag);
+
+    ctx.msg.value = (UINT8 *)&fw_key;
+    ctx.msg.length = sizeof fw_key;
+    ret = SBC_AESGcmEncrypt(&aesctx);
+    SBC_RET_VALIDATE_ERRCODEMSG((ret == SBCOK),
+                                ret,
+                                "Firmware ID Encrypt fail");
+
+
+    // Copy the Length for Ecnrypt Data
+    cpy_offset = SYS_CONF_OSID_CRT_OFS;
+    id_len = ctx.out.length;
+    // Copy Lengh
+    CopyMem(&buf[cpy_offset], &id_len, sizeof id_len);
+    cpy_offset += sizeof id_len;
+    // Copy Encrypt Data for FWID 
+    CopyMem(&buf[cpy_offset],
+            encbuf,
+            id_len);
+    cpy_offset += id_len;
+
+    // IV copy
+    CopyMem(&buf[cpy_offset], 
+            auth_iv,
+            SBC_AT_IV_LEN);
+    cpy_offset += SBC_AT_IV_LEN;
+
+    // Tag copy
+    CopyMem(&buf[cpy_offset], 
+            auth_tag,
+            SBC_AT_TAG_LEN);
+    cpy_offset += SBC_AT_TAG_LEN;
+
+
+    // Previously used TAG buffer initialize to zero 
+    ZeroMem((VOID *)auth_tag, sizeof auth_tag);
+
+    ctx.msg.value = (UINT8 *)&os_key;
+    ctx.msg.length = sizeof os_key;
+    ret = SBC_AESGcmEncrypt(&aesctx);
+    SBC_RET_VALIDATE_ERRCODEMSG((ret == SBCOK),
+                                ret,
+                                "OSID ID Encrypt fail");
+
+
+
+    // The OSID  key pair store in the Raw Partition
+
+    // Copy the Length for Ecnrypt Data
+    cpy_offset = SYS_CONF_OSID_CRT_OFS;
+    id_len = ctx.out.length;
+    // Copy Lengh
+    CopyMem(&buf[cpy_offset], &id_len, sizeof id_len);
+    cpy_offset += sizeof id_len;
+    // Copy Encrypt Data for FWID 
+    CopyMem(&buf[cpy_offset],
+            encbuf,
+            id_len);
+    cpy_offset += id_len;
+
+    // IV copy
+    CopyMem(&buf[cpy_offset], 
+            auth_iv,
+            SBC_AT_IV_LEN);
+    cpy_offset += SBC_AT_IV_LEN;
+
+    // Tag copy
+    CopyMem(&buf[cpy_offset], 
+            auth_tag,
+            SBC_AT_TAG_LEN);
+    cpy_offset += SBC_AT_TAG_LEN;
+
+
+
+    ret = SBC_RawPrtBlockWrite(bp->blkhnd,
+                               buf,
+                               ALIGN_VALUE(SYS_SETTING_STORAGE_LEN,512),
+                               lba);
+
+    if(ret != SBCOK) {
+        eprint("Block Write Fail for System Setting Repository");
+        goto errdone;
+    }
+
+
+
+
+
+errdone:
+
+    if(buf != NULL) {
+        FreePool(buf);
+        buf = NULL;
+    }
+
+    return ret;
+
+}
+
 void SBC_RecoveryBootProcessing(VOID *priv)
 {
     SBCStatus ret = SBCOK;
@@ -301,6 +474,7 @@ void SBC_RecoveryBootProcessing(VOID *priv)
         return;
     }
 
+
     if(_check_prev_fw(bt_proc->pvs_sw_bnk) != TRUE) {
         SBC_BootKeyModeChange(BOOT_MODE_FACTORY, KEY_MODE_BOOT, priv);
         SBC_RebootSystem();
@@ -311,6 +485,13 @@ void SBC_RecoveryBootProcessing(VOID *priv)
        
     }
 
+    ret = _store_fw_os_keypair_store(priv, 
+                               ((atp_ident_t *)bt_proc->keyinfo)->fwid,
+                               ((atp_ident_t *)bt_proc->keyinfo)->osid);
+
+    if(ret != SBCFAIL) {
+        bt_proc->bootst = SB_PROC_ST_ABNRAM;
+    }
     // Create the OSID
 
     // TODO : 

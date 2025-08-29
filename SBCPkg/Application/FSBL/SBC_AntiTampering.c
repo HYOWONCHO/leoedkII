@@ -898,6 +898,61 @@ errdone:
 }
 
 
+SBCStatus SBC_DeviceSecuirtyKeyCreate(VOID *key)
+{
+    SBCStatus ret = SBCOK;
+    hw_uniqueinfo_t info;
+    UINT8 *computebuf = NULL;
+    UINTN cnt = 0;
+    UINTN   allocate_len = 0;
+
+    SBC_RET_VALIDATE_ERRCODEMSG((key != NULL), SBCNULLP, "Output Nill");
+
+    _baseboard_sn(&info);
+    _memorydevice_sn(&info);
+    _nvme_get_serial(&info);
+
+
+    allocate_len = info.mbsnl + info.mmsnl + info.nvmesnl;
+    computebuf = AllocatePool(allocate_len);
+    SBC_RET_VALIDATE_ERRCODEMSG((computebuf != NULL),
+                                SBCNULLP, 
+                                "Blob buffer Nill");
+
+    cnt = 0;
+     //Print(L" cnt : %d \n", cnt);
+    CopyMem((void *)&computebuf[0], info.mbsn, info.mbsnl);
+    cnt = info.mbsnl;
+
+     //Print(L"Next cnt : %d \n", cnt);
+    CopyMem((void *)&computebuf[cnt], info.mmsn, info.mmsnl);
+    cnt += info.mmsnl;
+
+     //Print(L"Next Next cnt : %d \n", cnt);
+    CopyMem((void *)&computebuf[cnt], info.nvmesn, info.nvmesnl);
+    cnt += info.nvmesnl;
+
+    dprint("Security Key Message : %a", computebuf);
+    SBC_external_mem_print_bin("Security Key", computebuf, cnt);
+
+    ret = SBC_HashCompute(NULL,
+                          computebuf, 
+                          32,
+                          key);
+
+
+    SBC_RET_VALIDATE_ERRCODEMSG((ret == SBCOK),
+                                ret, 
+                                "Device Secret Key create fail");
+
+
+errdone:
+
+    return ret;
+
+}
+
+
 SBCStatus  SBC_DeviceIdKyeVerify(VOID *blkio, UINT8 *devid, UINT8 *deckey)
 {
     SBCStatus ret = SBCOK;
