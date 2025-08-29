@@ -304,6 +304,7 @@ static SBCStatus _store_fw_os_keypair_store(VOID *priv, VOID *fwid, VOID *osid)
     UINT32 rdlen = 0;
 
     UINTN lba = 0;
+    rawprt_hdr_t h_rawptrheader;
 
 
     ret = SBC_DICESeedKeyPair((UINT8 *)fwid, &fw_key);
@@ -436,7 +437,24 @@ static SBCStatus _store_fw_os_keypair_store(VOID *priv, VOID *fwid, VOID *osid)
 
 
 
+    id_len = 512;
+    ret = SBC_RawPrtReadBlock(bp->blkhnd,
+                             buf,
+                              &id_len,
+                              0);
 
+    CopyMem((void *)&h_rawptrheader, buf, 128);
+
+    h_rawptrheader.rcvmode = 1;
+
+    CopyMem((void *)buf, 
+            (void *)&h_rawptrheader, 
+            sizeof h_rawptrheader);
+
+    SBC_RawPrtBlockWrite(bp->blkhnd,
+                         buf,
+                         id_len,
+                         0);
 
 errdone:
 
@@ -743,6 +761,15 @@ SBCStatus  SBC_SecureBootCheck(VOID *priv)
             _sbc_abnormal_processing(priv);
                 // TODO : error processing
             SBC_RebootSystem();
+        }
+
+        if(((rawprt_hdr_t *)bp->rawprt_hdr)->rcvmode) {
+            // It is boot-up from Recovery
+            // FWID and OSID Certificate Verify
+        }
+        else {
+            // FWID and OSID key-pair verify
+
         }
 
         break;
