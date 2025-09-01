@@ -78,7 +78,7 @@ SBCStatus _kernel_image_load(EFI_HANDLE ImageHandle, LV_t *lv)
 
     lv->value = AllocateZeroPool(len_of_kernel);
     lv->length = len_of_kernel;
-    dprint("%s size %d", OSID_KERNEL_PATH, lv->length);
+    //dprint("%s size %d", OSID_KERNEL_PATH, lv->length);
     SBC_RET_VALIDATE_ERRCODEMSG((lv->value != NULL), SBCNULLP, "Out of Memory");
 
 
@@ -117,7 +117,7 @@ SBCStatus _ssbl_image_load(VOID *blkhnd, LV_t *lv,  UINTN normbank, UINTN bm)
       startlba = ((bsofs | BOOT_SSBL_OFS) >> SBC_RAWPRT_DFLT_SHIFT);
     }
 
-    dprint("BSOFS:  0x%lx, StartLBA: %lu", bsofs, startlba);
+    //dprint("BSOFS:  0x%lx, StartLBA: %lu", bsofs, startlba);
 
     ret = SBC_RawPrtReadBlock(blkhnd, (void *)imghdr, &imglen, startlba);
     if (ret != SBCOK) {
@@ -133,14 +133,14 @@ SBCStatus _ssbl_image_load(VOID *blkhnd, LV_t *lv,  UINTN normbank, UINTN bm)
       ret = SBCZEROL;
       goto errdone;
     }
-    dprint("SSBL image len : %ld", imglen);
+    //dprint("SSBL image len : %ld", imglen);
     imglen = ALIGN_VALUE(imglen, SBC_RAWPRT_DFLT_BLK_SZ);
 
 
 
 
 
-    dprint("Align SSBL image len : %ld", imglen);
+    //dprint("Align SSBL image len : %ld", imglen);
 
 
     lv->value = AllocatePool(imglen);
@@ -240,7 +240,7 @@ EFI_STATUS efi_boot_fsbl_load(LV_t *lv)
       continue;
     }
 
-    dprint("Discover the device path for FSBL~~~");
+    //dprint("Discover the device path for FSBL~~~");
 
     Status = gBS->HandleProtocol (
                     HandleBuffer[Index],
@@ -345,7 +345,7 @@ EFI_STATUS efi_boot_fsbl_load(LV_t *lv)
   }
 
   lv->length = FileInfo->FileSize;
-  dprint("%s file  size: %lu bytes\n", STR_FSBL_F_NAME, lv->length);
+  //dprint("%s file  size: %lu bytes\n", STR_FSBL_F_NAME, lv->length);
 
   // 6. Read the File Contents
   Status = gBS->AllocatePool (
@@ -368,7 +368,7 @@ EFI_STATUS efi_boot_fsbl_load(LV_t *lv)
     goto Exit;
   }
 
-  SBC_external_mem_print_bin("FSBL Rawe Buff", lv->value, 512);
+  //SBC_external_mem_print_bin("FSBL Rawe Buff", lv->value, 512);
 
   //Print(L"Successfully read X64.efi into memory at address 0x%lx. Read %lu bytes.\n", (UINTN)lv->value, lv->length);
 
@@ -626,7 +626,8 @@ static SBCStatus _baseboard_sn(hw_uniqueinfo_t *p)
                 }
 #endif
                 p->mbsnl = strlen(SerialNumberString);
-                SBC_external_mem_print_bin("_baseboard_sn", (UINT8 *)SerialNumberString, p->mbsnl);
+                Print(L"Base Board SN : %a \n", SerialNumberString);
+                //SBC_external_mem_print_bin("_baseboard_sn", (UINT8 *)SerialNumberString, p->mbsnl);
                 CopyMem(p->mbsn, SerialNumberString, p->mbsnl);
 
 
@@ -697,11 +698,11 @@ static SBCStatus _memorydevice_sn(hw_uniqueinfo_t *p)
                     cnt++;
                 }
 #endif
-                Print(L"_memorydevice_sn Serial Number: %a (%d)\n",
-                      SerialNumberString,cnt);
+                Print(L"Memory Device Serial Number: %a \n",
+                      SerialNumberString);
                 p->mmsnl = strlen(SerialNumberString);
                 CopyMem(p->mmsn, SerialNumberString, p->mmsnl);
-                SBC_mem_print_bin("_memorydevice_sn", (UINT8 *)p->mmsn, p->mmsnl);
+                //SBC_mem_print_bin("_memorydevice_sn", (UINT8 *)p->mmsn, p->mmsnl);
 
             }
         }
@@ -766,23 +767,30 @@ SBCStatus  _baseanswer_store(VOID *blkio, VOID *p)
     cpy += BASE_ANS_TAG_LEN;
 
     ZeroMem((void *)cpy, 16); // Reserved  bytes set to zero
-//  SBC_external_mem_print_bin("After Base Ans write",
-//                             (UINT8 *)&loadbuf[SYS_CONF_RES_OFS],
-//                             64);
+
+    SBC_mem_print_bin("Base Answer Encrypt write",
+                               (UINT8 *)&loadbuf[SYS_CONF_RES_OFS+4],
+                               16);
 
 
 
+
+    //dprint();
     ret = SBC_RawPrtBlockWrite(blkio, loadbuf, ldlen, baseansr_lba);
     if (ret != SBCOK) {
+      //dprint();
       //Print(L"SBC Raw Partition Base Answer write fail \n");
       goto errdone;
     }
+    //dprint();
 
     ret = SBCOK;
 
 errdone:
     if (loadbuf != NULL) {
+      //dprint();
       FreePool(loadbuf);
+      //dprint();
     }
     return ret;
 
@@ -799,7 +807,6 @@ static SBCStatus _baseanswer_extract_from_disk(VOID *blkio, base_ansid_t *p)
 
 
   SBC_RET_VALIDATE_ERRCODEMSG((p != NULL), SBCNULLP, "Invalid parameter");
-
 
   baseansr_lba = (SYS_CONF_START_OFS >> SBC_RAWPRT_DFLT_SHIFT);
   ldlen = ALIGN_VALUE(SYS_SETTING_STORAGE_LEN, ((EFI_BLOCK_IO_PROTOCOL *)blkio)->Media->BlockSize);
@@ -832,12 +839,13 @@ static SBCStatus _baseanswer_extract_from_disk(VOID *blkio, base_ansid_t *p)
   CopyMem((void *)p->tag, (void *)&loadbuf[offset], BASE_ANS_TAG_LEN);
   offset += BASE_ANS_TAG_LEN;
 
-
+#ifdef _UNIT_TEST_ON_
 //dprint("Enc Msg Len : %d", p->msglen);
-//SBC_mem_print_bin("Enc Message", p->encmsg, p->msglen);
+  Print(L"\t\t***Base Answer Read from Raw-partition \r\n");
+  SBC_mem_print_bin("Base Answer Encrypt Message", p->encmsg, p->msglen);
 //SBC_mem_print_bin("Enc IV", p->iv, BASE_ANS_IV_KEY_STR);
 //SBC_mem_print_bin("Tag Message", p->tag, BASE_ANS_TAG_LEN);
-  
+#endif  
 
 errdone:
   return ret;
@@ -1303,9 +1311,9 @@ SBCStatus SBC_BaseAnswerEncryptStore(VOID *blkhnd, UINT8* msg, UINT32 msgl, UINT
     ret = SBCOK;
 errdone:
 
-    if (msg != NULL) {
-      FreePool(msg);
-    }
+//  if (msg != NULL) {
+//    FreePool(msg);
+//  }
 
     return ret;
 
@@ -1322,10 +1330,14 @@ SBCStatus  SBC_BaseAnswerValidate(VOID *blkhnd, UINT8 *answer, UINTN answerl, UI
     SBC_AESContext aesctx;
     SBC_AESGcmCtx  ctx;
 
+    CHAR8 log_answr[32] = {0, };
+
     UINT8 decbuf[BASE_ANS_STREAM_LEN] = {0,};
 
     SBC_RET_VALIDATE_ERRCODEMSG((answer != NULL), SBCNULLP, "Answer is Nill");
-
+#ifdef _UNIT_TEST_ON_
+    Print(L"\t** Extract Encrypt Base Answer \r\n");
+#endif
 
     // Read the Base Answer from Disk 
 
@@ -1355,11 +1367,15 @@ SBCStatus  SBC_BaseAnswerValidate(VOID *blkhnd, UINT8 *answer, UINTN answerl, UI
     aesctx.gcm = &ctx;
     aesctx.algoid = SBC_CIPHER_AES_GCM;
 
-//  SBC_external_mem_print_bin("Key", (UINT8 *)ctx.key.value, ctx.key.length);
-//  SBC_external_mem_print_bin("IV", (UINT8 *)ctx.iv.value , BASE_ANS_IV_KEY_STR);
-//  SBC_external_mem_print_bin("TAG", (UINT8 *)ctx.tag.value , BASE_ANS_TAG_LEN);
-//  SBC_external_mem_print_bin("Enc Message", (UINT8 *)ctx.msg.value, ctx.msg.length);
 
+
+#if 0
+    SBC_external_mem_print_bin("Key", (UINT8 *)ctx.key.value, ctx.key.length);
+    SBC_external_mem_print_bin("IV", (UINT8 *)ctx.iv.value , BASE_ANS_IV_KEY_STR);
+    SBC_external_mem_print_bin("TAG", (UINT8 *)ctx.tag.value , BASE_ANS_TAG_LEN);
+    SBC_external_mem_print_bin("Enc Message", (UINT8 *)ctx.msg.value, ctx.msg.length);
+
+#endif
 
     if (SBC_AESGcmDecrypt(&aesctx) != SBCOK) {
       Print(L"Base Answer Decrypt fail \n");
@@ -1367,34 +1383,48 @@ SBCStatus  SBC_BaseAnswerValidate(VOID *blkhnd, UINT8 *answer, UINTN answerl, UI
       goto errdone;
     }
 
-//  SBC_external_mem_print_bin("plain msg", answer, answerl);
-//  SBC_external_mem_print_bin("decrypt msg", decbuf, ctx.out.length);
+#ifdef _UNIT_TEST_ON_
+
+     Print(L"\t\t*** Decrypt the Base Answer \r\n");
+     SBC_mem_print_bin("Decrypt BaseAnsw" , decbuf, ctx.out.length);
+
+     Print(L"\t\t*** Extract the Base Answer \r\n");
+     SBC_mem_print_bin("Extract BaseAnsw", answer, answerl);
+#endif
+#ifdef _UNIT_TEST_ON_
+    Print(L"\t\t*** Compare the Base Answer \r\n");
+#endif
+
+    CopyMem(log_answr, (const void *)answer, answerl);
+    decbuf[answerl] = '\0';
 
     if (CompareMem((const void *)decbuf, (const void *)answer, answerl) != 0) {
       //Print(L"Base Answer validate Fail \n");
 
 
         ZeroMem(mrgmsg, sizeof mrgmsg);
-        UnicodeSPrint(mrgmsg, sizeof mrgmsg, L"Base Answer validate fail(%s:%s) \n",answer,decbuf);
+        UnicodeSPrint(mrgmsg, sizeof mrgmsg, L"Base Answer validate fail(%a:%a) \n",
+                      (CHAR8 *)log_answr, (CHAR8 *)decbuf);
         sbc_err_sysprn(SBC_LOG_CMN_PRIO_ERR, 2,
-             L"SBC",
+             L"AT_BOOT",
              L"FSBL",
-             L"Weapon System",
+             L"SAT",
              8,
-             L"Determine Firmare Tampering ",
+             L"Detection ",
              mrgmsg);
           ret = SBCFAIL;
           goto errdone;
     }
 
     ZeroMem(mrgmsg, sizeof mrgmsg);
-    UnicodeSPrint(mrgmsg, sizeof mrgmsg, L"Base Answer validate Success (%s:%s) \n",answer,decbuf);
+    UnicodeSPrint(mrgmsg, sizeof mrgmsg, L"Base Answer validate Success (%a:%a) \n",
+                  (CHAR8 *)log_answr, (CHAR8 *)decbuf);
     sbc_err_sysprn(SBC_LOG_CMN_PRIO_ERR, 2,
-         L"SBC",
+         L"AT_BOOT",
          L"FSBL",
-         L"Weapon System",
+         L"SAT",
          8,
-         L"Determine Firmare Tampering ",
+         L"Validation ",
          mrgmsg);
 
 errdone:
@@ -1874,7 +1904,7 @@ SBCStatus SBC_GenDeviceID(UINT8 *devid)
       goto errdone;
     }
 
-    SBC_external_mem_print_bin("FSBL File Hash", (UINT8 *)devidhsah, 32);
+    //SBC_external_mem_print_bin("FSBL File Hash", (UINT8 *)devidhsah, 32);
 
 
     rdlv.length = SBC_AT_HASH_LEN;
@@ -1914,7 +1944,7 @@ SBCStatus SBC_GenDeviceID(UINT8 *devid)
       goto errdone;
     }
 
-    SBC_mem_print_bin("Device ID", devid, 32);
+    //SBC_mem_print_bin("Device ID", devid, 32);
 
 
     
@@ -1968,20 +1998,16 @@ SBCStatus SBC_GenFWID(EFI_HANDLE *h_image, UINT8 *devid, UINT8 *fwid, UINTN norm
                              fwid
                           ) ;
 
-  SBC_mem_print_bin("FW ID", fwid, 32);
+  //SBC_mem_print_bin("FW ID", fwid, 32);
 errdone:
 
-  dprint();
   if (temp != NULL) {
-    dprint();
     FreePool(temp);
   }
 
   if (lv.value != NULL) {
-    dprint();
     //FreePool(lv.value);
   }
-  dprint();
   return ret;
 
 
@@ -2029,7 +2055,7 @@ SBCStatus SBC_GenOSID(EFI_HANDLE *h_image, UINT8 *fwid, UINT8 *osid)
                              osid
                           ) ;
 
-  SBC_mem_print_bin("OS ID", osid, 32);
+  //SBC_mem_print_bin("OS ID", osid, 32);
 errdone:
 
   if (temp != NULL) {
@@ -2242,6 +2268,95 @@ errdone:
     }
     return ret;
 
+}
+
+SBCStatus SBC_ReadFwBootSrvInformation(UINT16 *fblpath, VOID *blobinfo, VOID *szinfo)
+{
+    SBCStatus       ret = SBCOK;
+    EFI_STATUS      retval = EFI_SUCCESS;
+    EFI_HANDLE      *hndl = NULL;
+    //UINT16          *fblpath = STR_FSBL_F_NAME;
+    //UINT16          *fblpath = L"\\boot\\vmlinuz-5.14.0-284.11.1.el9_2.x86_64" ;
+    UINT8           *infostart = NULL;
+    UINT32          last_of_fsbl = 0;
+    UINT32          bsinfolen = 0;
+    fsbl_bsinfo_t   *bsinfo = (fsbl_bsinfo_t *)szinfo; 
+    UINT32          bsptrcnt = 0;
+    fsbl_bsinfo_ptr_t *info = (fsbl_bsinfo_ptr_t *)blobinfo;
+
+    UINTN           HandleCount;
+    [[maybe_unused]]UINT32          fsbl_len =0;
+
+    LV_t            rdlv = {
+            .length = 0,
+            .value = NULL
+      };
+
+    HandleCount  = SBC_FindEfiFileSystemProtocol(&hndl);
+    ret = SBC_GetFileSize(fblpath, (UINTN *)&rdlv.length);
+    if (ret != SBCOK) {
+      goto errdone;
+    }
+
+    rdlv.value = AllocateZeroPool((UINTN)rdlv.length);
+    if (rdlv.value == NULL) {
+      eprint("Allocate Pool fail");
+      ret = SBCNULLP;
+      goto errdone;
+    }
+    ret = SBC_FindFileBufHndl(fblpath, &HandleCount, hndl);
+    SBC_RET_VALIDATE_ERRCODEMSG((ret == SBCOK), ret, "File not found");
+
+    retval = SBC_ReadFile(hndl[HandleCount], fblpath, &rdlv);
+    if (EFI_ERROR(retval)) {
+      eprint("%s filr read fail : %r", fblpath, retval);
+      ret = SBCIO;
+      goto errdone;
+    }
+
+    last_of_fsbl = rdlv.length - FSBL_BNIFO_SIZE;
+    infostart = &((UINT8 *)rdlv.value)[last_of_fsbl];
+
+    ZeroMem((void *)bsinfo, sizeof(fsbl_bsinfo_t));
+
+    CopyMem((void *)bsinfo, (void *)infostart, sizeof bsinfo);
+    bsinfolen = bsinfo->m.siglen + bsinfo->m.fwinfolen + bsinfo->m.certlen  + bsinfo->m.banswlen;
+
+#ifdef _UNIT_TEST_ON_
+    Print(L"\t** Extract the Base Answer \r\n");
+#endif
+
+
+    fsbl_len = last_of_fsbl = rdlv.length - FSBL_BNIFO_SIZE - bsinfolen;
+    infostart = &((UINT8 *)rdlv.value)[last_of_fsbl];
+
+    //dprint("FSBL Last : %d", last_of_fsbl);
+    ////SBC_external_mem_print_bin("Addtional Information", infostart,bsinfolen  );
+
+    
+
+    info->baseansw = (VOID *)&infostart[bsptrcnt];
+    bsptrcnt += bsinfo->m.banswlen;
+
+    //CopyMem(base_answer, info.baseansw, bsinfo->m.banswlen);
+
+    //SBC_external_mem_print_bin("Base Answer", (UINT8 *)info.baseansw,  bsinfo->m.banswlen );
+
+    info->fwinfo = (VOID *)&infostart[bsptrcnt];
+    bsptrcnt += bsinfo->m.fwinfolen;
+
+    //SBC_external_mem_print_bin("FW Info", (UINT8 *)info.fwinfo,  bsinfo->m.fwinfolen );
+
+    info->certi = (VOID *)&infostart[bsptrcnt];
+    bsptrcnt += bsinfo->m.certlen;
+
+    //SBC_external_mem_print_bin("Certificate", (UINT8 *)info.certi,  bsinfo->m.certlen );
+
+    info->signature = (VOID *)&infostart[bsptrcnt];
+    bsptrcnt += bsinfo->m.siglen;   
+errdone:
+
+    return ret;
 }
 
 //SBCStatus SBC_GenDeviceID(UINT8 *devid)

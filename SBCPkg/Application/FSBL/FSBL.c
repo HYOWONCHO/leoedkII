@@ -65,11 +65,12 @@
 #include "SBC_Config.h"
 #include "SBC_AntiTampering.h"
 #include "SBC_Util.h"
+#include "SBC_UnitTest.h"
 
 
 VOID *h_blkio;               // Block I/O handle
 #ifndef _FSBL_TEST_
-static rawprt_hdr_t tmp_prtheader;    // Raw Partition Header handle
+static rawprt_hdr_t *tmp_prtheader;    // Raw Partition Header handle
 #endif
 static BOOLEAN        is_boot_status; 
 
@@ -122,7 +123,7 @@ SBCStatus  SBC_DiceKeysGen(EFI_HANDLE ImageHandle, VOID *p,UINTN normbank, UINTN
         goto errdone;
     }
 //
-    SBC_mem_print_bin("Device ID", h->devid, sizeof h->devid);SBC_mem_print_bin("Device ID", h->devid, sizeof h->devid);
+    SBC_mem_print_bin("Device ID", h->devid, sizeof h->devid);
     ret = SBC_GenFWID(ImageHandle, h->devid, h->fwid, normbank, bm);
     if (ret != SBCOK) {
         Print(L"FW ID generate fail \n");
@@ -137,7 +138,7 @@ SBCStatus  SBC_DiceKeysGen(EFI_HANDLE ImageHandle, VOID *p,UINTN normbank, UINTN
         goto errdone;
     }
 
-    SBC_mem_print_bin("Firmware ID", h->fwid, sizeof h->fwid);
+    SBC_mem_print_bin("OSID", h->osid, sizeof h->osid);
     ret = SBCOK;
 
 errdone:
@@ -155,6 +156,7 @@ SBCStatus SBC_BootModeFactory(VOID *blkhnd, VOID *ImageHandle)
 
   UINT32  imglen = SBC_RAWPRT_DFLT_BLK_SZ;
   UINT8   imghdr[SBC_RAWPRT_DFLT_BLK_SZ] = {0, };
+
   UINT8   *loadimg = NULL;
   
 
@@ -232,11 +234,16 @@ SBCStatus SBC_BootModeFactory(VOID *blkhnd, VOID *ImageHandle)
   Print(L"SSBL Write is Done \n");
   //SBC_mem_print_bin("SSBL Header", imghdr, imglen);
 #ifndef _FSBL_TEST_
-  if (tmp_prtheader.keymode != KEY_MODE_NORMAL) {
-    tmp_prtheader.keymode = KEY_MODE_NORMAL;
+  if (tmp_prtheader->keymode != KEY_MODE_NORMAL) {
+    tmp_prtheader->keymode = KEY_MODE_NORMAL;
 
-    ret = SBC_RawPrtBlockWrite(h_blkio, (UINT8 *)&tmp_prtheader, sizeof(rawprt_hdr_t), 0);
-    SBC_RET_VALIDATE_ERRCODEMSG((ret == SBCOK), ret, "Key mode change fail");
+
+    CopyMem(imghdr, tmp_prtheader, sizeof(rawprt_hdr_t));
+
+    SBC_external_mem_print_bin("Write Partition Header", imghdr, 512);
+
+    //ret = SBC_RawPrtBlockWrite(h_blkio, (UINT8 *)imghdr, SBC_RAWPRT_DFLT_BLK_SZ, 0);
+    //SBC_RET_VALIDATE_ERRCODEMSG((ret == SBCOK), ret, "Key mode change fail");
   }
 #endif 
   ret = SBC_SSBL_LoadAndStart(ImageHandle);
@@ -701,7 +708,7 @@ UefiMain (
     EFI_STATUS retval = EFI_SUCCESS;
     SBCStatus  ret = SBCOK;
     rawprt_hdr_t h_rawprtheader;    // Raw Partition Header handle
-    rawprt_hdr_t tmp_prtheader;    // Raw Partition Header handle
+    //rawprt_hdr_t tmp_prtheader;    // Raw Partition Header handle
     
     UINT32 pres_hi = 0;
     UINT32 pres_low = 0;
@@ -712,6 +719,8 @@ UefiMain (
     [[maybe_unused]] UINTN testid = 0xAA55AA55;
 
     [[gnu::unused]] EFI_HANDLE ssbl_img_hndl = NULL;
+
+    unit_proc_t btproc;
 
 #ifdef _SBC_DRIVER_LOAD_
     retval = SBC_LodaDriver(SERIAL_DXE_PATH, TRUE);
@@ -757,18 +766,32 @@ UefiMain (
 
 
 
+    ZeroMem(&btproc, sizeof btproc);
     ZeroMem(&h_rawprtheader, sizeof h_rawprtheader);
+
+    btproc.bootst = SB_PROC_ST_NRMA;
     // Get the NVMe SSD Raw Partiton handle and Header information
     ret = SBC_BlkIoHandleInit(&h_blkio, &h_rawprtheader);
     if (ret != SBCOK) {
       Print(L"Raw Partitino find fail !!! \n");
       goto errdone;
     }
+#if 0
+    btproc.blkhnd = h_blkio;
+    btproc.rawprt_hdr = &h_rawptrheader;
+    SBC_mem_print_bin("Raw Prt Header", (UINT8 *)&h_rawptrheader, sizeof h_rawptrheader);
 
-    CopyMem(&tmp_prtheader, &h_rawprtheader, sizeof(rawprt_hdr_t));
 
-    dprint("Partition Header Information :");
-    SBC_external_mem_print_bin("Raw Partitino Header", (UINT8 *)&h_rawprtheader, sizeof(rawprt_hdr_t));
+    SBC_BootKeyModeChange(BOOT_MODE_FACTORY, KEY_MODE_NORMAL, (void *)&btproc);
+
+
+    return EFI_SUCCESS;
+#endif
+    tmp_prtheader = &h_rawprtheader;
+    //CopyMem(&tmp_prtheader, &h_rawprtheader, sizeof(rawprt_hdr_t));
+
+    //dprint("Partition Header Information :");
+    //SBC_external_mem_print_bin("Raw Partitino Header", (UINT8 *)&h_rawprtheader, sizeof(rawprt_hdr_t));
 
     // Check the Preference SSBL bank
     CopyMem((void *)&pres_low, (void *)&h_rawprtheader.bootpres[0], 4);
@@ -794,15 +817,38 @@ UefiMain (
     dprint("Currently Valid FW Bank ID : %d , Previously Bank ID : %d \n", currbank_id, prevbank_id);
     dprint("Boot Mode : %d", h_rawprtheader.bootmode);
 
+    btproc.curr_sw_bnk = currbank_id;
+    btproc.pvs_sw_bnk = prevbank_id;
+    btproc.bm = h_rawprtheader.bootmode;
+    btproc.km = h_rawprtheader.keymode;
+    btproc.curr_sw_bnk = currbank_id;
+    btproc.pvs_sw_bnk = prevbank_id;
+    btproc.blkhnd = h_blkio;
+    btproc.keyinfo = (VOID *)&diceid;
+    btproc.rawprt_hdr = &h_rawprtheader;
+    btproc.baseansr = (void *)&baseansr;
+    btproc.imghndl = ImageHandle;
+
    // Step 1-1 )  FSBL, self sign and verify
 
     //return EFI_SUCCESS; 
 
+#ifdef _UNIT_TEST_ON_
+//#   error "unit test mode"    
+    dprint("============= Unit Test Starting =============");
+    D_SAT_PWT_SFR_001((void *)&btproc);
+    D_SAT_PWT_SFR_002((void *)&btproc);
+    D_SAT_PWT_SFR_003((void *)&btproc);
+    dprint("Unit Test Finish !!!!");
 
+
+    return EFI_SUCCESS;
+#endif
 
     ret = SBC_FSBL_Verify(h_blkio, &baseansr, currbank_id, h_rawprtheader.bootmode);
     if (ret != SBCOK) {
           is_boot_status = FALSE;
+          btproc.bootst = SB_PROC_ST_ABNRAM;
           retval = EFI_INVALID_PARAMETER;
           goto errdone;
     }
@@ -825,6 +871,7 @@ UefiMain (
         //sbc_err_sysprn(SBC_LOG_CMN_PRIO_ERR, 2, L"SBC", L"FSBL", L"Weapon System", 4, L"EVT", L"Dice Key creation fail\n");
         retval = EFI_INVALID_PARAMETER;
         is_boot_status = FALSE;
+        btproc.bootst = SB_PROC_ST_ABNRAM;
         goto errdone;
     }
 
@@ -936,8 +983,8 @@ UefiMain (
 //      goto errdone;
 //    }
 //      // Change the key mode to normal based on key mode behavior scenario.
-//    if (tmp_prtheader.keymode != KEY_MODE_NORMAL) {
-//      tmp_prtheader.keymode = KEY_MODE_NORMAL;
+//    if (tmp_prtheader->keymode != KEY_MODE_NORMAL) {
+//      tmp_prtheader->keymode = KEY_MODE_NORMAL;
 //      SBC_RawPrtBlockWrite(h_blkio, (UINT8 *)&tmp_prtheader, sizeof(rawprt_hdr_t), 0);
 //    }
 //
@@ -1069,8 +1116,8 @@ errdone:
   // In terms of the Abnormal behavior on Factory Mode 
     if ((h_rawprtheader.bootmode == BOOT_MODE_FACTORY) && (is_boot_status != TRUE)) {
       // Change the key mode to normal based on key mode behavior scenario.
-      if (tmp_prtheader.keymode != KEY_MODE_NORMAL) {
-        tmp_prtheader.keymode = KEY_MODE_NORMAL;
+      if (tmp_prtheader->keymode != KEY_MODE_NORMAL) {
+        tmp_prtheader->keymode = KEY_MODE_NORMAL;
 
         SBC_RawPrtBlockWrite(h_blkio, (UINT8 *)&tmp_prtheader, sizeof(rawprt_hdr_t), 0);
       }

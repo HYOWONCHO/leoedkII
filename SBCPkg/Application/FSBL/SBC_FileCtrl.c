@@ -109,7 +109,7 @@ SBCStatus  SBC_GetFileSize(CHAR16 *FileName, UINTN  *FileSize)
 
 
     hndlcnt = SBC_FindEfiFileSystemProtocol(&ImageHandle);
-    Print(L"Hndl Count :%d \n", hndlcnt);
+    //Print(L"Hndl Count :%d \n", hndlcnt);
     if (hndlcnt <= 0) {
         Print(L"File Sys handle find fail : %d \n", hndlcnt);
         return SBCFAIL;
@@ -182,7 +182,7 @@ SBCStatus  SBC_GetFileSize(CHAR16 *FileName, UINTN  *FileSize)
         *FileSize = FileInfo->FileSize;
     }
 
-    dprint("File Size : %d", *FileSize);
+    //dprint("File Size : %d", *FileSize);
 
     // Clean up allocated memory and open handles.
     FreePool(FileInfo);

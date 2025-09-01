@@ -30,6 +30,7 @@
   SBC_AntiTampering.c
   SBC_X509.c
   SBC_LoadKernelImage.c 
+  SBC_UnitTest.c
  
 [Packages]
   MdePkg/MdePkg.dec
@@ -110,5 +111,6 @@
 [BuildOptions.X64]
   GCC:DEBUG_GCC5_X64_CC_FLAGS = -flto=2  -Werror=cpp 
   *_*_*_CC_FLAGS = -D_SBC_DEBUG_ON_ -D_SBC_DEVID_VERIFY_
+  *_*_*_CC_FLAGS = -D_UNIT_TEST_ON_
   #*_*_*_CC_FLAGS = D_FSBL_TEST_
   #*_*_*_CC_FLAGS = -D_FSBL_FACTORY_TEST_

@@ -235,4 +235,5 @@ SBCStatus  SBC_SSBL_Verify(VOID *blkhnd, VOID *ansr,  UINTN nrombank, UINTN bm);
 
 
 SBCStatus SBC_DeviceSecuirtyKeyCreate(VOID *key);
+SBCStatus SBC_ReadFwBootSrvInformation(UINT16 *flbpath, VOID *blobinfo, VOID *szinfo);
 #endif
