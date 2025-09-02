@@ -856,6 +856,16 @@ UefiMain (
 #ifdef _UNIT_TEST_SFR008_ABNORMAL_FSBL_
     extern void SBC_UnitFsblAbNormalTamperTest(void *priv);
     SBC_UnitFsblAbNormalTamperTest((void *)&btproc);
+
+    
+
+    sbc_err_sysprn(SBC_LOG_CMN_PRIO_NOTICE, 2,
+       L"AT_BOOT",
+       L"FSBL",
+       L"SAT",
+       6,
+       L"Validation",
+       L"SBC_tamper_FSBL_SSBL_OS signature verification faied");
 #endif
 
 

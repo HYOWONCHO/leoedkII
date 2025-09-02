@@ -274,6 +274,23 @@ SBCStatus  SBC_DeviceIdKyeVerify(VOID *blkio, UINT8 *devid, UINT8 *deckey);
  */
 SBCStatus  SBC_SSBL_Verify(VOID *blkhnd, VOID *ansr,  UINTN nrombank, UINTN bm, CHAR16 *fname);
 
+/*!
+ * \fn SBCStatus  SBC_Vmlinuz_Verify(VOID *blkhnd, VOID *ansr, UINTN normbank, UINTN bm, UINT16 *fblpath)
+ * 
+ * \brief Verify the Vmlinuz signature
+ * 
+ * \author leoc (9/2/25)
+ * 
+ * \param blkhnd   Indicates a pointer to the calling context
+ * \param ansr     Pointer to buffer for the base-answer destination  data. 
+ * \param nrombank Indicates a normal firmware bank
+ * \param bm       Indicates the curtently boot mode 
+ * \param fname    Pointer to the filename for opening ( Used only in test mode )
+ * 
+ * \return On Success, return the SBCOK, otherwise,return the apporiate value. 
+ */
+SBCStatus  SBC_Vmlinuz_Verify(VOID *blkhnd, VOID *ansr, UINTN normbank, UINTN bm, UINT16 *fblpath);
+
 
 SBCStatus SBC_DeviceSecuirtyKeyCreate(VOID *key);
 SBCStatus SBC_ReadFwBootSrvInformation(UINT16 *flbpath, VOID *blobinfo, VOID *szinfo);

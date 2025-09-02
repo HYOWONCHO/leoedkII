@@ -1580,14 +1580,14 @@ SBCStatus  SBC_SSBL_Verify(VOID *blkhnd, VOID *ansr,  UINTN nrombank, UINTN bm, 
     ZeroMem((void *)&bsinfo, sizeof bsinfo);
     CopyMem((void *)&bsinfo, (void *)infostart, sizeof bsinfo);
 
-    dprint("----------- SSBL Boot Service Informmtion ------------");
-    dprint("Signature Len     : %d", bsinfo.m.siglen );
-    dprint("Firmware Info Len : %d", bsinfo.m.fwinfolen );
-    dprint("Certificate Len   : %d", bsinfo.m.certlen );
-    dprint("BaseAnswer Len    : %d", bsinfo.m.banswlen );
-    dprint("BSinfo verdion    : %d", bsinfo.m.bsinfv );
-    dprint("Spec.1 Value      : %d", bsinfo.m.reserv1 );
-    dprint("Spec.2 Value      : %d", bsinfo.m.reserv2 );
+//  dprint("----------- SSBL Boot Service Informmtion ------------");
+//  dprint("Signature Len     : %d", bsinfo.m.siglen );
+//  dprint("Firmware Info Len : %d", bsinfo.m.fwinfolen );
+//  dprint("Certificate Len   : %d", bsinfo.m.certlen );
+//  dprint("BaseAnswer Len    : %d", bsinfo.m.banswlen );
+//  dprint("BSinfo verdion    : %d", bsinfo.m.bsinfv );
+//  dprint("Spec.1 Value      : %d", bsinfo.m.reserv1 );
+//  dprint("Spec.2 Value      : %d", bsinfo.m.reserv2 );
 
     bsinfolen = bsinfo.m.siglen + bsinfo.m.fwinfolen + bsinfo.m.certlen  + bsinfo.m.banswlen;
 
@@ -1710,6 +1710,235 @@ errdone:
 
 }
 
+SBCStatus  SBC_Vmlinuz_Verify(VOID *blkhnd, VOID *ansr, UINTN normbank, UINTN bm, UINT16 *fblpath)
+{
+    SBCStatus       ret = SBCOK;
+    EFI_STATUS      retval = EFI_SUCCESS;
+    EFI_HANDLE      *hndl = NULL;
+    //UINT16          *fblpath = STR_FSBL_F_NAME;
+    //UINT16          *fblpath = L"\\boot\\vmlinuz-5.14.0-284.11.1.el9_2.x86_64" ;
+    UINT8           *infostart = NULL;
+    UINT32          last_of_fsbl = 0;
+    UINT32          bsinfolen = 0;
+    fsbl_bsinfo_t   bsinfo; 
+    UINT32          bsptrcnt = 0;
+    UINT8           HashValue[256];
+    UINT32          HashSize =0;
+    UINT32          fsbl_len =0;
+    VOID            *EcPubKey = NULL;
+    UINTN           HandleCount;
+
+    LV_t            rdlv = {
+            .length = 0,
+            .value = NULL
+      };
+
+    HandleCount  = SBC_FindEfiFileSystemProtocol(&hndl);
+
+    ret = SBC_GetFileSize(fblpath, (UINTN *)&rdlv.length);
+    if (ret != SBCOK) {
+      goto errdone;
+    }
+
+    rdlv.value = AllocateZeroPool((UINTN)rdlv.length);
+    if (rdlv.value == NULL) {
+      eprint("FSBL Verify Allocate Pool fail");
+      ret = SBCNULLP;
+      goto errdone;
+    }
+
+    ret = SBC_FindFileBufHndl(fblpath, &HandleCount, hndl);
+    SBC_RET_VALIDATE_ERRCODEMSG((ret == SBCOK), ret, "File not found");
+
+    retval = SBC_ReadFile(hndl[HandleCount], fblpath, &rdlv);
+    if (EFI_ERROR(retval)) {
+      eprint("%s filr read fail : %r", fblpath, retval);
+      ret = SBCIO;
+      goto errdone;
+    }
+
+    last_of_fsbl = rdlv.length - FSBL_BNIFO_SIZE;
+    infostart = &((UINT8 *)rdlv.value)[last_of_fsbl];
+
+    ZeroMem((void *)&bsinfo, sizeof bsinfo);
+
+    CopyMem((void *)&bsinfo, (void *)infostart, sizeof bsinfo);
+
+    ////SBC_external_mem_print_bin("BSINFO", (UINT8 *)&bsinfo, sizeof bsinfo);
+
+//  dprint("----------- Vmlinuz Boot Service Informmtion ------------");
+//  dprint("Signature Len     : %d", bsinfo.m.siglen );
+//  dprint("Firmware Info Len : %d", bsinfo.m.fwinfolen );
+//  dprint("Certificate Len   : %d", bsinfo.m.certlen );
+//  dprint("BaseAnswer Len    : %d", bsinfo.m.banswlen );
+//  dprint("BSinfo verdion    : %d", bsinfo.m.bsinfv );
+//  dprint("Spec.1 Value      : %d", bsinfo.m.reserv1 );
+//  dprint("Spec.2 Value      : %d", bsinfo.m.reserv2 );
+
+    bsinfolen = bsinfo.m.siglen + bsinfo.m.fwinfolen + bsinfo.m.certlen  + bsinfo.m.banswlen;
+
+      
+    fsbl_len = last_of_fsbl = rdlv.length - FSBL_BNIFO_SIZE - bsinfolen;
+    infostart = &((UINT8 *)rdlv.value)[last_of_fsbl];
+
+    //dprint("FSBL Last : %d", last_of_fsbl);
+    ////SBC_external_mem_print_bin("Addtional Information", infostart,bsinfolen  );
+
+    fsbl_bsinfo_ptr_t info = {NULL, NULL, NULL, NULL};
+
+    info.baseansw = (VOID *)&infostart[bsptrcnt];
+    bsptrcnt += bsinfo.m.banswlen;
+
+    //SBC_external_mem_print_bin("Base Answer", (UINT8 *)info.baseansw,  bsinfo.m.banswlen );
+
+    info.fwinfo = (VOID *)&infostart[bsptrcnt];
+    bsptrcnt += bsinfo.m.fwinfolen;
+
+    //SBC_external_mem_print_bin("FW Info", (UINT8 *)info.fwinfo,  bsinfo.m.fwinfolen );
+
+    info.certi = (VOID *)&infostart[bsptrcnt];
+    bsptrcnt += bsinfo.m.certlen;
+
+    //
+    // Added by Leon
+    // Copyt the Certifi that verify the others certificate using it.
+    //
+    fsbl_certi_lv.length = bsinfo.m.certlen;
+    CopyMem(fsbl_certi_lv.value, info.certi, fsbl_certi_lv.length);
+#ifdef _UNIT_TEST_ON_
+    rootca_certi_lv.value = fsbl_certi_lv.value;
+    rootca_certi_lv.length = fsbl_certi_lv.length;
+
+#endif
+    //SBC_external_mem_print_bin("Certificate", (UINT8 *)info.certi,  bsinfo.m.certlen );
+
+    info.signature = (VOID *)&infostart[bsptrcnt];
+    bsptrcnt += bsinfo.m.siglen;
+
+    //SBC_external_mem_print_bin("Signature", (UINT8 *)info.signature,  bsinfo.m.siglen );
+
+    // Verify the FSBL certificate using RootCA certificate
+    // Later not comment 
+    ret = SBC_FSBLIntgCheck(NULL, blkhnd, info.certi, bsinfo.m.certlen, normbank, bm);
+    SBC_RET_VALIDATE_ERRCODEMSG((ret == SBCOK), ret, "FSBL certificate validation fail");
+
+    //dprint("Verify the FSBL certificate using RootCA certificate is done");
+
+    BOOLEAN retbool = TRUE;
+    retbool = EcGetPublicKeyFromX509((CONST UINT8  *)info.certi, (UINTN)bsinfo.m.certlen,  &EcPubKey);
+    if (retbool != TRUE) {
+      eprint("EcGetPublicKeyFromX509 fail");
+      ret = SBCFAIL;
+      goto errdone;
+    }
+
+    //dprint("FSBL image len : %d", fsbl_len);
+    ret = SBC_HashCompute(
+                         NULL, /* Not yet used */
+                         rdlv.value,
+                         fsbl_len,
+                         HashValue
+                      ) ; 
+
+
+    HashSize = 32;
+
+    retbool = EcDsaVerify(
+        EcPubKey,
+        CRYPTO_NID_SHA256,
+        HashValue,
+        HashSize,
+        info.signature,
+        bsinfo.m.siglen
+        );
+
+    if (retbool != TRUE) {
+      eprint("FSBL Verify fail");
+      ret = SBCFAIL;
+      goto errdone;
+    }
+
+    //sbc_err_sysprn(SBC_LOG_CMN_PRIO_INFO, 2, L"SBC", L"FSBL", L"CSC-01", 23, L"VERIFY", L"FSBL Integrate check is Done\n");
+    //Print(L"FSBL Verify Success !!!\n");
+
+    ((LV_t *)ansr)->value = AllocateZeroPool(bsinfo.m.banswlen);
+    if (((LV_t *)ansr)->value == NULL) {
+      //sbc_err_sysprn(SBC_LOG_CMN_PRIO_INFO, 2, L"SBC", L"FSBL", L"CSC-01", 23, L"VERIFY", L"FSBL Integrate check is Done\n");
+      eprint("Base Answer buffer allocate fail");
+      ret = SBCNULLP;
+      goto errdone;
+    }
+
+    ((LV_t *)ansr)->length = bsinfo.m.banswlen;
+    CopyMem(((LV_t *)ansr)->value, info.baseansw, bsinfo.m.banswlen);
+
+//    switch (bootmode) {
+//    case BOOT_MODE_FACTORY:
+//      break;
+//    default:
+//      // Base Answer Validate
+//      ret = SBC_BaseAnswerValidate(blkhnd, (UINT8 *)info.baseansw, bsinfo.m.banswlen );
+////    switch (ret) {
+////    case SBCBSANSWNOTFND:
+////      ((LV_t *)ansr)->value = AllocateZeroPool(bsinfo.m.banswlen);
+////      if (((LV_t *)ansr)->value == NULL) {
+////        ret = SBCNULLP;
+////        Print(L"Base Answer object create fail \n");
+////        goto errdone;
+////      }
+////      CopyMem(((LV_t *)ansr)->value, info.baseansw, bsinfo.m.banswlen);
+////      //goto errdone;
+////      break;
+////    case SBCOK:
+////      break;
+////    default:
+////      goto errdone;
+////      break;
+////    }
+//      break;
+//    }
+
+    ZeroMem(mrgmsg, sizeof mrgmsg);
+    UnicodeSPrint(mrgmsg, sizeof mrgmsg, L"SBC_tamper_OS signature verification success\n");
+    sbc_err_sysprn(SBC_LOG_CMN_PRIO_ERR, 2,
+           L"AT_BOOT",
+           L"FSBL",
+           L"SAT",
+           6,
+           L"Validation",
+           mrgmsg);
+    ret = SBCOK;
+
+errdone:
+
+    if (ret != SBCOK) {
+      ZeroMem(mrgmsg, sizeof mrgmsg);
+      UnicodeSPrint(mrgmsg, sizeof mrgmsg, L"SBC_tamper_OS signature verification faied\n");
+      sbc_err_sysprn(SBC_LOG_CMN_PRIO_ERR, 2,
+             L"AT_BOOT",
+             L"FSBL",
+             L"SAT",
+             6,
+             L"Detection",
+             mrgmsg);
+    }
+
+    if (EcPubKey != NULL) {
+      EcFree(EcPubKey);
+    }
+    if (rdlv.value != NULL) {
+      FreePool(rdlv.value);
+      rdlv.value = NULL;
+
+    }
+
+//  if (ret != SBCOK) {
+//      sbc_err_sysprn(SBC_LOG_CMN_PRIO_INFO, 2, L"SBC", L"FSBL", L"CSC-01", 23, L"VERIFY", L"SSBL Integrate check is Fail\n");
+//  }
+    return ret;
+
+}
+
 SBCStatus  SBC_FSBL_Verify(VOID *blkhnd, VOID *ansr, UINTN normbank, UINTN bm, UINT16 *fblpath)
 {
     SBCStatus       ret = SBCOK;
@@ -1766,14 +1995,14 @@ SBCStatus  SBC_FSBL_Verify(VOID *blkhnd, VOID *ansr, UINTN normbank, UINTN bm, U
 
     ////SBC_external_mem_print_bin("BSINFO", (UINT8 *)&bsinfo, sizeof bsinfo);
 
-    dprint("----------- FSBL Boot Service Informmtion ------------");
-    dprint("Signature Len     : %d", bsinfo.m.siglen );
-    dprint("Firmware Info Len : %d", bsinfo.m.fwinfolen );
-    dprint("Certificate Len   : %d", bsinfo.m.certlen );
-    dprint("BaseAnswer Len    : %d", bsinfo.m.banswlen );
-    dprint("BSinfo verdion    : %d", bsinfo.m.bsinfv );
-    dprint("Spec.1 Value      : %d", bsinfo.m.reserv1 );
-    dprint("Spec.2 Value      : %d", bsinfo.m.reserv2 );
+//  dprint("----------- FSBL Boot Service Informmtion ------------");
+//  dprint("Signature Len     : %d", bsinfo.m.siglen );
+//  dprint("Firmware Info Len : %d", bsinfo.m.fwinfolen );
+//  dprint("Certificate Len   : %d", bsinfo.m.certlen );
+//  dprint("BaseAnswer Len    : %d", bsinfo.m.banswlen );
+//  dprint("BSinfo verdion    : %d", bsinfo.m.bsinfv );
+//  dprint("Spec.1 Value      : %d", bsinfo.m.reserv1 );
+//  dprint("Spec.2 Value      : %d", bsinfo.m.reserv2 );
 
     bsinfolen = bsinfo.m.siglen + bsinfo.m.fwinfolen + bsinfo.m.certlen  + bsinfo.m.banswlen;
 

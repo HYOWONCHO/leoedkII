@@ -414,6 +414,12 @@ void D_SAT_PWT_SFR_006_FSBL(void *priv)
         goto errdone;
     }
 
+    Print(L"\t** Vmlinuz Normal Boot ( Verify the Vmlinuz signature ) \r\n");
+    ret = SBC_Vmlinuz_Verify(p->blkhnd, &baseansr,  p->curr_sw_bnk, p->bm, L"\\vmlinuz.bin");
+    if (ret != SBCOK) {
+        goto errdone;
+    }
+
     extern SBCStatus SBC_GRUB_LoadAndStart(EFI_HANDLE ImageHandle);
     SBC_GRUB_LoadAndStart(NULL);
     while (1) {
@@ -450,6 +456,12 @@ void D_SAT_PWT_SFR_006_TamperFSBL(void *priv)
     //L"\\EFI\\BOOT\\SSBL.efi.bin"
     Print(L"\t** SSBL AbNormal Boot ( Verify the SSBL signature ) \r\n");
     ret = SBC_SSBL_Verify(p->blkhnd, &baseansr,  p->curr_sw_bnk, p->bm, L"\\EFI\\BOOT\\SSBL.efi.tamper");
+    if (ret != SBCOK) {
+        //goto errdone;
+    }
+
+    Print(L"\t** Vmlinuz AbNormal Boot ( Verify the Vmlinuz signature ) \r\n");
+    ret = SBC_Vmlinuz_Verify(p->blkhnd, &baseansr,  p->curr_sw_bnk, p->bm, L"\\vmlinuz.bin.tamper");
     if (ret != SBCOK) {
         goto errdone;
     }
