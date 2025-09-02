@@ -1669,16 +1669,27 @@ SBCStatus  SBC_SSBL_Verify(VOID *blkhnd, VOID *ansr,  UINTN nrombank, UINTN bm, 
 //  CopyMem(((LV_t *)ansr)->value, info.baseansw, bsinfo.m.banswlen);
 
 #endif
+
+    ZeroMem(mrgmsg, sizeof mrgmsg);
+    UnicodeSPrint(mrgmsg, sizeof mrgmsg, L"SBC_tamper_SSBL signature verification success\n");
+    sbc_err_sysprn(SBC_LOG_CMN_PRIO_ERR, 2,
+           L"AT_BOOT",
+           L"FSBL",
+           L"SAT",
+           6,
+           L"Validation",
+           mrgmsg);
+    ret = SBCOK;
 errdone:
 
     if (ret != SBCOK) {
       ZeroMem(mrgmsg, sizeof mrgmsg);
-      UnicodeSPrint(mrgmsg, sizeof mrgmsg, L"SBC_tamper_ SSBL signature verification faied\n");
+      UnicodeSPrint(mrgmsg, sizeof mrgmsg, L"SBC_tamper_SSBL signature verification faied\n");
       sbc_err_sysprn(SBC_LOG_CMN_PRIO_ERR, 2,
              L"AT_BOOT",
              L"FSBL",
              L"SAT",
-             8,
+             6,
              L"Detection",
              mrgmsg);
     }
@@ -1888,12 +1899,12 @@ SBCStatus  SBC_FSBL_Verify(VOID *blkhnd, VOID *ansr, UINTN normbank, UINTN bm, U
 //    }
 
     ZeroMem(mrgmsg, sizeof mrgmsg);
-    UnicodeSPrint(mrgmsg, sizeof mrgmsg, L"SBC_tamper_ FSBL signature verification success\n");
+    UnicodeSPrint(mrgmsg, sizeof mrgmsg, L"SBC_tamper_FSBL signature verification success\n");
     sbc_err_sysprn(SBC_LOG_CMN_PRIO_ERR, 2,
            L"AT_BOOT",
            L"FSBL",
            L"SAT",
-           8,
+           6,
            L"Validation",
            mrgmsg);
     ret = SBCOK;
@@ -1902,12 +1913,12 @@ errdone:
 
     if (ret != SBCOK) {
       ZeroMem(mrgmsg, sizeof mrgmsg);
-      UnicodeSPrint(mrgmsg, sizeof mrgmsg, L"SBC_tamper_ FSBL signature verification faied\n");
+      UnicodeSPrint(mrgmsg, sizeof mrgmsg, L"SBC_tamper_FSBL signature verification faied\n");
       sbc_err_sysprn(SBC_LOG_CMN_PRIO_ERR, 2,
              L"AT_BOOT",
              L"FSBL",
              L"SAT",
-             8,
+             6,
              L"Detection",
              mrgmsg);
     }
@@ -2324,8 +2335,8 @@ SBCStatus  SBC_FSBLIntgCheck([[gnu::unused]]EFI_HANDLE *h_image , VOID *blkio, V
     calen = rootca_certi_lv.length;
     cabuf = (UINT8 *)rootca_certi_lv.value;
 
-    SBC_mem_print_bin("Root CA", cabuf, calen);
-    SBC_mem_print_bin("Cert", cert, certlen);
+    //SBC_mem_print_bin("Root CA", cabuf, calen);
+    //SBC_mem_print_bin("Cert", cert, certlen);
 #endif
 
     ret = SBC_X509VerifyCert(

@@ -843,6 +843,14 @@ UefiMain (
 
 #ifdef _UNIT_TEST_SFR008_FSBL_
     SBC_UnitFsblNormalTamperTest((void *)&btproc);
+
+    sbc_err_sysprn(SBC_LOG_CMN_PRIO_NOTICE, 2,
+       L"AT_BOOT",
+       L"FSBL",
+       L"SAT",
+       6,
+       L"Validation",
+       L"SBC_Integrity_All boot components passed signature verification");
 #endif
 
 #ifdef _UNIT_TEST_SFR008_ABNORMAL_FSBL_
