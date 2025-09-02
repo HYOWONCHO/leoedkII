@@ -408,7 +408,7 @@ void D_SAT_PWT_SFR_006_FSBL(void *priv)
 
 
     //L"\\EFI\\BOOT\\SSBL.efi.bin"
-    ret = SBC_SSBL_Verify(p->blkhnd, &baseansr,  p->curr_sw_bnk, p->bm);
+    ret = SBC_SSBL_Verify(p->blkhnd, &baseansr,  p->curr_sw_bnk, p->bm, L"\\EFI\\BOOT\\SSBL.efi.bin");
     if (ret != SBCOK) {
         goto errdone;
     }
