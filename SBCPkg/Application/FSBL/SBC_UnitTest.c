@@ -438,21 +438,33 @@ void D_SAT_PWT_SFR_006_TamperFSBL(void *priv)
     LV_t baseansr;
 
 
+    Print(L"* D-SAT-PWT-SFR-006 FSBL&SSBL Tamper Unit Test \r\n");
 
-    Print(L"* D-SAT-PWT-SFR-006 FSBL Tamper Unit Test \r\n");
-
-    Print(L"\t** FSBL Abnormal Boot ( Sign and Verify ) \r\n");
-    ret = SBC_FSBL_Verify(p->blkhnd, &baseansr,  p->curr_sw_bnk, p->bm, L"\\EFI\\BOOT\\FSBL.efi.tamper.bak");
+    Print(L"\t** FSBL Normal Boot ( Verify the FSBL signature ) \r\n");
+    ret = SBC_FSBL_Verify(p->blkhnd, &baseansr,  p->curr_sw_bnk, p->bm, STR_FSBL_F_NAME);
     if (ret != SBCOK) {
-
         goto errdone;
     }
 
 
+    //L"\\EFI\\BOOT\\SSBL.efi.bin"
+    Print(L"\t** SSBL AbNormal Boot ( Verify the SSBL signature ) \r\n");
+    ret = SBC_SSBL_Verify(p->blkhnd, &baseansr,  p->curr_sw_bnk, p->bm, L"\\EFI\\BOOT\\SSBL.efi.tamper");
+    if (ret != SBCOK) {
+        goto errdone;
+    }
+
+//  extern SBCStatus SBC_GRUB_LoadAndStart(EFI_HANDLE ImageHandle);
+//  SBC_GRUB_LoadAndStart(NULL);
+//  while (1) {
+//  }
+
+
+
     return;
 
-errdone:
 
+errdone:
     SBC_ShutdownSystem();
     return;
 }

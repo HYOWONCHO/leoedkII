@@ -1615,7 +1615,7 @@ SBCStatus  SBC_SSBL_Verify(VOID *blkhnd, VOID *ansr,  UINTN nrombank, UINTN bm, 
     ret = SBC_FSBLIntgCheck(NULL, blkhnd, info.certi, bsinfo.m.certlen, nrombank, bm);
     SBC_RET_VALIDATE_ERRCODEMSG((ret == SBCOK), ret, "FSBL certificate validation fail");
 
-#ifndef _UNIT_TEST_ON_
+#if 1 //ndef _UNIT_TEST_ON_
     retbool = EcGetPublicKeyFromX509((CONST UINT8  *)info.certi, (UINTN)bsinfo.m.certlen,  &EcPubKey);
     if (retbool != TRUE) {
         eprint("EcGetPublicKeyFromX509 fail");
