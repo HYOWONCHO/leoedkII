@@ -435,7 +435,49 @@ SBCStatus  _read_fsbl_image(LV_t *lv)
 
     //Investigate file size
     ret = SBC_GetFileSize(fsblid, ((UINTN *)&lv->length));
-    dprint("FSBL File Size : %d , Status : %d",  lv->length, ret);
+    //dprint("FSBL File Size : %d , Status : %d",  lv->length, ret);
+    SBC_RET_VALIDATE_ERRCODEMSG(((ret != SBCFAIL) && (lv->length > 0)), ret, "FSBL F Size fail or File not found");
+
+
+    //Allocate the File data buffer
+    //It must release from caller
+    lv->value = AllocateZeroPool((UINTN)lv->length);
+    SBC_RET_VALIDATE_ERRCODEMSG((lv->value != NULL), SBCNULLP, "Output buffer create Nill");
+
+    //Find the File handle protocol object
+    SBC_FileSysFindHndl(&handle);
+    SBC_RET_VALIDATE_ERRCODEMSG((handle != NULL), SBCNULLP, "Handle find fail");
+
+    ret = SBC_ReadFile(handle, fsblid, lv);
+    SBC_RET_VALIDATE_ERRCODEMSG((ret == SBCOK), ret, "FSBL read fail");
+
+
+    //SBC_external_mem_print_bin((CHAR8 *)fsblid, lv->value, lv->length);
+
+    return ret;
+
+errdone:
+
+    if (lv->value) {
+        gBS->FreePool(lv->value);
+        lv->value = NULL;
+    }
+    return ret;
+
+}
+
+SBCStatus  _read_os_image(LV_t *lv, CHAR16 *fname)
+{
+    SBCStatus           ret = SBCOK;
+    //UINT16              *fname = L"LeoTest.efi";
+    EFI_HANDLE          handle = NULL;
+    UINT16              *fsblid  = fname; //STRING_TOKEN(STR_FSBL_F_NAME);
+
+    SBC_RET_VALIDATE_ERRCODEMSG((lv != NULL), SBCNULLP, "Output buffer is Nill");
+
+    //Investigate file size
+    ret = SBC_GetFileSize(fsblid, ((UINTN *)&lv->length));
+    //dprint("FSBL File Size : %d , Status : %d",  lv->length, ret);
     SBC_RET_VALIDATE_ERRCODEMSG(((ret != SBCFAIL) && (lv->length > 0)), ret, "FSBL F Size fail or File not found");
 
 
@@ -1803,13 +1845,13 @@ SBCStatus  SBC_Vmlinuz_Verify(VOID *blkhnd, VOID *ansr, UINTN normbank, UINTN bm
     // Added by Leon
     // Copyt the Certifi that verify the others certificate using it.
     //
-    fsbl_certi_lv.length = bsinfo.m.certlen;
-    CopyMem(fsbl_certi_lv.value, info.certi, fsbl_certi_lv.length);
-#ifdef _UNIT_TEST_ON_
-    rootca_certi_lv.value = fsbl_certi_lv.value;
-    rootca_certi_lv.length = fsbl_certi_lv.length;
-
-#endif
+//    fsbl_certi_lv.length = bsinfo.m.certlen;
+//    CopyMem(fsbl_certi_lv.value, info.certi, fsbl_certi_lv.length);
+//#ifdef _UNIT_TEST_ON_
+//    rootca_certi_lv.value = fsbl_certi_lv.value;
+//    rootca_certi_lv.length = fsbl_certi_lv.length;
+//
+//#endif
     //SBC_external_mem_print_bin("Certificate", (UINT8 *)info.certi,  bsinfo.m.certlen );
 
     info.signature = (VOID *)&infostart[bsptrcnt];
