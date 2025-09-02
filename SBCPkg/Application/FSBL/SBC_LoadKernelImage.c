@@ -448,9 +448,9 @@ SBCStatus SBC_GRUB_LoadAndStart(EFI_HANDLE ImageHandle)
       Print(L"Failed to convert device path to string.\n");
       //return SBCFAIL;
     }
-    EFI_STATUS Status = gBS->LoadImage(FALSE, gImageHandle, DevicePath, NULL, 0, &ImageHandle);
+    EFI_STATUS Status = gBS->LoadImage(FALSE, gImageHandle, DevicePath, NULL, 0, &gImageHandle);
     if (!EFI_ERROR(Status)) {
-      gBS->StartImage(ImageHandle, NULL, NULL);
+      gBS->StartImage(gImageHandle, NULL, NULL);
       break;
     }
   }

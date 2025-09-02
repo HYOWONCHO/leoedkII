@@ -30,6 +30,11 @@ typedef struct _unit_proc_t {
 void D_SAT_PWT_SFR_001(void *priv);
 void D_SAT_PWT_SFR_002(void *priv);
 void D_SAT_PWT_SFR_003(void *priv);
+void D_SAT_PWT_SFR_003_Tampre(void *priv);
+void D_SAT_PWT_SFR_006_FSBL(void *priv);
+
+void SBC_UnitTestSFR001_TO_003(void *priv);
+void SBC_UnitFsblNormalTamperTest(void *priv);
 #endif
 
 

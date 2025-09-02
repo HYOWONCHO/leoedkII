@@ -53,6 +53,7 @@
 #include "SBC_Util.h"
 
 #include "SBC_UnitTest.h"
+#include "SBC_SystemControl.h"
 
 #ifdef _UNIT_TEST_ON_
 at_key_t devkey;
@@ -336,5 +337,146 @@ errdone:
 
     return;
 }
+
+void D_SAT_PWT_SFR_003_Tampre(void *priv)
+{
+    SBCStatus       ret = SBCOK;
+    fsbl_bsinfo_t   bsinfo;
+    fsbl_bsinfo_ptr_t blobinfo;
+    unit_proc_t *p = (unit_proc_t *)priv;
+    atp_ident_t *dicekey = (atp_ident_t *)p->keyinfo;
+    base_ansid_t bs_ansid;
+
+    Print(L"* D-SAT-PWT-SFR-003 Tamper Unit Test \r\n");
+    ret = SBC_ReadFwBootSrvInformation(L"\\EFI\\BOOT\\FSBL.efi.tamper", (void *)&blobinfo, (void *)&bsinfo);
+    SBC_RET_VALIDATE_ERRCODEMSG((ret == SBCOK), ret, "Boot Service Info Load Fail");
+
+//  dprint("----------- Boot Service Informmtion ------------");
+//  dprint("Signature Len     : %d", bsinfo.m.siglen );
+//  dprint("Firmware Info Len : %d", bsinfo.m.fwinfolen );
+//  dprint("Certificate Len   : %d", bsinfo.m.certlen );
+//  dprint("BaseAnswer Len    : %d", bsinfo.m.banswlen );
+//  dprint("BSinfo verdion    : %d", bsinfo.m.bsinfv );
+//  dprint("Spec.1 Value      : %d", bsinfo.m.reserv1 );
+//  dprint("Spec.2 Value      : %d", bsinfo.m.reserv2 );
+
+    Print(L"\t** Encrypted Base-answer and OSID load \r\n");
+
+    _unit_test_baseanswer_extract_from_disk(p->blkhnd, &bs_ansid);
+
+    Print(L"\t\t*** Encrypt Base Answer Extract \r\n");
+    SBC_mem_print_bin("Encrypted Base Answer", (UINT8 *)bs_ansid.encmsg, bsinfo.m.banswlen);
+
+    Print(L"\t\t*** OSID Key Load \r\n");
+    SBC_mem_print_bin("OSID", (UINT8 *)dicekey->osid, 32);
+
+   
+    Print(L"\t** Base Answer Validation \r\n");
+    ret = SBC_BaseAnswerValidate(p->blkhnd, 
+                                 blobinfo.baseansw, bsinfo.m.banswlen, 
+                                 dicekey->osid, 32);
+
+    if (ret != SBCOK) {
+        goto errdone;
+    }
+
+    return;
+errdone:
+
+    SBC_ShutdownSystem();
+    return;
+}
+
+void D_SAT_PWT_SFR_006_FSBL(void *priv)
+{
+    SBCStatus       ret = SBCOK;
+    [[maybe_unused]] fsbl_bsinfo_t   bsinfo;
+    [[maybe_unused]] fsbl_bsinfo_ptr_t blobinfo;
+    unit_proc_t *p = (unit_proc_t *)priv;
+    [[maybe_unused]] atp_ident_t *dicekey = (atp_ident_t *)p->keyinfo;
+    [[maybe_unused]] base_ansid_t bs_ansid;
+    LV_t baseansr;
+
+
+    Print(L"* D-SAT-PWT-SFR-006 FSBL Tamper Unit Test \r\n");
+
+    Print(L"\t** FSBL Normal Boot ( Sign and Verify ) \r\n");
+    ret = SBC_FSBL_Verify(p->blkhnd, &baseansr,  p->curr_sw_bnk, p->bm, STR_FSBL_F_NAME);
+    if (ret != SBCOK) {
+        goto errdone;
+    }
+
+
+    //L"\\EFI\\BOOT\\SSBL.efi.bin"
+    ret = SBC_SSBL_Verify(p->blkhnd, &baseansr,  p->curr_sw_bnk, p->bm);
+    if (ret != SBCOK) {
+        goto errdone;
+    }
+    extern SBCStatus SBC_GRUB_LoadAndStart(EFI_HANDLE ImageHandle);
+
+    SBC_GRUB_LoadAndStart(NULL);
+    while (1) {
+    }
+    return;
+
+errdone:
+
+    SBC_ShutdownSystem();
+    return;
+}
+
+
+void D_SAT_PWT_SFR_006_TamperFSBL(void *priv)
+{
+    SBCStatus       ret = SBCOK;
+    [[maybe_unused]] fsbl_bsinfo_t   bsinfo;
+    [[maybe_unused]] fsbl_bsinfo_ptr_t blobinfo;
+    unit_proc_t *p = (unit_proc_t *)priv;
+    [[maybe_unused]] atp_ident_t *dicekey = (atp_ident_t *)p->keyinfo;
+    [[maybe_unused]] base_ansid_t bs_ansid;
+    LV_t baseansr;
+
+
+
+    Print(L"* D-SAT-PWT-SFR-006 FSBL Tamper Unit Test \r\n");
+
+    Print(L"\t** FSBL Abnormal Boot ( Sign and Verify ) \r\n");
+    ret = SBC_FSBL_Verify(p->blkhnd, &baseansr,  p->curr_sw_bnk, p->bm, L"\\EFI\\BOOT\\FSBL.efi.tamper.bak");
+    if (ret != SBCOK) {
+
+        goto errdone;
+    }
+
+
+    return;
+
+errdone:
+
+    SBC_ShutdownSystem();
+    return;
+}
+
+void SBC_UnitTestSFR001_TO_003(void *priv)
+{
+    D_SAT_PWT_SFR_001(priv);
+    D_SAT_PWT_SFR_002(priv);
+    D_SAT_PWT_SFR_003(priv);
+    D_SAT_PWT_SFR_003_Tampre(priv);
+
+    return;
+}
+
+
+void SBC_UnitFsblNormalTamperTest(void *priv)
+{
+    D_SAT_PWT_SFR_006_FSBL(priv);
+
+}
+
+void SBC_UnitFsblAbNormalTamperTest(void *priv)
+{
+    D_SAT_PWT_SFR_006_TamperFSBL(priv);
+}
+
 #endif
 

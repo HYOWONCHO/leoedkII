@@ -830,22 +830,34 @@ UefiMain (
     btproc.imghndl = ImageHandle;
 
    // Step 1-1 )  FSBL, self sign and verify
+    SBC_AntiTamperingInit(NULL);
 
     //return EFI_SUCCESS; 
 
 #ifdef _UNIT_TEST_ON_
 //#   error "unit test mode"    
     dprint("============= Unit Test Starting =============");
-    D_SAT_PWT_SFR_001((void *)&btproc);
-    D_SAT_PWT_SFR_002((void *)&btproc);
-    D_SAT_PWT_SFR_003((void *)&btproc);
+#ifdef _UNIT_TEST_SFR001_TO_003_
+    SBC_UnitTestSFR001_TO_003((void *)&btproc);
+#endif
+
+#ifdef _UNIT_TEST_SFR008_FSBL_
+    SBC_UnitFsblNormalTamperTest((void *)&btproc);
+#endif
+
+#ifdef _UNIT_TEST_SFR008_ABNORMAL_FSBL_
+    extern void SBC_UnitFsblAbNormalTamperTest(void *priv);
+    SBC_UnitFsblAbNormalTamperTest((void *)&btproc);
+#endif
+
+
     dprint("Unit Test Finish !!!!");
 
 
     return EFI_SUCCESS;
-#endif
+#else
 
-    ret = SBC_FSBL_Verify(h_blkio, &baseansr, currbank_id, h_rawprtheader.bootmode);
+    ret = SBC_FSBL_Verify(h_blkio, &baseansr, currbank_id, h_rawprtheader.bootmode,STR_FSBL_F_NAME);
     if (ret != SBCOK) {
           is_boot_status = FALSE;
           btproc.bootst = SB_PROC_ST_ABNRAM;
@@ -1108,7 +1120,7 @@ UefiMain (
 
 
   // Access bank addr ( (0x200 + (128 << 20)) * currbank_id )
-
+#endif
 
 errdone:
 

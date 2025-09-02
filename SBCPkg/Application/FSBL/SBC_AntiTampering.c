@@ -34,6 +34,9 @@
 #include "SBC_X509.h"
 #include "SBC_Kdf.h" 
 #include "SBC_Log.h"
+
+[[maybe_unused]] static LV_t fsbl_certi_lv;
+[[maybe_unused]] static LV_t rootca_certi_lv;
   
 
 
@@ -44,6 +47,27 @@ typedef struct {
     // The rest of the 4096-byte structure is not used in this example.
 } NVME_CONTROLLER_DATA;
 #pragma pack()
+
+
+VOID SBC_AntiTamperingInit(VOID *priv)
+{
+    fsbl_certi_lv.length = 1024;
+    fsbl_certi_lv.value = AllocateZeroPool(fsbl_certi_lv.length);
+
+    //rootca_certi_lv.value = fsbl_certi_lv.value;
+    
+    return;
+}
+
+VOID SBC_AntiTamperingDeInit(VOID *priv)
+{
+    if(fsbl_certi_lv.value) {
+      FreePool(fsbl_certi_lv.value);
+      fsbl_certi_lv.value = NULL;
+    }
+    
+    return;
+}
 
 SBCStatus _kernel_image_load(EFI_HANDLE ImageHandle, LV_t *lv)
 {
@@ -162,12 +186,12 @@ SBCStatus _ssbl_image_load(VOID *blkhnd, LV_t *lv,  UINTN normbank, UINTN bm)
     EFI_STATUS retval = EFI_SUCCESS;
     UINTN idx = 0;
 
-    ret = SBC_GetFileSize(L"\\EFI\\BOOT\\SSBL.efi.bin", &f_size);
+    ret = SBC_GetFileSize(fname, &f_size);
     SBC_RET_VALIDATE_ERRCODEMSG((ret == SBCOK), ret, "SSBL File Not Found");
     hndlcnt = SBC_FindEfiFileSystemProtocol(&hndl);
 
     for (idx = 0; idx < hndlcnt; idx++) {
-      retval = SBC_IsFlieAccess(hndl[idx], L"\\EFI\\BOOT\\SSBL.efi.bin");
+      retval = SBC_IsFlieAccess(hndl[idx], fname);
       if (EFI_ERROR(retval)) {
         dprint("\\EFI\\BOOT\\SSBL.efi.bin not found in index %d", idx);
         continue;
@@ -186,7 +210,7 @@ SBCStatus _ssbl_image_load(VOID *blkhnd, LV_t *lv,  UINTN normbank, UINTN bm)
     lv->value = AllocatePool(f_size);
     lv->length = f_size;
 
-    ret = SBC_ReadFile(hndl[idx],  L"\\EFI\\BOOT\\SSBL.efi.bin", lv);
+    ret = SBC_ReadFile(hndl[idx],  fname, lv);
     SBC_RET_VALIDATE_ERRCODEMSG((ret == SBCOK), ret, "SSBL Read File Not Found");
 
 
@@ -1403,28 +1427,28 @@ SBCStatus  SBC_BaseAnswerValidate(VOID *blkhnd, UINT8 *answer, UINTN answerl, UI
 
 
         ZeroMem(mrgmsg, sizeof mrgmsg);
-        UnicodeSPrint(mrgmsg, sizeof mrgmsg, L"Base Answer validate fail(%a:%a) \n",
+        UnicodeSPrint(mrgmsg, sizeof mrgmsg, L"SBC_tamper_OSID derived answer mismatched known answer(%a:%a) \n",
                       (CHAR8 *)log_answr, (CHAR8 *)decbuf);
         sbc_err_sysprn(SBC_LOG_CMN_PRIO_ERR, 2,
              L"AT_BOOT",
              L"FSBL",
              L"SAT",
-             8,
-             L"Detection ",
+             3,
+             L"Detection",
              mrgmsg);
           ret = SBCFAIL;
           goto errdone;
     }
 
     ZeroMem(mrgmsg, sizeof mrgmsg);
-    UnicodeSPrint(mrgmsg, sizeof mrgmsg, L"Base Answer validate Success (%a:%a) \n",
+    UnicodeSPrint(mrgmsg, sizeof mrgmsg, L"SBC_Integrity_OSID derived answer matched known answer (%a:%a) \n",
                   (CHAR8 *)log_answr, (CHAR8 *)decbuf);
     sbc_err_sysprn(SBC_LOG_CMN_PRIO_ERR, 2,
          L"AT_BOOT",
          L"FSBL",
          L"SAT",
-         8,
-         L"Validation ",
+         3,
+         L"Validation",
          mrgmsg);
 
 errdone:
@@ -1432,7 +1456,7 @@ errdone:
 
 }
 
-SBCStatus  SBC_SSBL_Verify(VOID *blkhnd, VOID *ansr,  UINTN nrombank, UINTN bm)
+SBCStatus  SBC_SSBL_Verify(VOID *blkhnd, VOID *ansr,  UINTN nrombank, UINTN bm, CHAR16 *fname)
 {
     SBCStatus       ret = SBCOK;
 
@@ -1459,13 +1483,16 @@ SBCStatus  SBC_SSBL_Verify(VOID *blkhnd, VOID *ansr,  UINTN nrombank, UINTN bm)
             .value = NULL
     };
 
-#ifndef _FSBL_TEST_
+#ifndef _UNIT_TEST_ON_
     UINT32          imglen = SBC_RAWPRT_DFLT_BLK_SZ;
     UINT8           *loadimg = NULL;
     UINTN           startlba = 0;
     UINTN           bsofs = 0; // Boot Sector Offset
     UINT8           imghdr[SBC_RAWPRT_DFLT_BLK_SZ] = {0, };
 
+    //
+    // Boot FW location compute according to Boot Mode
+    //
     if (bm != BOOT_MODE_FACTORY) {
       bsofs = (BOOT_SECTOR1_OFS | ((nrombank - 1) << 20));
       startlba = ((bsofs | BOOT_SSBL_OFS) >> SBC_RAWPRT_DFLT_SHIFT);
@@ -1473,6 +1500,10 @@ SBCStatus  SBC_SSBL_Verify(VOID *blkhnd, VOID *ansr,  UINTN nrombank, UINTN bm)
     else {
       startlba = ((BOOT_SECTOR3_OFS | BOOT_SSBL_OFS) >> SBC_RAWPRT_DFLT_SHIFT);
     }
+
+    //
+    // Read the Head of Boot SSBL Boot FW 
+    //
     ret = SBC_RawPrtReadBlock(blkhnd, (void *)imghdr, &imglen, startlba);
     if (ret != SBCOK) {
         eprint("SSBL Factory Block Read Fail \n");
@@ -1480,14 +1511,24 @@ SBCStatus  SBC_SSBL_Verify(VOID *blkhnd, VOID *ansr,  UINTN nrombank, UINTN bm)
     }
 
     CopyMem((void *)&imglen, &imghdr[0], sizeof imglen);
+
+    //
+    //Compute the Alligned by 512
+    //
     imglen = ALIGN_VALUE(imglen, SBC_RAWPRT_DFLT_BLK_SZ);
 
     loadimg = AllocateZeroPool(imglen);
     SBC_RET_VALIDATE_ERRCODEMSG((loadimg != NULL), SBCNULLP, "Allocate Memory Fail");
 
+    //
+    // Read the Boot FW BLOB
+    //
     ret = SBC_RawPrtReadBlock(blkhnd, (void *)loadimg, &imglen, startlba);
     SBC_RET_VALIDATE_ERRCODEMSG((ret == SBCOK), ret, "SSBL Factory Block Read Fail ");
 
+    //
+    //Reference to SSBL FW addres
+    //
     rdlv.value = (UINT8 *)&loadimg[4];
     rdlv.length = imglen;
 
@@ -1499,12 +1540,12 @@ SBCStatus  SBC_SSBL_Verify(VOID *blkhnd, VOID *ansr,  UINTN nrombank, UINTN bm)
     EFI_STATUS retval = EFI_SUCCESS;
     UINTN idx = 0;
 
-    ret = SBC_GetFileSize(L"\\EFI\\BOOT\\SSBL.efi.bin", &f_size);
+    ret = SBC_GetFileSize(fname, &f_size);
     SBC_RET_VALIDATE_ERRCODEMSG((ret == SBCOK), ret, "SSBL File Not Found");
     hndlcnt = SBC_FindEfiFileSystemProtocol(&hndl);
 
     for (idx = 0; idx < hndlcnt; idx++) {
-      retval = SBC_IsFlieAccess(hndl[idx], L"\\EFI\\BOOT\\SSBL.efi.bin");
+      retval = SBC_IsFlieAccess(hndl[idx], fname);
       if (EFI_ERROR(retval)) {
         dprint("\\EFI\\BOOT\\SSBL.efi.bin not found in index %d", idx);
         continue;
@@ -1523,13 +1564,16 @@ SBCStatus  SBC_SSBL_Verify(VOID *blkhnd, VOID *ansr,  UINTN nrombank, UINTN bm)
     rdlv.value = AllocatePool(f_size);
     rdlv.length = f_size;
 
-    ret = SBC_ReadFile(hndl[idx],  L"\\EFI\\BOOT\\SSBL.efi.bin", &rdlv);
+    ret = SBC_ReadFile(hndl[idx],  fname, &rdlv);
     SBC_RET_VALIDATE_ERRCODEMSG((ret == SBCOK), ret, "SSBL Read File Not Found");
 
     dprint("SSBL Testing File Size %d", rdlv.length);
 
 #endif
 
+    //
+    //Locating the Boot Service Information portion.
+    // 
     last_of_fsbl =  rdlv.length - FSBL_BNIFO_SIZE;
     infostart = &((UINT8 *)rdlv.value)[last_of_fsbl];
 
@@ -1566,41 +1610,45 @@ SBCStatus  SBC_SSBL_Verify(VOID *blkhnd, VOID *ansr,  UINTN nrombank, UINTN bm)
     //SBC_external_mem_print_bin("Certificate", (UINT8 *)info.certi,  bsinfo.m.certlen );
 
     info.signature = (VOID *)&infostart[bsptrcnt];
-    bsptrcnt += bsinfo.m.siglen;    
-    
-//  retbool = EcGetPublicKeyFromX509((CONST UINT8  *)info.certi, (UINTN)bsinfo.m.certlen,  &EcPubKey);
-//  if (retbool != TRUE) {
-//      eprint("EcGetPublicKeyFromX509 fail");
-//      ret = SBCFAIL;
-//      goto errdone;
-//  }
+    bsptrcnt += bsinfo.m.siglen;  
 
-//  dprint("SSBL image len : %d", fsbl_len);
-//
-//  ret = SBC_HashCompute(
-//                   NULL, /* Not yet used */
-//                   rdlv.value,
-//                   fsbl_len,
-//                   HashValue
-//                ) ;
-//
-//
-//  HashSize = 32;
-//
-//  retbool = EcDsaVerify(
-//      EcPubKey,
-//      CRYPTO_NID_SHA256,
-//      HashValue,
-//      HashSize,
-//      info.signature,
-//      bsinfo.m.siglen
-//      );
-//
-//  if (retbool != TRUE) {
-//      eprint("FSBL Verify fail");
-//      ret = SBCFAIL;
-//      goto errdone;
-//  }
+    ret = SBC_FSBLIntgCheck(NULL, blkhnd, info.certi, bsinfo.m.certlen, nrombank, bm);
+    SBC_RET_VALIDATE_ERRCODEMSG((ret == SBCOK), ret, "FSBL certificate validation fail");
+
+#ifndef _UNIT_TEST_ON_
+    retbool = EcGetPublicKeyFromX509((CONST UINT8  *)info.certi, (UINTN)bsinfo.m.certlen,  &EcPubKey);
+    if (retbool != TRUE) {
+        eprint("EcGetPublicKeyFromX509 fail");
+        ret = SBCFAIL;
+        goto errdone;
+    }
+
+    //dprint("SSBL image len : %d", fsbl_len);
+
+    ret = SBC_HashCompute(
+                     NULL, /* Not yet used */
+                     rdlv.value,
+                     fsbl_len,
+                     HashValue
+                  ) ;
+
+
+    HashSize = 32;
+
+    retbool = EcDsaVerify(
+        EcPubKey,
+        CRYPTO_NID_SHA256,
+        HashValue,
+        HashSize,
+        info.signature,
+        bsinfo.m.siglen
+        );
+
+    if (retbool != TRUE) {
+        eprint("FSBL Verify fail");
+        ret = SBCFAIL;
+        goto errdone;
+    }
 //
 //  if (ansr == NULL) {
 //    goto errdone;
@@ -1620,16 +1668,28 @@ SBCStatus  SBC_SSBL_Verify(VOID *blkhnd, VOID *ansr,  UINTN nrombank, UINTN bm)
 //  ((LV_t *)ansr)->length = bsinfo.m.banswlen;
 //  CopyMem(((LV_t *)ansr)->value, info.baseansw, bsinfo.m.banswlen);
 
-
+#endif
 errdone:
 
-//  if (EcPubKey != NULL) {
-//    EcFree(EcPubKey);
-//  }
-//  if (rdlv.value != NULL) {
-//    FreePool(rdlv.value);
-//    rdlv.value = NULL;
-//  }
+    if (ret != SBCOK) {
+      ZeroMem(mrgmsg, sizeof mrgmsg);
+      UnicodeSPrint(mrgmsg, sizeof mrgmsg, L"SBC_tamper_ SSBL signature verification faied\n");
+      sbc_err_sysprn(SBC_LOG_CMN_PRIO_ERR, 2,
+             L"AT_BOOT",
+             L"FSBL",
+             L"SAT",
+             8,
+             L"Detection",
+             mrgmsg);
+    }
+
+    if (EcPubKey != NULL) {
+      EcFree(EcPubKey);
+    }
+    if (rdlv.value != NULL) {
+      FreePool(rdlv.value);
+      rdlv.value = NULL;
+    }
 
 //  if (ret != SBCOK) {
 //      sbc_err_sysprn(SBC_LOG_CMN_PRIO_INFO, 2, L"SBC", L"FSBL", L"CSC-01", 23, L"VERIFY", L"SSBL Integrate check is Fail\n");
@@ -1639,12 +1699,12 @@ errdone:
 
 }
 
-SBCStatus  SBC_FSBL_Verify(VOID *blkhnd, VOID *ansr, UINTN normbank, UINTN bm)
+SBCStatus  SBC_FSBL_Verify(VOID *blkhnd, VOID *ansr, UINTN normbank, UINTN bm, UINT16 *fblpath)
 {
     SBCStatus       ret = SBCOK;
     EFI_STATUS      retval = EFI_SUCCESS;
     EFI_HANDLE      *hndl = NULL;
-    UINT16          *fblpath = STR_FSBL_F_NAME;
+    //UINT16          *fblpath = STR_FSBL_F_NAME;
     //UINT16          *fblpath = L"\\boot\\vmlinuz-5.14.0-284.11.1.el9_2.x86_64" ;
     UINT8           *infostart = NULL;
     UINT32          last_of_fsbl = 0;
@@ -1728,6 +1788,17 @@ SBCStatus  SBC_FSBL_Verify(VOID *blkhnd, VOID *ansr, UINTN normbank, UINTN bm)
     info.certi = (VOID *)&infostart[bsptrcnt];
     bsptrcnt += bsinfo.m.certlen;
 
+    //
+    // Added by Leon
+    // Copyt the Certifi that verify the others certificate using it.
+    //
+    fsbl_certi_lv.length = bsinfo.m.certlen;
+    CopyMem(fsbl_certi_lv.value, info.certi, fsbl_certi_lv.length);
+#ifdef _UNIT_TEST_ON_
+    rootca_certi_lv.value = fsbl_certi_lv.value;
+    rootca_certi_lv.length = fsbl_certi_lv.length;
+
+#endif
     //SBC_external_mem_print_bin("Certificate", (UINT8 *)info.certi,  bsinfo.m.certlen );
 
     info.signature = (VOID *)&infostart[bsptrcnt];
@@ -1737,9 +1808,10 @@ SBCStatus  SBC_FSBL_Verify(VOID *blkhnd, VOID *ansr, UINTN normbank, UINTN bm)
 
     // Verify the FSBL certificate using RootCA certificate
     // Later not comment 
-//  ret = SBC_FSBLIntgCheck(NULL , blkhnd, info.certi, bsinfo.m.certlen, normbank, bm);
-//  SBC_RET_VALIDATE_ERRCODEMSG((ret == SBCOK), ret, "FSBL certificate validation fail");
+    ret = SBC_FSBLIntgCheck(NULL, blkhnd, info.certi, bsinfo.m.certlen, normbank, bm);
+    SBC_RET_VALIDATE_ERRCODEMSG((ret == SBCOK), ret, "FSBL certificate validation fail");
 
+    //dprint("Verify the FSBL certificate using RootCA certificate is done");
 
     BOOLEAN retbool = TRUE;
     retbool = EcGetPublicKeyFromX509((CONST UINT8  *)info.certi, (UINTN)bsinfo.m.certlen,  &EcPubKey);
@@ -1749,7 +1821,7 @@ SBCStatus  SBC_FSBL_Verify(VOID *blkhnd, VOID *ansr, UINTN normbank, UINTN bm)
       goto errdone;
     }
 
-    dprint("FSBL image len : %d", fsbl_len);
+    //dprint("FSBL image len : %d", fsbl_len);
     ret = SBC_HashCompute(
                          NULL, /* Not yet used */
                          rdlv.value,
@@ -1776,7 +1848,7 @@ SBCStatus  SBC_FSBL_Verify(VOID *blkhnd, VOID *ansr, UINTN normbank, UINTN bm)
     }
 
     //sbc_err_sysprn(SBC_LOG_CMN_PRIO_INFO, 2, L"SBC", L"FSBL", L"CSC-01", 23, L"VERIFY", L"FSBL Integrate check is Done\n");
-    Print(L"FSBL Verify Success !!!\n");
+    //Print(L"FSBL Verify Success !!!\n");
 
     ((LV_t *)ansr)->value = AllocateZeroPool(bsinfo.m.banswlen);
     if (((LV_t *)ansr)->value == NULL) {
@@ -1815,24 +1887,28 @@ SBCStatus  SBC_FSBL_Verify(VOID *blkhnd, VOID *ansr, UINTN normbank, UINTN bm)
 //      break;
 //    }
 
-
-
-
-
-
-    //ret = SBCOK;
+    ZeroMem(mrgmsg, sizeof mrgmsg);
+    UnicodeSPrint(mrgmsg, sizeof mrgmsg, L"SBC_tamper_ FSBL signature verification success\n");
+    sbc_err_sysprn(SBC_LOG_CMN_PRIO_ERR, 2,
+           L"AT_BOOT",
+           L"FSBL",
+           L"SAT",
+           8,
+           L"Validation",
+           mrgmsg);
+    ret = SBCOK;
 
 errdone:
 
     if (ret != SBCOK) {
       ZeroMem(mrgmsg, sizeof mrgmsg);
-      UnicodeSPrint(mrgmsg, sizeof mrgmsg, L"FSBL Verify Fail \n");
+      UnicodeSPrint(mrgmsg, sizeof mrgmsg, L"SBC_tamper_ FSBL signature verification faied\n");
       sbc_err_sysprn(SBC_LOG_CMN_PRIO_ERR, 2,
-             L"SBC",
+             L"AT_BOOT",
              L"FSBL",
-             L"Weapon System",
+             L"SAT",
              8,
-             L"Determine Firmare Tampering ",
+             L"Detection",
              mrgmsg);
     }
 
@@ -2200,7 +2276,7 @@ errdone:
 }
 
 // FSBL Integrity check 
-SBCStatus  SBC_FSBLIntgCheck([[gnu::unused]]EFI_HANDLE *h_image , VOID *blkio, VOID *cert, UINTN certle, UINTN nrombank, UINTN mode)
+SBCStatus  SBC_FSBLIntgCheck([[gnu::unused]]EFI_HANDLE *h_image , VOID *blkio, VOID *cert, UINTN certlen, UINTN nrombank, UINTN mode)
 {
     SBCStatus ret = SBCOK;
 
@@ -2211,7 +2287,7 @@ SBCStatus  SBC_FSBLIntgCheck([[gnu::unused]]EFI_HANDLE *h_image , VOID *blkio, V
 //  VOID *blkio;
     UINT8 *cabuf =  NULL;
     UINTN calen = 0;
-    UINTN certlen = 0;
+    //UINTN certlen = 0;
 
     switch (mode) {
     case BOOT_MODE_NORMAL:
@@ -2239,12 +2315,18 @@ SBCStatus  SBC_FSBLIntgCheck([[gnu::unused]]EFI_HANDLE *h_image , VOID *blkio, V
                               &imglen, 
                               startlba);
     SBC_RET_VALIDATE_ERRCODEMSG((ret == SBCOK), ret, "RooTCA load fail");
-
+#ifndef _UNIT_TEST_ON_
     // Pointing the RooTCA Address
     CopyMem((void *)&calen, (void *)&imgbuf[SYS_CONF_ROOT_CA_OFS], LEN_DFLT_OFS);
     cabuf = &imgbuf[SYS_CONF_ROOT_CA_OFS + LEN_DFLT_OFS];
     
+#else
+    calen = rootca_certi_lv.length;
+    cabuf = (UINT8 *)rootca_certi_lv.value;
 
+    SBC_mem_print_bin("Root CA", cabuf, calen);
+    SBC_mem_print_bin("Cert", cert, certlen);
+#endif
 
     ret = SBC_X509VerifyCert(
                       (CONST UINT8 *)cert,  //  Cert

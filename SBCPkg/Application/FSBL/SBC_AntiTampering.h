@@ -146,6 +146,15 @@ typedef struct _t_baseansr {
 #pragma pack()
 
 
+/*!
+ * \fn VOID SBC_AntiTamperingInit(VOID *priv)
+ * 
+ * \author leoc (9/2/25)
+ * 
+ * \param priv   Point to Boot Procedure related object
+ */
+VOID SBC_AntiTamperingInit(VOID *priv);
+
 /**
  * @fn SBCStatus SBC_GenDeviceID(UINT8 *devid)
  * 
@@ -210,28 +219,60 @@ SBCStatus SBC_GenFWID(EFI_HANDLE *h_image, UINT8 *devid, UINT8 *fwid, UINTN norm
 SBCStatus SBC_GenOSID(EFI_HANDLE *h_image, UINT8 *fwid, UINT8 *osid);
 
 
-SBCStatus  SBC_FSBLIntgCheck(EFI_HANDLE *h_image , VOID *blkio, VOID *cert, UINTN certle, UINTN nrombank, UINTN mode);
+SBCStatus  SBC_FSBLIntgCheck(EFI_HANDLE *h_image , VOID *blkio, VOID *cert, UINTN certlen, UINTN nrombank, UINTN mode);
 
-SBCStatus  SBC_FSBL_Verify(VOID *blkhnd, VOID *ansr, UINTN normbank, UINTN bm);
+/*!
+ * \fn SBCStatus  SBC_FSBL_Verify(VOID *blkhnd, VOID *ansr, UINTN normbank, UINTN bm, UINT16 *fblpath)
+ * 
+ * \brief Verify the FSBL signature
+ * 
+ * \author leoc (9/2/25)
+ * 
+ * \param blkhnd   Indicates a pointer to the calling context
+ * \param ansr     Pointer to buffer for the base-answer destination  data. 
+ * \param nrombank Indicates a normal firmware bank
+ * \param bm       Indicates the curtently boot mode 
+ * \param fname    Pointer to the filename for opening ( Used only in test mode )
+ * 
+ * \return On Success, return the SBCOK, otherwise,return the apporiate value. 
+ */
+SBCStatus  SBC_FSBL_Verify(VOID *blkhnd, VOID *ansr, UINTN normbank, UINTN bm, UINT16 *fblpath);
 
 SBCStatus  SBC_BlkIoHandleInit(OUT VOID **hblk, OUT VOID *hdr);
 
 SBCStatus  SBC_GenMigrationKey(VOID *priv, UINT32 currbankid, UINT32 prevbankid, VOID *out);
 
 /*!
- * De
+ * \fn SBCStatus  SBC_DeviceIdKyeVerify(VOID *blkio, UINT8 *devid, UINT8 *deckey)
+ * 
+ * \brief Verify certificate was issued by RootCA
  * 
  * \author leoc (7/10/25)
  * 
- * \param blkio  
- * \param devid  
- * \param deckey 
+ * \param blkio  Indicates a pointer to the calling context
+ * \param devid  Pointer to buffer for the device id
+ * \param deckey Pointer to buffer for decryption 
  * 
- * \return SBCStatus 
+ * \return On Success, return the SBCOK, otherwise,return the apporiate value. 
  */
 SBCStatus  SBC_DeviceIdKyeVerify(VOID *blkio, UINT8 *devid, UINT8 *deckey);
 
-SBCStatus  SBC_SSBL_Verify(VOID *blkhnd, VOID *ansr,  UINTN nrombank, UINTN bm);
+/*!
+ * \fn SBCStatus  SBC_SSBL_Verify(VOID *blkhnd, VOID *ansr,  UINTN nrombank, UINTN bm, CHAR16 *fname)
+ * 
+ * \brief Verify the SSBL signature
+ * 
+ * \author leoc (9/2/25)
+ * 
+ * \param blkhnd   Indicates a pointer to the calling context
+ * \param ansr     Pointer to buffer for the base-answer destination  data. 
+ * \param nrombank Indicates a normal firmware bank
+ * \param bm       Indicates the curtently boot mode 
+ * \param fname    Pointer to the filename for opening ( Used only in test mode )
+ * 
+ * \return On Success, return the SBCOK, otherwise,return the apporiate value. 
+ */
+SBCStatus  SBC_SSBL_Verify(VOID *blkhnd, VOID *ansr,  UINTN nrombank, UINTN bm, CHAR16 *fname);
 
 
 SBCStatus SBC_DeviceSecuirtyKeyCreate(VOID *key);
