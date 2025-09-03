@@ -66,7 +66,8 @@
 #include "SBC_AntiTampering.h"
 #include "SBC_Util.h"
 #include "SBC_UnitTest.h"
-
+#include "SBC_Nvram.h"
+#include "SBC_SystemControl.h"
 
 VOID *h_blkio;               // Block I/O handle
 #ifndef _FSBL_TEST_
@@ -721,6 +722,10 @@ UefiMain (
     [[gnu::unused]] EFI_HANDLE ssbl_img_hndl = NULL;
 
     unit_proc_t btproc;
+#ifdef _UNIT_TEST_ON_
+    CHAR16 *varname = L"SBCBOOTORDER";
+    UINTN boot_oredr_mode = 0;
+#endif
 
 #ifdef _SBC_DRIVER_LOAD_
     retval = SBC_LodaDriver(SERIAL_DXE_PATH, TRUE);
@@ -837,41 +842,72 @@ UefiMain (
 #ifdef _UNIT_TEST_ON_
 //#   error "unit test mode"    
     dprint("============= Unit Test Starting =============");
-#ifdef _UNIT_TEST_SFR001_TO_003_
-    SBC_UnitTestSFR001_TO_003((void *)&btproc);
-#endif
+    UINTN  varsz =  0;
+    retval = SBC_NvramGetVar((VOID *)varname, (VOID *)&boot_oredr_mode, (VOID *)&varsz);
+    if (EFI_ERROR(retval)) {
+      UINTN bt_order = SBC_BOOT_SHDN_SFR_003;
+      UINTN bt_varsz = sizeof bt_order;
+      retval = SBC_NvramSetVar((VOID *)varname, (VOID *)&bt_order, (VOID *)&bt_varsz);
+      SBC_RebootSystem();
+    }
 
-#ifdef _UNIT_TEST_SFR008_FSBL_
-    SBC_UnitFsblNormalTamperTest((void *)&btproc);
+    //retval = SBC_NvramGetVar((VOID *)varname, (VOID *)&boot_oredr_mode, (VOID *)&varsz);
 
-    sbc_err_sysprn(SBC_LOG_CMN_PRIO_NOTICE, 2,
-       L"AT_BOOT",
-       L"FSBL",
-       L"SAT",
-       6,
-       L"Validation",
-       L"SBC_Integrity_All boot components passed signature verification");
-#endif
+    Print(L"Boot Order : 0x%04x\n", boot_oredr_mode);
+    //return EFI_SUCCESS; 
 
-#ifdef _UNIT_TEST_SFR008_ABNORMAL_FSBL_
-    extern void SBC_UnitFsblAbNormalTamperTest(void *priv);
-    SBC_UnitFsblAbNormalTamperTest((void *)&btproc);
+    //SBC_BiosReadBootOrder();
+//#ifdef _UNIT_TEST_SFR001_TO_003_
+    if (boot_oredr_mode == SBC_BOOT_SHDN_SFR_003) {
+      UINTN bt_order = SBC_BOOT_SHDN_SFR_006;
+      UINTN bt_varsz = sizeof bt_order;
+      retval = SBC_NvramSetVar((VOID *)varname, (VOID *)&bt_order, (VOID *)&bt_varsz);
+      SBC_UnitTestSFR001_TO_003((void *)&btproc);
+    }
+//#endif
 
-    
+//#ifdef _UNIT_TEST_SFR008_FSBL_
+    if (boot_oredr_mode == SBC_BOOT_SHDN_SFR_006) {
+      UINTN bt_order = SBC_BOOT_SHDN_SFR_006_TAMPER;
+      UINTN bt_varsz = sizeof bt_order;
+      retval = SBC_NvramSetVar((VOID *)varname, (VOID *)&bt_order, (VOID *)&bt_varsz);
+      SBC_UnitFsblNormalTamperTest((void *)&btproc);
 
-    sbc_err_sysprn(SBC_LOG_CMN_PRIO_NOTICE, 2,
-       L"AT_BOOT",
-       L"FSBL",
-       L"SAT",
-       6,
-       L"Validation",
-       L"SBC_tamper_FSBL_SSBL_OS signature verification faied");
-#endif
+      sbc_err_sysprn(SBC_LOG_CMN_PRIO_NOTICE, 2,
+         L"AT_BOOT",
+         L"FSBL",
+         L"SAT",
+         6,
+         L"Validation",
+         L"SBC_Integrity_All boot components passed signature verification");
+  //#endif
+    }
+
+    if (boot_oredr_mode == SBC_BOOT_SHDN_SFR_006_TAMPER) {
+      UINTN bt_order = SBC_BOOT_SHDN_SFR_003;
+      UINTN bt_varsz = sizeof bt_order;
+      retval = SBC_NvramSetVar((VOID *)varname, (VOID *)&bt_order, (VOID *)&bt_varsz);
+    //#ifdef _UNIT_TEST_SFR008_ABNORMAL_FSBL_
+      extern void SBC_UnitFsblAbNormalTamperTest(void *priv);
+      SBC_UnitFsblAbNormalTamperTest((void *)&btproc);
+
+      
+
+      sbc_err_sysprn(SBC_LOG_CMN_PRIO_NOTICE, 2,
+         L"AT_BOOT",
+         L"FSBL",
+         L"SAT",
+         6,
+         L"Validation",
+         L"SBC_tamper_FSBL_SSBL_OS signature verification faied");
 
 
-    dprint("Unit Test Finish !!!!");
+      dprint("Unit Test Finish !!!!");
+//endif
+    }
 
 
+//unit_test_done:
     return EFI_SUCCESS;
 #else
 

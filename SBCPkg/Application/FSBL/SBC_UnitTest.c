@@ -13,7 +13,7 @@
 #include <string.h>
 #include <stdio.h>
 #include <stdlib.h>
-
+#include <Library/UefiLib.h>
 // Block Io
 #include <Protocol/BlockIo.h>
 #include <Protocol/DiskInfo.h>
@@ -54,6 +54,7 @@
 
 #include "SBC_UnitTest.h"
 #include "SBC_SystemControl.h"
+#include <Include/Base.h>
 
 #ifdef _UNIT_TEST_ON_
 at_key_t devkey;
@@ -67,6 +68,14 @@ void D_SAT_PWT_SFR_001(void *priv)
     SBCStatus ret = SBCOK;
     unit_proc_t *p = (unit_proc_t *)priv;
     atp_ident_t *dicekey = (atp_ident_t *)p->keyinfo;
+
+
+    UINT8 *loadbuf;
+    //UINT8 *cpy = NULL;
+    UINT32 ldlen = BASE_ANS_BLK_LEN;
+    UINTN baseansr_lba = 0;
+    UINTN offset = 0;
+    UINTN hdrlen = 0;
 
     ZeroMem((void *)&devkey, sizeof devkey);
     ZeroMem((void *)&fwkey, sizeof fwkey);
@@ -98,6 +107,47 @@ void D_SAT_PWT_SFR_001(void *priv)
     SBC_RET_VALIDATE_ERRCODEMSG((ret == SBCOK), ret, "Device ID Key-pair Create Fail");
     SBC_mem_print_bin("OS Private Key", oskey.d, oskey.dl);
     SBC_mem_print_bin("OS Public Key", oskey.q.value, oskey.ql);
+
+
+    baseansr_lba = (SYS_CONF_START_OFS >> SBC_RAWPRT_DFLT_SHIFT);
+    ldlen = ALIGN_VALUE(SYS_SETTING_STORAGE_LEN, ((EFI_BLOCK_IO_PROTOCOL *)blkio)->Media->BlockSize);
+    loadbuf = AllocateZeroPool(ldlen);
+    SBC_RET_VALIDATE_ERRCODEMSG((loadbuf != NULL), SBCNULLP, "Buffer invalid object");
+
+    ret = SBC_RawPrtReadBlock(p->blkhnd, 
+                              (VOID *)loadbuf, 
+                              &ldlen, 
+                              baseansr_lba);
+    if (ret != SBCOK) {
+        Print(L"SBC_RawPrtReadBlock fail (%p)\n", blkio);
+        goto errdone;
+    }
+
+    offset = SYS_CONF_DEVID_CRT_OFS;
+    hdrlen = sizeof(at_key_t);
+    CopyMem(&loadbuf[offset], &hdrlen, 4);
+    offset += 4;
+    CopyMem(&loadbuf[offset], (void *)&devkey, hdrlen);
+
+
+    offset = SYS_CONF_SWID_CRT_OFS;
+    hdrlen = sizeof(at_key_t);
+    CopyMem(&loadbuf[offset], &hdrlen, 4);
+    offset += 4;
+    CopyMem(&loadbuf[offset], (void *)&fwkey, hdrlen);
+
+
+    offset = SYS_CONF_OSID_CRT_OFS;
+    hdrlen = sizeof(at_key_t);
+    CopyMem(&loadbuf[offset], &hdrlen, 4);
+    offset += 4;
+    CopyMem(&loadbuf[offset], (void *)&oskey, hdrlen);
+
+    ret = SBC_RawPrtBlockWrite(p->blkhnd,
+                               loadbuf,
+                               ldlen, 
+                               baseansr_lba);
+
 
     return;
 errdone:

@@ -1609,7 +1609,7 @@ SBCStatus  SBC_SSBL_Verify(VOID *blkhnd, VOID *ansr,  UINTN nrombank, UINTN bm, 
     ret = SBC_ReadFile(hndl[idx],  fname, &rdlv);
     SBC_RET_VALIDATE_ERRCODEMSG((ret == SBCOK), ret, "SSBL Read File Not Found");
 
-    dprint("SSBL Testing File Size %d", rdlv.length);
+    //dprint("SSBL Testing File Size %d", rdlv.length);
 
 #endif
 
@@ -1687,7 +1687,7 @@ SBCStatus  SBC_SSBL_Verify(VOID *blkhnd, VOID *ansr,  UINTN nrombank, UINTN bm, 
         );
 
     if (retbool != TRUE) {
-        eprint("FSBL Verify fail");
+        eprint("SSBL Verify fail");
         ret = SBCFAIL;
         goto errdone;
     }
@@ -1895,7 +1895,7 @@ SBCStatus  SBC_Vmlinuz_Verify(VOID *blkhnd, VOID *ansr, UINTN normbank, UINTN bm
         );
 
     if (retbool != TRUE) {
-      eprint("FSBL Verify fail");
+      eprint("Vmlinuz Verify fail");
       ret = SBCFAIL;
       goto errdone;
     }
@@ -2618,7 +2618,7 @@ SBCStatus  SBC_FSBLIntgCheck([[gnu::unused]]EFI_HANDLE *h_image , VOID *blkio, V
         );
 
     if (ret != SBCOK) {
-      int_eprint("FSBL Verify fail \n");
+      //int_eprint("RootCA Signature Verify fail \n");
       goto errdone;
     }
 
