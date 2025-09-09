@@ -1011,7 +1011,7 @@ UefiMain (
       dprint();
 
       ret =  SBC_DeviceIdKyeVerify(h_blkio, diceid.devid, diceid.osid);
-      ret = SBCOK;
+      //ret = SBCOK;
       if (ret != SBCOK) {
 //            sbc_err_sysprn(SBC_LOG_CMN_PRIO_ERR, 2,
 //                   L"SBC",
