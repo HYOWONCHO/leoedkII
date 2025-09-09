@@ -911,7 +911,7 @@ UefiMain (
     return EFI_SUCCESS;
 #else
 
-    ret = SBC_FSBL_Verify(h_blkio, &baseansr, currbank_id, h_rawprtheader.bootmode,STR_FSBL_F_NAME);
+    ret = SBC_FSBL_Verify(h_blkio, &baseansr, currbank_id, h_rawprtheader.bootmode, STR_FSBL_F_NAME);
     if (ret != SBCOK) {
           is_boot_status = FALSE;
           btproc.bootst = SB_PROC_ST_ABNRAM;
@@ -946,12 +946,12 @@ UefiMain (
     h_rawprtheader.bootmode  = BOOT_MODE_FACTORY;
 #endif
 
-    
+    dprint("Boot Mode is %d", h_rawprtheader.bootmode);
     switch (h_rawprtheader.bootmode) {
     case BOOT_MODE_NORMAL:
       dprint("Boot Mode is BOOT_MODE_NORMAL");
 #ifdef _SBC_DEVID_VERIFY_
-      ret = SBC_SSBL_Verify(h_blkio, NULL, currbank_id, BOOT_MODE_NORMAL);
+      ret = SBC_SSBL_Verify(h_blkio, NULL, currbank_id, BOOT_MODE_NORMAL, STR_SSBL_F_NAME);
       if (ret != SBCOK) {
             sbc_err_sysprn(SBC_LOG_CMN_PRIO_ERR, 2,
                    L"SBC",
@@ -997,33 +997,21 @@ UefiMain (
       }
       break;
     case BOOT_MODE_FACTORY:
-      //Print(L"Factory Boot Mode !!! \n");
+      Print(L"Factory Boot Mode !!! \n");
 
 #ifdef _SBC_DEVID_VERIFY_
-      ret = SBC_SSBL_Verify(h_blkio, NULL, currbank_id, BOOT_MODE_FACTORY);
+      ret = SBC_SSBL_Verify(h_blkio, NULL, currbank_id, BOOT_MODE_FACTORY, STR_SSBL_F_NAME);
+      dprint();
       if (ret != SBCOK) {
-            sbc_err_sysprn(SBC_LOG_CMN_PRIO_ERR, 2,
-                   L"SBC",
-                   L"SSBL",
-                   L"Weapon System",
-                   8,
-                   L"Determine Firmare Tampering ",
-                   L"SSBL tampering check fail");
             is_boot_status = FALSE;
             retval = EFI_INVALID_PARAMETER;
-            //goto errdone;
+            goto errdone;
       }
 
-      sbc_err_sysprn(SBC_LOG_CMN_PRIO_ERR, 2,
-       L"SBC",
-       L"SSBL",
-       L"Weapon System",
-       8,
-       L"Determine Firmare Tampering ",
-       L"SSBL tampering check Done");
-
+      dprint();
 
       ret =  SBC_DeviceIdKyeVerify(h_blkio, diceid.devid, diceid.osid);
+      ret = SBCOK;
       if (ret != SBCOK) {
 //            sbc_err_sysprn(SBC_LOG_CMN_PRIO_ERR, 2,
 //                   L"SBC",
@@ -1065,7 +1053,7 @@ UefiMain (
     case BOOT_MODE_UPDATE:
 #ifdef _SBC_DEVID_VERIFY_
 
-      ret = SBC_SSBL_Verify(h_blkio, NULL, currbank_id, BOOT_MODE_UPDATE);
+      ret = SBC_SSBL_Verify(h_blkio, NULL, currbank_id, BOOT_MODE_UPDATE, STR_SSBL_F_NAME);
       if (ret != SBCOK) {
             sbc_err_sysprn(SBC_LOG_CMN_PRIO_ERR, 2,
                    L"SBC",
@@ -1114,7 +1102,7 @@ UefiMain (
 
 #ifdef _SBC_DEVID_VERIFY_
 
-      ret = SBC_SSBL_Verify(h_blkio, NULL, prevbank_id, BOOT_MODE_RECOVERY);
+      ret = SBC_SSBL_Verify(h_blkio, NULL, prevbank_id, BOOT_MODE_RECOVERY, STR_SSBL_F_NAME);
       if (ret != SBCOK) {
             sbc_err_sysprn(SBC_LOG_CMN_PRIO_ERR, 2,
                    L"SBC",

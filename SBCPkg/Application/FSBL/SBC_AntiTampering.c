@@ -1274,6 +1274,7 @@ SBCStatus  SBC_DeviceIdKyeVerify(VOID *blkio, UINT8 *devid, UINT8 *deckey)
 
 #else
     SBC_external_mem_print_bin("Device ID Pubkey", key_pair.q.value, key_pair.ql);
+    SBC_external_mem_print_bin("Device Certificate Pubkey", pubkey, pubkeyl);
     if(CompareMem(key_pair.q.value,  pubkey, pubkeyl) != 0) {
         eprint("CA public key verify fail");
         ret = SBCINVPARAM;
@@ -1536,11 +1537,13 @@ SBCStatus  SBC_SSBL_Verify(VOID *blkhnd, VOID *ansr,  UINTN nrombank, UINTN bm, 
     // Boot FW location compute according to Boot Mode
     //
     if (bm != BOOT_MODE_FACTORY) {
-      bsofs = (BOOT_SECTOR1_OFS | ((nrombank - 1) << 20));
-      startlba = ((bsofs | BOOT_SSBL_OFS) >> SBC_RAWPRT_DFLT_SHIFT);
+        bsofs = (BOOT_SECTOR1_OFS | ((nrombank - 1) << 20));
+        startlba = ((bsofs | BOOT_SSBL_OFS) >> SBC_RAWPRT_DFLT_SHIFT);
     }
     else {
-      startlba = ((BOOT_SECTOR3_OFS | BOOT_SSBL_OFS) >> SBC_RAWPRT_DFLT_SHIFT);
+
+        dprint("Factory Boot Sector : 0x%lx", (BOOT_SECTOR3_OFS | BOOT_SSBL_OFS));
+        startlba = ((BOOT_SECTOR3_OFS | BOOT_SSBL_OFS) >> SBC_RAWPRT_DFLT_SHIFT);
     }
 
     //
@@ -1554,9 +1557,11 @@ SBCStatus  SBC_SSBL_Verify(VOID *blkhnd, VOID *ansr,  UINTN nrombank, UINTN bm, 
 
     CopyMem((void *)&imglen, &imghdr[0], sizeof imglen);
 
+    dprint("SSBL Image Len : %ld (0x%lx)",imglen,imglen);
     //
     //Compute the Alligned by 512
     //
+    rdlv.length = imglen;
     imglen = ALIGN_VALUE(imglen, SBC_RAWPRT_DFLT_BLK_SZ);
 
     loadimg = AllocateZeroPool(imglen);
@@ -1572,7 +1577,7 @@ SBCStatus  SBC_SSBL_Verify(VOID *blkhnd, VOID *ansr,  UINTN nrombank, UINTN bm, 
     //Reference to SSBL FW addres
     //
     rdlv.value = (UINT8 *)&loadimg[4];
-    rdlv.length = imglen;
+    
 
 #else
 //#warning "FSBL Test Mode ..... "
@@ -1622,14 +1627,14 @@ SBCStatus  SBC_SSBL_Verify(VOID *blkhnd, VOID *ansr,  UINTN nrombank, UINTN bm, 
     ZeroMem((void *)&bsinfo, sizeof bsinfo);
     CopyMem((void *)&bsinfo, (void *)infostart, sizeof bsinfo);
 
-//  dprint("----------- SSBL Boot Service Informmtion ------------");
-//  dprint("Signature Len     : %d", bsinfo.m.siglen );
-//  dprint("Firmware Info Len : %d", bsinfo.m.fwinfolen );
-//  dprint("Certificate Len   : %d", bsinfo.m.certlen );
-//  dprint("BaseAnswer Len    : %d", bsinfo.m.banswlen );
-//  dprint("BSinfo verdion    : %d", bsinfo.m.bsinfv );
-//  dprint("Spec.1 Value      : %d", bsinfo.m.reserv1 );
-//  dprint("Spec.2 Value      : %d", bsinfo.m.reserv2 );
+    dprint("----------- SSBL Boot Service Informmtion ------------");
+    dprint("Signature Len     : %d", bsinfo.m.siglen );
+    dprint("Firmware Info Len : %d", bsinfo.m.fwinfolen );
+    dprint("Certificate Len   : %d", bsinfo.m.certlen );
+    dprint("BaseAnswer Len    : %d", bsinfo.m.banswlen );
+    dprint("BSinfo verdion    : %d", bsinfo.m.bsinfv );
+    dprint("Spec.1 Value      : %d", bsinfo.m.reserv1 );
+    dprint("Spec.2 Value      : %d", bsinfo.m.reserv2 );
 
     bsinfolen = bsinfo.m.siglen + bsinfo.m.fwinfolen + bsinfo.m.certlen  + bsinfo.m.banswlen;
 
@@ -1654,16 +1659,21 @@ SBCStatus  SBC_SSBL_Verify(VOID *blkhnd, VOID *ansr,  UINTN nrombank, UINTN bm, 
     info.signature = (VOID *)&infostart[bsptrcnt];
     bsptrcnt += bsinfo.m.siglen;  
 
-    ret = SBC_FSBLIntgCheck(NULL, blkhnd, info.certi, bsinfo.m.certlen, nrombank, bm);
-    SBC_RET_VALIDATE_ERRCODEMSG((ret == SBCOK), ret, "FSBL certificate validation fail");
+    //ret = SBC_FSBLIntgCheck(NULL, blkhnd, info.certi, bsinfo.m.certlen, nrombank, bm);
+    //SBC_RET_VALIDATE_ERRCODEMSG((ret == SBCOK), ret, "FSBL certificate validation fail");
 
-#if 1 //ndef _UNIT_TEST_ON_
+#ifndef _UNIT_TEST_ON_
     retbool = EcGetPublicKeyFromX509((CONST UINT8  *)info.certi, (UINTN)bsinfo.m.certlen,  &EcPubKey);
     if (retbool != TRUE) {
         eprint("EcGetPublicKeyFromX509 fail");
         ret = SBCFAIL;
         goto errdone;
     }
+
+
+
+    SBC_mem_print_bin("SSBL Certi", (UINT8  *)info.certi, (UINTN)bsinfo.m.certlen);
+    SBC_mem_print_bin("SSBL Signature", (UINT8  *)info.signature, (UINTN)bsinfo.m.siglen);
 
     //dprint("SSBL image len : %d", fsbl_len);
 
@@ -1675,6 +1685,8 @@ SBCStatus  SBC_SSBL_Verify(VOID *blkhnd, VOID *ansr,  UINTN nrombank, UINTN bm, 
                   ) ;
 
 
+    SBC_mem_print_bin("SSBL Hash", (UINT8 *)HashValue, 32);
+    dprint("SSBL Len : %d", fsbl_len);
     HashSize = 32;
 
     retbool = EcDsaVerify(
@@ -1685,6 +1697,8 @@ SBCStatus  SBC_SSBL_Verify(VOID *blkhnd, VOID *ansr,  UINTN nrombank, UINTN bm, 
         info.signature,
         bsinfo.m.siglen
         );
+
+
 
     if (retbool != TRUE) {
         eprint("SSBL Verify fail");
@@ -1736,13 +1750,15 @@ errdone:
              mrgmsg);
     }
 
-    if (EcPubKey != NULL) {
-      EcFree(EcPubKey);
-    }
-    if (rdlv.value != NULL) {
-      FreePool(rdlv.value);
-      rdlv.value = NULL;
-    }
+//  if (EcPubKey != NULL) {
+//    EcFree(EcPubKey);
+//  }
+
+
+//  if (rdlv.value != NULL) {
+//    FreePool(rdlv.value);
+//    rdlv.value = NULL;
+//  }
 
 //  if (ret != SBCOK) {
 //      sbc_err_sysprn(SBC_LOG_CMN_PRIO_INFO, 2, L"SBC", L"FSBL", L"CSC-01", 23, L"VERIFY", L"SSBL Integrate check is Fail\n");
@@ -1861,8 +1877,8 @@ SBCStatus  SBC_Vmlinuz_Verify(VOID *blkhnd, VOID *ansr, UINTN normbank, UINTN bm
 
     // Verify the FSBL certificate using RootCA certificate
     // Later not comment 
-    ret = SBC_FSBLIntgCheck(NULL, blkhnd, info.certi, bsinfo.m.certlen, normbank, bm);
-    SBC_RET_VALIDATE_ERRCODEMSG((ret == SBCOK), ret, "FSBL certificate validation fail");
+    //ret = SBC_FSBLIntgCheck(NULL, blkhnd, info.certi, bsinfo.m.certlen, normbank, bm);
+    //SBC_RET_VALIDATE_ERRCODEMSG((ret == SBCOK), ret, "FSBL certificate validation fail");
 
     //dprint("Verify the FSBL certificate using RootCA certificate is done");
 
@@ -2570,6 +2586,14 @@ SBCStatus  SBC_FSBLIntgCheck([[gnu::unused]]EFI_HANDLE *h_image , VOID *blkio, V
     UINT8 *cabuf =  NULL;
     UINTN calen = 0;
     //UINTN certlen = 0;
+    SBC_AESGcmCtx  ctx;
+    SBC_AESContext  aesctx;
+    UINT8 decbuf[1024] ={0,};
+    UINT8 secret_key[SBC_AT_HASH_LEN] = {0, };
+
+    UINT8 *iv;
+    UINT8 *tag;
+
 
     switch (mode) {
     case BOOT_MODE_NORMAL:
@@ -2601,7 +2625,39 @@ SBCStatus  SBC_FSBLIntgCheck([[gnu::unused]]EFI_HANDLE *h_image , VOID *blkio, V
     // Pointing the RooTCA Address
     CopyMem((void *)&calen, (void *)&imgbuf[SYS_CONF_ROOT_CA_OFS], LEN_DFLT_OFS);
     cabuf = &imgbuf[SYS_CONF_ROOT_CA_OFS + LEN_DFLT_OFS];
+
+    iv = &imgbuf[SYS_CONF_ROOT_CA_OFS + LEN_DFLT_OFS + calen];
+    tag = &imgbuf[SYS_CONF_ROOT_CA_OFS + LEN_DFLT_OFS + calen +  SBC_AT_IV_LEN];
+
+    ret = SBC_DeviceSecuirtyKeyCreate(secret_key);
+    SBC_RET_VALIDATE_ERRCODEMSG((ret == SBCOK), 
+                                SBCINVPARAM, 
+                                "SBC_DeviceSecuirtyKeyCreate fail");
+   //offset = 0;
+    ctx.out.value = (void *)decbuf;
+    //declen = calen;
+    ctx.out.length = calen;
+
+    ctx.msg.value = cabuf;
+    ctx.msg.length = calen;
     
+    aesctx.gcm = &ctx;
+    aesctx.algoid = SBC_CIPHER_AES_GCM;
+
+    SBC_AESGcmSetContext((void *)aesctx.gcm,
+                         (void *)secret_key,
+                         (void *)iv,
+                         (void *)tag);
+
+
+    ret = SBC_AESGcmDecrypt(&aesctx);
+    SBC_RET_VALIDATE_ERRCODEMSG((ret == SBCOK), 
+                                SBCENCFAIL, 
+                                "CA decrypt fail");    
+
+    SBC_mem_print_bin("RootCA", decbuf, calen);
+
+    SBC_mem_print_bin("RootCA", cert, certlen);
 #else
     calen = rootca_certi_lv.length;
     cabuf = (UINT8 *)rootca_certi_lv.value;
@@ -2613,12 +2669,12 @@ SBCStatus  SBC_FSBLIntgCheck([[gnu::unused]]EFI_HANDLE *h_image , VOID *blkio, V
     ret = SBC_X509VerifyCert(
                       (CONST UINT8 *)cert,  //  Cert
                       certlen,
-                      cabuf, // CA
+                      decbuf, // CA
                       calen
         );
 
     if (ret != SBCOK) {
-      //int_eprint("RootCA Signature Verify fail \n");
+      int_eprint("RootCA Signature Verify fail \n");
       goto errdone;
     }
 

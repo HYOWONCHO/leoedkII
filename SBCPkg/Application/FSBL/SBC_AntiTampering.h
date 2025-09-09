@@ -9,9 +9,12 @@
 
 #ifndef _FSBL_TEST_
 #   define STR_FSBL_F_NAME             L"\\EFI\\BOOT\\FSBL.efi"
+#   define STR_SSBL_F_NAME             L"\\EFI\\BOOT\\SSBL.efi"
 #else
 #   define STR_FSBL_F_NAME             L"\\EFI\\BOOT\\FSBL.efi"
 #endif
+
+#define SBC_AT_IV_LEN               12
 #define SBC_AT_HASH_LEN             32
 #define SBC_BLKDEV_BLKSZ            512
 

@@ -151,6 +151,24 @@ SBCStatus SBC_AESGcmDecrypt(SBC_AESContext *ctx)
 
 }
 
+void SBC_AESGcmSetContext(void *ctx, void *key, void *iv, void *tag)
+{
+  SBC_AESGcmCtx *gcm = NULL;
+
+  gcm = (SBC_AESGcmCtx *)ctx;
+
+  gcm->key.value = key;
+  gcm->key.length = SBC_AES_KEY_STRENGTH;
+  gcm->iv.value = iv;
+  gcm->iv.length = SBC_AES_IV_STRENGTH; 
+  gcm->aad.value = NULL;
+  gcm->aad.length = 0;
+  gcm->tag.value = tag;
+  gcm->tag.length = SBC_AES_TAG_STRENGTH;
+
+  return;
+
+}
 
 
 SBCStatus SBC_AESEncrypt(SBC_AESContext *ctx)
