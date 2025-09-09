@@ -11,14 +11,26 @@ base_answer = "rlwlekqdksrlfdl."
 fw_info = "bjadnpdjwjdqhrlf"
 
 #fwfname     = "FSBL.efi"
-rootcaf     = "root_ca_ecc.crt.der"
-rootkeyf    = "root_ca_ecc.key"
+rootcaf     = "SBC.der"
+rootkeyf    = "SBC.key"
 
 def compute_dsa(certibytes, content):
 
     hasher  = Hash(Sha256) 
 
     return signval
+
+def make_rawfs_bin():
+    flen = filectrl.get_image_size(fwfname + ".bin")
+
+    print(f"The '{fwfname}'.bin file size {flen}")
+    print(f"The '{fwfname}'.bin file size  {hex(flen)}")
+    content = filectrl.read_image(fwfname + ".bin")
+
+    binfo = array.array('I',[flen])
+    filectrl.write_image(fwfname + ".rawfs", binfo, "wb");
+    filectrl.write_image(fwfname + ".rawfs", content, "ab")
+
 
 def make_fsbl_image():
     baseanswers = base_answer.encode()
@@ -30,7 +42,10 @@ def make_fsbl_image():
 
 
 
+
     content = filectrl.read_image(fwfname)
+    
+     
     certibytes = filectrl.read_image(rootcaf)
 
 
@@ -64,9 +79,9 @@ def make_fsbl_image():
 
     content = content + baseanswers + fwinfos + certibytes
 
+    
     filectrl.write_image(fwfname + ".bin", content, "wb")
     filectrl.write_image(fwfname + ".bin", signature , "ab")
-
 
     # "i" means signed integer, typically 2 or 4 bytes
     binfo = array.array('b',[len(signature),len(fw_info)])
@@ -86,8 +101,11 @@ if __name__ == "__main__":
 
     
     fwfname = sys.argv[1]
+    #fwfname_rawfs = sys.argv[1] + "_rawfs"
     print(f"Sign Firmware Name : ${fwfname}")
     make_fsbl_image()
+
+    make_rawfs_bin();
 
 
 

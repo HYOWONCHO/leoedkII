@@ -1,6 +1,6 @@
 #!/bin/sh
 
-cp -af ../Build/Shell/DEBUG_GCC5/X64/SSBLFactory.efi  SSBL.efi
+cp -af ../Build/SBC/DEBUG_GCC5/X64/SSBL.efi  SSBL.efi
 if [ $? != 0 ]; then
     printf "SSBL copy is not done \n"
     exit
