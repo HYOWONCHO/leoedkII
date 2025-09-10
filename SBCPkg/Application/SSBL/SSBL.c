@@ -415,8 +415,11 @@ UefiMain (
     CopyMem((void *)&pres_low, (void *)&h_rawptrheader.bootpres[0], 4);
     CopyMem((void *)&pres_hi, (void *)&h_rawptrheader.bootpres[4], 4);
 
-    pres_low = SBC_SWAP_ENDIAN_32(pres_low);
-    pres_hi = SBC_SWAP_ENDIAN_32(pres_hi);
+    //pres_low = SBC_SWAP_ENDIAN_32(pres_low);
+    //pres_hi = SBC_SWAP_ENDIAN_32(pres_hi);
+
+    pres_low = pres_low;
+    pres_hi = pres_hi;
 
     //sbc_err_sysprn(SBC_LOG_CMN_PRIO_INFO, 2, L"SBC", L"FSBL", L"xxx", 233, L"EVT", L"Pres HI : 0x%x , Pres Low: %a \n", "holla oops");
 
@@ -490,9 +493,12 @@ UefiMain (
     }
 
     // FWID and OSID certificate verify
-
-
-
+//
+//  SBC_GenMigrationKey((void *)&btproc, diceid.migid);
+//  SBC_mem_print_bin("Migration  Key", diceid.migid, 32);
+//
+//
+//  return EFI_SUCCESS;
     // TODO : Read Key Mode 
     //dprint("Chaeck Boot Mode read from BlkIO is %d", h_rawptrheader.bootmode);
 #if defined(_FILE_RD_BM_)
@@ -568,17 +574,17 @@ UefiMain (
           goto errdone;
       }
 
-        dprint("Base Answer verifing starting !!!");
-        SBC_mem_print_bin("Base Answer", (UINT8 *)baseansr.value, baseansr.length);
-        ret = SBC_BaseAnswerValidate(h_blkio, 
-                                     (UINT8 *)baseansr.value, 
-                                     (UINTN)baseansr.length, 
-                                     diceid.osid, 
-                                     BASE_ANS_KEY_STR);
-        if (ret != SBCOK) {
-            btproc.bootst = SB_PROC_ST_ABNRAM;
-            eprint("Base Answer verification fail !!!");
-        }
+//      dprint("Base Answer verifing starting !!!");
+//      SBC_mem_print_bin("Base Answer", (UINT8 *)baseansr.value, baseansr.length);
+//      ret = SBC_BaseAnswerValidate(h_blkio,
+//                                   (UINT8 *)baseansr.value,
+//                                   (UINTN)baseansr.length,
+//                                   diceid.osid,
+//                                   BASE_ANS_KEY_STR);
+//      if (ret != SBCOK) {
+//          btproc.bootst = SB_PROC_ST_ABNRAM;
+//          eprint("Base Answer verification fail !!!");
+//      }
 
       SBC_external_mem_print_bin("Migraiotn Key", diceid.migid, 32);
 

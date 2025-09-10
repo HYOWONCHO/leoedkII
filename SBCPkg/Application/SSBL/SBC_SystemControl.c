@@ -143,6 +143,52 @@ errdone:
 
 }
 
+static SBCStatus _base_answer_decrypt_encrypt(void *priv)
+{
+    SBCStatus ret = SBCOK;
+#if 0
+    UINT8 *answer_key = ((atp_ident_t *)bp->keyinfo)->migid;
+#else
+    UINT8 answer_key[32] = {
+    	0xB3, 0x88, 0xCC, 0xF6, 0xBE, 0xA0, 0xD4, 0x31, 0xBA, 0xF2, 0x37, 0x1D,
+    	0x9D, 0x9D, 0x9C, 0x7C, 0xCA, 0x89, 0xC4, 0x02, 0x1A, 0x67, 0x30, 0x19,
+    	0x04, 0x00, 0x55, 0x30, 0x0E, 0xC9, 0x12, 0x3E
+    };
+#endif
+
+    SBC_AESContext aesctx;
+    SBC_AESGcmCtx  ctx;
+    UINT8 decbuf[BASE_ANS_STREAM_LEN] = {0,};
+    boot_proc_t *bp = (boot_proc_t *)priv;
+
+
+    ZeroMem((void *)&ctx, sizeof ctx);
+    ZeroMem((void *)&aesctx, sizeof aesctx);
+
+    ret = SBC_BaseAnswerValidate(bp->blkhnd,
+                                 decbuf, 
+                                 16,
+                                 answer_key,
+                                 ATP_IDENT_KEY_STG,
+                                 FALSE);
+
+    SBC_RET_VALIDATE_ERRCODEMSG((ret == SBCOK),ret, "SBC_BaseAnswer obtain fail");
+
+
+    SBC_mem_print_bin("Mig ID BaseAnswer", decbuf, 16);
+
+    ret = SBC_BaseAnswerEncryptStore(bp->blkhnd, 
+                                 decbuf,
+                                 16,
+                                 ((atp_ident_t *)bp->keyinfo)->osid,
+                                 ATP_IDENT_KEY_STG);
+
+    SBC_RET_VALIDATE_ERRCODEMSG((ret == SBCOK), ret, "SBC_BaseAnswerEncryptStore  fail");
+errdone:
+
+    return ret;
+}
+
 static SBCStatus _update_behavior_for_km(void *priv)
 {
     SBCStatus ret = SBCOK;
@@ -170,12 +216,16 @@ static SBCStatus _update_behavior_for_km(void *priv)
     case SB_PROC_ST_NRMA:
         dprint("Base Answer re-encrypt and write in Update Mode");
         // Base answer re-encrypt using Migration Key 
-        ret = SBC_BaseAnswerEncryptStore(bp->blkhnd, 
-                                         ((LV_t *)bp->baseansr)->value,
-                                         ((LV_t *)bp->baseansr)->length,
-                                         ((atp_ident_t *)bp->keyinfo)->migid,
-                                         ATP_IDENT_KEY_STG);
 
+        // Base Answer decrypt 
+
+        // Base Answer re-encrypt and store 
+//      ret = SBC_BaseAnswerEncryptStore(bp->blkhnd,
+//                                       ((LV_t *)bp->baseansr)->value,
+//                                       ((LV_t *)bp->baseansr)->length,
+//                                       ((atp_ident_t *)bp->keyinfo)->migid,
+//                                       ATP_IDENT_KEY_STG);
+        ret = _base_answer_decrypt_encrypt((void *)bp);
         if(ret != SBCOK) {
             eprint("Detection SBC_tamper_OSID derived answer "
                             "mismatched known answer");
@@ -749,7 +799,8 @@ SBCStatus  SBC_SecureBootCheck(VOID *priv)
                                      ((LV_t *)bp->baseansr)->value,
                                      SBC_BASE_ANSR_LEN,
                                      ((atp_ident_t *)bp->keyinfo)->osid,
-                                     SBC_OSID_KEY_LEN);
+                                     SBC_OSID_KEY_LEN,
+                                     TRUE);
         if(ret != SBCOK) {
             //TODO : SysLog
             bp->bootst = SB_PROC_ST_ABNRAM;

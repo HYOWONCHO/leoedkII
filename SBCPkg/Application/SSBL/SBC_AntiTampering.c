@@ -112,6 +112,9 @@ SBCStatus _ssbl_image_load(VOID *blkhnd, LV_t *lv,  UINTN normbank, UINTN bm)
     UINT32          imglen = SBC_RAWPRT_DFLT_BLK_SZ;
     UINT8           imghdr[SBC_RAWPRT_DFLT_BLK_SZ] = {0, };
 
+    normbank++;
+
+
     if (bm != BOOT_MODE_FACTORY) {
       bsofs = (BOOT_SECTOR1_OFS | ((normbank - 1) << 20));
       startlba = ((bsofs | BOOT_SSBL_OFS) >> SBC_RAWPRT_DFLT_SHIFT);
@@ -121,7 +124,7 @@ SBCStatus _ssbl_image_load(VOID *blkhnd, LV_t *lv,  UINTN normbank, UINTN bm)
       startlba = ((bsofs | BOOT_SSBL_OFS) >> SBC_RAWPRT_DFLT_SHIFT);
     }
 
-    //dprint("BSOFS:  0x%lx, StartLBA: %lu", bsofs, startlba);
+    dprint("BSOFS:  0x%lx, StartLBA: %lu", bsofs, startlba);
 
     ret = SBC_RawPrtReadBlock(blkhnd, (void *)imghdr, &imglen, startlba);
     if (ret != SBCOK) {
@@ -1536,7 +1539,7 @@ errdone:
 
 }
 
-SBCStatus  SBC_BaseAnswerValidate(VOID *blkhnd, UINT8 *answer, UINTN answerl, UINT8 *key, UINTN keylen)
+SBCStatus  SBC_BaseAnswerValidate(VOID *blkhnd, UINT8 *answer, UINTN answerl, UINT8 *key, UINTN keylen, BOOLEAN ischeck)
 {
     SBCStatus ret = SBCOK;
     //UINT8 rdbuf[256];
@@ -1595,7 +1598,7 @@ SBCStatus  SBC_BaseAnswerValidate(VOID *blkhnd, UINT8 *answer, UINTN answerl, UI
 //SBC_external_mem_print_bin("plain msg", answer, answerl);
 //SBC_external_mem_print_bin("decrypt msg", decbuf, ctx.out.length);
 
-    if (CompareMem((const void *)decbuf, (const void *)answer, answerl) != 0) {
+    if ((CompareMem((const void *)decbuf, (const void *)answer, answerl) != 0) && (ischeck == TRUE)) {
       //Print(L"Base Answer validate Fail \n");
 
 
@@ -2297,6 +2300,8 @@ SBCStatus SBC_GenMigrationKey(void *priv, void *outmsg)
     ret = SBC_RawPrtReadBlock(p->blkhnd, (void *)fwinf->value, (UINT32 *)&imglen, startlba);
     SBC_RET_VALIDATE_ERRCODEMSG((ret == SBCOK), ret, "Raw Partition read fail");
 
+    dprint("FSBL len : %d , SSBL Length : %d \n", fwinf->mbr.fsbln, fwinf->mbr.ssbln);
+
     msglen += (fwinf->mbr.fsbln + fwinf->mbr.ssbln);
 
     msg = AllocateZeroPool(msglen);
@@ -2322,7 +2327,7 @@ SBCStatus SBC_GenMigrationKey(void *priv, void *outmsg)
     lv.value = fbuf;
     lv.length = len_fsbl;
 
-    ret = SBC_ReadFile(f_hndl, EFI_BOOT_FSBL_PATH, &lv);
+    ret = SBC_ReadFile(f_hndl[0], EFI_BOOT_FSBL_PATH, &lv);
 
     ret = SBC_HashCompute(NULL, lv.value, lv.length, temp_hash);
     CopyMem((void *)&msg[cpyofs], temp_hash, ATP_IDENT_KEY_STG);
@@ -2340,7 +2345,7 @@ SBCStatus SBC_GenMigrationKey(void *priv, void *outmsg)
     lv.value = fbuf;
     lv.length = len_ssbl;
 
-    ret = SBC_ReadFile(f_hndl, EFI_BOOT_SSBL_PATH, &lv);
+    ret = SBC_ReadFile(f_hndl[0], EFI_BOOT_SSBL_PATH, &lv);
 
     ZeroMem((void *)temp_hash, 32);
     ret = SBC_HashCompute(NULL, lv.value, lv.length, temp_hash);
