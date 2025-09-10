@@ -395,7 +395,7 @@ UefiMain (
       Print(L"Raw Partitino find fail !!! \n");
       goto errdone;
     }
-#if 1
+#if 0
     btproc.blkhnd = h_blkio;
     btproc.rawprt_hdr = &h_rawptrheader;
     SBC_mem_print_bin("Raw Prt Header", (UINT8 *)&h_rawptrheader, sizeof h_rawptrheader);
@@ -408,8 +408,8 @@ UefiMain (
 #endif
 
     
-    //Print(L"Find Raw Partition (0x%x)...\n", h_rawptrheader.magicid);
-    dprint("Partition Info (%a) \n", h_rawptrheader.prtinfo);
+    Print(L"Find Raw Partition (0x%x)...\n", h_rawptrheader.magicid);
+    //dprint("Partition Info (%a) \n", h_rawptrheader.prtinfo);
 
     // Check the Preference SSBL bank
     CopyMem((void *)&pres_low, (void *)&h_rawptrheader.bootpres[0], 4);
@@ -478,7 +478,10 @@ UefiMain (
        L"Validation",
        L"SBC_Integrity_All boot components passed signature verification");
 
-    ret = SBC_DiceKeysGen(ImageHandle, &diceid,BOOT_MODE_NORMAL, currbank_id);
+  
+    dprint("SSBL currently Boot Mode is %d", btproc.bm);
+
+    ret = SBC_DiceKeysGen(ImageHandle, &diceid,  currbank_id, btproc.bm);
     if (ret != SBCOK) {
         sbc_err_sysprn(SBC_LOG_CMN_PRIO_ERR, 2, L"SBC", L"FSBL", L"Weapon System", 4, L"EVT", L"Dice Key creation fail\n");
         retval = EFI_INVALID_PARAMETER;
@@ -533,7 +536,7 @@ UefiMain (
     case BOOT_MODE_FACTORY:
        dprint("Boot Mode is BOOT_MODE_FACTORY");
 #ifndef _SSBL_TEST_
-       ret = SBC_BootKeyModeChange(BOOT_MODE_FACTORY, KEY_MODE_NORMAL, NULL);
+       ret = SBC_BootKeyModeChange(BOOT_MODE_FACTORY, KEY_MODE_NORMAL, (void *)&btproc);
        if (ret != SBCOK) {
            btproc.bootst = SB_PROC_ST_NRMA;
        }
@@ -556,7 +559,8 @@ UefiMain (
         btproc.bm = BOOT_MODE_UPDATE;
         btproc.km = KEY_MODE_NORMAL;
 #endif
-      ret = SBC_GenMigrationKey(h_blkio, currbank_id, prevbank_id, diceid.migid);
+      //ret = SBC_GenMigrationKey(h_blkio, currbank_id, prevbank_id, diceid.migid);
+        ret = SBC_GenMigrationKey(&btproc, diceid.migid);
       if (ret != SBCOK) {
           sbc_err_sysprn(SBC_LOG_CMN_PRIO_ERR, 2, L"SBC", L"FSBL", L"Weapon System", 4, L"EVT", L"Migration Key creation fail\n");
           retval = EFI_INVALID_PARAMETER;
@@ -641,7 +645,7 @@ errdone:
             8,
             L"Detection",
             L"SSBL system is shutdown because BOOT Status is abnormal");
-        SBC_ShutdownSystem();
+        //SBC_ShutdownSystem();
     }
    return retval;
 }

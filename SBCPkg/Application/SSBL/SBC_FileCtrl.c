@@ -92,6 +92,36 @@ errdone:
 }
 
 
+SBCStatus SBC_GetRawPrtImageLength(VOID *priv, UINTN lba, UINT32 *rdlen, UINTN offset)
+{
+    SBCStatus ret = SBCOK;
+    UINT8 *buf = NULL;
+
+    buf = AllocateZeroPool(*rdlen);
+    SBC_RET_VALIDATE_ERRCODEMSG((buf != NULL), 
+                                SBCNULLP, 
+                                "Memory Allocation fail");
+
+
+
+    ret = SBC_RawPrtReadBlock(priv,
+                              (void *)buf,
+                              rdlen,
+                              lba);
+
+    SBC_RET_VALIDATE_ERRCODEMSG((ret == SBCOK),
+                                ret,
+                                "Raw Partition read fail");
+
+    CopyMem(rdlen, &buf[offset], 4);
+
+
+
+errdone:
+    return ret;
+}
+
+
 
 //SBCStatus  SBC_GetFileSize(IN CHAR16 *FileName, OUT *FileSize)
 SBCStatus  SBC_GetFileSize(CHAR16 *FileName, UINTN  *FileSize)
@@ -1118,6 +1148,8 @@ SBCStatus  SBC_BlkIoHandleInit(OUT VOID **hblk, OUT VOID *hdr)
     UINTN                           NumberOfHandles;
     VOID                            *ReadBuffer = NULL; // Buffer for raw block data
     EFI_BLOCK_IO_PROTOCOL           *BlockIo = NULL;
+    UINT32                           magicid = 0UL;
+   // UINT64                           blkiosz;
 
     SBC_RET_VALIDATE_ERRCODEMSG((hblk != NULL), SBCNULLP, "Invalid Parameter");
 
@@ -1174,15 +1206,12 @@ SBCStatus  SBC_BlkIoHandleInit(OUT VOID **hblk, OUT VOID *hdr)
                          );
 
         if (EFI_ERROR(Status)) {
+//          Print(L"ERROR: Failed to read LBA 0: %r\n", Status);
+//          SBC_RET_VALIDATE_ERRCODEMSG((Status != EFI_SUCCESS), SBCFAIL, "ERROR: Could not open BlockIoProtocol");
+//          ret = SBCFAIL;
+//          goto errdone;
 
-            Print(L"ERROR: Failed to read LBA 0: %r\n", Status);
-#ifndef _SSBL_TEST_
-            SBC_RET_VALIDATE_ERRCODEMSG((Status != EFI_SUCCESS), SBCFAIL, "ERROR: Could not open BlockIoProtocol");
-            ret = SBCFAIL;
-            goto errdone;
-#else
             continue;
-#endif
         }
 
         //SBC_mem_print_bin("Read Block", (UINT8 *)ReadBuffer, SBC_MAGIC_LEN);
@@ -1204,14 +1233,13 @@ SBCStatus  SBC_BlkIoHandleInit(OUT VOID **hblk, OUT VOID *hdr)
         }
 
         *hblk = (VOID *)BlockIo;
-        //Print(L"Found %p Block I/O Protocol Address Magci ID : 0x%x.\n", BlockIo, magicid);
+        Print(L"Found %p Block I/O Protocol Address Magci ID : 0x%x.\n", BlockIo, magicid);
         //Print(L"0x%p SBC Raw Buffer MagicID found !!! \n", *hblk);
 
 
         ret = SBCOK;
         break;
     }
-
 
 errdone:
     return ret;

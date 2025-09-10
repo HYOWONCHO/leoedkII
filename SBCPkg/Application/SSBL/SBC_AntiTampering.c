@@ -112,9 +112,14 @@ SBCStatus _ssbl_image_load(VOID *blkhnd, LV_t *lv,  UINTN normbank, UINTN bm)
     UINT32          imglen = SBC_RAWPRT_DFLT_BLK_SZ;
     UINT8           imghdr[SBC_RAWPRT_DFLT_BLK_SZ] = {0, };
 
-
-    bsofs = (BOOT_SECTOR1_OFS | ((normbank - 1) << 20));
-    startlba = ((bsofs | BOOT_SSBL_OFS) >> SBC_RAWPRT_DFLT_SHIFT);
+    if (bm != BOOT_MODE_FACTORY) {
+      bsofs = (BOOT_SECTOR1_OFS | ((normbank - 1) << 20));
+      startlba = ((bsofs | BOOT_SSBL_OFS) >> SBC_RAWPRT_DFLT_SHIFT);
+    }
+    else {
+      bsofs = BOOT_SECTOR3_OFS;
+      startlba = ((bsofs | BOOT_SSBL_OFS) >> SBC_RAWPRT_DFLT_SHIFT);
+    }
 
     //dprint("BSOFS:  0x%lx, StartLBA: %lu", bsofs, startlba);
 
@@ -125,8 +130,19 @@ SBCStatus _ssbl_image_load(VOID *blkhnd, LV_t *lv,  UINTN normbank, UINTN bm)
     }
 
     CopyMem((void *)&imglen, &imghdr[0], sizeof imglen);
+
+    // If imglen is zero, assumed that image not existense in Raw partition
+    if (imglen <= 0) {
+      eprint("Boot Mode (%d) Image not existense", bm);
+      ret = SBCZEROL;
+      goto errdone;
+    }
     //dprint("SSBL image len : %ld", imglen);
     imglen = ALIGN_VALUE(imglen, SBC_RAWPRT_DFLT_BLK_SZ);
+
+
+
+
 
     //dprint("Align SSBL image len : %ld", imglen);
 
@@ -791,7 +807,20 @@ errdone:
   return ret;
 }
 
+SBCStatus SBC_ProtectedSWEnc(VOID *priv)
+{
+    SBCStatus ret = SBCOK;
+    boot_proc_t *p = (boot_proc_t *)priv;
 
+    SBC_RET_VALIDATE_ERRCODEMSG((p != NULL),
+                                SBCNULLP,
+                                "Invalid Argument");
+
+
+errdone:
+
+    return ret;
+}
 
 SBCStatus SBC_DeviceSecuirtyKeyCreate(VOID *key)
 {
@@ -2198,6 +2227,163 @@ errdone:
 
 }
 
+SBCStatus SBC_GenMigrationKey(void *priv, void *outmsg)
+{
+    SBCStatus ret = SBCOK;
+
+    boot_proc_t *p = (boot_proc_t *)priv;
+
+    UINTN msglen = 0UL;
+    UINTN len_fsbl = 0UL;
+    UINTN len_ssbl = 0UL;
+    UINTN len_hwifno = 0UL;
+    [[gnu::unused]] UINTN len_blkfsbl = 0UL;
+    [[gnu::unused]] UINTN len_blkssbl = 0UL;
+    UINT8 *msg = NULL;
+    hw_uniqueinfo_t info;
+    UINTN startaddr = 0;
+    UINTN startlba = 0;
+    boot_fw_inf_t *fwinf;
+    UINTN imglen = 0;
+    UINTN cpyofs = 0;
+
+    UINT8 *fbuf = NULL;
+    [[maybe_unused]] UINTN flen = 0UL;
+    LV_t lv;
+
+    EFI_HANDLE *f_hndl;
+    UINT8 temp_hash[ATP_IDENT_KEY_STG] = {0, };
+    
+
+    SBC_RET_VALIDATE_ERRCODEMSG((p != NULL),
+                               SBCNULLP,
+                               "Invalid Parameter");
+
+
+    // Get the Hardware Unique Information
+    ZeroMem((void *)&info, sizeof info);
+
+    _baseboard_sn(&info);
+    _memorydevice_sn(&info);
+    _nvme_get_serial(&info);
+
+    len_hwifno = info.mbsnl + info.mmsnl + info.nvmesnl;
+    msglen = len_hwifno;
+
+    // Getting the FSBL and SSBL file size
+    ret = SBC_GetFileSize(EFI_BOOT_FSBL_PATH, &len_fsbl);
+    SBC_RET_VALIDATE_ERRCODEMSG((ret == SBCOK),
+                               ret,
+                               "Not Found the FSBL");
+
+    ret = SBC_GetFileSize(EFI_BOOT_SSBL_PATH, &len_ssbl);
+    SBC_RET_VALIDATE_ERRCODEMSG((ret == SBCOK),
+                               ret,
+                               "Not Found the SSBL");
+
+    msglen += (len_fsbl + len_ssbl);
+
+    // Obtain the length for SSBL and FSBL in Raw-partition
+    fwinf = AllocateZeroPool(sizeof(boot_fw_inf_t));
+    SBC_RET_VALIDATE_ERRCODEMSG((fwinf != NULL),SBCNULLP, "Firmware Info Memory allocate Nill");
+
+    //Step 2. Read Current Image and Hash compute
+    //pvs_sw_bank means that "Previously Firware location"
+    startaddr = (BOOT_SECTOR1_OFS | (BOOT_FW_IMGMAX *  (p->pvs_sw_bnk - 1)));
+    startlba = (startaddr >> SBC_RAWPRT_DFLT_SHIFT);
+    imglen = ALIGN_VALUE(sizeof *fwinf, SBC_RAWPRT_DFLT_BLK_SZ);
+
+
+    ret = SBC_RawPrtReadBlock(p->blkhnd, (void *)fwinf->value, (UINT32 *)&imglen, startlba);
+    SBC_RET_VALIDATE_ERRCODEMSG((ret == SBCOK), ret, "Raw Partition read fail");
+
+    msglen += (fwinf->mbr.fsbln + fwinf->mbr.ssbln);
+
+    msg = AllocateZeroPool(msglen);
+    SBC_RET_VALIDATE_ERRCODEMSG((msg != NULL), SBCNULLP, "Not enough resource");
+
+
+    CopyMem((void *)&msg[cpyofs], info.mbsn , info.mbsnl);
+    cpyofs += info.mbsnl;
+
+    CopyMem((void *)&msg[cpyofs], info.mmsn, info.mmsnl);
+    cpyofs += info.mmsnl;
+
+    CopyMem((void *)&msg[cpyofs], info.nvmesn, info.nvmesnl);
+    cpyofs += info.nvmesnl;
+
+    //
+    // Read the FSBL file 
+    //
+
+    SBC_FindEfiFileSystemProtocol(&f_hndl);
+
+    fbuf = AllocateZeroPool(len_fsbl);
+    lv.value = fbuf;
+    lv.length = len_fsbl;
+
+    ret = SBC_ReadFile(f_hndl, EFI_BOOT_FSBL_PATH, &lv);
+
+    ret = SBC_HashCompute(NULL, lv.value, lv.length, temp_hash);
+    CopyMem((void *)&msg[cpyofs], temp_hash, ATP_IDENT_KEY_STG);
+    cpyofs += ATP_IDENT_KEY_STG;
+
+    if (fbuf != NULL) {
+        lv.value = NULL;
+        FreePool(fbuf);
+    }
+
+    //
+    // Read the SSBL flie
+    //
+    fbuf = AllocateZeroPool(len_fsbl);
+    lv.value = fbuf;
+    lv.length = len_ssbl;
+
+    ret = SBC_ReadFile(f_hndl, EFI_BOOT_SSBL_PATH, &lv);
+
+    ZeroMem((void *)temp_hash, 32);
+    ret = SBC_HashCompute(NULL, lv.value, lv.length, temp_hash);
+    CopyMem((void *)&msg[cpyofs], temp_hash, ATP_IDENT_KEY_STG);
+    cpyofs += ATP_IDENT_KEY_STG;
+
+    if (fbuf != NULL) {
+        lv.value = NULL;
+        FreePool(fbuf);
+    }
+
+
+    //
+    // Un-used FSBL  ( into the Raw-partiiont)
+    //
+    ret = SBC_HashCompute(NULL, fwinf->mbr.fsblimg, fwinf->mbr.fsbln, (void *)&msg[cpyofs]);
+    cpyofs += ATP_IDENT_KEY_STG;
+
+    ret = SBC_HashCompute(NULL, fwinf->mbr.ssblimg, fwinf->mbr.ssbln, (void *)&msg[cpyofs]);
+    cpyofs += ATP_IDENT_KEY_STG;
+
+
+
+    //
+    // Final message digest 
+    // 
+    ret = SBC_HashCompute(NULL, (UINT8 *)&msg[0], cpyofs, outmsg);
+errdone:
+
+    if (fwinf != NULL) {
+        FreePool(fwinf);
+    }
+
+    if (msg != NULL) {
+        FreePool(msg);
+    }
+
+
+    return ret;
+}
+
+
+#if 0
 SBCStatus  SBC_GenMigrationKey(VOID *priv, UINT32 currbankid, UINT32 prevbankid, VOID *out)
 {
   //Migration Key = H(H(Unique HW ID)||H(Current FSBL)||H(Current SSBL)||H(Current KERNEL)||H(Newer SSBL)||H(Newer KERNEL))
@@ -2326,7 +2512,7 @@ errdone:
     return ret;
 
 }
-
+#endif
 // FSBL Integrity check 
 SBCStatus  SBC_FSBLIntgCheck([[gnu::unused]]EFI_HANDLE *h_image , VOID *blkio, VOID *cert, UINTN certle, UINTN nrombank, UINTN mode)
 {

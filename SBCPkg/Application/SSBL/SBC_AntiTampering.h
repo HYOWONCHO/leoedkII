@@ -4,7 +4,7 @@
 
 
 #ifndef _SSBL_TEST_
-#   define OSID_KERNEL_PATH            L"\\boot\\vmlinuz-5.14.0-284.11.1.el9_2.x86_64"         
+#   define OSID_KERNEL_PATH            L"\\vmlinuz"         
 #   define EFI_BOOT_FSBL_PATH          L"\\EFI\\boot\\FSBL.efi"
 #   define EFI_BOOT_SSBL_PATH          L"\\EFI\\boot\\SSBL.efi"
 #else
@@ -222,8 +222,8 @@ SBCStatus  SBC_FSBL_Verify(VOID *blkhnd, VOID *ansr, UINTN normbank, UINTN bm);
 
 SBCStatus  SBC_BlkIoHandleInit(OUT VOID **hblk, OUT VOID *hdr);
 
-SBCStatus  SBC_GenMigrationKey(VOID *priv, UINT32 currbankid, UINT32 prevbankid, VOID *out);
-
+//SBCStatus  SBC_GenMigrationKey(VOID *priv, UINT32 currbankid, UINT32 prevbankid, VOID *out);
+SBCStatus SBC_GenMigrationKey(void *priv, void *outmsg);
 /*!
  * De
  * 
