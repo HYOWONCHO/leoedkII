@@ -118,6 +118,9 @@ SBCStatus  SBC_DiceKeysGen(EFI_HANDLE ImageHandle, VOID *p,UINTN normbank, UINTN
 
     //SBC_mem_print_bin("Device ID", h->devid, sizeof h->devid);SBC_mem_print_bin("Device ID", h->devid, sizeof h->devid);
 
+
+
+
     ret = SBC_GenFWID(ImageHandle, h->devid, h->fwid, normbank, bm);
     if (ret != SBCOK) {
         Print(L"FW ID generate fail \n");
@@ -457,6 +460,8 @@ UefiMain (
     dprint("Boot Mode : %d , Key Mode : %d, Recovery Mode : %d",
            btproc.bm, btproc.km, h_rawptrheader.rcvmode);
 
+    //dprint("Chaeck Boot Mode read from BlkIO is %d", h_rawptrheader.bootmode);
+
 
 //  ret = SBC_GenMigrationKey((void *)&btproc, diceid.migid);
 //  SBC_external_mem_print_bin("Migration Key", diceid.migid, 32);
@@ -492,7 +497,7 @@ UefiMain (
          L"Determine Firmare Tampering ",
          L"FSBL tampering check Done");
 
-    ret = SBC_DiceKeysGen(ImageHandle, &diceid,btproc.bm, currbank_id);
+    ret = SBC_DiceKeysGen(ImageHandle, &diceid,  currbank_id, btproc.bm);
     if (ret != SBCOK) {
         sbc_err_sysprn(SBC_LOG_CMN_PRIO_ERR, 2, L"SBC", L"FSBL", L"Weapon System", 4, L"EVT", L"Dice Key creation fail\n");
         retval = EFI_INVALID_PARAMETER;
@@ -505,7 +510,7 @@ UefiMain (
 
 
     // TODO : Read Key Mode 
-    dprint("Chaeck Boot Mode read from BlkIO is %d", h_rawptrheader.bootmode);
+    
 #if defined(_FILE_RD_BM_)
 //#warning   "SBC Boot Mode Read from File"
     UINT32 bootmd = SBC_ReadBootMode();
