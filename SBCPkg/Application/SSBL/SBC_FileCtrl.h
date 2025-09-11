@@ -66,7 +66,7 @@ typedef struct _t_bm_lookup_table {
 #define SBC_HDR_SKIP_LEN                    46
 
 /*! Boot pres length */
-#define SBC_BOOT_PRES_LEN                   8
+#define SBC_BOOT_PRES_LEN                   4
 
 /*! Boot Mode */
 #define SBC_BOOT_MODE_LEN                   2
@@ -85,6 +85,7 @@ typedef struct _rawprt_hdr_t {
     UINT16      keymode;                        /*! Key Mode*/
     UINT16      rcvmode;                        /*! Recover mode */     
     UINT8       bootpres[SBC_BOOT_PRES_LEN];    /**< Boot pres */
+    UINT8       bootpres_reserv[SBC_BOOT_PRES_LEN];    /**< Boot pres */
 }rawprt_hdr_t;
 
 #pragma pack()

@@ -685,6 +685,34 @@ Exit:
 CHAR16 mrgmsg[8192]; 
 
 
+static VOID _get_fw_bankid(UINT32 val, UINT32 *cur, UINT32 *prev)
+{
+    UINT8 bank_first;
+    UINT8 bank_second;
+
+    bank_first  = (UINT8)((val >> 8) & 0xFF);
+    bank_second = (UINT8)((val >> 24) & 0xFF);
+
+    Print(L"Banke First : %c , Bank Second : %c \n", bank_first, bank_second);
+
+    if(bank_first == 'C') {
+        *cur = (val) & 0xFF;
+    }
+    else if(bank_first == 'P') {
+        *prev = (val) & 0xFF;
+    }
+
+    if(bank_second == 'C') {
+        *cur = (val >> 16) & 0xFF;
+    }
+    else if(bank_second == 'P') {
+        *prev = (val >> 16) & 0xFF;
+    }
+
+    return;
+
+}
+
 
 extern VOID SBC_ShutdownSystem(VOID);
 extern SBCStatus SBC_GRUB_LoadAndStart(EFI_HANDLE ImageHandle);
@@ -711,7 +739,7 @@ UefiMain (
     rawprt_hdr_t h_rawprtheader;    // Raw Partition Header handle
     //rawprt_hdr_t tmp_prtheader;    // Raw Partition Header handle
     
-    UINT32 pres_hi = 0;
+    //UINT32 pres_hi = 0;
     UINT32 pres_low = 0;
     UINT32 currbank_id = 0;
     UINT32 prevbank_id = 0;
@@ -800,25 +828,28 @@ UefiMain (
 
     // Check the Preference SSBL bank
     CopyMem((void *)&pres_low, (void *)&h_rawprtheader.bootpres[0], 4);
-    CopyMem((void *)&pres_hi, (void *)&h_rawprtheader.bootpres[4], 4);
+    //CopyMem((void *)&pres_hi, (void *)&h_rawprtheader.bootpres[4], 4);
 
-    pres_low = SBC_SWAP_ENDIAN_32(pres_low);
-    pres_hi = SBC_SWAP_ENDIAN_32(pres_hi);
+    _get_fw_bankid(pres_low, &currbank_id, &prevbank_id);
+    dprint("Pres Low : 0x%04x Cur. Bank ID : %d , Prev. Bank ID : %d ", pres_low, currbank_id, prevbank_id);
 
-
-    if ((CHAR8)(pres_low & 0x0000FFFF) == 'C') {
-      currbank_id = (pres_low & 0xFFFF0000) >> 16;
-    }
-    else if ((CHAR8)(pres_hi & 0x0000FFFF) == 'C') {
-      currbank_id = (pres_hi & 0xFFFF0000) >> 16;
-    }
-
-    prevbank_id = FindPreviouslyBank(currbank_id);
-    if (prevbank_id < 1) {
-        eprint("Currently Valid FW Bank ID : %d , Previously Bank ID : %d \n", currbank_id, prevbank_id);
-        retval = EFI_INVALID_PARAMETER;
-        goto errdone;
-    }
+//  pres_low = SBC_SWAP_ENDIAN_32(pres_low);
+//  pres_hi = SBC_SWAP_ENDIAN_32(pres_hi);
+//
+//
+//  if ((CHAR8)(pres_low & 0x0000FFFF) == 'C') {
+//    currbank_id = (pres_low & 0xFFFF0000) >> 16;
+//  }
+//  else if ((CHAR8)(pres_hi & 0x0000FFFF) == 'C') {
+//    currbank_id = (pres_hi & 0xFFFF0000) >> 16;
+//  }
+//
+//  prevbank_id = FindPreviouslyBank(currbank_id);
+//  if (prevbank_id < 1) {
+//      eprint("Currently Valid FW Bank ID : %d , Previously Bank ID : %d \n", currbank_id, prevbank_id);
+//      retval = EFI_INVALID_PARAMETER;
+//      goto errdone;
+//  }
     dprint("Currently Valid FW Bank ID : %d , Previously Bank ID : %d \n", currbank_id, prevbank_id);
     dprint("Boot Mode : %d", h_rawprtheader.bootmode);
 

@@ -1590,9 +1590,9 @@ SBCStatus  SBC_BaseAnswerValidate(VOID *blkhnd, UINT8 *answer, UINTN answerl, UI
 
 
     if (SBC_AESGcmDecrypt(&aesctx) != SBCOK) {
-      Print(L"Base Answer Decrypt fail \n");
-      ret = SBCFAIL;
-      goto errdone;
+        Print(L"Base Answer Decrypt fail \n");
+        ret = SBCFAIL;
+        goto errdone;
     }
 
 //SBC_external_mem_print_bin("plain msg", answer, answerl);
@@ -1604,15 +1604,15 @@ SBCStatus  SBC_BaseAnswerValidate(VOID *blkhnd, UINT8 *answer, UINTN answerl, UI
 
 //      ZeroMem(mrgmsg, sizeof mrgmsg);
 //      UnicodeSPrint(mrgmsg, sizeof mrgmsg, L"Base Answer validate fail(%s:%s) \n",answer,decbuf);
-      sbc_err_sysprn(SBC_LOG_CMN_PRIO_ERR, 2,
-           L"SBC",
-           L"SSBL",
-           L"SAT",
-           3,
-           L"Detection",
-           L"SBC_tamper_OSID derived answer mismatched known answer");
-          ret = SBCFAIL;
-          goto errdone;
+        sbc_err_sysprn(SBC_LOG_CMN_PRIO_ERR, 2,
+             L"SBC",
+             L"SSBL",
+             L"SAT",
+             3,
+             L"Detection",
+             L"SBC_tamper_OSID derived answer mismatched known answer");
+            ret = SBCFAIL;
+            goto errdone;
     }
 
 //  ZeroMem(mrgmsg, sizeof mrgmsg);
@@ -2284,20 +2284,27 @@ SBCStatus SBC_GenMigrationKey(void *priv, void *outmsg)
                                ret,
                                "Not Found the SSBL");
 
+    dprint("Existing FSBL (%d) & SSBL (%d) Length", len_fsbl, len_ssbl);
+
     msglen += (len_fsbl + len_ssbl);
 
+    dprint();
     // Obtain the length for SSBL and FSBL in Raw-partition
     fwinf = AllocateZeroPool(sizeof(boot_fw_inf_t));
     SBC_RET_VALIDATE_ERRCODEMSG((fwinf != NULL),SBCNULLP, "Firmware Info Memory allocate Nill");
 
+    dprint("Previously Bank ID : %d", p->pvs_sw_bnk - 1);
     //Step 2. Read Current Image and Hash compute
     //pvs_sw_bank means that "Previously Firware location"
+    
     startaddr = (BOOT_SECTOR1_OFS | (BOOT_FW_IMGMAX *  (p->pvs_sw_bnk - 1)));
     startlba = (startaddr >> SBC_RAWPRT_DFLT_SHIFT);
     imglen = ALIGN_VALUE(sizeof *fwinf, SBC_RAWPRT_DFLT_BLK_SZ);
 
+    dprint("Start Address : 0x%04x", startaddr);
 
     ret = SBC_RawPrtReadBlock(p->blkhnd, (void *)fwinf->value, (UINT32 *)&imglen, startlba);
+    dprint();
     SBC_RET_VALIDATE_ERRCODEMSG((ret == SBCOK), ret, "Raw Partition read fail");
 
     dprint("FSBL len : %d , SSBL Length : %d \n", fwinf->mbr.fsbln, fwinf->mbr.ssbln);

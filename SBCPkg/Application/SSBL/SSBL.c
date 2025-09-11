@@ -345,6 +345,36 @@ UINT32 FindPreviouslyBank(UINT32 bankid)
     return ret;
 }
 
+static VOID _get_fw_bankid(UINT32 val, UINT32 *cur, UINT32 *prev)
+{
+    UINT8 bank_first;
+    UINT8 bank_second;
+
+    bank_first  = (UINT8)((val >> 8) & 0xFF);
+    bank_second = (UINT8)((val >> 24) & 0xFF);
+
+    Print(L"Banke First : %c , Bank Second : %c \n", bank_first, bank_second);
+
+    if(bank_first == 'C') {
+        *cur = (val) & 0xFF;
+    }
+    else if(bank_first == 'P') {
+        *prev = (val) & 0xFF;
+    }
+
+    if(bank_second == 'C') {
+        *cur = (val >> 16) & 0xFF;
+    }
+    else if(bank_second == 'P') {
+        *prev = (val >> 16) & 0xFF;
+    }
+
+    return;
+
+}
+
+
+
 extern SBCStatus SBC_GRUB_LoadAndStart(EFI_HANDLE ImageHandle);
 extern SBCStatus SBC_BootKeyModeChange(UINT32 newbm, UINT32 newkey, VOID *priv);
 
@@ -363,7 +393,7 @@ UefiMain (
     SBCStatus  ret = SBCOK;
     rawprt_hdr_t h_rawptrheader;    // Raw Partition Header handle
     //VOID *h_blkio;               // Block I/O handle
-    UINT32 pres_hi = 0;
+    [[maybe_unused]] UINT32 pres_hi = 0;
     UINT32 pres_low = 0;
     UINT32 currbank_id = 0;
     UINT32 prevbank_id = 0;
@@ -371,19 +401,12 @@ UefiMain (
     LV_t baseansr;
 
     boot_proc_t       btproc;
+    [[gnu::unused]] CHAR8 bank_find;
  
 #ifdef _SBC_DEBUG_ON_
 //#warning   "Enable to the SBC debugmode is on"
     intgreen_dprint("------------- SSBL Factory System START -------------\n");
 #endif
-
-    sbc_err_sysprn(SBC_LOG_CMN_PRIO_INFO, 2,
-       L"AT_BOOT",
-       L"SSBL",
-       L"SAT",
-       8,
-       L"Decetion",
-       L"SSBL Starting");
 
     ZeroMem(&btproc, sizeof btproc);
     ZeroMem(&h_rawptrheader, sizeof h_rawptrheader);
@@ -395,45 +418,20 @@ UefiMain (
       Print(L"Raw Partitino find fail !!! \n");
       goto errdone;
     }
-#if 0
-    btproc.blkhnd = h_blkio;
-    btproc.rawprt_hdr = &h_rawptrheader;
+
     SBC_mem_print_bin("Raw Prt Header", (UINT8 *)&h_rawptrheader, sizeof h_rawptrheader);
 
 
-    SBC_BootKeyModeChange(BOOT_MODE_FACTORY, KEY_MODE_NORMAL, (void *)&btproc);
-
-
-    return EFI_SUCCESS;
-#endif
-
     
-    Print(L"Find Raw Partition (0x%x)...\n", h_rawptrheader.magicid);
-    //dprint("Partition Info (%a) \n", h_rawptrheader.prtinfo);
+    //Print(L"Find Raw Partition (0x%x)...\n", h_rawptrheader.magicid);
+    dprint("Partition Info (%a) \n", h_rawptrheader.prtinfo);
 
     // Check the Preference SSBL bank
     CopyMem((void *)&pres_low, (void *)&h_rawptrheader.bootpres[0], 4);
-    CopyMem((void *)&pres_hi, (void *)&h_rawptrheader.bootpres[4], 4);
 
-    //pres_low = SBC_SWAP_ENDIAN_32(pres_low);
-    //pres_hi = SBC_SWAP_ENDIAN_32(pres_hi);
-
-    pres_low = pres_low;
-    pres_hi = pres_hi;
-
-    //sbc_err_sysprn(SBC_LOG_CMN_PRIO_INFO, 2, L"SBC", L"FSBL", L"xxx", 233, L"EVT", L"Pres HI : 0x%x , Pres Low: %a \n", "holla oops");
-
-    //SBC_mem_print_bin("Pres Low", (UINT8 *)&pres_low, 4);
-    //SBC_mem_print_bin("Pres Hi", (UINT8 *)&pres_hi, 4);
-
-    if ((CHAR8)(pres_low & 0x0000FFFF) == 'C') {
-      currbank_id = (pres_low & 0xFFFF0000) >> 16;
-    }
-    else if ((CHAR8)(pres_hi & 0x0000FFFF) == 'C') {
-      currbank_id = (pres_hi & 0xFFFF0000) >> 16;
-    }
-
-    prevbank_id = FindPreviouslyBank(currbank_id);
+    _get_fw_bankid(pres_low, &currbank_id, &prevbank_id);
+    dprint("Pres Low : 0x%04x Cur. Bank ID : %d , Prev. Bank ID : %d ", pres_low, currbank_id, prevbank_id);
+    //prevbank_id = FindPreviouslyBank(currbank_id);
 
 
     // Used from Recovery and Update 
@@ -456,6 +454,13 @@ UefiMain (
     btproc.rawprt_hdr = &h_rawptrheader;
     btproc.baseansr = (void *)&baseansr;
 
+    dprint("Boot Mode : %d , Key Mode : %d, Recovery Mode : %d",
+           btproc.bm, btproc.km, h_rawptrheader.rcvmode);
+
+
+//  ret = SBC_GenMigrationKey((void *)&btproc, diceid.migid);
+//  SBC_external_mem_print_bin("Migration Key", diceid.migid, 32);
+//  return EFI_SUCCESS;
 
 #if 0
     SBC_BootKeyModeChange(BOOT_MODE_UPDATE, KEY_MODE_NORMAL, (void *)&btproc);
@@ -465,7 +470,13 @@ UefiMain (
 
     ret = SBC_SSBL_Verify(h_blkio, &baseansr, btproc.curr_sw_bnk );
     if (ret != SBCOK) {
-
+          sbc_err_sysprn(SBC_LOG_CMN_PRIO_ERR, 2,
+                 L"SBC",
+                 L"FSBL",
+                 L"Weapon System",
+                 8,
+                 L"Determine Firmare Tampering ",
+                 L"FSBL tampering check fail");
           retval = EFI_INVALID_PARAMETER;
           btproc.bootst = SB_PROC_ST_ABNRAM;
           goto errdone;
@@ -473,18 +484,15 @@ UefiMain (
 
     
 
-  sbc_err_sysprn(SBC_LOG_CMN_PRIO_INFO, 2,
-       L"AT_BOOT",
-       L"SSBL",
-       L"SAT",
-       8,
-       L"Validation",
-       L"SBC_Integrity_All boot components passed signature verification");
+    sbc_err_sysprn(SBC_LOG_CMN_PRIO_ERR, 2,
+         L"SBC",
+         L"FSBL",
+         L"Weapon System",
+         8,
+         L"Determine Firmare Tampering ",
+         L"FSBL tampering check Done");
 
-  
-    dprint("SSBL currently Boot Mode is %d", btproc.bm);
-
-    ret = SBC_DiceKeysGen(ImageHandle, &diceid,  currbank_id, btproc.bm);
+    ret = SBC_DiceKeysGen(ImageHandle, &diceid,btproc.bm, currbank_id);
     if (ret != SBCOK) {
         sbc_err_sysprn(SBC_LOG_CMN_PRIO_ERR, 2, L"SBC", L"FSBL", L"Weapon System", 4, L"EVT", L"Dice Key creation fail\n");
         retval = EFI_INVALID_PARAMETER;
@@ -493,62 +501,40 @@ UefiMain (
     }
 
     // FWID and OSID certificate verify
-//
-//  SBC_GenMigrationKey((void *)&btproc, diceid.migid);
-//  SBC_mem_print_bin("Migration  Key", diceid.migid, 32);
-//
-//
-//  return EFI_SUCCESS;
+
+
+
     // TODO : Read Key Mode 
-    //dprint("Chaeck Boot Mode read from BlkIO is %d", h_rawptrheader.bootmode);
+    dprint("Chaeck Boot Mode read from BlkIO is %d", h_rawptrheader.bootmode);
 #if defined(_FILE_RD_BM_)
 //#warning   "SBC Boot Mode Read from File"
     UINT32 bootmd = SBC_ReadBootMode();
-    //dprint("Boot Mode read from File %d" , bootmd);
+    dprint("Boot Mode read from File %d" , bootmd);
     if (h_rawptrheader.bootmode != 0) {
         bootmd = h_rawptrheader.bootmode;
     }
-#ifdef _SSBL_FACTORY_TEST_
-    bootmd = BOOT_MODE_FACTORY;
-#endif
     switch (bootmd) {
 #else
-    //dprint("Boot Mode read from BlkIO is %d", h_rawptrheader.bootmode);
+    dprint("Boot Mode read from BlkIO is %d", h_rawptrheader.bootmode);
     switch (h_rawptrheader.bootmode) {
 #endif
     case BOOT_MODE_NORMAL:
-        dprint("Boot Mode is BOOT_MODE_NORMAL");
 #if defined(_FILE_RD_BM_)
         h_rawptrheader.keymode = KEY_MODE_NORMAL;
         SBC_BootKeyModeChange(BOOT_MODE_NORMAL, KEY_MODE_NORMAL, (void *)&btproc);
 #endif
-
-//      dprint("Base Answer verifing starting !!!");
-//      SBC_mem_print_bin("Base Answer", (UINT8 *)baseansr.value, baseansr.length);
-//      ret = SBC_BaseAnswerValidate(h_blkio,
-//                                   (UINT8 *)baseansr.value,
-//                                   (UINTN)baseansr.length,
-//                                   diceid.osid,
-//                                   BASE_ANS_KEY_STR);
-//      if (ret != SBCOK) {
-//          btproc.bootst = SB_PROC_ST_ABNRAM;
-//          eprint("Base Answer verification fail !!!");
-//      }
-
-       
+       dprint("Boot Mode is BOOT_MODE_NORMAL");
        ret = SBC_SecureBootCheck((VOID *)&btproc);
 
        break;
     case BOOT_MODE_FACTORY:
        dprint("Boot Mode is BOOT_MODE_FACTORY");
-#ifndef _SSBL_TEST_
+
        ret = SBC_BootKeyModeChange(BOOT_MODE_FACTORY, KEY_MODE_NORMAL, (void *)&btproc);
        if (ret != SBCOK) {
            btproc.bootst = SB_PROC_ST_NRMA;
        }
-#else
-       btproc.bootst = SB_PROC_ST_NRMA;
-#endif
+
 
        // If boot status is abnromal, system should be shutdown.
        if (btproc.bootst != SB_PROC_ST_NRMA) {
@@ -565,26 +551,13 @@ UefiMain (
         btproc.bm = BOOT_MODE_UPDATE;
         btproc.km = KEY_MODE_NORMAL;
 #endif
-      //ret = SBC_GenMigrationKey(h_blkio, currbank_id, prevbank_id, diceid.migid);
-        ret = SBC_GenMigrationKey(&btproc, diceid.migid);
+      ret = SBC_GenMigrationKey(h_blkio, diceid.migid);
       if (ret != SBCOK) {
           sbc_err_sysprn(SBC_LOG_CMN_PRIO_ERR, 2, L"SBC", L"FSBL", L"Weapon System", 4, L"EVT", L"Migration Key creation fail\n");
           retval = EFI_INVALID_PARAMETER;
           btproc.bootst = SB_PROC_ST_ABNRAM;
           goto errdone;
       }
-
-//      dprint("Base Answer verifing starting !!!");
-//      SBC_mem_print_bin("Base Answer", (UINT8 *)baseansr.value, baseansr.length);
-//      ret = SBC_BaseAnswerValidate(h_blkio,
-//                                   (UINT8 *)baseansr.value,
-//                                   (UINTN)baseansr.length,
-//                                   diceid.osid,
-//                                   BASE_ANS_KEY_STR);
-//      if (ret != SBCOK) {
-//          btproc.bootst = SB_PROC_ST_ABNRAM;
-//          eprint("Base Answer verification fail !!!");
-//      }
 
       SBC_external_mem_print_bin("Migraiotn Key", diceid.migid, 32);
 
@@ -623,16 +596,6 @@ UefiMain (
         retval = EFI_INVALID_PARAMETER;
     }
 
-    sbc_err_sysprn(SBC_LOG_CMN_PRIO_INFO, 2,
-        L"AT_BOOT",
-        L"SSBL",
-        L"SAT",
-        8,
-        L"Validation",
-        L"SBC_Boot Jump to Grub");
-
-    
-
     //ret = SBC_FSBL_Verify(h_blkio, &baseansr);
 
   // Read SSBL from
@@ -644,14 +607,7 @@ UefiMain (
 
 errdone:
     if (ret != SBCOK) {
-        sbc_err_sysprn(SBS_LOG_CMN_PRIO_ALERT, 2,
-            L"AT_BOOT",
-            L"SSBL",
-            L"SAT",
-            8,
-            L"Detection",
-            L"SSBL system is shutdown because BOOT Status is abnormal");
-        //SBC_ShutdownSystem();
+        SBC_ShutdownSystem();
     }
    return retval;
 }
