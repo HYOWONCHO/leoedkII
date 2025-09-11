@@ -476,11 +476,11 @@ UefiMain (
     ret = SBC_SSBL_Verify(h_blkio, &baseansr, btproc.curr_sw_bnk );
     if (ret != SBCOK) {
           sbc_err_sysprn(SBC_LOG_CMN_PRIO_ERR, 2,
-                 L"SBC",
-                 L"FSBL",
-                 L"Weapon System",
+                 L"AT_BOOT",
+                 L"SSBL",
+                 L"SAT",
                  8,
-                 L"Determine Firmare Tampering ",
+                 L"Detectoin",
                  L"FSBL tampering check fail");
           retval = EFI_INVALID_PARAMETER;
           btproc.bootst = SB_PROC_ST_ABNRAM;
@@ -490,16 +490,16 @@ UefiMain (
     
 
     sbc_err_sysprn(SBC_LOG_CMN_PRIO_ERR, 2,
-         L"SBC",
-         L"FSBL",
-         L"Weapon System",
+         L"AT_BOOT",
+         L"SSBL",
+        L"SAT",
          8,
-         L"Determine Firmare Tampering ",
+         L"Validation",
          L"FSBL tampering check Done");
 
     ret = SBC_DiceKeysGen(ImageHandle, &diceid,  currbank_id, btproc.bm);
     if (ret != SBCOK) {
-        sbc_err_sysprn(SBC_LOG_CMN_PRIO_ERR, 2, L"SBC", L"FSBL", L"Weapon System", 4, L"EVT", L"Dice Key creation fail\n");
+        sbc_err_sysprn(SBC_LOG_CMN_PRIO_ERR, 2, L"AT_BOOT", L"SSBL",L"SAT", 4, L"Detection", L"Dice Key creation fail\n");
         retval = EFI_INVALID_PARAMETER;
         btproc.bootst = SB_PROC_ST_ABNRAM;
         goto errdone;
@@ -558,7 +558,7 @@ UefiMain (
 #endif
       ret = SBC_GenMigrationKey(h_blkio, diceid.migid);
       if (ret != SBCOK) {
-          sbc_err_sysprn(SBC_LOG_CMN_PRIO_ERR, 2, L"SBC", L"FSBL", L"Weapon System", 4, L"EVT", L"Migration Key creation fail\n");
+          sbc_err_sysprn(SBC_LOG_CMN_PRIO_ERR, 2, L"AT_BOOT", L"SSBL",L"SAT", 4, L"Detection", L"Migration Key creation fail\n");
           retval = EFI_INVALID_PARAMETER;
           btproc.bootst = SB_PROC_ST_ABNRAM;
           goto errdone;
@@ -566,7 +566,7 @@ UefiMain (
 
       SBC_external_mem_print_bin("Migraiotn Key", diceid.migid, 32);
 
-      sbc_err_sysprn(SBC_LOG_CMN_PRIO_INFO, 2, L"SBC", L"FSBL", L"Weapon System", 4, L"EVT", L"Migration Key creation Success\n");
+      sbc_err_sysprn(SBC_LOG_CMN_PRIO_INFO, 2, L"AT_BOOT", L"SSBL",L"SAT", 4, L"Validation", L"Migration Key creation Success\n");
 
       dprint("Boot State : 0x%x",btproc.bootst);
       ret = SBC_SecureBootCheck((VOID *)&btproc);
@@ -592,14 +592,22 @@ UefiMain (
     ret = SBC_GRUB_LoadAndStart(ImageHandle);
     if(ret != SBCOK) {
         sbc_err_sysprn(SBC_LOG_CMN_PRIO_ERR, 2, 
-                L"SBC", 
-                L"FSBL", 
-                L"Weapon System", 
+                L"AT_BOOT", 
+                L"SSBL", 
+               L"SAT", 
                 8, 
-                L"Determine Firmare Tampering ", 
-                L"FSBL tampering check fail");
+                L"Detection ", 
+                L"Grub Load fail");
         retval = EFI_INVALID_PARAMETER;
     }
+
+    sbc_err_sysprn(SBC_LOG_CMN_PRIO_NOTICE, 2, 
+        L"AT_BOOT", 
+        L"SSBL", 
+        L"SAT", 
+        8, 
+        L"Validation ", 
+        L"Grub Load Done");
 
     //ret = SBC_FSBL_Verify(h_blkio, &baseansr);
 
