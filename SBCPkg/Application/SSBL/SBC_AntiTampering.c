@@ -102,6 +102,7 @@ errdone:
     return ret;
 }
 
+#if 0
 SBCStatus _ssbl_image_load(VOID *blkhnd, LV_t *lv,  UINTN normbank, UINTN bm)
 {
 
@@ -166,6 +167,64 @@ errdone:
     return ret;
 
 }
+#else
+SBCStatus _ssbl_image_load(EFI_HANDLE ImageHandle, LV_t *lv)
+{
+    SBCStatus           ret = SBCOK;
+    EFI_STATUS          Status;
+    UINTN               len_of_kernel = 0;
+    UINTN               hndlcnt;
+    UINTN               idx;
+    EFI_HANDLE          *hndl;
+
+
+    //dprint();
+    ret = SBC_GetFileSize( EFI_BOOT_SSBL_PATH, &len_of_kernel);
+    SBC_RET_VALIDATE_ERRCODEMSG((ret == SBCOK), ret, "File Not Found");
+    //dprint();
+    hndlcnt = SBC_FindEfiFileSystemProtocol(&hndl);
+    if (hndlcnt <= 0) {
+      eprint("File System Handle find fail : %d", hndlcnt);
+      return SBCFAIL;
+    }
+    //dprint();
+    for (idx = 0; idx < hndlcnt; idx++) {
+      Status = SBC_IsFlieAccess(hndl[idx], EFI_BOOT_SSBL_PATH);
+      if (EFI_ERROR(Status)) {
+        continue;
+      }
+
+      break;
+    }
+    //dprint();
+
+    if (EFI_ERROR(Status)) {
+        eprint("%s  : %r", EFI_BOOT_SSBL_PATH, Status);
+        return SBCFAIL;
+    }
+
+    //dprint();
+    lv->value = AllocateZeroPool(len_of_kernel);
+    lv->length = len_of_kernel;
+    dprint("%s size %d", EFI_BOOT_SSBL_PATH, lv->length);
+    SBC_RET_VALIDATE_ERRCODEMSG((lv->value != NULL), SBCNULLP, "Out of Memory");
+
+    //dprint();
+
+    Status = SBC_ReadFile(hndl[idx], EFI_BOOT_SSBL_PATH, lv);
+    if (EFI_ERROR(Status)) {
+      eprint("%s file read fail with %r", EFI_BOOT_SSBL_PATH, Status);
+      ret = SBCNOTFND;
+      goto errdone;
+    }
+
+
+    //dprint();
+errdone:
+    return ret;
+}
+
+#endif
 
 EFI_STATUS efi_boot_fsbl_load(LV_t *lv)
 {
@@ -2127,12 +2186,12 @@ SBCStatus SBC_GenFWID(EFI_HANDLE *h_image, UINT8 *devid, UINT8 *fwid, UINTN norm
   lv.value = NULL;
   lv.length = 0;
 
-  ret = _ssbl_image_load(h_blkio, &lv, normbank, bm);
+  ret = _ssbl_image_load(h_image, &lv);
   SBC_RET_VALIDATE_ERRCODEMSG((ret == SBCOK), ret, "SSB Image load fail");
   SBC_RET_VALIDATE_ERRCODEMSG((lv.length > 0), SBCZEROL, "SSB Image length 0");
 
-  lv.value = hash_ssbl;
-  lv.length = SBC_AT_HASH_LEN;
+  //lv.value = hash_ssbl;
+  //lv.length = SBC_AT_HASH_LEN;
 
   // Added the Hash for SSBL
   ret = SBC_HashCompute( NULL, 
@@ -2140,6 +2199,8 @@ SBCStatus SBC_GenFWID(EFI_HANDLE *h_image, UINT8 *devid, UINT8 *fwid, UINTN norm
                          lv.length,
                          hash_ssbl );
   SBC_RET_VALIDATE_ERRCODEMSG((ret == SBCOK), ret, "SSBL hash compute failed");
+
+  SBC_mem_print_bin("SSBL Hash", hash_ssbl, 32);
 
   temp = AllocateZeroPool(SBC_AT_HASH_LEN << 1);
   SBC_RET_VALIDATE_ERRCODEMSG((temp != NULL), SBCNULLP, "memeory creation fail");

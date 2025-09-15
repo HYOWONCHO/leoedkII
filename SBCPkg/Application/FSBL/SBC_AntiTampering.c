@@ -2349,8 +2349,8 @@ SBCStatus SBC_GenFWID(EFI_HANDLE *h_image, UINT8 *devid, UINT8 *fwid, UINTN norm
   SBC_RET_VALIDATE_ERRCODEMSG((ret == SBCOK), ret, "SSB Image load fail");
   SBC_RET_VALIDATE_ERRCODEMSG((lv.length > 0), SBCZEROL, "SSB Image length 0");
 
-  lv.value = hash_ssbl;
-  lv.length = SBC_AT_HASH_LEN;
+//lv.value = hash_ssbl;
+//lv.length = SBC_AT_HASH_LEN;
 
   // Added the Hash for SSBL
   ret = SBC_HashCompute( NULL, 
