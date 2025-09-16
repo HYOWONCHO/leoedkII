@@ -1899,8 +1899,10 @@ SBCStatus  SBC_SSBL_Verify(VOID *blkhnd, VOID *ansr, UINTN normbank)
       goto errdone;
     }
 
-    ret = SBC_FindFileBufHndl(fblpath, &HandleCount, hndl);
+    ret = SBC_FindFileBufHndl(fblpath, &HandleCount, (VOID **)hndl);
     SBC_RET_VALIDATE_ERRCODEMSG((ret == SBCOK), ret, "File not found");
+
+    dprint("SSBL File Handle Index : %d", HandleCount);
 
     retval = SBC_ReadFile(hndl[HandleCount], fblpath, &rdlv);
     if (EFI_ERROR(retval)) {

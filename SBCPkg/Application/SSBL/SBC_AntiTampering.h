@@ -5,12 +5,12 @@
 
 #ifndef _SSBL_TEST_
 #   define OSID_KERNEL_PATH            L"\\vmlinuz"         
-#   define EFI_BOOT_FSBL_PATH          L"\\EFI\\boot\\FSBL.efi"
-#   define EFI_BOOT_SSBL_PATH          L"\\EFI\\boot\\SSBL.efi"
+#   define EFI_BOOT_FSBL_PATH          L"\\EFI\\BOOT\\FSBL.efi"
+#   define EFI_BOOT_SSBL_PATH          L"\\EFI\\BOOT\\SSBL.efi"
 #else
 #   define OSID_KERNEL_PATH            L"\\EFI\\rocky\\vmlinuz"         
-#   define EFI_BOOT_FSBL_PATH          L"\\EFI\\boot\\FSBL.efi.bin"
-#   define EFI_BOOT_SSBL_PATH          L"\\EFI\\boot\\SSBL.efi.bin"
+#   define EFI_BOOT_FSBL_PATH          L"\\EFI\\BOOT\\FSBL.efi.bin"
+#   define EFI_BOOT_SSBL_PATH          L"\\EFI\\BOOT\\SSBL.efi.bin"
 #endif
 
 #define SBC_AT_HASH_LEN             32
