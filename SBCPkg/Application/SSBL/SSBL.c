@@ -473,6 +473,19 @@ UefiMain (
 #endif
     dprint("Currently Valid FW Bank ID : %d , Previously Bank ID : %d \n", currbank_id, prevbank_id);
 
+#if 0
+    ret = SBC_GenMigrationKey((void *)&btproc, diceid.migid);
+    if (ret != SBCOK) {
+      sbc_err_sysprn(SBC_LOG_CMN_PRIO_ERR, 2, L"AT_BOOT", L"SSBL",L"SAT", 4, L"Detection", L"Migration Key creation fail\n");
+      retval = EFI_INVALID_PARAMETER;
+      btproc.bootst = SB_PROC_ST_ABNRAM;
+      goto errdone;
+    }
+
+    SBC_external_mem_print_bin("Migraiotn Key", diceid.migid, 32);
+    return EFI_SUCCESS;
+#endif
+
     ret = SBC_SSBL_Verify(h_blkio, &baseansr, btproc.curr_sw_bnk );
     if (ret != SBCOK) {
           sbc_err_sysprn(SBC_LOG_CMN_PRIO_ERR, 2,
@@ -556,7 +569,7 @@ UefiMain (
         btproc.bm = BOOT_MODE_UPDATE;
         btproc.km = KEY_MODE_NORMAL;
 #endif
-      ret = SBC_GenMigrationKey(h_blkio, diceid.migid);
+      ret = SBC_GenMigrationKey((void *)&btproc, diceid.migid);
       if (ret != SBCOK) {
           sbc_err_sysprn(SBC_LOG_CMN_PRIO_ERR, 2, L"AT_BOOT", L"SSBL",L"SAT", 4, L"Detection", L"Migration Key creation fail\n");
           retval = EFI_INVALID_PARAMETER;

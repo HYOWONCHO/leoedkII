@@ -161,7 +161,7 @@ SBCStatus SBC_AESGcmDecrypt(SBC_AESContext *ctx)
                        gcm->msg.value, gcm->msg.length,
                        gcm->tag.value, gcm->tag.length,
                        gcm->out.value, &gcm->out.length) == FALSE) {
-    eprint("GCM Decrypt fail \r\n");
+    //eprint("GCM Decrypt fail \r\n");
     return SBCENCFAIL;
   }
 

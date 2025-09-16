@@ -147,19 +147,22 @@ static SBCStatus _base_answer_decrypt_encrypt(void *priv)
 {
     SBCStatus ret = SBCOK;
 #if 0
+    boot_proc_t *bp = (boot_proc_t *)priv;
     UINT8 *answer_key = ((atp_ident_t *)bp->keyinfo)->migid;
 #else
+
+    boot_proc_t *bp = (boot_proc_t *)priv;
     UINT8 answer_key[32] = {
-    	0xB3, 0x88, 0xCC, 0xF6, 0xBE, 0xA0, 0xD4, 0x31, 0xBA, 0xF2, 0x37, 0x1D,
-    	0x9D, 0x9D, 0x9C, 0x7C, 0xCA, 0x89, 0xC4, 0x02, 0x1A, 0x67, 0x30, 0x19,
-    	0x04, 0x00, 0x55, 0x30, 0x0E, 0xC9, 0x12, 0x3E
+    	0x52, 0x86, 0x81, 0x76, 0x78, 0x3D, 0x9D, 0x87, 0x5E, 0xF6, 0x7F, 0x91,
+    	0xC1, 0x39, 0x35, 0x83, 0x28, 0xE4, 0x59, 0x3D, 0x77, 0x2A, 0xDC, 0xD4,
+    	0xB5, 0x9E, 0xC1, 0x39, 0xFB, 0x29, 0x69, 0x3C
     };
 #endif
 
     SBC_AESContext aesctx;
     SBC_AESGcmCtx  ctx;
     UINT8 decbuf[BASE_ANS_STREAM_LEN] = {0,};
-    boot_proc_t *bp = (boot_proc_t *)priv;
+    
 
 
     ZeroMem((void *)&ctx, sizeof ctx);
@@ -167,7 +170,7 @@ static SBCStatus _base_answer_decrypt_encrypt(void *priv)
 
     ret = SBC_BaseAnswerValidate(bp->blkhnd,
                                  decbuf, 
-                                 16,
+                                 SBC_BASE_ANSR_LEN,
                                  answer_key,
                                  ATP_IDENT_KEY_STG,
                                  FALSE);
@@ -179,7 +182,7 @@ static SBCStatus _base_answer_decrypt_encrypt(void *priv)
 
     ret = SBC_BaseAnswerEncryptStore(bp->blkhnd, 
                                  decbuf,
-                                 16,
+                                 SBC_BASE_ANSR_LEN,
                                  ((atp_ident_t *)bp->keyinfo)->osid,
                                  ATP_IDENT_KEY_STG);
 
@@ -211,7 +214,12 @@ static SBCStatus _update_behavior_for_km(void *priv)
 //                                priv);
 //      }
 
-        _update_protected_software(priv);
+        ret = _update_protected_software(priv);
+        if(ret != SBCOK) {
+            eprint("Detection SBC_tamper_ProtSW derived"
+                            "Not Protected");
+            goto errdone;
+        }
         break;
     case SB_PROC_ST_NRMA:
         dprint("Base Answer re-encrypt and write in Update Mode");
@@ -327,6 +335,8 @@ static SBCStatus  SBC_UpdateBootPorcsesing(void *priv)
 
 errdone:
     if(ret != SBCOK) {
+        eprint("Update Operation Not Permit !!!");
+        bp->bootst = SB_PROC_ST_ABNRAM;
     }
     return ret;
 }
@@ -691,14 +701,16 @@ static void _update_reset_check_and_behavior(VOID *priv)
     dprint("Key mode : %d", bp->km);
     switch(bp->km) {
     case KEY_MODE_NORMAL:
-        dprint("Boot State : %d", bp->bootst);
+        //dprint("Boot State : %d", bp->bootst);
         switch(bp->bootst) {
         case SB_PROC_ST_NRMA:
             //dprint();
+            dprint("Boot is Normal ");
             // bug fixed at 20250814 
             SBC_BootKeyModeChange(BOOT_MODE_NORMAL, KEY_MODE_NORMAL, priv);
             break;
         case SB_PROC_ST_ABNRAM:
+            dprint("Boot is AbNormal");
             if(bp->pvs_sw_bnk) {
                 //dprint();
                 // if existense the previously firmware 
@@ -831,6 +843,8 @@ SBCStatus  SBC_SecureBootCheck(VOID *priv)
 
     case BOOT_MODE_UPDATE:
         ret = SBC_UpdateBootPorcsesing(priv);
+
+
         //dprint();
         break;
     default:
@@ -842,6 +856,11 @@ SBCStatus  SBC_SecureBootCheck(VOID *priv)
 
 
 errdone:
+
+    if(ret != SBCOK) {
+        eprint("Boot is AbNormal");
+        bp->bootst = SB_PROC_ST_ABNRAM;
+    }
     SBC_ResetScenario(priv);
     return ret;
 
