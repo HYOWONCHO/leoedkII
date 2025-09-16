@@ -1930,7 +1930,8 @@ SBCStatus  SBC_SSBL_Verify(VOID *blkhnd, VOID *ansr, UINTN normbank)
     bsinfolen = bsinfo.m.siglen + bsinfo.m.fwinfolen + bsinfo.m.certlen  + bsinfo.m.banswlen;
 
       
-    fsbl_len = last_of_fsbl = rdlv.length - FSBL_BNIFO_SIZE - bsinfolen;
+    fsbl_len =  last_of_fsbl = rdlv.length - FSBL_BNIFO_SIZE - bsinfolen;
+    //fsbl_len = last_of_fsbl - bsinfo.m.siglen;
     infostart = &((UINT8 *)rdlv.value)[last_of_fsbl];
 
     //dprint("FSBL Last : %d", last_of_fsbl);
@@ -1972,6 +1973,8 @@ SBCStatus  SBC_SSBL_Verify(VOID *blkhnd, VOID *ansr, UINTN normbank)
       goto errdone;
     }
 
+
+    fsbl_len += (bsinfo.m.fwinfolen + bsinfo.m.certlen  + bsinfo.m.banswlen);
     dprint("SSBL image len : %d", fsbl_len);
     ret = SBC_HashCompute(
                          NULL, /* Not yet used */
@@ -2055,7 +2058,7 @@ errdone:
 
     if (ret != SBCOK) {
       ZeroMem(mrgmsg, sizeof mrgmsg);
-      UnicodeSPrint(mrgmsg, sizeof mrgmsg, L"FSBL Verify Fail \n");
+      UnicodeSPrint(mrgmsg, sizeof mrgmsg, L"SSBL Verify Fail \n");
       sbc_err_sysprn(SBC_LOG_CMN_PRIO_ERR, 2,
              L"SBC",
              L"FSBL",
@@ -2679,7 +2682,7 @@ SBCStatus  SBC_FSBLIntgCheck([[gnu::unused]]EFI_HANDLE *h_image , VOID *blkio, V
         );
 
     if (ret != SBCOK) {
-      int_eprint("FSBL Verify fail \n");
+      int_eprint("SSBL Verify fail \n");
       goto errdone;
     }
 

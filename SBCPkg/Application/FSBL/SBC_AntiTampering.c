@@ -2120,6 +2120,7 @@ SBCStatus  SBC_FSBL_Verify(VOID *blkhnd, VOID *ansr, UINTN normbank, UINTN bm, U
     }
 
     //dprint("FSBL image len : %d", fsbl_len);
+    fsbl_len += (bsinfo.m.fwinfolen + bsinfo.m.certlen  + bsinfo.m.banswlen);
     ret = SBC_HashCompute(
                          NULL, /* Not yet used */
                          rdlv.value,

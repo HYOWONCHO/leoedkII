@@ -494,7 +494,7 @@ UefiMain (
                  L"SAT",
                  8,
                  L"Detectoin",
-                 L"FSBL tampering check fail");
+                 L"SSBL tampering check fail");
           retval = EFI_INVALID_PARAMETER;
           btproc.bootst = SB_PROC_ST_ABNRAM;
           goto errdone;
@@ -508,7 +508,7 @@ UefiMain (
         L"SAT",
          8,
          L"Validation",
-         L"FSBL tampering check Done");
+         L"SSBL tampering check Done");
 
     ret = SBC_DiceKeysGen(ImageHandle, &diceid,  currbank_id, btproc.bm);
     if (ret != SBCOK) {
