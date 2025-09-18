@@ -1657,10 +1657,19 @@ SBCStatus  SBC_BaseAnswerValidate(VOID *blkhnd, UINT8 *answer, UINTN answerl, UI
         goto errdone;
     }
 
+
+#ifndef _ATSW_INTGR_TEST_
     SBC_external_mem_print_bin("plain msg", answer, answerl);
     SBC_external_mem_print_bin("decrypt msg", decbuf, ctx.out.length);
-
     if ((CompareMem((const void *)decbuf, (const void *)answer, answerl) != 0) && (ischeck == TRUE)) {
+#else
+    UINT8 test_answering[16] = {
+      'A','n','t','i','-','T','a','m','p','e','r','i','n','g'
+    };
+    SBC_external_mem_print_bin("plain msg", test_answering, sizeof test_answering);
+    SBC_external_mem_print_bin("decrypt msg", decbuf, ctx.out.length);
+    if ((CompareMem((const void *)decbuf, (const void *)test_answering, 16) != 0) && (ischeck == TRUE)) {
+#endif
       //Print(L"Base Answer validate Fail \n");
 
 
@@ -1669,6 +1678,7 @@ SBCStatus  SBC_BaseAnswerValidate(VOID *blkhnd, UINT8 *answer, UINTN answerl, UI
 
             ret = SBCFAIL;
             goto errdone;
+
     }
     else if(ischeck == FALSE) {
       CopyMem((void *)answer, (void *)decbuf, ctx.out.length);

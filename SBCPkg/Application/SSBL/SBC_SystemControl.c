@@ -146,7 +146,7 @@ errdone:
 static SBCStatus _base_answer_decrypt_encrypt(void *priv)
 {
     SBCStatus ret = SBCOK;
-#if 0
+#if 1
     boot_proc_t *bp = (boot_proc_t *)priv;
     UINT8 *answer_key = ((atp_ident_t *)bp->keyinfo)->migid;
 #else

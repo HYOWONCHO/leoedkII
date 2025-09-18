@@ -124,8 +124,8 @@
     #*_*_*_CC_FLAGS = -D_FILE_RD_BM_ -D_SBC_DEBUG_ON_
     #Test Mode 
     #*_*_*_CC_FLAGS = -D_FILE_RD_BM_ -D_SSBL_TEST_
-
     #*_*_*_CC_FLAGS = -D_SSBL_FACTORY_TEST_
+    *_*_*_CC_FLAGS = -D_ATSW_INTGR_TEST_
 
     #Debug On
     *_*_*_CC_FLAGS = -D_SBC_DEBUG_ON_ 
