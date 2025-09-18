@@ -1135,6 +1135,7 @@ SBCStatus  SBC_FirmwareIdKyeVerify(VOID *priv)
     dprint("PublicK Key Match Done ...");
 
 #else
+    SBC_external_mem_print_bin("Certificate Pubkey", pubkey, pubkeyl);
     SBC_external_mem_print_bin("Device ID Pubkey", key_pair.q.value, key_pair.ql);
     if(CompareMem(key_pair.q.value,  pubkey, pubkeyl) != 0) {
         eprint("CA public key verify fail");
@@ -1386,6 +1387,51 @@ errdone:
 //           L"Device ID Verify Fail");
     }
     return ret;
+
+
+
+}
+
+SBCStatus SBC_DiceIDKeyVerify(VOID *priv)
+{
+    SBCStatus ret = SBCOK;
+   
+    SBC_RET_VALIDATE_ERRCODEMSG((priv != NULL), SBCNULLP, "Invalid Pointer");
+
+    ret = SBC_FirmwareIdKyeVerify(priv);
+    if (ret != SBCOK) {
+        sbc_err_sysprn(SBC_LOG_CMN_PRIO_ERR, 2,
+                 L"AT_BOOT",
+                 L"SSBL",
+                 L"SAT",
+                 1,
+                 L"Detectoin",
+                 L"SBC_Dice_FWID Key Verify Fail");
+
+        goto errdone;
+    }
+
+    ret = SBC_OSIdKyeVerify(priv);
+    if (ret != SBCOK) {
+        sbc_err_sysprn(SBC_LOG_CMN_PRIO_ERR, 2,
+                 L"AT_BOOT",
+                 L"SSBL",
+                 L"SAT",
+                 1,
+                 L"Detectoin",
+                 L"SBC_Dice_OSID Key Verify Fail");
+
+        goto errdone;
+    }
+
+
+ 
+
+errdone:
+
+    return ret;
+
+
 
 }
 

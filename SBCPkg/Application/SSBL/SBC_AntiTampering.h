@@ -249,4 +249,17 @@ SBCStatus  SBC_DeviceIdKyeVerify(VOID *blkio, UINT8 *devid, UINT8 *deckey);
 SBCStatus SBC_DeviceSecuirtyKeyCreate(VOID *key);
 
 SBCStatus  SBC_SSBL_Verify(VOID *blkhnd, VOID *ansr,  UINTN nrombank);
+
+/*!
+ * \fn SBCStatus SBC_DiceIDKeyVerify(VOID *priv)
+ * 
+ * \brief FWID and OSID certificate verification 
+ * 
+ * \author leoc (9/18/25)
+ * 
+ * \param[in] priv   Pointer to Boot Process Structure 
+ * 
+ * \return On success, return the SBCOK, otherwise, return the approiate error value  
+ */
+SBCStatus SBC_DiceIDKeyVerify(VOID *priv);
 #endif

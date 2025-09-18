@@ -806,6 +806,9 @@ SBCStatus  SBC_SecureBootCheck(VOID *priv)
     switch(bp->bm) {
     case BOOT_MODE_NORMAL:
 
+        ret = SBC_DiceIDKeyVerify((VOID *)bp);
+        SBC_RET_VALIDATE_ERRCODEMSG((ret == SBCOK), ret, "Certificate ID Verify Fail");
+
         // TODO : Baseanswer verify
         ret = SBC_BaseAnswerValidate(bp->blkhnd,
                                      ((LV_t *)bp->baseansr)->value,

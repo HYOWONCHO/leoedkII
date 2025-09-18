@@ -1,3 +1,5 @@
+#!/usr/bin/env python3
+
 import os
 import array
 import sys
@@ -63,6 +65,10 @@ def make_fsbl_image():
 
 
 
+    #fwcrypt.compute_ec_dsa_verify(pubkey, signature,digest)
+
+
+    content = content + baseanswers + fwinfos + certibytes
 
     digest  = fwcrypt.sha256_compute(content)
     print(f"Digest {digest.hex()}")
@@ -72,12 +78,7 @@ def make_fsbl_image():
     print(f"Signature len : {len(signature)}")
     print(f"Signature return : {signature}")
 
-    #fwcrypt.compute_ec_dsa_verify(pubkey, signature,digest)
 
-
-
-
-    content = content + baseanswers + fwinfos + certibytes
 
     
     filectrl.write_image(fwfname + ".bin", content, "wb")

@@ -505,7 +505,7 @@ UefiMain (
     sbc_err_sysprn(SBC_LOG_CMN_PRIO_ERR, 2,
          L"AT_BOOT",
          L"SSBL",
-        L"SAT",
+         L"SAT",
          8,
          L"Validation",
          L"SSBL tampering check Done");
@@ -518,7 +518,17 @@ UefiMain (
         goto errdone;
     }
 
+    sbc_err_sysprn(SBC_LOG_CMN_PRIO_INFO, 2,
+         L"AT_BOOT",
+         L"SSBL",
+         L"SAT",
+         1,
+         L"Validation",
+         L"HW&SW Base Key Creation Success");
+
     // FWID and OSID certificate verify
+
+
 
 
 
