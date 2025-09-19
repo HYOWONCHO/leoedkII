@@ -1976,14 +1976,14 @@ SBCStatus  SBC_SSBL_Verify(VOID *blkhnd, VOID *ansr, UINTN normbank)
 
     ////SBC_external_mem_print_bin("BSINFO", (UINT8 *)&bsinfo, sizeof bsinfo);
 
-//  dprint("----------- SSBL Boot Service Informmtion ------------");
-//  dprint("Signature Len     : %d", bsinfo.m.siglen );
-//  dprint("Firmware Info Len : %d", bsinfo.m.fwinfolen );
-//  dprint("Certificate Len   : %d", bsinfo.m.certlen );
-//  dprint("BaseAnswer Len    : %d", bsinfo.m.banswlen );
-//  dprint("BSinfo verdion    : %d", bsinfo.m.bsinfv );
-//  dprint("Spec.1 Value      : %d", bsinfo.m.reserv1 );
-//  dprint("Spec.2 Value      : %d", bsinfo.m.reserv2 );
+    dprint("----------- SSBL Boot Service Informmtion ------------");
+    dprint("Signature Len     : %d", bsinfo.m.siglen );
+    dprint("Firmware Info Len : %d", bsinfo.m.fwinfolen );
+    dprint("Certificate Len   : %d", bsinfo.m.certlen );
+    dprint("BaseAnswer Len    : %d", bsinfo.m.banswlen );
+    dprint("BSinfo verdion    : %d", bsinfo.m.bsinfv );
+    dprint("Spec.1 Value      : %d", bsinfo.m.reserv1 );
+    dprint("Spec.2 Value      : %d", bsinfo.m.reserv2 );
 
     bsinfolen = bsinfo.m.siglen + bsinfo.m.fwinfolen + bsinfo.m.certlen  + bsinfo.m.banswlen;
 

@@ -512,7 +512,13 @@ UefiMain (
 
     ret = SBC_DiceKeysGen(ImageHandle, &diceid,  currbank_id, btproc.bm);
     if (ret != SBCOK) {
-        sbc_err_sysprn(SBC_LOG_CMN_PRIO_ERR, 2, L"AT_BOOT", L"SSBL",L"SAT", 4, L"Detection", L"Dice Key creation fail\n");
+        sbc_err_sysprn(SBC_LOG_CMN_PRIO_ERR, 2,
+             L"AT_BOOT",
+             L"SSBL",
+             L"SAT",
+             1,
+             L"Validation",
+             L"HW&SW Base Key Creation Fail");
         retval = EFI_INVALID_PARAMETER;
         btproc.bootst = SB_PROC_ST_ABNRAM;
         goto errdone;

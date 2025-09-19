@@ -1705,7 +1705,7 @@ SBCStatus  SBC_BaseAnswerValidate(VOID *blkhnd, UINT8 *answer, UINTN answerl, UI
          L"SAT",
          3,
          L"Validation",
-         mrgmsg);
+         mrgmsg); /                                                                   
 
 errdone:
     return ret;
