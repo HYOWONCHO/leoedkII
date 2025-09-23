@@ -1549,6 +1549,88 @@ errdone:
     return ret;
 }
 
+SBCStatus SBC_RawAlignedReadBlockIO(VOID *blk, UINTN off, UINTN sz, VOID *buf)
+{
+
+    SBCStatus               ret = SBCOK;
+    EFI_STATUS              retval = EFI_SUCCESS;
+    EFI_BLOCK_IO_PROTOCOL  *io = (EFI_BLOCK_IO_PROTOCOL *)blk;
+    UINT32                  blksz = io->Media->BlockSize;
+    EFI_LBA                 lba = off / blksz;
+
+    UINTN                   o = (UINTN)(off / blksz);
+    UINT8                   *p = NULL;
+    UINT8                   *tmp = NULL;
+
+    dprint("LBA : %ld, O : %ld", lba, o);
+
+    if ( o == 0 && (sz % blksz) == 0) {
+        return io->ReadBlocks(io, io->Media->MediaId, lba, sz, buf);
+    }
+
+
+    // 
+    // Unaligned : read-modify-copy
+    //
+    p = buf;
+    tmp = AllocatePool(blksz);
+    SBC_RET_VALIDATE_ERRCODEMSG((tmp != NULL), SBCNULLP, "Out Of Resource");
+
+    // Head
+
+    if (o) {
+        retval = io->ReadBlocks(io, io->Media->MediaId, lba, blksz ,tmp);
+        if (EFI_ERROR(retval)) {
+            dprint("%ld LBA read block fail (%r)", lba, retval);
+            ret = SBCIO;
+            goto errdone;
+        }
+        UINTN c = MIN(sz, blksz - o);
+        CopyMem(p, tmp + o, c);
+        p += c;
+        sz -= c;
+        lba++;
+    }
+
+    // Body Copy
+    if (sz) {
+        retval = io->ReadBlocks(io, io->Media->MediaId, lba, blksz, tmp);
+        if (EFI_ERROR(retval)) {
+            dprint("%ld LBA read block fail (%r)", lba, retval);
+            ret = SBCIO;
+            goto errdone;
+        }
+
+        UINTN c = MIN(sz, blksz - o);
+        CopyMem(p, tmp + o, c);
+
+        p += blksz;
+        sz -= blksz;
+        lba++;
+    }
+
+    //
+    // tail
+    //
+    if (sz) {
+        retval = io->ReadBlocks(io, io->Media->MediaId, lba, blksz, tmp);
+        if (EFI_ERROR(retval)) {
+            dprint("%ld LBA read block fail (%r)", lba, retval);
+            ret = SBCIO;
+            goto errdone;
+        }
+        CopyMem(p, tmp, sz);
+    }
+
+errdone:
+
+    if (tmp) {
+        FreePool(tmp);
+    }
+    return ret;
+
+}
+
 VOID SBC_FileCtrlTestMain(VOID)
 {
     SBCStatus ret = SBCOK;

@@ -10,7 +10,7 @@ import fwcrypt
 
 
 base_answer = "rlwlekqdksrlfdl."
-fw_info = "bjadnpdjwjdqhrlf"
+fw_info = "fw_v_1.0"
 
 #fwfname     = "FSBL.efi"
 rootcaf     = "SBC.der"

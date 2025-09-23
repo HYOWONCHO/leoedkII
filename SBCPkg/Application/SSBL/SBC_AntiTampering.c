@@ -1974,7 +1974,7 @@ SBCStatus  SBC_SSBL_Verify(VOID *blkhnd, VOID *ansr, UINTN normbank)
 
     CopyMem((void *)&bsinfo, (void *)infostart, sizeof bsinfo);
 
-    ////SBC_external_mem_print_bin("BSINFO", (UINT8 *)&bsinfo, sizeof bsinfo);
+    //SBC_external_mem_print_bin("BSINFO", (UINT8 *)&bsinfo, sizeof bsinfo);
 
     dprint("----------- SSBL Boot Service Informmtion ------------");
     dprint("Signature Len     : %d", bsinfo.m.siglen );
@@ -1993,29 +1993,29 @@ SBCStatus  SBC_SSBL_Verify(VOID *blkhnd, VOID *ansr, UINTN normbank)
     infostart = &((UINT8 *)rdlv.value)[last_of_fsbl];
 
     //dprint("FSBL Last : %d", last_of_fsbl);
-    ////SBC_external_mem_print_bin("Addtional Information", infostart,bsinfolen  );
+    SBC_external_mem_print_bin("Addtional Information", infostart,bsinfolen  );
 
     fsbl_bsinfo_ptr_t info = {NULL, NULL, NULL, NULL};
 
     info.baseansw = (VOID *)&infostart[bsptrcnt];
     bsptrcnt += bsinfo.m.banswlen;
 
-    //SBC_external_mem_print_bin("Base Answer", (UINT8 *)info.baseansw,  bsinfo.m.banswlen );
+    SBC_external_mem_print_bin("Base Answer", (UINT8 *)info.baseansw,  bsinfo.m.banswlen );
 
     info.fwinfo = (VOID *)&infostart[bsptrcnt];
     bsptrcnt += bsinfo.m.fwinfolen;
 
-    //SBC_external_mem_print_bin("FW Info", (UINT8 *)info.fwinfo,  bsinfo.m.fwinfolen );
+    SBC_external_mem_print_bin("FW Info", (UINT8 *)info.fwinfo,  bsinfo.m.fwinfolen );
 
     info.certi = (VOID *)&infostart[bsptrcnt];
     bsptrcnt += bsinfo.m.certlen;
 
-    //SBC_external_mem_print_bin("Certificate", (UINT8 *)info.certi,  bsinfo.m.certlen );
+    SBC_external_mem_print_bin("Certificate", (UINT8 *)info.certi,  bsinfo.m.certlen );
 
     info.signature = (VOID *)&infostart[bsptrcnt];
     bsptrcnt += bsinfo.m.siglen;
 
-    //SBC_external_mem_print_bin("Signature", (UINT8 *)info.signature,  bsinfo.m.siglen );
+    SBC_external_mem_print_bin("Signature", (UINT8 *)info.signature,  bsinfo.m.siglen );
 
     // Verify the FSBL certificate using RootCA certificate
     // Later not comment 
@@ -2024,16 +2024,21 @@ SBCStatus  SBC_SSBL_Verify(VOID *blkhnd, VOID *ansr, UINTN normbank)
 
 
     BOOLEAN retbool = TRUE;
+    //SBC_external_mem_print_bin("SSBL Certi.", (UINT8  *)info.certi, (UINTN)bsinfo.m.certlen);
+
+
     retbool = EcGetPublicKeyFromX509((CONST UINT8  *)info.certi, (UINTN)bsinfo.m.certlen,  &EcPubKey);
+
     if (retbool != TRUE) {
       eprint("EcGetPublicKeyFromX509 fail");
       ret = SBCFAIL;
       goto errdone;
     }
 
-
     fsbl_len += (bsinfo.m.fwinfolen + bsinfo.m.certlen  + bsinfo.m.banswlen);
+
     dprint("SSBL image len : %d", fsbl_len);
+    HashSize = 32;
     ret = SBC_HashCompute(
                          NULL, /* Not yet used */
                          rdlv.value,
@@ -2042,7 +2047,9 @@ SBCStatus  SBC_SSBL_Verify(VOID *blkhnd, VOID *ansr, UINTN normbank)
                       ) ; 
 
 
-    HashSize = 32;
+    SBC_external_mem_print_bin("SSBL Image Hash", (UINT8 *)HashValue,   HashSize);
+
+   
 
     retbool = EcDsaVerify(
         EcPubKey,
@@ -2060,7 +2067,7 @@ SBCStatus  SBC_SSBL_Verify(VOID *blkhnd, VOID *ansr, UINTN normbank)
            L"SAT",
            8,
            L"Detection",
-           L"SBC_tamper_ SSBL signature verification faied");
+           L"SBC_tamper_SSBL signature verification faied");
       ret = SBCFAIL;
       goto errdone;
     }
@@ -2113,18 +2120,6 @@ SBCStatus  SBC_SSBL_Verify(VOID *blkhnd, VOID *ansr, UINTN normbank)
     //ret = SBCOK;
 
 errdone:
-
-    if (ret != SBCOK) {
-      ZeroMem(mrgmsg, sizeof mrgmsg);
-      UnicodeSPrint(mrgmsg, sizeof mrgmsg, L"SSBL Verify Fail \n");
-      sbc_err_sysprn(SBC_LOG_CMN_PRIO_ERR, 2,
-             L"SBC",
-             L"FSBL",
-             L"Weapon System",
-             8,
-             L"Determine Firmare Tampering ",
-             mrgmsg);
-    }
 
     if (EcPubKey != NULL) {
       EcFree(EcPubKey);

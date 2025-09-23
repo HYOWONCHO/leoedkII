@@ -157,7 +157,7 @@ typedef union _boot_fw_inf_t {
 #define SYS_CONF_RES_OFS                0x00000040          /**< Reference offset */
 #define SYS_CONF_ROOT_CA_OFS            0x00000080
 #define SYS_CONF_DEVID_CRT_OFS          0x00000880
-#define SYS_CONF_SWID_CRT_OFS           0x00001080
+#define SYS_CONF_FWID_CRT_OFS           0x00001080
 #define SYS_CONF_OSID_CRT_OFS           0x00001880
 #define SYS_CONF_SW_LIST_OFS            0x00002080
 

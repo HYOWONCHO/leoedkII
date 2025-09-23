@@ -1153,7 +1153,7 @@ SBCStatus  SBC_DeviceIdKyeVerify(VOID *blkio, UINT8 *fwid, UINT8 *deckey)
 
     //SBC_mem_print_bin("12 Device ID cert", (UINT8 *)loadbuf, ldlen);
 #if 1 //ndef _FSBL_TEST_ 
-    offset = SYS_CONF_fwid_CRT_OFS;
+    offset = SYS_CONF_FWID_CRT_OFS;
 #else
 
     UINT8 rawData[428] = {                                           
@@ -1356,7 +1356,7 @@ SBCStatus  SBC_FirmwareIdKyeVerify(VOID *blkio, UINT8 *fwid, UINT8 *deckey)
 
     //SBC_mem_print_bin("12 Firmware IDcert", (UINT8 *)loadbuf, ldlen);
 #if 1 //ndef _FSBL_TEST_ 
-    offset = SYS_CONF_SWID_CRT_OFS;
+    offset = SYS_CONF_FWID_CRT_OFS;
 #else
 
     UINT8 rawData[428] = {                                           
@@ -1671,14 +1671,14 @@ SBCStatus  SBC_BaseAnswerValidate(VOID *blkhnd, UINT8 *answer, UINTN answerl, UI
 #ifndef _ATSW_INTGR_TEST_
     SBC_external_mem_print_bin("plain msg", answer, answerl);
     SBC_external_mem_print_bin("decrypt msg", decbuf, ctx.out.length);
-    if ((CompareMem((const void *)decbuf, (const void *)answer, answerl) != 0) && (ischeck == TRUE)) {
+    if ((CompareMem((const void *)decbuf, (const void *)answer, answerl) != 0)) {
 #else
     UINT8 test_answering[16] = {
       'A','n','t','i','-','T','a','m','p','e','r','i','n','g'
     };
     SBC_external_mem_print_bin("plain msg", test_answering, sizeof test_answering);
     SBC_external_mem_print_bin("decrypt msg", decbuf, ctx.out.length);
-    if ((CompareMem((const void *)decbuf, (const void *)test_answering, 16) != 0) && (ischeck == TRUE)) {
+    if ((CompareMem((const void *)decbuf, (const void *)test_answering, 16) != 0)) {
 #endif
 
 
@@ -1705,7 +1705,7 @@ SBCStatus  SBC_BaseAnswerValidate(VOID *blkhnd, UINT8 *answer, UINTN answerl, UI
          L"SAT",
          3,
          L"Validation",
-         mrgmsg); /                                                                   
+         mrgmsg);                                                                  
 
 errdone:
     return ret;
@@ -2546,7 +2546,7 @@ errdone:
 }
 
 extern VOID *h_blkio;
-SBCStatus SBC_GenFWID(EFI_HANDLE *h_image, UINT8 *fwid, UINT8 *fwid, UINTN normbank, UINTN bm)
+SBCStatus SBC_GenFWID(EFI_HANDLE *h_image, UINT8 *devid, UINT8 *fwid, UINTN normbank, UINTN bm)
 {
 
   SBCStatus ret       = SBCOK;
@@ -2576,7 +2576,7 @@ SBCStatus SBC_GenFWID(EFI_HANDLE *h_image, UINT8 *fwid, UINT8 *fwid, UINTN normb
   temp = AllocateZeroPool(SBC_AT_HASH_LEN << 1);
   SBC_RET_VALIDATE_ERRCODEMSG((temp != NULL), SBCNULLP, "memeory creation fail");
 
-  CopyMem((void *)&temp[0], fwid, SBC_AT_HASH_LEN);
+  CopyMem((void *)&temp[0], devid, SBC_AT_HASH_LEN);
   CopyMem((void *)&temp[SBC_AT_HASH_LEN], hash_ssbl, SBC_AT_HASH_LEN);
 
   ret = SBC_HashCompute(

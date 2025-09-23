@@ -130,7 +130,7 @@ void D_SAT_PWT_SFR_001(void *priv)
     CopyMem(&loadbuf[offset], (void *)&devkey, hdrlen);
 
 
-    offset = SYS_CONF_SWID_CRT_OFS;
+    offset = SYS_CONF_FWID_CRT_OFS;
     hdrlen = sizeof(at_key_t);
     CopyMem(&loadbuf[offset], &hdrlen, 4);
     offset += 4;
