@@ -1549,6 +1549,125 @@ errdone:
     return ret;
 }
 
+SBCStatus SBC_RawAlignedWriteBlockIO(VOID *blk, UINTN off, UINTN sz, CONST VOID *buf)
+{
+    SBCStatus ret = SBCOK;
+    EFI_BLOCK_IO_PROTOCOL *io = (EFI_BLOCK_IO_PROTOCOL *)blk; 
+    UINT32 B;
+    UINTN total;
+    EFI_LBA lba;
+    EFI_STATUS retval;
+    UINTN cur;
+    UINT8 *p;
+    UINTN intra;
+
+
+    EFI_BLOCK_IO_MEDIA *m = io->Media;
+
+    if ( !m || !m->MediaPresent) {
+        eprint("EFI NO MEDIA");
+        ret = SBCIO;
+        goto errdone;
+    }
+
+    B = m->BlockSize;
+    total =(m->LastBlock + 1ULL) *  (UINT64)B;
+
+    //
+    // Check the Block IO device boundary
+    //
+    if (off > total || off + sz > total) {
+        eprint("Invalid Parameter");
+        ret = SBCINVPARAM;
+        goto errdone;
+    }
+
+    cur = off;
+    p = (UINT8 *)buf;
+
+    lba = cur / B;
+    intra = (UINTN)(cur % B);
+
+
+    //
+    // Head ( Partial Block )
+    //
+    if (intra) {
+        UINT8 *tmp = AllocatePool(B);
+        SBC_RET_VALIDATE_ERRCODEMSG((tmp != NULL), SBCNULLP, "Allocation Fail");
+
+        retval=  io->ReadBlocks(io, m->MediaId, lba, B, tmp);
+        if (EFI_ERROR(retval)) {
+            eprint("Read Block fail (%r)", retval);
+            FreePool(tmp);
+            return SBCIO;
+        }
+
+        UINTN c = MIN(sz, B - intra);
+        CopyMem(tmp + intra, p, c);
+
+        retval = io->WriteBlocks(io, m->MediaId, lba, B, tmp);
+        FreePool(tmp);
+        if (EFI_ERROR(retval)) {
+            return SBCIO;
+        }
+
+        p += c;
+        sz -= c;
+        cur += c;
+        lba++;
+    }
+
+    //
+    // Body ( pure write block )
+    //
+    while (sz >= B) {
+        retval = io->WriteBlocks(io, m->MediaId, lba, B, (VOID *)p);
+        if (EFI_ERROR(retval)) {
+            eprint("Write Blocks fail (%r)", retval);
+            return SBCIO;
+        }
+
+        p += B;
+        sz -= B;
+        cur += B;
+        lba++;
+    }
+
+    //
+    // remind blocks
+    //
+    if (sz) {
+        UINT8 *tmp = AllocatePool(B);
+        SBC_RET_VALIDATE_ERRCODEMSG((tmp != NULL), SBCNULLP, "Allocation Fail");
+
+        retval = io->ReadBlocks(io, m->MediaId, lba, B, tmp);
+        if (EFI_ERROR(retval)) {
+            FreePool(tmp);
+            return SBCIO;
+        }
+
+        CopyMem(tmp, p, sz);
+        retval = io->WriteBlocks(io, m->MediaId, lba, B, tmp);
+        FreePool(tmp);
+        if (EFI_ERROR(retval)) {
+            return SBCIO;
+        }
+    }
+
+
+    ret = SBCOK;
+
+
+
+
+
+errdone:
+
+    return ret;
+
+}
+
 SBCStatus SBC_RawAlignedReadBlockIO(VOID *blk, UINTN off, UINTN sz, VOID *buf)
 {
 

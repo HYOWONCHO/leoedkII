@@ -428,6 +428,39 @@ SBCStatus SBC_ProtectedSWRead(VOID *blkio,
                               VOID **buf, UINT32 *len, 
                               UINT32 bnkid);
 
+
+/*!
+ * 
+ * \brief Write arbitrary bytes to a Block I/O device
+ * 
+ * \author leoc (9/24/25)
+ * 
+ * \param blk    Pointer to EFI_BLOCK_IO_PROTOCOL
+ * \param off    Byte offset from the start to media to begin writting
+ * \param sz     Number of bytes to write.
+ * \param buf    Source bufferw to write
+ * 
+ * \return On success, return the SBCOK, otherwise return the apporiate value 
+ */
+SBCStatus SBC_RawAlignedWriteBlockIO(VOID *blk, UINTN off, UINTN sz, CONST VOID *buf);
+
+
+
+/*!
+ * 
+ * \brief Read arbitrary bytes to a Block I/O device
+ * 
+ * \author leoc (9/24/25)
+ * 
+ * \param blk    Pointer to EFI_BLOCK_IO_PROTOCOL
+ * \param off    Byte offset from the start to media to begin reading
+ * \param sz     Number of bytes to read.
+ * \param buf    Source bufferw to read
+ * 
+ * \return On success, return the SBCOK, otherwise return the apporiate value 
+ */
+SBCStatus SBC_RawAlignedReadBlockIO(VOID *blk, UINTN off, UINTN sz, VOID *buf);
+
 EFI_STATUS SBC_WriteFile(EFI_HANDLE ImageHandle, CHAR16 *FileNames, LV_t *out);
 
 UINTN SBC_FindEfiFileSystemProtocol(EFI_HANDLE **handle);
