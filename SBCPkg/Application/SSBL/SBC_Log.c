@@ -69,6 +69,7 @@ void SBC_mem_print_bin(
         UINT32 length /**< [in] length of buffer */
         )
 {
+#ifdef _DEBUG_PRINT_ON_
     UINT32 i, sz;
 
     if(title) {
@@ -105,6 +106,12 @@ void SBC_mem_print_bin(
         buffer += sz;
         length -= sz;
     }
+#else
+    (VOID)title;
+    (VOID)buffer;
+    (VOID)length;
+#endif
+    return;
 }
 
 
@@ -114,6 +121,7 @@ void SBC_external_mem_print_bin(
         UINT32 length /**< [in] length of buffer */
         )
 {
+#ifdef _DEBUG_PRINT_ON_
     UINT32 i, sz;
     UINT32 offset = 0;
 
@@ -151,6 +159,13 @@ void SBC_external_mem_print_bin(
         buffer += sz;
         length -= sz;
     }
+#else
+    (VOID)title;
+    (VOID)buffer;
+    (VOID)length;
+#endif
+
+    return;
 }
 
 

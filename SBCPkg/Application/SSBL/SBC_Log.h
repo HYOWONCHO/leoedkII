@@ -34,6 +34,7 @@ typedef enum {
 #define SBC_LOG_HOSTNAME                            L"N/A"
 
 //#define LINE_LEN 16
+
 void SBC_mem_print_bin(
         CHAR8 *title /**< [in] display name strings */,
         UINT8* buffer /**< [in] print buffer  */,
@@ -52,7 +53,7 @@ VOID SBC_LogBoolean(BOOLEAN expression, CONST CHAR8 *funcname, UINTN linenumber,
 
 VOID SBC_LogMsg(CHAR8* logmsg, CONST CHAR8 *funcname, UINTN linenumber, 
                 CONST CHAR8 *filename);
-
+#ifdef _DEBUG_PRINT_ON_
 #define SBCLOGBOOLEAN(expression)    \
   SBC_LogBoolean((expression), __func__, __LINE__ , __FILE__, #expression)
 
@@ -74,6 +75,22 @@ VOID SBC_LogMsg(CHAR8* logmsg, CONST CHAR8 *funcname, UINTN linenumber,
 
 #define int_eprint(fmt,...) \
     Print(ANSI_COLOR_RED_BOLD L"(%a:%d) : "fmt" \n" ANSI_COLOR_RESET, __FUNCTION__, __LINE__,##__VA_ARGS__)
+#else
+#define SBCLOGBOOLEAN(expression)    
+
+#define SBCLOGMSG(logmsg) 
+
+#define dprint(fmt,...) 
+
+#define eprint(fmt,...) 
+
+#define intgreen_dprint(fmt,...) 
+
+#define int_dprint(fmt,...) 
+
+#define int_eprint(fmt,...) 
+#endif
+
 
 /*
 extern VOID  SBC_LogWrite(UINT32 prio, CHAR16 *ver, CHAR16 *host,                                                

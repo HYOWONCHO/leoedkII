@@ -112,7 +112,7 @@ SBCStatus  SBC_DiceKeysGen(EFI_HANDLE ImageHandle, VOID *p,UINTN normbank, UINTN
 
     ret = SBC_GenDeviceID(h->devid);
     if (ret != SBCOK) {
-        Print(L"Device ID generate fail \n");
+        dprint("Device ID generate fail \n");
         goto errdone;
     }
 
@@ -123,7 +123,7 @@ SBCStatus  SBC_DiceKeysGen(EFI_HANDLE ImageHandle, VOID *p,UINTN normbank, UINTN
 
     ret = SBC_GenFWID(ImageHandle, h->devid, h->fwid, normbank, bm);
     if (ret != SBCOK) {
-        Print(L"FW ID generate fail \n");
+        dprint("FW ID generate fail \n");
         goto errdone;
     }
 
@@ -131,7 +131,7 @@ SBCStatus  SBC_DiceKeysGen(EFI_HANDLE ImageHandle, VOID *p,UINTN normbank, UINTN
 
     ret = SBC_GenOSID(ImageHandle,  h->fwid, h->osid);
     if (ret != SBCOK) {
-        Print(L"FW ID generate fail \n");
+        dprint("FW ID generate fail \n");
         goto errdone;
     }
 
@@ -172,7 +172,7 @@ SBCStatus SBC_BootModeFactory(VOID *blkhnd, VOID *ImageHandle)
   //Print("Start LBA Address : 0x%x  \n")
   //endlba = (BOOT_SSBL_MAX >>  SBC_RAWPRT_DFLT_SHIFT) - startlba;
 
-  //Print(L"Start Addr : 0x%lx , End addr : 0x%lx \n", startlba, endlba);
+  //dprint("Start Addr : 0x%lx , End addr : 0x%lx \n", startlba, endlba);
 
   ret = SBC_RawPrtReadBlock(blkhnd, (void *)imghdr, &imglen, startlba);
   if (ret != SBCOK) {
@@ -186,13 +186,13 @@ SBCStatus SBC_BootModeFactory(VOID *blkhnd, VOID *ImageHandle)
   // Temp code, at later, should be need to remove 
   //imglen = SBC_SWAP_ENDIAN_32(imglen);
 
-  //Print(L"SSBL Image Len : %d \n", imglen);
+  //dprint("SSBL Image Len : %d \n", imglen);
  
   imglen = ALIGN_VALUE(imglen, SBC_RAWPRT_DFLT_BLK_SZ);
-  //Print(L"Align Image Len : %d \n", imglen);
+  //dprint("Align Image Len : %d \n", imglen);
   //loadimg = AllocateZeroPool(imglen);
 //if (loadimg == NULL) {
-//  Print(L"Allocate Image pool fail \n");
+//  dprint("Allocate Image pool fail \n");
 //  ret = SBCNULLP;
 //  goto errdone;
 //}
@@ -212,12 +212,12 @@ SBCStatus SBC_BootModeFactory(VOID *blkhnd, VOID *ImageHandle)
   }
 
   if ((hndlcnt = SBC_FindEfiFileSystemProtocol(&ssbl_img_hndl)) <= 0) {
-    Print(L"File SYstem Handle Found fail \n");
+    dprint("File SYstem Handle Found fail \n");
     ret = SBCIO;
     goto errdone;
   }
 
-  //Print(L"File System Handle Found (Handle Count : %d) \n", hndlcnt);
+  //dprint("File System Handle Found (Handle Count : %d) \n", hndlcnt);
 
   _lv_set_data(&wrlv,&loadimg[4], imglen - 4);
 
@@ -227,13 +227,13 @@ SBCStatus SBC_BootModeFactory(VOID *blkhnd, VOID *ImageHandle)
     retval = SBC_WriteFile(ssbl_img_hndl[idx], fname, &wrlv);
     if (EFI_ERROR(retval)) {
         //eprint("%s file write fail %r", fname, retval);
-        //Print(L"%a file write fail %r \n", fname, retval);
+        //dprint("%a file write fail %r \n", fname, retval);
         ret = SBCIO;
         continue;
         //goto errdone;
     }
 
-    //Print(L"Index %d Result : %d \n", idx, retval);
+    //dprint("Index %d Result : %d \n", idx, retval);
     break;
   }
 
@@ -245,12 +245,12 @@ SBCStatus SBC_BootModeFactory(VOID *blkhnd, VOID *ImageHandle)
 
 
 
-  Print(L"SSBL Write is Done \n");
+  dprint("SSBL Write is Done \n");
   //SBC_mem_print_bin("SSBL Header", imghdr, imglen);
   
   ret = SBC_SSBL_LoadAndStart(ImageHandle);
   if (ret != SBCOK) {
-    Print(L"SSBL Factory Running Fail \n");
+    dprint("SSBL Factory Running Fail \n");
     goto errdone;
   }
 #else
@@ -356,7 +356,7 @@ static VOID _get_fw_bankid(UINT32 val, UINT32 *cur, UINT32 *prev)
     bank_first  = (UINT8)((val >> 8) & 0xFF);
     bank_second = (UINT8)((val >> 24) & 0xFF);
 
-    Print(L"Banke First : %c , Bank Second : %c \n", bank_first, bank_second);
+    dprint("Banke First : %c , Bank Second : %c \n", bank_first, bank_second);
 
     if(bank_first == 'C') {
         *cur = (val) & 0xFF;
@@ -418,7 +418,7 @@ UefiMain (
     // Get the NVMe SSD Raw Partiton handle and Header information
     ret = SBC_BlkIoHandleInit(&h_blkio, &h_rawptrheader);
     if (ret != SBCOK) {
-      Print(L"Raw Partitino find fail !!! \n");
+      dprint("Raw Partitino find fail !!! \n");
       goto errdone;
     }
 
@@ -426,7 +426,7 @@ UefiMain (
 
 
     
-    //Print(L"Find Raw Partition (0x%x)...\n", h_rawptrheader.magicid);
+    //dprint("Find Raw Partition (0x%x)...\n", h_rawptrheader.magicid);
     dprint("Partition Info (%a) \n", h_rawptrheader.prtinfo);
 
     // Check the Preference SSBL bank
@@ -577,7 +577,7 @@ UefiMain (
            goto errdone;
        }
       
-       //Print(L"Factory Boot Mode !!! \n");
+       //dprint("Factory Boot Mode !!! \n");
       break;
     case BOOT_MODE_UPDATE:
         dprint("Boot Mode BOOT_MODE_UPDATE");
@@ -610,7 +610,7 @@ UefiMain (
         ret = SBC_SecureBootCheck((VOID *)&btproc);
         break;
     default:
-      Print(L"Unknown Boot Mode ... SHOULD go to Abort\n");
+      dprint("Unknown Boot Mode ... SHOULD go to Abort\n");
       break;
     }
 
@@ -659,7 +659,7 @@ errdone:
 //UINTN BootOptionCount;
 //
 //
-//Print(L"Start BOOt .. !! \n");
+//dprint("Start BOOt .. !! \n");
 //BootOptions = NULL;
 //BootOptionCount = 0;
 //
