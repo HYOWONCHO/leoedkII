@@ -1743,7 +1743,7 @@ SBCStatus SBC_RawAlignedReadBlockIO(VOID *blk, UINTN off, UINTN sz, VOID *buf)
 
 errdone:
 
-    SBC_mem_print_bin("Read Buf", p, 512);
+    //SBC_mem_print_bin("Read Buf", (UINT8 *)buf, 512);
     if (tmp) {
         FreePool(tmp);
     }
