@@ -1,14 +1,17 @@
 
+#include "SBC_ProtectedSW.h"
 #include "SBC_FileCtrl.h"
+#include "SBC_BootProc.h"
+
 
 
 SBCStatus SBC_ProtSWGetCnt(VOID *handle, UINTN *cnt)
 {
     SBCStatus ret = SBCOK;
-    UINTN sw_list_len;
-    UINTN line;
+    //UINTN sw_list_len;
+    //UINTN line;
     UINTN sw_list_size = sizeof(sw_path_t);
-    UINTN readn; 
+    //UINTN readn; 
     boot_proc_t *p = (boot_proc_t *)handle;
 
     ret  = SBC_RawAlignedReadBlockIO(p->blkhnd, 
@@ -19,7 +22,7 @@ SBCStatus SBC_ProtSWGetCnt(VOID *handle, UINTN *cnt)
 
     dprint("Protected List Cnt %d", *cnt);
 
-    *cnt = *cnt / sizeof sw_path_t;
+    *cnt = *cnt / sw_list_size;
 
     dprint("Protected SW count = %d", *cnt);
 
@@ -31,6 +34,13 @@ errdone:
 
 SBCStatus SBC_ProtSWDecrypt(VOID *handle, UINT8 *key, UINT8 *decbuf ,UINT32 *declen)
 {
+    SBCStatus ret = SBCOK;
+
+    SBC_RET_VALIDATE_ERRCODEMSG((handle != NULL), SBCNULLP, "Invalid Handle Object");
+
+errdone:
+
+    return ret;
 
 }
 

@@ -40,6 +40,7 @@
   SBC_X509.c
   SBC_LoadKernelImage.c
   SBC_Kdf.c
+  SBC_ProtectedSW.c
 
 
 [Packages]
@@ -132,7 +133,7 @@
 
     #Debug On
     #*_*_*_CC_FLAGS = -D_SBC_DEBUG_ON_ 
-    #*_*_*_CC_FLAGS = -D_DEBUG_PRINT_ON_
+    *_*_*_CC_FLAGS = -D_DEBUG_PRINT_ON_
     #*_*_*_CC_FLAGS = -D_SSBL_TEST_
 
     

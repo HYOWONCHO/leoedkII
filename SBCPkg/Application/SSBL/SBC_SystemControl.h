@@ -35,7 +35,7 @@ typedef struct _sw_node_t {
     UINT8 reserved[12];
     off_t sw0_off;
     off_t sw1_off;
-}sw_node_t;
+}sbc_sw_node_t;
 
 #pragma pack()
 VOID SBC_ShutdownSystem(VOID);

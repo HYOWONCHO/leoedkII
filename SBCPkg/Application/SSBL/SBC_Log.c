@@ -219,6 +219,25 @@ UINTN SBC_LogHexToStrChar16( UINT8 *data, UINTN len, CHAR16 *out, UINTN out_cap,
 }
 
 
+VOID SBC_LogHexKeyConvToChar16(VOID *out, VOID *msgbuf, VOID *keymsg)
+{
+    UINT8 *keybuf = (UINT8 *)keymsg;
+    UINT16 *msg = (UINT16 *)msgbuf;
+    CHAR16 out_key[128] = {0,};
+
+    ZeroMem(keybuf, 32);
+    ZeroMem(msgbuf, 8192);
+
+    dprint("msg : %s", msg);
+
+    SBC_LogHexToStrChar16(keybuf, 32, out_key, sizeof(out_key)/sizeof(out_key[0]), FALSE, 0);
+
+
+    UnicodeSPrint(out,  8192, msg , out_key);
+
+    return;
+}
+
 CHAR16 *SBC_LogMrg(CONST CHAR16 *fmt, ...)
 {
 

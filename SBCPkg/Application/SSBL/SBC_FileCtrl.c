@@ -1677,7 +1677,7 @@ SBCStatus SBC_RawAlignedReadBlockIO(VOID *blk, UINTN off, UINTN sz, VOID *buf)
     UINT32                  blksz = io->Media->BlockSize;
     EFI_LBA                 lba = off / blksz;
 
-    UINTN                   o = (UINTN)(off / blksz);
+    UINTN                   o = (UINTN)(off % blksz);
     UINT8                   *p = NULL;
     UINT8                   *tmp = NULL;
 
@@ -1743,6 +1743,7 @@ SBCStatus SBC_RawAlignedReadBlockIO(VOID *blk, UINTN off, UINTN sz, VOID *buf)
 
 errdone:
 
+    SBC_mem_print_bin("Read Buf", p, 512);
     if (tmp) {
         FreePool(tmp);
     }

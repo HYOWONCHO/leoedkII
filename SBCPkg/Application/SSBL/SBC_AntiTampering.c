@@ -2280,6 +2280,7 @@ SBCStatus SBC_GenFWID(EFI_HANDLE *h_image, UINT8 *devid, UINT8 *fwid, UINTN norm
   //UINT8 *rdbuf = NULL;
   LV_t lv;
   UINT8 hash_ssbl[SBC_AT_HASH_LEN] = {0, };
+  //CHAR16 *print_msg = L"SBC_Dice_FWID Creation Succeess (%s) \n";
 
 
   lv.value = NULL;
@@ -2323,6 +2324,8 @@ SBCStatus SBC_GenFWID(EFI_HANDLE *h_image, UINT8 *devid, UINT8 *fwid, UINTN norm
   SBC_mem_print_bin("Print out key", (UINT8 *)print_out_key, sizeof print_out_key);
 
   UnicodeSPrint(mrgmsg,  sizeof mrgmsg, L"SBC_Dice_FWID Creation Succeess (%s) \n", print_out_key);
+
+  //SBC_LogHexKeyConvToChar16(mrgmsg, (VOID *)print_msg, fwid);
 
 
   sbc_err_sysprn(SBC_LOG_CMN_PRIO_INFO, 2, 

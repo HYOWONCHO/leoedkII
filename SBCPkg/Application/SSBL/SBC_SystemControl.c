@@ -36,7 +36,7 @@ SBC_FindPrtoSWAndProcessing(UINT8 *deckey,
     SBC_AESContext aesctx;
     SBC_AESGcmCtx  ctx;
     [[gnu::unused]]  UINT8 shared_secret[SBC_AT_HASH_LEN] = {0, };
-    [[gnu::unused]] sw_node_t node_info;
+    [[gnu::unused]] sbc_sw_node_t node_info;
 
     CopyMem((void *)&enclen, (void *)&buf[0], 4);
     encbuf = &buf[4];

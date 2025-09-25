@@ -65,6 +65,7 @@
 #include "SBC_Util.h"
 #include "SBC_BootProc.h"
 #include "SBC_SystemControl.h"
+#include "SBC_ProtectedSW.h"
 
 
 VOID *h_blkio;               // Block I/O handle
@@ -486,6 +487,16 @@ UefiMain (
     return EFI_SUCCESS;
 #endif
 
+    {
+        UINTN prot_sw_cnt = 0;
+        SBC_ProtSWGetCnt(&btproc, &prot_sw_cnt);
+        dprint("Protected SW Count : %d", prot_sw_cnt);
+
+    }
+
+    return EFI_SUCCESS;
+
+
     ret = SBC_SSBL_Verify(h_blkio, &baseansr, btproc.curr_sw_bnk );
     if (ret != SBCOK) {
           sbc_err_sysprn(SBC_LOG_CMN_PRIO_ERR, 2,
@@ -531,6 +542,8 @@ UefiMain (
          1,
          L"Validation",
          L"HW&SW Base Key Creation Success");
+
+    return EFI_SUCCESS;
     
 #if defined(_FILE_RD_BM_)
 //#warning   "SBC Boot Mode Read from File"

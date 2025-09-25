@@ -166,6 +166,7 @@ UINTN SBC_LogHexToStrChar8( UINT8 *data, UINTN len, CHAR8 *out, UINTN out_cap, B
  */
 UINTN SBC_LogHexToStrChar16( UINT8 *data, UINTN len, CHAR16 *out, UINTN out_cap, BOOLEAN loweracse, CHAR16 sep);
 
+VOID SBC_LogHexKeyConvToChar16(VOID *out, VOID *msgbuf, VOID *keymsg);
 
 #define sbc_err_sysprn(prio, ver, host, appname, csc, sfrid, evtype, fmt,...)                                  \
     SBC_LogPrint((CONST CHAR16 *)__FUNCTION__, (UINT32)__LINE__, prio, ver, host, appname, csc, sfrid, evtype, fmt, ##__VA_ARGS__)
