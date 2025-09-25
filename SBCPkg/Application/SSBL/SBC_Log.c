@@ -168,6 +168,31 @@ void SBC_external_mem_print_bin(
     return;
 }
 
+UINTN SBC_LogHexToStrChar8( UINT8 *data, UINTN len, CHAR8 *out, UINTN out_cap, BOOLEAN loweracse, CHAR8 sep)
+{
+    CHAR8 HEXU16[] = "0123456789ABCDEF";
+    CHAR8 HEXL16[] = "0123456789abcdef";
+    CHAR8 *HEX = loweracse ? HEXL16 : HEXU16;
+    UINTN need = (sep ? (len ? (len * 2 + (len - 1)) : 0) : (len * 2)) + 1; // +1 for L'\0'
+    dprint("out cap : %d , need : %d", out_cap, need);
+    if (out_cap < need) {
+        return 0;
+    }
+
+    UINTN pos = 0;
+    for (UINTN i = 0; i < len; i++) {
+        UINT8 b = data[i];
+        out[pos++] = HEX[(b >> 4) & 0xFF];
+        out[pos++] = HEX[b & 0x0F];
+        if (sep && i + 1 < len) {
+            out[pos++] = sep;
+        }
+    }
+
+    out[pos] = L'\0';
+    return pos;
+}
+
 UINTN SBC_LogHexToStrChar16( UINT8 *data, UINTN len, CHAR16 *out, UINTN out_cap, BOOLEAN loweracse, CHAR16 sep)
 {
     CHAR16 HEXU16[] = L"0123456789ABCDEF";
