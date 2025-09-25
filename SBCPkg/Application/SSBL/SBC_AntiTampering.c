@@ -2237,7 +2237,7 @@ SBCStatus SBC_GenDeviceID(UINT8 *devid)
     SBC_mem_print_bin("Device ID", devid, 32);
     ZeroMem(print_out_key, 32);
     ZeroMem(mrgmsg, sizeof mrgmsg);
-    SBC_LogHexToStrChar16(devid, 32, print_out_key, sizeof(print_out_key)/sizeof(print_out_key[0]),  FALSE, ':');
+    SBC_LogHexToStrChar16(devid, 32, print_out_key, sizeof(print_out_key)/sizeof(print_out_key[0]),  FALSE, 0);
 
     SBC_mem_print_bin("Print out key", (UINT8 *)print_out_key, sizeof print_out_key);
 
@@ -2318,7 +2318,7 @@ SBCStatus SBC_GenFWID(EFI_HANDLE *h_image, UINT8 *devid, UINT8 *fwid, UINTN norm
 
   ZeroMem(print_out_key, 32);
   ZeroMem(mrgmsg, sizeof mrgmsg);
-  SBC_LogHexToStrChar16(fwid, 32, print_out_key, sizeof(print_out_key)/sizeof(print_out_key[0]),  FALSE, ':');
+  SBC_LogHexToStrChar16(fwid, 32, print_out_key, sizeof(print_out_key)/sizeof(print_out_key[0]),  FALSE, 0);
 
   SBC_mem_print_bin("Print out key", (UINT8 *)print_out_key, sizeof print_out_key);
 
@@ -2396,7 +2396,7 @@ SBCStatus SBC_GenOSID(EFI_HANDLE *h_image, UINT8 *fwid, UINT8 *osid)
 
   ZeroMem(print_out_key, 32);
   ZeroMem(mrgmsg, sizeof mrgmsg);
-  SBC_LogHexToStrChar16(osid, 32, print_out_key, sizeof(print_out_key)/sizeof(print_out_key[0]),  FALSE, ':');
+  SBC_LogHexToStrChar16(osid, 32, print_out_key, sizeof(print_out_key)/sizeof(print_out_key[0]),  FALSE, 0);
 
   SBC_mem_print_bin("Print out key", (UINT8 *)print_out_key, sizeof print_out_key);
 
