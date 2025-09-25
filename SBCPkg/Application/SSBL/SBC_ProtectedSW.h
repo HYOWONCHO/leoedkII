@@ -20,6 +20,20 @@ typedef struct {
     UINTN sw1_off;
 } sw_node_t;
 
+#define SBC_AT_RP_SW_NAME_MAX           256
+#define SBC_AT_RP_SYS_CONF_MAX_LEN   16 * 1024
+#define SBC_AT_RP_PROFILE_MAX_LEN    4096
+#define SBC_AT_RP_SW_BLOCK_LEN       1024
+#define SBC_AT_RP_SW_PATH_MAX        58  /** 16K * sizeof(sw_path_t) **/
+#define SBC_AT_RP_SW_NAME_MAX        256
+#define SBC_AT_RP_CERT_MAX_LEN       2 * 1024
+
+#define SBC_AT_RP_AAD_LENGTH		 20
+#define SBC_AT_RP_TAG_LEN	         16
+#define SBC_AT_RP_IV_LEN             12
+#define SBC_AT_RP_KEY_LEN            32
+#define SBC_AT_RP_RES_LEN            16
+
 
 /*!
  * \fn SBCStatus SBC_ProtSWGetCnt(VOID *handle, UINTN *cnt)

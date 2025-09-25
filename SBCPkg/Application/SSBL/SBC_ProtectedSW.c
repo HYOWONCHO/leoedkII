@@ -2,6 +2,7 @@
 #include "SBC_ProtectedSW.h"
 #include "SBC_FileCtrl.h"
 #include "SBC_BootProc.h"
+#include "SBC_AntiTampering.h"
 
 
 
@@ -31,12 +32,46 @@ errdone:
     return ret;
 }
 
+SBCStatus SBC_GetProtectedSwName(UINTN st, CHAR8 *sw_name, UINTN sw_name_size)
+{
+    SBCStatus ret = SBCOK;
+
+    UINT8 data[SBC_AT_RP_SYS_CONF_MAX_LEN]  = {0,};
+    UINT8 dec_key[SBC_AT_RP_KEY_LEN] = {0,};
+
+    ret = SBC_DeviceSecuirtyKeyCreate(dec_key);
+    SBC_RET_VALIDATE_ERRCODEMSG((ret == SBCOK), ret, "Protected SW List Cnt read fail");
+
+
+
+
+
+errdone:
+
+    return ret;
+
+}
+
 
 SBCStatus SBC_ProtSWDecrypt(VOID *handle, UINT8 *key, UINT8 *decbuf ,UINT32 *declen)
 {
     SBCStatus ret = SBCOK;
+    boot_proc_t *p = (boot_proc_t *)handle;
+    UINTN sw_list_line = 0ULL;
+    UINTN x = 0;
 
-    SBC_RET_VALIDATE_ERRCODEMSG((handle != NULL), SBCNULLP, "Invalid Handle Object");
+
+    SBC_RET_VALIDATE_ERRCODEMSG((p != NULL), SBCNULLP, "Invalid Handle Object");
+
+    ret = SBC_ProtSWGetCnt((VOID *)p, &sw_list_line);
+    SBC_RET_VALIDATE_ERRCODEMSG((ret == SBCOK), ret, "Protected SW Count read fail");
+
+    for( x = 0; x < sw_list_line; x++) {
+
+    }
+
+
+
 
 errdone:
 
