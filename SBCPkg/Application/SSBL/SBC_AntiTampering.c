@@ -37,6 +37,7 @@
 #include "SBC_Log.h"
   
 extern CHAR16 mrgmsg[8192];
+CHAR16 print_out_key[128];
 
 #pragma pack(1)
 typedef struct {
@@ -2234,10 +2235,34 @@ SBCStatus SBC_GenDeviceID(UINT8 *devid)
     }
 
     SBC_mem_print_bin("Device ID", devid, 32);
+    ZeroMem(print_out_key, 32);
+    ZeroMem(mrgmsg, sizeof mrgmsg);
+    SBC_LogHexToStrChar16(devid, 32, print_out_key, sizeof(print_out_key)/sizeof(print_out_key[0]),  FALSE, ':');
+
+    SBC_mem_print_bin("Print out key", (UINT8 *)print_out_key, sizeof print_out_key);
+
+    UnicodeSPrint(mrgmsg,  sizeof mrgmsg, L"SBC_Dice_DEVID Creation Succeess (%s) \n", print_out_key);
 
 
+    sbc_err_sysprn(SBC_LOG_CMN_PRIO_INFO, 2, 
+              L"AT_BOOT", 
+              L"SSBL", 
+              L"SAT", 
+              1, 
+              L"Validation ", 
+              mrgmsg);
     
 errdone:
+
+    if (ret != SBCOK) {
+        sbc_err_sysprn(SBC_LOG_CMN_PRIO_ERR, 2, 
+              L"AT_BOOT", 
+              L"SSBL", 
+              L"SAT", 
+              1, 
+              L"Validation ", 
+              L"SBC_Dice_DEVID Creation Fail");
+    }
 
     if(computebuf) {
         FreePool(computebuf);
@@ -2290,6 +2315,23 @@ SBCStatus SBC_GenFWID(EFI_HANDLE *h_image, UINT8 *devid, UINT8 *fwid, UINTN norm
                           ) ;
 
   SBC_mem_print_bin("FW ID", fwid, 32);
+
+  ZeroMem(print_out_key, 32);
+  ZeroMem(mrgmsg, sizeof mrgmsg);
+  SBC_LogHexToStrChar16(fwid, 32, print_out_key, sizeof(print_out_key)/sizeof(print_out_key[0]),  FALSE, ':');
+
+  SBC_mem_print_bin("Print out key", (UINT8 *)print_out_key, sizeof print_out_key);
+
+  UnicodeSPrint(mrgmsg,  sizeof mrgmsg, L"SBC_Dice_FWID Creation Succeess (%s) \n", print_out_key);
+
+
+  sbc_err_sysprn(SBC_LOG_CMN_PRIO_INFO, 2, 
+          L"AT_BOOT", 
+          L"SSBL", 
+          L"SAT", 
+          1, 
+          L"Validation ", 
+          mrgmsg);
 errdone:
 
   //dprint();
@@ -2351,6 +2393,23 @@ SBCStatus SBC_GenOSID(EFI_HANDLE *h_image, UINT8 *fwid, UINT8 *osid)
                           ) ;
 
   SBC_mem_print_bin("OS ID", osid, 32);
+
+  ZeroMem(print_out_key, 32);
+  ZeroMem(mrgmsg, sizeof mrgmsg);
+  SBC_LogHexToStrChar16(osid, 32, print_out_key, sizeof(print_out_key)/sizeof(print_out_key[0]),  FALSE, ':');
+
+  SBC_mem_print_bin("Print out key", (UINT8 *)print_out_key, sizeof print_out_key);
+
+  UnicodeSPrint(mrgmsg,  sizeof mrgmsg, L"SBC_Dice_OSID Creation Succeess (%s) \n", print_out_key);
+
+
+  sbc_err_sysprn(SBC_LOG_CMN_PRIO_INFO, 2, 
+          L"AT_BOOT", 
+          L"SSBL", 
+          L"SAT", 
+          1, 
+          L"Validation ", 
+          mrgmsg);
 errdone:
 
   if (temp != NULL) {

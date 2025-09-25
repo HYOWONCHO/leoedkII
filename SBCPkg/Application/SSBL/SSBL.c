@@ -531,14 +531,6 @@ UefiMain (
          1,
          L"Validation",
          L"HW&SW Base Key Creation Success");
-
-    // FWID and OSID certificate verify
-
-
-
-
-
-    // TODO : Read Key Mode 
     
 #if defined(_FILE_RD_BM_)
 //#warning   "SBC Boot Mode Read from File"

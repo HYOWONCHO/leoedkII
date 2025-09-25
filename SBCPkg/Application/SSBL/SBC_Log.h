@@ -133,6 +133,23 @@ VOID  SBC_LogPrint(CONST CHAR16* func, UINT32 funcline, UINT32 prio, UINT32 ver,
                         CHAR16 *format, ...);
 
 
+/*!
+ * 
+ * 
+ * \author leoc (9/25/25)
+ * 
+ * \param data      Pointer to input byte array
+ * \param len       Length of Data
+ * \param out       Pointer to output byte array
+ * \param out_cap   Lengthh of output element 
+ * \param loweracse Specify the Upper and Lower case 
+ * \param sep       Specify the delimiter 
+ * 
+ * \return UINTN    Actual recorded CHAR16 length excluding NULL character, On failure, return the 0 
+ */
+UINTN SBC_LogHexToStrChar16( UINT8 *data, UINTN len, CHAR16 *out, UINTN out_cap, BOOLEAN loweracse, CHAR16 sep);
+
+
 #define sbc_err_sysprn(prio, ver, host, appname, csc, sfrid, evtype, fmt,...)                                  \
     SBC_LogPrint((CONST CHAR16 *)__FUNCTION__, (UINT32)__LINE__, prio, ver, host, appname, csc, sfrid, evtype, fmt, ##__VA_ARGS__)
 
