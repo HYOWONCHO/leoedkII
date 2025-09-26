@@ -461,6 +461,21 @@ SBCStatus SBC_RawAlignedWriteBlockIO(VOID *blk, UINTN off, UINTN sz, CONST VOID 
  */
 SBCStatus SBC_RawAlignedReadBlockIO(VOID *blk, UINTN off, UINTN sz, VOID *buf);
 
+
+/*!
+ * 
+ * 
+ * \author leonc (9/26/25)
+ * 
+ * \param handle        
+ * \param shared_secret 
+ * \param decbuf        
+ * \param rd_ofs        
+ * 
+ * \return SBCStatus 
+ */
+SBCStatus SBC_LoadRawPrt(VOID *handle, UINT8 *shared_secret, UINT8 *decbuf, UINTN *rdlen, UINTN rd_ofs)
+
 EFI_STATUS SBC_WriteFile(EFI_HANDLE ImageHandle, CHAR16 *FileNames, LV_t *out);
 
 UINTN SBC_FindEfiFileSystemProtocol(EFI_HANDLE **handle);

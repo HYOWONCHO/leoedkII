@@ -219,10 +219,12 @@ UINTN SBC_LogHexToStrChar16( UINT8 *data, UINTN len, CHAR16 *out, UINTN out_cap,
 }
 
 
+
+
 VOID SBC_LogHexKeyConvToChar16(VOID *out, VOID *msgbuf, VOID *keymsg)
 {
     UINT8 *keybuf = (UINT8 *)keymsg;
-    UINT16 *msg = (UINT16 *)msgbuf;
+    CONST UINT16 *msg = (CONST UINT16 *)msgbuf;
     CHAR16 out_key[128] = {0,};
 
     ZeroMem(keybuf, 32);

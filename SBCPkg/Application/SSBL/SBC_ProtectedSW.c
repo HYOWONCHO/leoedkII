@@ -39,81 +39,32 @@ SBCStatus SBC_GetProtectedSwName(VOID *handle, UINTN st, CHAR8 *sw_name, UINTN s
 {
     SBCStatus ret = SBCOK;
 
-    boot_proc_t *p = (boot_proc_t *)handle; 
-    UINT8 encbuf[SBC_AT_RP_SYS_CONF_MAX_LEN]  = {0,};
-    UINT8 decbuf[SBC_AT_RP_SYS_CONF_MAX_LEN]  = {0,};
-    UINT8 dec_key[SBC_AT_RP_KEY_LEN] = {0,};
-    UINTN enclen = 0ULL;
-    UINTN rd_ofs = SYS_CONF_START_OFS + SYS_CONF_SW_LIST_OFS;
-    UINT8 iv[SBC_AT_RP_IV_LEN], tag[SBC_AT_RP_TAG_LEN];
+    UINTN rdlen;
+    UINT8 decbuf[SBC_AT_RP_SYS_CONF_MAX_LEN] ={0, };
+    UINT8 deckey[SBC_AT_RP_KEY_LEN] = {0, };
 
-    UINT8 *shared_secret = NULL;
-    SBC_AESContext aesctx;
-    SBC_AESGcmCtx  ctx;
-
+    sw_path_t *path = (sw_path_t *)decbuf;
+    UINTN cnt, line, len = sizeof(sw_path_t);
 
     CHAR16 err_out_key_val[128] = {0,};
 
-    ret = SBC_DeviceSecuirtyKeyCreate(dec_key);
-    SBC_RET_VALIDATE_ERRCODEMSG((ret == SBCOK), ret, "Protected SW List Cnt read fail");
-
-    ret  = SBC_RawAlignedReadBlockIO(p->blkhnd, 
-                                     rd_ofs,
-                                     SBC_RAW_PRTHDR_LEN_OFS,
-                                     enclen);
-    SBC_RET_VALIDATE_ERRCODEMSG((ret == SBCOK), ret, "Protected SW List Cnt read fail");
-
-    
-
-    //
-    // Reading encrypted protected software
-    //
-    rd_ofs += SBC_RAW_PRTHDR_LEN_OFS;
-    ret  = SBC_RawAlignedReadBlockIO(p->blkhnd, 
-                                 rd_ofs,
-                                 enclen,
-                                 encbuf);
-
-    //
-    // Reading  iv
-    //
-    rd_ofs += enclen;
-    ret  = SBC_RawAlignedReadBlockIO(p->blkhnd, 
-                                 rd_ofs,
-                                 SBC_AT_RP_IV_LEN,
-                                 iv);
+    ret = SBC_DeviceSecuirtyKeyCreate(deckey);
+    if( ret != SBCOK ) {
+        sbc_err_sysprn(SBC_LOG_CMN_PRIO_ERR, 1,
+                     L"AT_BOOT",
+                     L"SSBL",
+                     L"SAT",
+                     8,
+                     L"Validation",
+                     L"SBC_RawFS_Key Creation Fail");
+        goto errdone;
+    }
 
 
-    //
-    // Reading tag
-    //
-    rd_ofs += SBC_AT_RP_IV_LEN;
-    ret  = SBC_RawAlignedReadBlockIO(p->blkhnd, 
-                                 rd_ofs,
-                                 SBC_AT_RP_TAG_LEN,
-                                 tag);
-
-
-    ( p->bm == BOOT_MODE_UPDATE ) ? shared_secret = ((atp_ident_t *)p->keyinfo)->migid : shared_secret = dec_key;
-
-
-
-
-    //
-    // Decrypt the Protected SW 
-    //
-
-    ctx.msg.value = (void *)encbuf;
-    ctx.out.value = (void *)decbuf;
-    ctx.msg.length = ctx.out.length = enclen;
-
-    SBC_AESGcmSetContext((void *)aesctx.gcm, 
-                     (void *)shared_secret, 
-                     (void *)iv, 
-                     (void *)tag);
-
-    if (SBC_AESGcmDecrypt(&aesctx) != SBCOK) {
-        SBC_LogHexToStrChar16(shared_secret, 32, err_out_key_val, sizeof(err_out_key_val)/sizeof(err_out_key_val[0]),  FALSE, 0);
+    //boot_proc_t *p = (boot_proc_t *)handle; 
+    ret = SBC_LoadRawPrt(handle, deckey, decbuf, &rdlen, SYS_CONF_START_OFS + SYS_CONF_SW_LIST_OFS);
+    if( ret != SBCOK ) {
+        SBC_LogHexToStrChar16(deckey, 32, err_out_key_val, sizeof(err_out_key_val)/sizeof(err_out_key_val[0]),  FALSE, 0);
         UnicodeSPrint(mrgmsg,  sizeof mrgmsg, L"SBC_ProtSW_Update Failed to decrypt (%s) \n", err_out_key_val);
         sbc_err_sysprn(SBC_LOG_CMN_PRIO_ERR, 2,
                  L"AT_BOOT",
@@ -122,9 +73,23 @@ SBCStatus SBC_GetProtectedSwName(VOID *handle, UINTN st, CHAR8 *sw_name, UINTN s
                  5,
                  L"Detection",
                  mrgmsg);
-        ret = SBCENCFAIL;
+
         goto errdone;
     }
+
+    line = rdlen / len;
+    SBC_RET_VALIDATE_ERRCODEMSG(!(line > SBC_AT_RP_SW_PATH_MAX), SBCINVPARAM, "Invalid Len");
+    dprint("protected sw count=%d\n", line);
+
+    SBC_RET_VALIDATE_ERRCODEMSG(!(st > line), SBCINVPARAM, "Invalid parameter");
+    SBC_RET_VALIDATE_ERRCODEMSG(!(sw_name == NULL), SBCNULLP, "Invalid parameter");
+    SBC_RET_VALIDATE_ERRCODEMSG(!(sw_name_size > SBC_AT_RP_SW_NAME_MAX), SBCINVPARAM, "Invalid parameter");
+
+    for(cnt = 0; cnt < st; cnt++) {
+        path++;
+    }
+
+    CopyMem(sw_name, &path->name, sw_name_size);
 
 errdone:
 
@@ -140,6 +105,8 @@ SBCStatus SBC_ProtSWDecrypt(VOID *handle, UINT8 *key, UINT8 *decbuf ,UINT32 *dec
     UINTN sw_list_line = 0ULL;
     UINTN x = 0;
 
+    CHAR8 sw_name[SBC_AT_RP_SW_NAME_MAX] = {0, };
+
 
     SBC_RET_VALIDATE_ERRCODEMSG((p != NULL), SBCNULLP, "Invalid Handle Object");
 
@@ -147,6 +114,9 @@ SBCStatus SBC_ProtSWDecrypt(VOID *handle, UINT8 *key, UINT8 *decbuf ,UINT32 *dec
     SBC_RET_VALIDATE_ERRCODEMSG((ret == SBCOK), ret, "Protected SW Count read fail");
 
     for( x = 0; x < sw_list_line; x++) {
+        ret = SBC_GetProtectedSwName(handle, x, sw_name,  sizeof(sw_name));
+        SBC_RET_VALIDATE_ERRCODEMSG(!(ret != SBCOK), ret, "Protected SW Name obtain fail");
+
 
     }
 
