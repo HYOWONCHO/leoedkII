@@ -20,6 +20,11 @@ typedef struct {
     UINTN sw1_off;
 } sw_node_t;
 
+typedef enum {
+    AT_RP_SW_NODE_SLOT0 = 0,
+    AT_RP_SW_NODE_SLOT1 = 1,
+} AT_RP_SW_NODE_SLOT_T;
+
 #define SBC_AT_RP_SW_NAME_MAX           256
 #define SBC_AT_RP_SYS_CONF_MAX_LEN   16 * 1024
 #define SBC_AT_RP_PROFILE_MAX_LEN    4096

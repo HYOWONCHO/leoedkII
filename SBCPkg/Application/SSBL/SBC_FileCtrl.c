@@ -13,6 +13,7 @@
 #include <string.h>
 
 #include <Library/DevicePathLib.h>
+#include <Library/BaseCryptLib.h>
 
 #include "SBC_Util.h"
 #include "SBC_FileCtrl.h"
@@ -29,6 +30,8 @@
 //    return ALIGN_VALUE(bytes, SBC_RAWPRT_DFLT_BLK_SZ);
 //
 //}
+
+static UINTN gn_cpycnt[4] = {4, 0, SBC_AT_RP_IV_LEN, SBC_AT_RP_TAG_LEN};
 
 SBCStatus  SBC_RawPrtHeadRead(VOID *h, VOID *out)
 {
@@ -1751,6 +1754,75 @@ errdone:
 
 }
 
+SBCStatus SBC_StoreRawPrt(VOID *handle, UINT8 *shared_secret, UINT8 *encbuf, UINTN *wrlen, UINTN wr_ofs)
+{
+    SBCStatus ret = SBCOK;
+    boot_proc_t *p = (boot_proc_t *)handle;
+    
+    UINT8 iv[SBC_AT_RP_IV_LEN], tag[SBC_AT_RP_TAG_LEN];
+    UINT8 enc[SBC_AT_RP_SYS_CONF_MAX_LEN];   
+    SBC_AESContext aesctx;
+    SBC_AESGcmCtx  ctx;  
+
+    UINT8 *wrtemp = NULL;
+    UINTN cpyofs = 0ULL;
+
+    SBC_RngGeneration((UINT8 *)shared_secret, 
+                      SYS_OSID_KEY_LEN,
+                      SBC_AT_IV_LEN,
+                      iv);
+
+    ctx.out.value = enc;
+    ctx.out.length = *wrlen;
+    ctx.msg.value = encbuf;
+    ctx.msg.length = *wrlen;
+
+    aesctx.gcm = &ctx;
+    aesctx.algoid= SBC_CIPHER_AES_GCM;
+
+    SBC_AESGcmSetContext((void *)aesctx.gcm,
+                         (void *)shared_secret,
+                         (void *)iv,
+                         (void *)tag);
+
+    ret = SBC_AESGcmEncrypt(&aesctx);
+    SBC_RET_VALIDATE_ERRCODEMSG((ret == SBCOK),
+                                ret,
+                                "SBC Data Encrypt Fail");
+
+
+
+    
+    wrtemp = AllocatePool(wrlen + SBC_AT_IV_LEN + SBC_AT_TAG_LEN + 4);
+    SBC_RET_VALIDATE_ERRCODEMSG((wrtemp != NULL), SBCNULLP, "Out of Resource");
+
+    CopyMem(&wrtemp[cpyofs], (void *)wrlen, 4);
+    cpyofs += 4;
+
+    CopyMem(&wrtemp[cpyofs], enc, *wrlen);
+    cpyofs += *wrlen;
+
+    CopyMem(&wrtemp[cpyofs], iv, SBC_AT_RP_IV_LEN);
+    cpyofs += SBC_AT_RP_IV_LEN;
+
+    CopyMem(&wrtemp[cpyofs], tag, SBC_AT_RP_TAG_LEN);
+    cpyofs += SBC_AT_RP_TAG_LEN;
+
+    ret = SBC_RawAlignedWriteBlockIO(p->blkhnd,
+                                     wr_ofs,
+                                     cpyofs,
+                                     wrtemp);
+    SBC_RET_VALIDATE_ERRCODEMSG(!(ret != SBCOK), ret, "Data Write fail in RawPartition");
+
+errdone:
+
+    if (wrtemp) {
+        FreePool(wrtemp);
+    }
+
+    return ret;
+}
+
 SBCStatus SBC_LoadRawPrt(VOID *handle, UINT8 *shared_secret, UINT8 *decbuf, UINTN *rdlen, UINTN rd_ofs)
 {
     SBCStatus ret = SBCOK;
@@ -1769,8 +1841,8 @@ SBCStatus SBC_LoadRawPrt(VOID *handle, UINT8 *shared_secret, UINT8 *decbuf, UINT
 
     
 
-    ret = SBC_DeviceSecuirtyKeyCreate(dec_key);
-    SBC_RET_VALIDATE_ERRCODEMSG((ret == SBCOK), ret, "Protected SW List Cnt read fail");
+//  ret = SBC_DeviceSecuirtyKeyCreate(dec_key);
+//  SBC_RET_VALIDATE_ERRCODEMSG((ret == SBCOK), ret, "Protected SW List Cnt read fail");
 
     ret  = SBC_RawAlignedReadBlockIO(p->blkhnd, 
                                      rd_ofs,
@@ -1842,6 +1914,7 @@ SBCStatus SBC_LoadRawPrt(VOID *handle, UINT8 *shared_secret, UINT8 *decbuf, UINT
     }
 
     *rdlen = enclen;
+
 
 errdone:
 
