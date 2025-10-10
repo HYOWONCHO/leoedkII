@@ -54,8 +54,34 @@ typedef enum {
  */
 SBCStatus SBC_ProtSWGetCnt(VOID *handle, UINTN *cnt);
 
+/*!
+ * Decrypt the Protected SW using Migration, and then Re-encrypt and Re-write into Raw Partition 
+ * 
+ * \author leoc (10/10/25)
+ * 
+ * \param handle 
+ * \param key    
+ * \param migkey 
+ * \param decbuf 
+ * \param declen 
+ * 
+ * \return SBCStatus 
+ */
 SBCStatus SBC_ProtSWDecrypt(VOID *handle, UINT8 *key, UINT8 *migkey, UINT8 *decbuf ,UINT32 *declen);
 
+
+/*!
+ * Protected SW re-encrypt, It stores in Portected SW partition 
+ * 
+ * \author leoc (10/10/25)
+ * 
+ * \param handle        
+ * \param ofs           
+ * \param sw_secret_key 
+ * \param sw_mig_key    
+ * 
+ * \return SBCStatus 
+ */
 SBCStatus SBC_RecryptoProtectedSW(VOID *handle, UINTN ofs,  UINT8* sw_secret_key, UINT8 *sw_mig_key);
 
 SBCStatus SBC_ReadProtectedSwSlotOffset(VOID *handle, UINTN *check, CHAR8 *sw_name, UINTN slot, UINTN *offset);
