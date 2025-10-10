@@ -54,8 +54,7 @@ typedef enum {
  */
 SBCStatus SBC_ProtSWGetCnt(VOID *handle, UINTN *cnt);
 
-SBCStatus SBC_ProtSWDecrypt(VOID *handle, UINT8 *key, UINT8 *decbuf ,UINT32 *declen);
-
+SBCStatus SBC_ProtSWDecrypt(VOID *handle, UINT8 *key, UINT8 *migkey, UINT8 *decbuf ,UINT32 *declen);
 
 SBCStatus SBC_RecryptoProtectedSW(VOID *handle, UINTN ofs,  UINT8* sw_secret_key, UINT8 *sw_mig_key);
 

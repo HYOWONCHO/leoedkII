@@ -562,7 +562,7 @@ errdone:
 
 }
 
-SBCStatus SBC_ProtSWDecrypt(VOID *handle, UINT8 *key, UINT8 *decbuf ,UINT32 *declen)
+SBCStatus SBC_ProtSWDecrypt(VOID *handle, UINT8 *key, UINT8 *migkey, UINT8 *decbuf ,UINT32 *declen)
 {
     SBCStatus ret = SBCOK;
     boot_proc_t *p = (boot_proc_t *)handle;
@@ -583,23 +583,37 @@ SBCStatus SBC_ProtSWDecrypt(VOID *handle, UINT8 *key, UINT8 *decbuf ,UINT32 *dec
     for( x = 0; x < sw_list_line; x++) {
         ret = SBC_GetProtectedSwName(handle, x, sw_name,  sizeof(sw_name));
         SBC_RET_VALIDATE_ERRCODEMSG(!(ret != SBCOK), ret, "Protected SW Name obtain fail");
+
+        // Software Slot 1
         ret = SBC_ReadProtectedSwSlotOffset(handle,
                                             &check,
                                             sw_name,
                                             AT_RP_SW_NODE_SLOT0,
                                             &sw_off);
-        if( check == 1 ) {
-            //ret = SBC_RecryptoProtectedSW(sw_off, key, 
+        if( ret == SBCOK ) {
+            ret = SBC_RecryptoProtectedSW(handle,
+                                          sw_off,
+                                          key,
+                                          migkey);
+
+            SBC_RET_VALIDATE_ERRCODEMSG(!(ret != SBCOK), ret, "Failed to Re-crypto for Software Slot 1");
         }
 
-                                                    
+        // Software Slot 2
+        ret = SBC_ReadProtectedSwSlotOffset(handle,
+                                            &check,
+                                            sw_name,
+                                            AT_RP_SW_NODE_SLOT1,
+                                            &sw_off);
+        if( ret == SBCOK ) {
+            ret = SBC_RecryptoProtectedSW(handle,
+                                          sw_off,
+                                          key,
+                                          migkey);
 
-        
-
+            SBC_RET_VALIDATE_ERRCODEMSG(!(ret != SBCOK), ret, "Failed to Re-crypto for Software Slot 2");
+        }
     }
-
-
-
 
 errdone:
 
