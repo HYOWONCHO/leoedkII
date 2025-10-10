@@ -54,6 +54,26 @@ typedef enum {
  */
 SBCStatus SBC_ProtSWGetCnt(VOID *handle, UINTN *cnt);
 
+SBCStatus SBC_ProtSWDecrypt(VOID *handle, UINT8 *key, UINT8 *decbuf ,UINT32 *declen);
+
+
+SBCStatus SBC_RecryptoProtectedSW(VOID *handle, UINTN ofs,  UINT8* sw_secret_key, UINT8 *sw_mig_key);
+
+SBCStatus SBC_ReadProtectedSwSlotOffset(VOID *handle, UINTN *check, CHAR8 *sw_name, UINTN slot, UINTN *offset);
+
+SBCStatus SBC_UpdateProtectedSWListVersion(VOID *handle, CHAR8 *sw_name, CHAR8 *sw_ver);
+
+SBCStatus SBC_UpdateProtecteSWSlotInfo(VOID *handle, CHAR8 *sw_name);
+
+SBCStatus SBC_FindProtectedSw(VOID *handle, CHAR8 name[256], CHAR8 *ver, UINTN *sw_node_off);
+
+SBCStatus SBC_WriteProtSwNodeBlob(VOID *handle, UINTN swoff, UINT8 *blob, UINTN blob_len, UINT8 *iv, UINT8 *tag);
+
+SBCStatus SBC_WriteProtSwSize(VOID *handle, UINTN sw_off, UINTN size);
+
+SBCStatus SBC_GetProtectedSwName(VOID *handle, UINTN st, CHAR8 *sw_name, UINTN sw_name_size);
+
+SBCStatus SBC_LoadSysFile(VOID *handle, UINTN offset, UINT8 *deckey, UINT8* data);
 
 #endif
 

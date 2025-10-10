@@ -1,8 +1,12 @@
+#include <Library/PrintLib.h>
+#include <Library/BaseMemoryLib.h>
+#include <Library/MemoryAllocationLib.h>
 
 #include "SBC_ProtectedSW.h"
 #include "SBC_FileCtrl.h"
 #include "SBC_BootProc.h"
 #include "SBC_AntiTampering.h"
+#include "SBC_CryptAES.h"
 
 #include "SBC_Config.h"
 
@@ -17,7 +21,8 @@ SBCStatus SBC_LoadSysFile(VOID *handle, UINTN offset, UINT8 *deckey, UINT8* data
     SBCStatus ret = SBCOK;
 
     UINT8 iv[SBC_AT_RP_IV_LEN], tag[SBC_AT_RP_TAG_LEN];
-    UINT8 enc[SBC_AT_RP_SYS_CONF_MAX_LEN], dec[SBC_AT_RP_SYS_CONF_MAX_LEN];
+    UINT8 enc[SBC_AT_RP_SYS_CONF_MAX_LEN];
+    //UINT8 dec[SBC_AT_RP_SYS_CONF_MAX_LEN];
     UINT32 enc_len;
     boot_proc_t *p = (boot_proc_t *)handle;
     SBC_AESContext aesctx;
@@ -25,33 +30,36 @@ SBCStatus SBC_LoadSysFile(VOID *handle, UINTN offset, UINT8 *deckey, UINT8* data
 
     ret = SBC_RawAlignedReadBlockIO(p->blkhnd,
                                     offset,
-                                    &enc_len,
-                                    4);
+                                    SBC_RAW_PRTHDR_LEN_OFS,
+                                    &enc_len);
     SBC_RET_VALIDATE_ERRCODEMSG(!(ret != SBCOK), ret, "Block IO read fail");
 
     ret = SBC_RawAlignedReadBlockIO(p->blkhnd,
                                     offset + SBC_PROT_SYS_DATA_LEN,
-                                    enc,
-                                    enc_len);
+                                    enc_len,
+                                    enc);
     SBC_RET_VALIDATE_ERRCODEMSG(!(ret != SBCOK), ret, "Block IO read fail");
 
     ret = SBC_RawAlignedReadBlockIO(p->blkhnd,
                                     offset + SBC_PROT_SYS_DATA_LEN + enc_len,
-                                    iv,
-                                    SBC_AT_RP_IV_LEN);
+                                    SBC_AT_RP_IV_LEN,
+                                    iv);
     SBC_RET_VALIDATE_ERRCODEMSG(!(ret != SBCOK), ret, "Block IO read fail");
 
     ret = SBC_RawAlignedReadBlockIO(p->blkhnd,
                                     offset + SBC_PROT_SYS_DATA_LEN + enc_len + SBC_AT_RP_IV_LEN,
-                                    tag,
-                                    SBC_AT_RP_TAG_LEN);
+                                    SBC_AT_RP_TAG_LEN,
+                                    tag);
     SBC_RET_VALIDATE_ERRCODEMSG(!(ret != SBCOK), ret, "Block IO read fail");
 
     //
     // Decrypt 
     //
-    ctx.out.value = (void *)enc;
+    ctx.out.value = (void *)data;
     ctx.out.length = enc_len;
+    ctx.msg.value = (void *)enc;
+    ctx.msg.length = enc_len;
+
     aesctx.gcm = &ctx;
     aesctx.algoid = SBC_CIPHER_AES_GCM;
 
@@ -195,7 +203,7 @@ SBCStatus SBC_WriteProtSwNodeBlob(VOID *handle, UINTN swoff, UINT8 *blob, UINTN 
     boot_proc_t *p = (boot_proc_t *)handle;
 
 
-    wrbuf = AllocatePool(wrbuf_len);
+    wrbuf = AllocateZeroPool(wrbuf_len);
     SBC_RET_VALIDATE_ERRCODEMSG((wrbuf != NULL), SBCNULLP, "Out of Resource");
 
     CopyMem(&wrbuf[cpyofs], &wrbuf_len, 4);
@@ -228,13 +236,13 @@ errdone:
 SBCStatus SBC_FindProtectedSw(VOID *handle, CHAR8 name[256], CHAR8 *ver, UINTN *sw_node_off)
 {
     SBCStatus ret = SBCOK;
-    size_t  readn;
+    UINTN  readn;
     UINT8   data[SBC_AT_RP_SYS_CONF_MAX_LEN] = {0, };
     UINT8   dec_key[SBC_AT_RP_KEY_LEN] = {0, };
-    boot_proc_t *p = (boot_proc_t *)handle;
+    [[gnu::unused]] boot_proc_t *p = (boot_proc_t *)handle;
 
     sw_path_t *path = (sw_path_t *)data;
-    UINTN len = sizeof(sw_path_t);
+    [[maybe_unused]] UINTN len = sizeof(sw_path_t);
     UINTN cnt, line;
 
     ret = SBC_DeviceSecuirtyKeyCreate(dec_key);
@@ -252,7 +260,7 @@ SBCStatus SBC_FindProtectedSw(VOID *handle, CHAR8 name[256], CHAR8 *ver, UINTN *
     ret = SBC_LoadRawPrt(handle, dec_key, data, &readn, SYS_CONF_START_OFS + SYS_CONF_SW_LIST_OFS);
     SBC_RET_VALIDATE_ERRCODEMSG(!(ret != SBCOK), ret, "System Configuration Partition Read fail");
 
-    for(cnt = 0; cnt < line, cnt++) {
+    for(cnt = 0; cnt < line; cnt++) {
         if( AsciiStrCmp(name, path->name) == 0 ) {
             ret = SBCOK;
             if( sw_node_off != NULL ) {
@@ -277,7 +285,8 @@ errdone:
 SBCStatus SBC_UpdateProtecteSWSlotInfo(VOID *handle, CHAR8 *sw_name)
 {
     sw_node_t node;
-    UINTN node_off, offset;
+    UINTN node_off;
+    [[gnu::unused]]UINTN offset;
     SBCStatus ret = SBCOK;
     boot_proc_t *p = (boot_proc_t *)handle;
 
@@ -302,7 +311,7 @@ SBCStatus SBC_UpdateProtectedSWListVersion(VOID *handle, CHAR8 *sw_name, CHAR8 *
 {
     SBCStatus ret = SBCOK;
 
-    size_t readn;
+    UINTN readn;
     UINT8 data[SBC_AT_RP_SYS_CONF_MAX_LEN];
     UINT8 dec_key[SBC_AT_RP_KEY_LEN];
 
@@ -385,15 +394,170 @@ errdone:
     return ret;
 }
 
-
-SBCStatus SB_RecryptoProtectedSW(VOID *handle, UINT8* sw_secret_key, UINT8 *sw_mig_key)
+SBCStatus SBC_RedaPrteoctedSwSize(VOID *handle,  UINTN ofs, UINTN *size)
 {
     SBCStatus ret = SBCOK;
+    //UINTN length = 0UL;
+    boot_proc_t  *p = (boot_proc_t *)handle;
 
+    SBC_RET_VALIDATE_ERRCODEMSG((size != NULL), SBCNULLP, "It's handle point to NULL");
+
+    ret = SBC_RawAlignedReadBlockIO( p->blkhnd, 
+                                     ofs,
+                                     SBC_RAW_PRTHDR_LEN_OFS,
+                                     size);
+
+    SBC_RET_VALIDATE_ERRCODEMSG(!(ret != SBCOK), ret, "Failed to read the Block I/O");
 
 
 errdone:
+    return ret;
+}
 
+
+SBCStatus SBC_RecryptoProtectedSW(VOID *handle, UINTN ofs,  UINT8* sw_secret_key, UINT8 *sw_mig_key)
+{
+    SBCStatus ret = SBCOK;
+    UINTN length = 0ULL;
+    boot_proc_t *p = (boot_proc_t *)handle;
+    UINTN mvofs = 0;
+    UINT8 *dec_mem = NULL;
+    UINT8 *enc_mem = NULL;
+
+    aes_buf_t aesbuf; 
+    SBC_AESGcmCtx   decctx;
+    SBC_AESGcmCtx   encctx;
+    SBC_AESContext  aesctx;
+    UINT8 *buf = NULL;
+
+    SBC_RET_VALIDATE_ERRCODEMSG((handle != NULL), SBCNULLP, "Handle Object NULL");
+    SBC_RET_VALIDATE_ERRCODEMSG((sw_secret_key != NULL), SBCNULLP, "Handle Object NULL");
+    SBC_RET_VALIDATE_ERRCODEMSG((sw_mig_key != NULL), SBCNULLP, "Handle Object NULL");
+
+
+    dprint("Prot. SW off : %lx", ofs);
+
+    ret = SBC_RedaPrteoctedSwSize(handle, ofs, &length);
+    SBC_RET_VALIDATE_ERRCODEMSG(!(ret != SBCOK), ret, "Failed to read the Protected SW Size");
+    SBC_RET_VALIDATE_ERRCODEMSG((length != 0), SBCZEROL, "Can't found the Protecde SW");
+
+
+    buf = AllocateZeroPool(length + SBC_AT_RP_IV_LEN + SBC_AT_RP_TAG_LEN);
+    SBC_RET_VALIDATE_ERRCODEMSG((buf != NULL), SBCNULLP, "Out of Resource");
+
+    ret = SBC_RawAlignedReadBlockIO(p->blkhnd,
+                                    ofs + SBC_RAW_PRTHDR_LEN_OFS,
+                                    length + SBC_AT_RP_IV_LEN + SBC_AT_RP_TAG_LEN,
+                                    buf);
+    SBC_RET_VALIDATE_ERRCODEMSG(!(ret != SBCOK), ret, "Failed to read the Protected SW");
+
+    aesbuf.buf = &buf[mvofs];
+    mvofs += length;
+
+    aesbuf.iv = &buf[mvofs];
+    mvofs += SBC_AT_RP_IV_LEN;
+
+    aesbuf.tag = &buf[mvofs];
+    mvofs += SBC_AT_RP_TAG_LEN;
+
+    dprint("length of sw=%u", length);
+   
+    SBC_mem_print_bin("iv=", (UINT8 *)aesbuf.iv, SBC_AT_RP_IV_LEN);
+    SBC_mem_print_bin("tag=", (UINT8 *)aesbuf.tag, SBC_AT_RP_TAG_LEN);
+
+
+    dprint("Key info ");
+    SBC_mem_print_bin("Migration Key", sw_mig_key, 32);
+    SBC_mem_print_bin("Security Key", sw_secret_key, 32);
+
+    //
+    // Allocate the Encrypt and Decrypt memory 
+    //
+    dec_mem = AllocateZeroPool(length);
+    SBC_RET_VALIDATE_ERRCODEMSG((buf != NULL), SBCNULLP, "Dec buf Out of Resource");
+
+    enc_mem = AllocateZeroPool(length);
+    SBC_RET_VALIDATE_ERRCODEMSG((buf != NULL), SBCNULLP, "Enc buf Out of Resource");
+
+
+    //
+    // TODO : Decrypt 
+    //
+    decctx.msg.value = (void *)aesbuf.buf;
+    decctx.msg.length = length;
+    decctx.out.value = (void *)dec_mem;
+    decctx.out.length = decctx.msg.length;
+
+    SBC_AESGcmSetContext(&aesctx, sw_mig_key, aesbuf.iv, aesbuf.tag);
+    ret = SBC_AESGcmDecrypt(&aesctx);
+
+    SBC_RET_VALIDATE_ERRCODEMSG(!(ret != SBCOK), ret, "Failed to decrypt"
+                                "the Prot SW using MigKey");
+
+
+
+    //
+    // TODO : Re-encrypt
+    //
+
+    ZeroMem((void *)&aesctx, sizeof aesctx);
+    encctx.msg.value = (void *)dec_mem;
+    encctx.msg.length = length;
+    encctx.out.value = (void *)enc_mem;
+    encctx.out.length = encctx.msg.length;
+
+    SBC_AESGcmSetContext(&aesctx, sw_secret_key, aesbuf.iv, aesbuf.tag);
+    ret = SBC_AESGcmEncrypt(&aesctx);
+    SBC_RET_VALIDATE_ERRCODEMSG(!(ret != SBCOK), ret, "Failed to encrypt"
+                                "the Prot SW using Security Key");
+
+    //
+    // Re-write the protected SW
+    //
+
+    // Write the Encrypt Data 
+    
+    ret = SBC_RawAlignedWriteBlockIO(p->blkhnd, 
+                                     ofs + SBC_RAW_PRTHDR_LEN_OFS,
+                                     encctx.out.length,
+                                     encctx.out.value);
+
+    SBC_RET_VALIDATE_ERRCODEMSG(!(ret != SBCOK), ret, "Failed to write"
+                                "the Prot SW");
+
+    // Write the IV Data
+    ret = SBC_RawAlignedWriteBlockIO(p->blkhnd, 
+                                     ofs + SBC_RAW_PRTHDR_LEN_OFS + SBC_AT_RP_IV_LEN,
+                                     SBC_AT_RP_IV_LEN,
+                                     aesbuf.iv);
+
+    SBC_RET_VALIDATE_ERRCODEMSG(!(ret != SBCOK), ret, "Failed to write"
+                                "the Prot SW IV");
+
+    // Write the Tag Data
+    ret = SBC_RawAlignedWriteBlockIO(p->blkhnd, 
+                                     ofs + SBC_RAW_PRTHDR_LEN_OFS + SBC_AT_RP_IV_LEN + SBC_AT_RP_TAG_LEN,
+                                     SBC_AT_RP_TAG_LEN,
+                                     aesbuf.tag);
+
+    SBC_RET_VALIDATE_ERRCODEMSG(!(ret != SBCOK), ret, "Failed to write"
+                                "the Prot SW TAG");
+errdone:
+
+    if( buf != NULL ) {
+        FreePool(buf);
+        buf = NULL;
+    }
+
+    if( dec_mem != NULL ) {
+        FreePool(dec_mem);
+        dec_mem = NULL;
+    }
+
+    if( enc_mem != NULL ) {
+        FreePool(enc_mem);
+        enc_mem = NULL;
+    }
     return ret;
 
 }
@@ -420,12 +584,12 @@ SBCStatus SBC_ProtSWDecrypt(VOID *handle, UINT8 *key, UINT8 *decbuf ,UINT32 *dec
         ret = SBC_GetProtectedSwName(handle, x, sw_name,  sizeof(sw_name));
         SBC_RET_VALIDATE_ERRCODEMSG(!(ret != SBCOK), ret, "Protected SW Name obtain fail");
         ret = SBC_ReadProtectedSwSlotOffset(handle,
-                                          sw_name,
-                                          &check,
-                                          AT_RP_SW_NODE_SLOT0,
-                                          &sw_off);
+                                            &check,
+                                            sw_name,
+                                            AT_RP_SW_NODE_SLOT0,
+                                            &sw_off);
         if( check == 1 ) {
-            ret = SBC_RecryptoProtectedSW(sw_off, key, 
+            //ret = SBC_RecryptoProtectedSW(sw_off, key, 
         }
 
                                                     

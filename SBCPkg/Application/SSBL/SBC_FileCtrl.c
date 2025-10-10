@@ -17,21 +17,12 @@
 
 #include "SBC_Util.h"
 #include "SBC_FileCtrl.h"
-
-//static UINT32 _get_rw_blkcnt(UINT32 bytes)
-//{
-////  UINTN       division;
-////  UINTN       quotient;
-////
-////  //quteint = bytes % SBC_RAWPTR_DFLT_BLK_SZ;
-////
-////  division =
-//
-//    return ALIGN_VALUE(bytes, SBC_RAWPRT_DFLT_BLK_SZ);
-//
-//}
-
-static UINTN gn_cpycnt[4] = {4, 0, SBC_AT_RP_IV_LEN, SBC_AT_RP_TAG_LEN};
+#include "SBC_BootProc.h"
+#include "SBC_ProtectedSW.h"
+#include "SBC_CryptAES.h"
+#include "SBC_Kdf.h"
+#include "SBC_AntiTampering.h"
+#include "SBC_Config.h"
 
 SBCStatus  SBC_RawPrtHeadRead(VOID *h, VOID *out)
 {
@@ -1793,7 +1784,7 @@ SBCStatus SBC_StoreRawPrt(VOID *handle, UINT8 *shared_secret, UINT8 *encbuf, UIN
 
 
     
-    wrtemp = AllocatePool(wrlen + SBC_AT_IV_LEN + SBC_AT_TAG_LEN + 4);
+    wrtemp = AllocatePool(*wrlen + SBC_AT_IV_LEN + SBC_AT_TAG_LEN + 4);
     SBC_RET_VALIDATE_ERRCODEMSG((wrtemp != NULL), SBCNULLP, "Out of Resource");
 
     CopyMem(&wrtemp[cpyofs], (void *)wrlen, 4);
@@ -1847,7 +1838,7 @@ SBCStatus SBC_LoadRawPrt(VOID *handle, UINT8 *shared_secret, UINT8 *decbuf, UINT
     ret  = SBC_RawAlignedReadBlockIO(p->blkhnd, 
                                      rd_ofs,
                                      SBC_RAW_PRTHDR_LEN_OFS,
-                                     enclen);
+                                     &enclen);
     SBC_RET_VALIDATE_ERRCODEMSG((ret == SBCOK), ret, "Protected SW List Cnt read fail");
 
     

@@ -29,6 +29,7 @@
     \brief Anti-tampering DICE key strength 
 */
 #define ATP_IDENT_KEY_STG          32
+
 #pragma pack(1)
 /*!
  * Anti-tampering Identify for DICE key

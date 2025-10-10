@@ -51,6 +51,15 @@ struct _lv_t {
 typedef struct _lv_t LV_t;
 typedef struct _lv_t *LV_p;
 
+#pragma pack(1)
+typedef struct _aes_buf_t{
+    VOID *key;
+    VOID *iv;
+    VOID *tag;
+    VOID *buf;
+}aes_buf_t;
+#pragma pack()
+
 
 #define KDF_KEY_MAXL                (32)
 typedef struct _kdf_t {
