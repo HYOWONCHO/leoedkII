@@ -1668,16 +1668,17 @@ SBCStatus SBC_RawAlignedReadBlockIO(VOID *blk, UINTN off, UINTN sz, VOID *buf)
     SBCStatus               ret = SBCOK;
     EFI_STATUS              retval = EFI_SUCCESS;
     EFI_BLOCK_IO_PROTOCOL  *io = (EFI_BLOCK_IO_PROTOCOL *)blk;
-    UINT32                  blksz = io->Media->BlockSize;
-    EFI_LBA                 lba = off / blksz;
+    UINT32                  B = io->Media->BlockSize;
+    EFI_LBA                 lba = off / B;
 
-    UINTN                   o = (UINTN)(off % blksz);
+    UINTN                   o = (UINTN)(off % B);
     UINT8                   *p = NULL;
     UINT8                   *tmp = NULL;
 
-    dprint("LBA : %ld, O : %ld", lba, o);
+    //dprint("newer Offset : 0x%lx, LBA : %ld, O : %ld, Size : %ld", 
+    //       off, lba, o, sz);
 
-    if ( o == 0 && (sz % blksz) == 0) {
+    if ( o == 0 && (sz % B) == 0) {
         return io->ReadBlocks(io, io->Media->MediaId, lba, sz, buf);
     }
 
@@ -1686,58 +1687,69 @@ SBCStatus SBC_RawAlignedReadBlockIO(VOID *blk, UINTN off, UINTN sz, VOID *buf)
     // Unaligned : read-modify-copy
     //
     p = buf;
-    tmp = AllocatePool(blksz);
+    tmp = AllocatePool(B);
     SBC_RET_VALIDATE_ERRCODEMSG((tmp != NULL), SBCNULLP, "Out Of Resource");
 
     // Head
 
     if (o) {
-        retval = io->ReadBlocks(io, io->Media->MediaId, lba, blksz ,tmp);
+
+        //dprint("lba of head : %ld", lba);
+        retval = io->ReadBlocks(io, io->Media->MediaId, lba, B ,tmp);
         if (EFI_ERROR(retval)) {
             dprint("%ld LBA read block fail (%r)", lba, retval);
             ret = SBCIO;
             goto errdone;
         }
-        UINTN c = MIN(sz, blksz - o);
+        UINTN c = MIN(sz, B - o);
         CopyMem(p, tmp + o, c);
+
+        //SBC_mem_print_bin("Head Read Buf", (UINT8 *)p, c);
         p += c;
         sz -= c;
         lba++;
+
+        
     }
 
+
+
     // Body Copy
-    if (sz) {
-        retval = io->ReadBlocks(io, io->Media->MediaId, lba, blksz, tmp);
+    while (sz >= B) {
+
+        //dprint("lba of body : %ld", lba);
+        retval = io->ReadBlocks(io, io->Media->MediaId, lba, B, p);
         if (EFI_ERROR(retval)) {
             dprint("%ld LBA read block fail (%r)", lba, retval);
             ret = SBCIO;
             goto errdone;
         }
 
-        UINTN c = MIN(sz, blksz - o);
-        CopyMem(p, tmp + o, c);
-
-        p += blksz;
-        sz -= blksz;
+        p += B;
+        sz -= B;
         lba++;
+
+        //dprint("size of body : %ld", sz);
     }
 
     //
     // tail
     //
     if (sz) {
-        retval = io->ReadBlocks(io, io->Media->MediaId, lba, blksz, tmp);
+        //dprint("lba of tail : %ld", lba);
+        retval = io->ReadBlocks(io, io->Media->MediaId, lba, B, tmp);
         if (EFI_ERROR(retval)) {
             dprint("%ld LBA read block fail (%r)", lba, retval);
             ret = SBCIO;
             goto errdone;
         }
         CopyMem(p, tmp, sz);
+        //SBC_mem_print_bin("Tail Read Buf", (UINT8 *)p, sz);
     }
 
 errdone:
 
-    //SBC_mem_print_bin("Read Buf", (UINT8 *)buf, 512);
+    //SBC_mem_print_bin("Read Buf", (UINT8 *)buf, sz);
     if (tmp) {
         FreePool(tmp);
     }
@@ -1820,6 +1832,7 @@ SBCStatus SBC_LoadRawPrt(VOID *handle, UINT8 *shared_secret, UINT8 *decbuf, UINT
 
     boot_proc_t *p = (boot_proc_t *)handle; 
     UINT8 encbuf[SBC_AT_RP_SYS_CONF_MAX_LEN]  = {0,};
+    CHAR16 err_out_key_val[128] = {0, };
     //UINT8 decbuf[SBC_AT_RP_SYS_CONF_MAX_LEN]  = {0,};
     //UINT8 dec_key[SBC_AT_RP_KEY_LEN] = {0,};
     UINTN enclen = 0ULL;
@@ -1842,6 +1855,7 @@ SBCStatus SBC_LoadRawPrt(VOID *handle, UINT8 *shared_secret, UINT8 *decbuf, UINT
     SBC_RET_VALIDATE_ERRCODEMSG((ret == SBCOK), ret, "Protected SW List Cnt read fail");
 
     
+    
 
     //
     // Reading encrypted protected software
@@ -1852,6 +1866,8 @@ SBCStatus SBC_LoadRawPrt(VOID *handle, UINT8 *shared_secret, UINT8 *decbuf, UINT
                                  enclen,
                                  encbuf);
 
+    SBC_mem_print_bin("enc data =", encbuf, enclen);
+
     //
     // Reading  iv
     //
@@ -1861,6 +1877,7 @@ SBCStatus SBC_LoadRawPrt(VOID *handle, UINT8 *shared_secret, UINT8 *decbuf, UINT
                                  SBC_AT_RP_IV_LEN,
                                  iv);
 
+    SBC_mem_print_bin("iv data =", iv, SBC_AT_RP_IV_LEN);
 
     //
     // Reading tag
@@ -1872,6 +1889,7 @@ SBCStatus SBC_LoadRawPrt(VOID *handle, UINT8 *shared_secret, UINT8 *decbuf, UINT
                                  tag);
 
 
+    SBC_mem_print_bin("tag data =", tag, SBC_AT_RP_TAG_LEN);
     //( p->bm == BOOT_MODE_UPDATE ) ? shared_secret = ((atp_ident_t *)p->keyinfo)->migid : shared_secret = dec_key;
 
 
@@ -1885,25 +1903,31 @@ SBCStatus SBC_LoadRawPrt(VOID *handle, UINT8 *shared_secret, UINT8 *decbuf, UINT
     ctx.out.value = (void *)decbuf;
     ctx.msg.length = ctx.out.length = enclen;
 
+    aesctx.gcm = &ctx;
+    aesctx.algoid = SBC_CIPHER_AES_GCM;
+
+    dprint("");
     SBC_AESGcmSetContext((void *)aesctx.gcm, 
                      (void *)shared_secret, 
                      (void *)iv, 
                      (void *)tag);
 
+    dprint("");
     if (SBC_AESGcmDecrypt(&aesctx) != SBCOK) {
-//      SBC_LogHexToStrChar16(shared_secret, 32, err_out_key_val, sizeof(err_out_key_val)/sizeof(err_out_key_val[0]),  FALSE, 0);
-//      UnicodeSPrint(mrgmsg,  sizeof mrgmsg, L"SBC_ProtSW_Update Failed to decrypt (%s) \n", err_out_key_val);
-//      sbc_err_sysprn(SBC_LOG_CMN_PRIO_ERR, 2,
-//               L"AT_BOOT",
-//               L"SSBL",
-//               L"SAT",
-//               5,
-//               L"Detection",
-//               mrgmsg);
+        SBC_LogHexToStrChar16(shared_secret, 32, err_out_key_val, sizeof(err_out_key_val)/sizeof(err_out_key_val[0]),  FALSE, 0);
+        UnicodeSPrint(mrgmsg,  sizeof mrgmsg, L"SBC_ProtSW_Update Failed to decrypt (%s) \n", err_out_key_val);
+        sbc_err_sysprn(SBC_LOG_CMN_PRIO_ERR, 2,
+                 L"AT_BOOT",
+                 L"SSBL",
+                 L"SAT",
+                 5,
+                 L"Detection",
+                 mrgmsg);
         ret = SBCENCFAIL;
         goto errdone;
     }
 
+    dprint("");
     *rdlen = enclen;
 
 
