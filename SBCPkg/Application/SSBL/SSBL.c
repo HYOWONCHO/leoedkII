@@ -463,7 +463,7 @@ UefiMain (
 
     //dprint("Chaeck Boot Mode read from BlkIO is %d", h_rawptrheader.bootmode);
 
-
+#if 0
     ret = SBC_GenMigrationKey((void *)&btproc, diceid.migid);
     SBC_external_mem_print_bin("Migration Key", diceid.migid, 32);
 
@@ -492,6 +492,7 @@ UefiMain (
     //                    NULL);
         return EFI_SUCCESS;
     }
+#endif 
 
 #if 0
     SBC_BootKeyModeChange(BOOT_MODE_UPDATE, KEY_MODE_NORMAL, (void *)&btproc);
