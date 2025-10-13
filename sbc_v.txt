@@ -1,0 +1,4 @@
+MAJOR_VAR="v1"
+MINOR_VAR="0"
+PATCH_VAR="0"
+PRERES_VAR="build-update-demo"

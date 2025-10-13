@@ -13,6 +13,10 @@ SPDX-License-Identifier: BSD-2-Clause-Patent
 #include <openssl/asn1.h>
 #include <openssl/rsa.h>
 
+
+#define x509_eprint(fmt,...) \
+    DEBUG((DEBUG_ERROR, "(ERROR %a:%d) : "fmt"\n",__FUNCTION__, __LINE__,##__VA_ARGS__))
+
 /* OID*/
 #define OID_EXT_KEY_USAGE      { 0x55, 0x1D, 0x25 }
 #define OID_BASIC_CONSTRAINTS  { 0x55, 0x1D, 0x13 }
@@ -53,6 +57,7 @@ X509ConstructCertificate (
   // Check input parameters.
   //
   if ((Cert == NULL) || (SingleX509Cert == NULL) || (CertSize > INT_MAX)) {
+    x509_eprint("x509 cert obj : %p", X509Cert);
     return FALSE;
   }
 
@@ -62,6 +67,7 @@ X509ConstructCertificate (
   Temp     = Cert;
   X509Cert = d2i_X509 (NULL, &Temp, (long)CertSize);
   if (X509Cert == NULL) {
+    x509_eprint("x509 cert obj : %p", X509Cert);
     return FALSE;
   }
 
@@ -889,6 +895,7 @@ EcGetPublicKeyFromX509 (
   // Check input parameters.
   //
   if ((Cert == NULL) || (EcContext == NULL)) {
+    x509_eprint();
     return FALSE;
   }
 
@@ -900,6 +907,7 @@ EcGetPublicKeyFromX509 (
   //
   Status = X509ConstructCertificate (Cert, CertSize, (UINT8 **)&X509Cert);
   if ((X509Cert == NULL) || (!Status)) {
+    x509_eprint("x509 cert obj : %p", X509Cert);
     Status = FALSE;
     goto _Exit;
   }

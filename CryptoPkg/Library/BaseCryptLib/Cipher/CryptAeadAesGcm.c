@@ -13,6 +13,8 @@ SPDX-License-Identifier: BSD-2-Clause-Patent
 #include <openssl/aes.h>
 #include <openssl/evp.h>
 
+#include <Library/UefiLib.h>
+
 /**
   Performs AEAD AES-GCM authenticated encryption on a data buffer and additional authenticated data (AAD).
 
@@ -60,14 +62,17 @@ AeadAesGcmEncrypt (
   BOOLEAN           RetValue;
 
   if (DataInSize > INT_MAX) {
+    Print(L"%a:%d \n", __FUNCTION__, __LINE__);
     return FALSE;
   }
 
   if (ADataSize > INT_MAX) {
+    Print(L"%a:%d \n", __FUNCTION__, __LINE__);
     return FALSE;
   }
 
   if (IvSize != 12) {
+    Print(L"%a:%d \n", __FUNCTION__, __LINE__);
     return FALSE;
   }
 
@@ -86,47 +91,57 @@ AeadAesGcmEncrypt (
   }
 
   if ((TagSize != 12) && (TagSize != 13) && (TagSize != 14) && (TagSize != 15) && (TagSize != 16)) {
+    Print(L"%a:%d \n", __FUNCTION__, __LINE__);
     return FALSE;
   }
 
   if (DataOutSize != NULL) {
+    //Print(L"%a:%d \n", __FUNCTION__, __LINE__);
     if ((*DataOutSize > INT_MAX) || (*DataOutSize < DataInSize)) {
+      Print(L"%a:%d \n", __FUNCTION__, __LINE__);
       return FALSE;
     }
   }
 
   Ctx = EVP_CIPHER_CTX_new ();
   if (Ctx == NULL) {
+    Print(L"%a:%d \n", __FUNCTION__, __LINE__);
     return FALSE;
   }
 
   RetValue = (BOOLEAN)EVP_EncryptInit_ex (Ctx, Cipher, NULL, NULL, NULL);
   if (!RetValue) {
+    Print(L"%a:%d \n", __FUNCTION__, __LINE__);
     goto Done;
   }
 
   RetValue = (BOOLEAN)EVP_CIPHER_CTX_ctrl (Ctx, EVP_CTRL_GCM_SET_IVLEN, (INT32)IvSize, NULL);
   if (!RetValue) {
+    Print(L"%a:%d \n", __FUNCTION__, __LINE__);
     goto Done;
   }
 
   RetValue = (BOOLEAN)EVP_EncryptInit_ex (Ctx, NULL, NULL, Key, Iv);
   if (!RetValue) {
+    Print(L"%a:%d \n", __FUNCTION__, __LINE__);
     goto Done;
   }
 
   RetValue = (BOOLEAN)EVP_EncryptUpdate (Ctx, NULL, (INT32 *)&TempOutSize, AData, (INT32)ADataSize);
   if (!RetValue) {
+    Print(L"%a:%d \n", __FUNCTION__, __LINE__);
     goto Done;
   }
 
   RetValue = (BOOLEAN)EVP_EncryptUpdate (Ctx, DataOut, (INT32 *)&TempOutSize, DataIn, (INT32)DataInSize);
   if (!RetValue) {
+    Print(L"%a:%d \n", __FUNCTION__, __LINE__);
     goto Done;
   }
 
   RetValue = (BOOLEAN)EVP_EncryptFinal_ex (Ctx, DataOut, (INT32 *)&TempOutSize);
   if (!RetValue) {
+    Print(L"%a:%d \n", __FUNCTION__, __LINE__);
     goto Done;
   }
 
@@ -135,13 +150,17 @@ AeadAesGcmEncrypt (
 Done:
   EVP_CIPHER_CTX_free (Ctx);
   if (!RetValue) {
+    Print(L"%a:%d \n", __FUNCTION__, __LINE__);
     return RetValue;
   }
+
+  Print(L"%a:%d \n", __FUNCTION__, __LINE__);
 
   if (DataOutSize != NULL) {
     *DataOutSize = DataInSize;
   }
 
+  Print(L"%a:%d \n", __FUNCTION__, __LINE__);
   return RetValue;
 }
 

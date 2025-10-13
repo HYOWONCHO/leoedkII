@@ -1174,12 +1174,13 @@ CoreLoadImageCommon (
   // The caller must pass in a valid ParentImageHandle
   //
   if ((ImageHandle == NULL) || (ParentImageHandle == NULL)) {
+    DEBUG ((DEBUG_ERROR, "LoadImageEx: ImageHandle  and ParentImageHandlehandle not an image handle\n"));
     return EFI_INVALID_PARAMETER;
   }
 
   ParentImage = CoreLoadedImageInfo (ParentImageHandle);
   if (ParentImage == NULL) {
-    DEBUG ((DEBUG_LOAD|DEBUG_ERROR, "LoadImageEx: Parent handle not an image handle\n"));
+    DEBUG ((DEBUG_ERROR, "LoadImageEx: Parent handle not an image handle\n"));
     return EFI_INVALID_PARAMETER;
   }
 
@@ -1202,6 +1203,8 @@ CoreLoadImageCommon (
     FHand.SourceSize = SourceSize;
     Status           = CoreLocateDevicePath (&gEfiDevicePathProtocolGuid, &HandleFilePath, &DeviceHandle);
     if (EFI_ERROR (Status)) {
+
+      DEBUG ((DEBUG_ERROR, "Fail to CoreLocateDevicePath %r \n", Status));
       DeviceHandle = NULL;
     }
 
@@ -1265,6 +1268,7 @@ CoreLoadImageCommon (
   }
 
   if (EFI_ERROR (Status)) {
+    DEBUG ((DEBUG_ERROR, "%a:%d Fail %r \n", __FUNCTION__, __LINE__, Status));
     Image = NULL;
     goto Done;
   }
@@ -1295,6 +1299,7 @@ CoreLoadImageCommon (
                                     AuthenticationStatus,
                                     OriginalFilePath
                                     );
+      DEBUG ((DEBUG_ERROR, "%a:%d FileAuthenticationState %r \n", __FUNCTION__, __LINE__, Status));
     }
   } else if ((gSecurity != NULL) && (OriginalFilePath != NULL)) {
     //
@@ -1305,6 +1310,8 @@ CoreLoadImageCommon (
                                   AuthenticationStatus,
                                   OriginalFilePath
                                   );
+
+    DEBUG ((DEBUG_ERROR, "%a:%d FileAuthenticationState %r \n", __FUNCTION__, __LINE__, Status));
   }
 
   //
@@ -1373,6 +1380,7 @@ CoreLoadImageCommon (
              FALSE
              );
   if (EFI_ERROR (Status)) {
+    DEBUG ((DEBUG_ERROR, "%a:%d Fail %r \n", __FUNCTION__, __LINE__, Status));
     goto Done;
   }
 
@@ -1421,6 +1429,7 @@ CoreLoadImageCommon (
              &Image->Info
              );
   if (EFI_ERROR (Status)) {
+    DEBUG ((DEBUG_ERROR, "%a:%d Fail %r \n", __FUNCTION__, __LINE__, Status));
     goto Done;
   }
 
@@ -1442,6 +1451,7 @@ CoreLoadImageCommon (
              Image->LoadedImageDevicePath
              );
   if (EFI_ERROR (Status)) {
+    DEBUG ((DEBUG_ERROR, "%a:%d Fail %r \n", __FUNCTION__, __LINE__, Status));
     goto Done;
   }
 
@@ -1456,6 +1466,7 @@ CoreLoadImageCommon (
                (VOID *)(UINTN)Image->ImageContext.HiiResourceData
                );
     if (EFI_ERROR (Status)) {
+      DEBUG ((DEBUG_ERROR, "%a:%d Fail %r \n", __FUNCTION__, __LINE__, Status));
       goto Done;
     }
   }
@@ -1484,11 +1495,13 @@ Done:
   // There was an error.  If there's an Image structure, free it
   //
   if (EFI_ERROR (Status)) {
+    DEBUG ((DEBUG_ERROR, "%a:%d Fail %r \n", __FUNCTION__, __LINE__, Status));
     if (Image != NULL) {
       CoreUnloadAndCloseImage (Image, (BOOLEAN)(DstBuffer == 0));
       Image = NULL;
     }
   } else if (EFI_ERROR (SecurityStatus)) {
+    DEBUG ((DEBUG_ERROR, "%a:%d Fail %r \n", __FUNCTION__, __LINE__, Status));
     Status = SecurityStatus;
   }
 

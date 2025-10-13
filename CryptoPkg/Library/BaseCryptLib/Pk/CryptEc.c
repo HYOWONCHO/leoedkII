@@ -10,7 +10,58 @@
 #include <openssl/objects.h>
 #include <openssl/bn.h>
 #include <openssl/ec.h>
+#if 0
+#define LINE_LEN 16
+void ec_mem_print_bin(
+        CHAR8 *title /**< [in] display name strings */,
+        UINT8* buffer /**< [in] print buffer  */,
+        UINT32 length /**< [in] length of buffer */
+        )
+{
+    UINT32 i, sz;
 
+    if(title) {
+        Print(L"%a (length of buffer: %d) \r\r\n", title, length) ;
+    }
+
+    if (!buffer) {
+        Print(L"\tNULL\r\n");
+        return;
+    }
+
+    while (length > 0) {
+        sz = length;
+        if (sz > LINE_LEN)
+            sz = LINE_LEN;
+
+        Print(L"\t");
+        for (i = 0; i < LINE_LEN; i++) {
+            if (i < length)
+                Print(L"%02x ", buffer[i]);
+            else
+                Print(L"   ");
+        }
+        Print(L"| ");
+        for (i = 0; i < sz; i++) {
+            if (buffer[i] > 31 && buffer[i] < 127)
+                Print(L"%c", buffer[i]);
+            else
+                Print(L".");
+        }
+        Print(L"\r\r\n");
+
+
+        buffer += sz;
+        length -= sz;
+    }
+}
+#endif
+#if 0
+#define ec_eprint(fmt,...) \
+    DEBUG((DEBUG_ERROR, "(ERROR %a:%d) : "fmt"\n",__FUNCTION__, __LINE__,##__VA_ARGS__))
+#else
+#define ec_eprint(fmt,...)
+#endif
 // =====================================================================================
 //    Basic Elliptic Curve Primitives
 // =====================================================================================
@@ -948,10 +999,12 @@ EcDsaVerify (
   BIGNUM     *S;
 
   if ((EcContext == NULL) || (MessageHash == NULL) || (Signature == NULL)) {
+    ec_eprint("");
     return FALSE;
   }
 
   if ((SigSize > INT_MAX) || (SigSize == 0)) {
+     ec_eprint("");
     return FALSE;
   }
 
@@ -971,16 +1024,19 @@ EcDsaVerify (
       HalfSize = 64;
       break;
     default:
+       ec_eprint("");
       return FALSE;
   }
 
   if (SigSize != (UINTN)(HalfSize * 2)) {
+     ec_eprint("SigSize : %d , HalfSize * 2 : %d", SigSize, HalfSize*2);
     return FALSE;
   }
 
   switch (HashNid) {
     case CRYPTO_NID_SHA256:
       if (HashSize != SHA256_DIGEST_SIZE) {
+         ec_eprint("");
         return FALSE;
       }
 
@@ -988,6 +1044,7 @@ EcDsaVerify (
 
     case CRYPTO_NID_SHA384:
       if (HashSize != SHA384_DIGEST_SIZE) {
+         ec_eprint("");
         return FALSE;
       }
 
@@ -995,24 +1052,29 @@ EcDsaVerify (
 
     case CRYPTO_NID_SHA512:
       if (HashSize != SHA512_DIGEST_SIZE) {
+         ec_eprint("");
         return FALSE;
       }
 
       break;
 
     default:
+      // ec_eprint("");
       return FALSE;
   }
 
   EcDsaSig = ECDSA_SIG_new ();
   if (EcDsaSig == NULL) {
+     ec_eprint("");
     ECDSA_SIG_free (EcDsaSig);
     return FALSE;
   }
 
   R = BN_bin2bn (Signature, (UINT32)HalfSize, NULL);
   S = BN_bin2bn (Signature + HalfSize, (UINT32)HalfSize, NULL);
+  //ec_mem_print_bin("Signature R", (UINT89))
   if ((R == NULL) || (S == NULL)) {
+     ec_eprint("");
     ECDSA_SIG_free (EcDsaSig);
     return FALSE;
   }
@@ -1027,6 +1089,6 @@ EcDsaVerify (
              );
 
   ECDSA_SIG_free (EcDsaSig);
-
+   //ec_eprint("Result : %d", Result);
   return (Result == 1);
 }

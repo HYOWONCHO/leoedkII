@@ -107,7 +107,7 @@ static VOID _sbc_abnormal_processing(VOID *priv)
         // Check which existense the previously firmware 
         if(_check_prev_fw(bp->pvs_sw_bnk) != TRUE) {
             // Boot Mode changes from Normmal to Factory
-            SBC_BootKeyModeChange(BOOT_MODE_FACTORY, KEY_MODE_UPDATE, priv);
+            SBC_SBC Package change that not run to singleBootKeyModeChange(BOOT_MODE_FACTORY, KEY_MODE_UPDATE, priv);
         }
         else {
             SBC_BootKeyModeChange(BOOT_MODE_RECOVERY, KEY_MODE_UPDATE, priv);

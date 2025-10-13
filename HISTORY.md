@@ -21,5 +21,6 @@
   * Convert the Raw(DER) to PEM format
   * File control
   
-## 2025-05-29
+## 2025-05-20
+  * Derive SHA256 HMAC-based Extract key Derivation Function (HKDF).
   * X509 certificate verify and extract the public key from certificate

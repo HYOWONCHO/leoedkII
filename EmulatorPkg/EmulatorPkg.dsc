@@ -234,6 +234,8 @@
   gEfiMdeModulePkgTokenSpaceGuid.PcdDxeIplBuildPageTables|FALSE
 
 [PcdsFixedAtBuild]
+
+  gEfiMdePkgTokenSpaceGuid.PcdUefiLibMaxPrintBufferSize|8000
   gEfiMdeModulePkgTokenSpaceGuid.PcdImageProtectionPolicy|0x00000000
   gEfiMdeModulePkgTokenSpaceGuid.PcdResetOnMemoryTypeInformationChange|FALSE
   gEfiMdePkgTokenSpaceGuid.PcdDebugPrintErrorLevel|0x80000040
