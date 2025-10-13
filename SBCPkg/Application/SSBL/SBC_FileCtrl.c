@@ -1866,7 +1866,7 @@ SBCStatus SBC_LoadRawPrt(VOID *handle, UINT8 *shared_secret, UINT8 *decbuf, UINT
                                  enclen,
                                  encbuf);
 
-    SBC_mem_print_bin("enc data =", encbuf, enclen);
+    //SBC_mem_print_bin("enc data =", encbuf, enclen);
 
     //
     // Reading  iv
@@ -1877,7 +1877,7 @@ SBCStatus SBC_LoadRawPrt(VOID *handle, UINT8 *shared_secret, UINT8 *decbuf, UINT
                                  SBC_AT_RP_IV_LEN,
                                  iv);
 
-    SBC_mem_print_bin("iv data =", iv, SBC_AT_RP_IV_LEN);
+    //SBC_mem_print_bin("iv data =", iv, SBC_AT_RP_IV_LEN);
 
     //
     // Reading tag
@@ -1889,7 +1889,7 @@ SBCStatus SBC_LoadRawPrt(VOID *handle, UINT8 *shared_secret, UINT8 *decbuf, UINT
                                  tag);
 
 
-    SBC_mem_print_bin("tag data =", tag, SBC_AT_RP_TAG_LEN);
+    //SBC_mem_print_bin("tag data =", tag, SBC_AT_RP_TAG_LEN);
     //( p->bm == BOOT_MODE_UPDATE ) ? shared_secret = ((atp_ident_t *)p->keyinfo)->migid : shared_secret = dec_key;
 
 
@@ -1906,13 +1906,13 @@ SBCStatus SBC_LoadRawPrt(VOID *handle, UINT8 *shared_secret, UINT8 *decbuf, UINT
     aesctx.gcm = &ctx;
     aesctx.algoid = SBC_CIPHER_AES_GCM;
 
-    dprint("");
+    //dprint("");
     SBC_AESGcmSetContext((void *)aesctx.gcm, 
                      (void *)shared_secret, 
                      (void *)iv, 
                      (void *)tag);
 
-    dprint("");
+    //dprint("");
     if (SBC_AESGcmDecrypt(&aesctx) != SBCOK) {
         SBC_LogHexToStrChar16(shared_secret, 32, err_out_key_val, sizeof(err_out_key_val)/sizeof(err_out_key_val[0]),  FALSE, 0);
         UnicodeSPrint(mrgmsg,  sizeof mrgmsg, L"SBC_ProtSW_Update Failed to decrypt (%s) \n", err_out_key_val);
@@ -1927,7 +1927,7 @@ SBCStatus SBC_LoadRawPrt(VOID *handle, UINT8 *shared_secret, UINT8 *decbuf, UINT
         goto errdone;
     }
 
-    dprint("");
+    //dprint("");
     *rdlen = enclen;
 
 

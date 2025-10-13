@@ -166,7 +166,8 @@ SBCStatus SBC_GetProtectedSwName(VOID *handle, UINTN st, CHAR8 *sw_name, UINTN s
         path++;
     }
 
-    CopyMem(sw_name, &path->name, sw_name_size);
+    dprint("name=%a, ver=%a, sw_node_off=%lx\n",path->name, path->ver, path->sw_node_off);
+    CopyMem(sw_name, path->name, sw_name_size);
 
 errdone:
 

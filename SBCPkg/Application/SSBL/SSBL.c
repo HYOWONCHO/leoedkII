@@ -467,12 +467,31 @@ UefiMain (
     ret = SBC_GenMigrationKey((void *)&btproc, diceid.migid);
     SBC_external_mem_print_bin("Migration Key", diceid.migid, 32);
 
-    SBC_ProtSWDecrypt((VOID *)&btproc, 
-                      diceid.devid,
-                      diceid.migid,
-                      NULL,
-                      NULL);
-    return EFI_SUCCESS;
+    {
+        UINTN   line  = 0ULL;
+        UINTN   cnt;
+        SBC_ProtSWGetCnt((VOID *)&btproc, &line);
+
+        dprint("Protected Software Count : %ld", line);
+
+        for (cnt = 0; cnt < line; cnt++ ) {
+            CHAR8 sw_name[256] = {0, };
+            UINTN sw_name_len = 0ULL;
+
+            SBC_GetProtectedSwName((void *)&btproc, cnt, sw_name, 256);
+            //sw_name[sw_name_len] = '\0';
+            dprint("SW Name : %a, Name Len : %ld", sw_name, sw_name_len);
+
+        }
+
+
+    //  SBC_ProtSWDecrypt((VOID *)&btproc,
+    //                    diceid.devid,
+    //                    diceid.migid,
+    //                    NULL,
+    //                    NULL);
+        return EFI_SUCCESS;
+    }
 
 #if 0
     SBC_BootKeyModeChange(BOOT_MODE_UPDATE, KEY_MODE_NORMAL, (void *)&btproc);
@@ -492,15 +511,6 @@ UefiMain (
     SBC_external_mem_print_bin("Migraiotn Key", diceid.migid, 32);
     return EFI_SUCCESS;
 #endif
-
-    {
-        UINTN prot_sw_cnt = 0;
-        SBC_ProtSWGetCnt(&btproc, &prot_sw_cnt);
-        dprint("Protected SW Count : %d", prot_sw_cnt);
-
-    }
-
-    return EFI_SUCCESS;
 
 
     ret = SBC_SSBL_Verify(h_blkio, &baseansr, btproc.curr_sw_bnk );
