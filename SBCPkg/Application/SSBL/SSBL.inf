@@ -41,6 +41,7 @@
   SBC_LoadKernelImage.c
   SBC_Kdf.c
   SBC_ProtectedSW.c
+  SBC_Nvram.c
 
 
 [Packages]
