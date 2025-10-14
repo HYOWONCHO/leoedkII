@@ -1697,7 +1697,7 @@ SBCStatus SBC_RawAlignedReadBlockIO(VOID *blk, UINTN off, UINTN sz, VOID *buf)
         //dprint("lba of head : %ld", lba);
         retval = io->ReadBlocks(io, io->Media->MediaId, lba, B ,tmp);
         if (EFI_ERROR(retval)) {
-            dprint("%ld LBA read block fail (%r)", lba, retval);
+            dprint("(Offset : %lx, %ld LBA read block fail (%r)", off, lba, retval);
             ret = SBCIO;
             goto errdone;
         }
@@ -1720,7 +1720,7 @@ SBCStatus SBC_RawAlignedReadBlockIO(VOID *blk, UINTN off, UINTN sz, VOID *buf)
         //dprint("lba of body : %ld", lba);
         retval = io->ReadBlocks(io, io->Media->MediaId, lba, B, p);
         if (EFI_ERROR(retval)) {
-            dprint("%ld LBA read block fail (%r)", lba, retval);
+            dprint("(Offset : %lx, %ld LBA read block fail (%r)", off, lba, retval);
             ret = SBCIO;
             goto errdone;
         }
@@ -1739,7 +1739,7 @@ SBCStatus SBC_RawAlignedReadBlockIO(VOID *blk, UINTN off, UINTN sz, VOID *buf)
         //dprint("lba of tail : %ld", lba);
         retval = io->ReadBlocks(io, io->Media->MediaId, lba, B, tmp);
         if (EFI_ERROR(retval)) {
-            dprint("%ld LBA read block fail (%r)", lba, retval);
+            dprint("(Offset : %lx, %ld LBA read block fail (%r)", off, lba, retval);
             ret = SBCIO;
             goto errdone;
         }
