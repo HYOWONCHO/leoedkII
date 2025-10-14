@@ -14,6 +14,7 @@
 #include "SBC_BootProc.h"
 #include "SBC_FileCtrl.h"
 #include "SBC_Kdf.h"
+#include "SBC_ProtectedSW.h"
 
 //EFI_GUID g_sbc_guid  = {0x1F3F7E80, 0xDB6B, 0x93FA, {0x9E, 0x61, 0x4C, 0x31, 0x3D, 0x3A}};
 static SBCStatus _update_protected_software(VOID *priv);
@@ -300,6 +301,12 @@ static SBCStatus _update_behavior_for_km(void *priv)
         }
 
 
+
+        ret =  _proetcted_sw_re_enc_dec((void *)bp);
+        if(ret != SBCOK) {
+            eprint("Detection _proetcted_sw_re_enc_dec ");
+            goto errdone;
+        }
 
 //      ret = SBC_BootKeyModeChange(BOOT_MODE_RECOVERY, KEY_MODE_NORMAL, priv);
 //      if(ret != SBCOK) {

@@ -270,7 +270,7 @@ SBC_BuildHexFormattedMessage (
 
   // 바이너리 → HEX 문자열 변환
   SBC_LogHexToStrChar16(
-      PubKey,
+      (VOID *)PubKey,
       PubKeySize,
       HexStr,
       HexChars + 1,

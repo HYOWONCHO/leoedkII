@@ -20,7 +20,7 @@
 #define SYS_LOG_EVT_DETECTION                   L"Detection"
 #define SYS_LOG_HOST_BOOT                       L"AT_BOOT"
 #define SYS_LOG_APP_NAME                        L"SSBL"
-#define SYS_LOG_CSC_NAME                        SYS_LOG_CSC_NAME
+#define SYS_LOG_CSC_NAME                        L"SAT"
 
 /*!
     \breif SBC System Log Priority 

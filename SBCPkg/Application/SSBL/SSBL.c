@@ -66,6 +66,7 @@
 #include "SBC_BootProc.h"
 #include "SBC_SystemControl.h"
 #include "SBC_ProtectedSW.h"
+#include "SBC_Hashing.h"
 
 
 VOID *h_blkio;               // Block I/O handle
@@ -463,13 +464,33 @@ UefiMain (
 
     //dprint("Chaeck Boot Mode read from BlkIO is %d", h_rawptrheader.bootmode);
 
-#if 0
+#if 1
     ret = SBC_GenMigrationKey((void *)&btproc, diceid.migid);
     SBC_external_mem_print_bin("Migration Key", diceid.migid, 32);
 
     {
         UINTN   line  = 0ULL;
         UINTN   cnt;
+
+        UINT8  deckey[32];
+        UINT8  enckey[32];
+
+        ret = SBC_DiceKeysGen(ImageHandle, &diceid,  currbank_id, btproc.bm);
+        if (ret != SBCOK) {
+            sbc_err_sysprn(SBC_LOG_CMN_PRIO_ERR, 2,
+                 SYS_LOG_HOST_BOOT,
+                 SYS_LOG_APP_NAME,
+                 SYS_LOG_CSC_NAME,
+                 1,
+                 SYS_LOG_EVT_VALDIATION,
+                 L"HW&SW Base Key Creation Fail");
+            retval = EFI_INVALID_PARAMETER;
+            btproc.bootst = SB_PROC_ST_ABNRAM;
+            goto errdone;
+        }
+
+        SBC_GenMigrationKey((void *)&btproc, diceid.migid);
+
         SBC_ProtSWGetCnt((VOID *)&btproc, &line);
 
         dprint("Protected Software Count : %ld", line);
@@ -484,12 +505,15 @@ UefiMain (
 
         }
 
+        SBC_HashCompute(NULL, ((atp_ident_t *)btproc.keyinfo)->migid, 32, deckey);
+        SBC_HashCompute(NULL, ((atp_ident_t *)btproc.keyinfo)->osid, 32, enckey);
 
-    //  SBC_ProtSWDecrypt((VOID *)&btproc,
-    //                    diceid.devid,
-    //                    diceid.migid,
-    //                    NULL,
-    //                    NULL);
+
+        SBC_ProtSWDecrypt((VOID *)&btproc,
+                          enckey,
+                          deckey,
+                          NULL,
+                          NULL);
         return EFI_SUCCESS;
     }
 #endif 

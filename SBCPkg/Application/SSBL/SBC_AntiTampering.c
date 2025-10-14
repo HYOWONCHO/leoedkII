@@ -1143,7 +1143,6 @@ SBCStatus  SBC_FirmwareIdKyeVerify(VOID *priv)
             (CONST VOID *)pubkey, (UINTN)pubkeyl,
             L"SBC_Dice_OSID failed to create OSID (%s)\n",
             mrgmsg, sizeof mrgmsg);
-            );
 
         sbc_err_sysprn(SBC_LOG_CMN_PRIO_ERR, 2,
                  SYS_LOG_HOST_BOOT,
@@ -1380,7 +1379,6 @@ SBCStatus  SBC_OSIdKyeVerify(VOID *priv)
             (CONST VOID *)pubkey, (UINTN)pubkeyl,
             L"SBC_Dice_OSID failed to create OSID (%s)\n",
             mrgmsg, sizeof mrgmsg);
-            );
 
         sbc_err_sysprn(SBC_LOG_CMN_PRIO_ERR, 2,
                  SYS_LOG_HOST_BOOT,
