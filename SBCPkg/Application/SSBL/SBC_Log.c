@@ -240,6 +240,59 @@ VOID SBC_LogHexKeyConvToChar16(VOID *out, VOID *msgbuf, VOID *keymsg)
     return;
 }
 
+EFI_STATUS 
+SBC_BuildHexFormattedMessage (
+  IN  CONST VOID  *PubKey,
+  IN  UINTN        PubKeySize,
+  IN  CONST CHAR16 *FormatString,
+  OUT CHAR16      *OutMsg,
+  IN  UINTN        OutMsgBytes
+  )
+{
+  if (PubKey == NULL || PubKeySize == 0 ||
+      FormatString == NULL || OutMsg == NULL ||
+      OutMsgBytes < sizeof(CHAR16)) {
+    return EFI_INVALID_PARAMETER;
+  }
+
+  // %s 자리가 존재하는지 간단 검증 (선택사항)
+  if (StrStr(FormatString, L"%s") == NULL) {
+    return EFI_INVALID_PARAMETER;
+  }
+
+  const UINTN HexChars = PubKeySize * 2;
+  const UINTN HexBytes = (HexChars + 1) * sizeof(CHAR16);
+
+  CHAR16 *HexStr = AllocateZeroPool(HexBytes);
+  if (HexStr == NULL) {
+    return EFI_OUT_OF_RESOURCES;
+  }
+
+  // 바이너리 → HEX 문자열 변환
+  SBC_LogHexToStrChar16(
+      PubKey,
+      PubKeySize,
+      HexStr,
+      HexChars + 1,
+      FALSE,   // 대문자/소문자 구분 옵션
+      0
+  );
+
+  ZeroMem(OutMsg, OutMsgBytes);
+
+  // 포맷 문자열과 HEX 문자열을 합침
+  UnicodeSPrint(
+      OutMsg,
+      OutMsgBytes,
+      FormatString,
+      HexStr
+  );
+
+  FreePool(HexStr);
+  return EFI_SUCCESS;
+}
+
+
 CHAR16 *SBC_LogMrg(CONST CHAR16 *fmt, ...)
 {
 

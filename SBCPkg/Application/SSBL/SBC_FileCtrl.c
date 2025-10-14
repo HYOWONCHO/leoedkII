@@ -1917,11 +1917,11 @@ SBCStatus SBC_LoadRawPrt(VOID *handle, UINT8 *shared_secret, UINT8 *decbuf, UINT
         SBC_LogHexToStrChar16(shared_secret, 32, err_out_key_val, sizeof(err_out_key_val)/sizeof(err_out_key_val[0]),  FALSE, 0);
         UnicodeSPrint(mrgmsg,  sizeof mrgmsg, L"SBC_ProtSW_Update Failed to decrypt (%s) \n", err_out_key_val);
         sbc_err_sysprn(SBC_LOG_CMN_PRIO_ERR, 2,
-                 L"AT_BOOT",
-                 L"SSBL",
-                 L"SAT",
+                 SYS_LOG_HOST_BOOT,
+                 SYS_LOG_APP_NAME,
+                 SYS_LOG_CSC_NAME,
                  5,
-                 L"Detection",
+                 SYS_LOG_EVT_DETECTION,
                  mrgmsg);
         ret = SBCENCFAIL;
         goto errdone;

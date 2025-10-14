@@ -192,6 +192,64 @@ errdone:
     return ret;
 }
 
+static SBCStatus _proetcted_sw_re_enc_dec(VOID *handle)
+{
+    SBCStatus ret = SBCOK;
+    boot_proc_t *bp = (boot_proc_t *)handle;
+
+    UINT8 deckey[SBC_AT_RP_KEY_LEN] = {0, };
+    UINT8 enckey[SBC_AT_RP_KEY_LEN] = {0, };
+
+
+
+    ret = SBC_HashCompute(NULL, 
+                          ((atp_ident_t *)bp->keyinfo)->migid,
+                          SBC_AT_RP_KEY_LEN,
+                          deckey);
+    SBC_RET_VALIDATE_ERRCODEMSG(!(ret != SBCOK), ret, 
+                                "Failed to Dec secret key creation");
+
+    ret = SBC_HashCompute(NULL, 
+                          ((atp_ident_t *)bp->keyinfo)->osid,
+                          SBC_AT_RP_KEY_LEN,
+                          enckey);
+    SBC_RET_VALIDATE_ERRCODEMSG(!(ret != SBCOK), ret, 
+                                "Failed to Enc secret key creation");
+
+
+
+    ret = SBC_ProtSWDecrypt((VOID *)bp, 
+                            enckey,
+                            deckey,
+                            NULL, NULL);
+    SBC_RET_VALIDATE_ERRCODEMSG(!(ret != SBCOK),
+                                ret,
+                                "Failed to Re-crypto");
+
+
+    sbc_err_sysprn(SBC_LOG_CMN_PRIO_INFO, 2,
+               SYS_LOG_HOST_BOOT,
+               SYS_LOG_APP_NAME,
+               SYS_LOG_CSC_NAME,
+               1,
+               SYS_LOG_EVT_VALDIATION,
+               L"SBC_ProtSW_Update Protected Software update success");
+
+errdone:
+
+    if(ret != SBCOK) {
+        sbc_err_sysprn(SBC_LOG_CMN_PRIO_ERR, 2,
+           SYS_LOG_HOST_BOOT,
+           SYS_LOG_APP_NAME,
+           SYS_LOG_CSC_NAME,
+           1,
+           SYS_LOG_EVT_DETECTION,
+           L"SBC_ProtSW_Update Failed to update the Protected Software");
+    }
+
+    return ret;
+}
+
 static SBCStatus _update_behavior_for_km(void *priv)
 {
     SBCStatus ret = SBCOK;
@@ -223,6 +281,7 @@ static SBCStatus _update_behavior_for_km(void *priv)
         break;
     case SB_PROC_ST_NRMA:
         dprint("Base Answer re-encrypt and write in Update Mode");
+
         // Base answer re-encrypt using Migration Key 
 
         // Base Answer decrypt 
@@ -239,6 +298,8 @@ static SBCStatus _update_behavior_for_km(void *priv)
                             "mismatched known answer");
             goto errdone;
         }
+
+
 
 //      ret = SBC_BootKeyModeChange(BOOT_MODE_RECOVERY, KEY_MODE_NORMAL, priv);
 //      if(ret != SBCOK) {

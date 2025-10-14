@@ -1139,7 +1139,19 @@ SBCStatus  SBC_FirmwareIdKyeVerify(VOID *priv)
     SBC_external_mem_print_bin("Certificate Pubkey", pubkey, pubkeyl);
     SBC_external_mem_print_bin("Device ID Pubkey", key_pair.q.value, key_pair.ql);
     if(CompareMem(key_pair.q.value,  pubkey, pubkeyl) != 0) {
-        eprint("CA public key verify fail");
+        SBC_BuildHexFormattedMessage(
+            (CONST VOID *)pubkey, (UINTN)pubkeyl,
+            L"SBC_Dice_OSID failed to create OSID (%s)\n",
+            mrgmsg, sizeof mrgmsg);
+            );
+
+        sbc_err_sysprn(SBC_LOG_CMN_PRIO_ERR, 2,
+                 SYS_LOG_HOST_BOOT,
+                 SYS_LOG_APP_NAME,
+                 SYS_LOG_CSC_NAME,
+                 1,
+                 L"Detectoin",
+                 mrgmsg);
         ret = SBCINVPARAM;
         goto errdone;
     }
@@ -1363,7 +1375,20 @@ SBCStatus  SBC_OSIdKyeVerify(VOID *priv)
 #else
     SBC_external_mem_print_bin("OS ID Pubkey", key_pair.q.value, key_pair.ql);
     if(CompareMem(key_pair.q.value,  pubkey, pubkeyl) != 0) {
-        eprint("CA public key verify fail");
+        
+        SBC_BuildHexFormattedMessage(
+            (CONST VOID *)pubkey, (UINTN)pubkeyl,
+            L"SBC_Dice_OSID failed to create OSID (%s)\n",
+            mrgmsg, sizeof mrgmsg);
+            );
+
+        sbc_err_sysprn(SBC_LOG_CMN_PRIO_ERR, 2,
+                 SYS_LOG_HOST_BOOT,
+                 SYS_LOG_APP_NAME,
+                 SYS_LOG_CSC_NAME,
+                 1,
+                 L"Detectoin",
+                 mrgmsg);
         ret = SBCINVPARAM;
         goto errdone;
     }
@@ -1401,37 +1426,29 @@ SBCStatus SBC_DiceIDKeyVerify(VOID *priv)
 
     ret = SBC_FirmwareIdKyeVerify(priv);
     if (ret != SBCOK) {
-        sbc_err_sysprn(SBC_LOG_CMN_PRIO_ERR, 2,
-                 L"AT_BOOT",
-                 L"SSBL",
-                 L"SAT",
-                 1,
-                 L"Detectoin",
-                 L"SBC_Dice_FWID Key Verify Fail");
-
-        goto errdone;
-    }
-
-    ret = SBC_OSIdKyeVerify(priv);
-    if (ret != SBCOK) {
-        sbc_err_sysprn(SBC_LOG_CMN_PRIO_ERR, 2,
-                 L"AT_BOOT",
-                 L"SSBL",
-                 L"SAT",
-                 1,
-                 L"Detectoin",
-                 L"SBC_Dice_OSID Key Verify Fail");
-
         goto errdone;
     }
 
     sbc_err_sysprn(SBC_LOG_CMN_PRIO_INFO, 2,
-               L"AT_BOOT",
-               L"SSBL",
-               L"SAT",
+           SYS_LOG_HOST_BOOT,
+           SYS_LOG_APP_NAME,
+           SYS_LOG_CSC_NAME,
+           1,
+           SYS_LOG_EVT_VALDIATION,
+           L"SBC_Dice_Key FWID Verify Success");
+
+    ret = SBC_OSIdKyeVerify(priv);
+    if (ret != SBCOK) {
+        goto errdone;
+    }
+
+    sbc_err_sysprn(SBC_LOG_CMN_PRIO_INFO, 2,
+               SYS_LOG_HOST_BOOT,
+               SYS_LOG_APP_NAME,
+               SYS_LOG_CSC_NAME,
                1,
-               L"Validation",
-               L"SBC_Dice_Key Verify Success");
+               SYS_LOG_EVT_VALDIATION,
+               L"SBC_Dice_Key OSID Verify Success");
  
 
 errdone:
@@ -1743,10 +1760,10 @@ SBCStatus  SBC_BaseAnswerValidate(VOID *blkhnd, UINT8 *answer, UINTN answerl, UI
 //  UnicodeSPrint(mrgmsg, sizeof mrgmsg, L"Base Answer validate Success (%s:%s) \n",answer,decbuf);
     sbc_err_sysprn(SBC_LOG_CMN_PRIO_INFO, 2,
          L"SBC",
-         L"SSBL",
-         L"SAT",
+         SYS_LOG_APP_NAME,
+         SYS_LOG_CSC_NAME,
          3,
-         L"Validation",
+         SYS_LOG_EVT_VALDIATION,
          L"SBC_Integrity_OSID derived answer matched known answer");
 
     return ret;
@@ -1754,10 +1771,10 @@ errdone:
 
     sbc_err_sysprn(SBC_LOG_CMN_PRIO_ERR, 2,
        L"SBC",
-       L"SSBL",
-       L"SAT",
+       SYS_LOG_APP_NAME,
+       SYS_LOG_CSC_NAME,
        3,
-       L"Detection",
+       SYS_LOG_EVT_DETECTION,
        L"SBC_tamper_OSID derived answer mismatched known answer");
 
     return ret;
@@ -2070,10 +2087,10 @@ SBCStatus  SBC_SSBL_Verify(VOID *blkhnd, VOID *ansr, UINTN normbank)
     if (retbool != TRUE) {
       sbc_err_sysprn(SBC_LOG_CMN_PRIO_ERR, 2,
            L"SBC",
-           L"SSBL",
-           L"SAT",
+           SYS_LOG_APP_NAME,
+           SYS_LOG_CSC_NAME,
            8,
-           L"Detection",
+           SYS_LOG_EVT_DETECTION,
            L"SBC_tamper_SSBL signature verification faied");
       ret = SBCFAIL;
       goto errdone;
@@ -2245,9 +2262,9 @@ SBCStatus SBC_GenDeviceID(UINT8 *devid)
 
 
     sbc_err_sysprn(SBC_LOG_CMN_PRIO_INFO, 2, 
-              L"AT_BOOT", 
-              L"SSBL", 
-              L"SAT", 
+              SYS_LOG_HOST_BOOT, 
+              SYS_LOG_APP_NAME, 
+              SYS_LOG_CSC_NAME, 
               1, 
               L"Validation ", 
               mrgmsg);
@@ -2256,9 +2273,9 @@ errdone:
 
     if (ret != SBCOK) {
         sbc_err_sysprn(SBC_LOG_CMN_PRIO_ERR, 2, 
-              L"AT_BOOT", 
-              L"SSBL", 
-              L"SAT", 
+              SYS_LOG_HOST_BOOT, 
+              SYS_LOG_APP_NAME, 
+              SYS_LOG_CSC_NAME, 
               1, 
               L"Validation ", 
               L"SBC_Dice_DEVID Creation Fail");
@@ -2329,9 +2346,9 @@ SBCStatus SBC_GenFWID(EFI_HANDLE *h_image, UINT8 *devid, UINT8 *fwid, UINTN norm
 
 
   sbc_err_sysprn(SBC_LOG_CMN_PRIO_INFO, 2, 
-          L"AT_BOOT", 
-          L"SSBL", 
-          L"SAT", 
+          SYS_LOG_HOST_BOOT, 
+          SYS_LOG_APP_NAME, 
+          SYS_LOG_CSC_NAME, 
           1, 
           L"Validation ", 
           mrgmsg);
@@ -2407,9 +2424,9 @@ SBCStatus SBC_GenOSID(EFI_HANDLE *h_image, UINT8 *fwid, UINT8 *osid)
 
 
   sbc_err_sysprn(SBC_LOG_CMN_PRIO_INFO, 2, 
-          L"AT_BOOT", 
-          L"SSBL", 
-          L"SAT", 
+          SYS_LOG_HOST_BOOT, 
+          SYS_LOG_APP_NAME, 
+          SYS_LOG_CSC_NAME, 
           1, 
           L"Validation ", 
           mrgmsg);
@@ -2749,7 +2766,7 @@ errdone:
 }
 #endif
 // FSBL Integrity check 
-SBCStatus  SBC_FSBLIntgCheck([[gnu::unused]]EFI_HANDLE *h_image , VOID *blkio, VOID *cert, UINTN certle, UINTN nrombank, UINTN mode)
+SBCStatus  SBC_FSBLIntgCheck([[gnu::unused]]EFI_HANDLE *h_image , VOID *blkio, VOID *cert, UINTN certlen, UINTN nrombank, UINTN mode)
 {
     SBCStatus ret = SBCOK;
 
@@ -2760,7 +2777,15 @@ SBCStatus  SBC_FSBLIntgCheck([[gnu::unused]]EFI_HANDLE *h_image , VOID *blkio, V
 //  VOID *blkio;
     UINT8 *cabuf =  NULL;
     UINTN calen = 0;
-    UINTN certlen = 0;
+    //UINTN certlen = 0;
+    SBC_AESGcmCtx  ctx;
+    SBC_AESContext  aesctx;
+    UINT8 decbuf[1024] ={0,};
+    UINT8 secret_key[SBC_AT_HASH_LEN] = {0, };
+
+    UINT8 *iv;
+    UINT8 *tag;
+
 
     switch (mode) {
     case BOOT_MODE_NORMAL:
@@ -2788,22 +2813,60 @@ SBCStatus  SBC_FSBLIntgCheck([[gnu::unused]]EFI_HANDLE *h_image , VOID *blkio, V
                               &imglen, 
                               startlba);
     SBC_RET_VALIDATE_ERRCODEMSG((ret == SBCOK), ret, "RooTCA load fail");
-
+#ifndef _UNIT_TEST_ON_
     // Pointing the RooTCA Address
     CopyMem((void *)&calen, (void *)&imgbuf[SYS_CONF_ROOT_CA_OFS], LEN_DFLT_OFS);
     cabuf = &imgbuf[SYS_CONF_ROOT_CA_OFS + LEN_DFLT_OFS];
-    
 
+    iv = &imgbuf[SYS_CONF_ROOT_CA_OFS + LEN_DFLT_OFS + calen];
+    tag = &imgbuf[SYS_CONF_ROOT_CA_OFS + LEN_DFLT_OFS + calen +  SBC_AT_IV_LEN];
+
+    ret = SBC_DeviceSecuirtyKeyCreate(secret_key);
+    SBC_RET_VALIDATE_ERRCODEMSG((ret == SBCOK), 
+                                SBCINVPARAM, 
+                                "SBC_DeviceSecuirtyKeyCreate fail");
+   //offset = 0;
+    ctx.out.value = (void *)decbuf;
+    //declen = calen;
+    ctx.out.length = calen;
+
+    ctx.msg.value = cabuf;
+    ctx.msg.length = calen;
+    
+    aesctx.gcm = &ctx;
+    aesctx.algoid = SBC_CIPHER_AES_GCM;
+
+    SBC_AESGcmSetContext((void *)aesctx.gcm,
+                         (void *)secret_key,
+                         (void *)iv,
+                         (void *)tag);
+
+
+    ret = SBC_AESGcmDecrypt(&aesctx);
+    SBC_RET_VALIDATE_ERRCODEMSG((ret == SBCOK), 
+                                SBCENCFAIL, 
+                                "CA decrypt fail");    
+
+    SBC_mem_print_bin("RootCA", decbuf, calen);
+
+    SBC_mem_print_bin("RootCA", cert, certlen);
+#else
+    calen = rootca_certi_lv.length;
+    cabuf = (UINT8 *)rootca_certi_lv.value;
+
+    //SBC_mem_print_bin("Root CA", cabuf, calen);
+    //SBC_mem_print_bin("Cert", cert, certlen);
+#endif
 
     ret = SBC_X509VerifyCert(
                       (CONST UINT8 *)cert,  //  Cert
                       certlen,
-                      cabuf, // CA
+                      decbuf, // CA
                       calen
         );
 
     if (ret != SBCOK) {
-      int_eprint("SSBL Verify fail \n");
+      int_eprint("RootCA Signature Verify fail \n");
       goto errdone;
     }
 
@@ -2818,6 +2881,8 @@ errdone:
     return ret;
 
 }
+
+
 
 //SBCStatus SBC_GenDeviceID(UINT8 *devid)
 //{

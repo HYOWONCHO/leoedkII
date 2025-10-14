@@ -128,11 +128,11 @@ SBCStatus SBC_GetProtectedSwName(VOID *handle, UINTN st, CHAR8 *sw_name, UINTN s
     ret = SBC_DeviceSecuirtyKeyCreate(deckey);
     if( ret != SBCOK ) {
         sbc_err_sysprn(SBC_LOG_CMN_PRIO_ERR, 1,
-                     L"AT_BOOT",
-                     L"SSBL",
-                     L"SAT",
+                     SYS_LOG_HOST_BOOT,
+                     SYS_LOG_APP_NAME,
+                     SYS_LOG_CSC_NAME,
                      8,
-                     L"Validation",
+                     SYS_LOG_EVT_VALDIATION,
                      L"SBC_RawFS_Key Creation Fail");
         goto errdone;
     }
@@ -144,11 +144,11 @@ SBCStatus SBC_GetProtectedSwName(VOID *handle, UINTN st, CHAR8 *sw_name, UINTN s
         SBC_LogHexToStrChar16(deckey, 32, err_out_key_val, sizeof(err_out_key_val)/sizeof(err_out_key_val[0]),  FALSE, 0);
         UnicodeSPrint(mrgmsg,  sizeof mrgmsg, L"SBC_ProtSW_Update Failed to decrypt (%s) \n", err_out_key_val);
         sbc_err_sysprn(SBC_LOG_CMN_PRIO_ERR, 2,
-                 L"AT_BOOT",
-                 L"SSBL",
-                 L"SAT",
+                 SYS_LOG_HOST_BOOT,
+                 SYS_LOG_APP_NAME,
+                 SYS_LOG_CSC_NAME,
                  5,
-                 L"Detection",
+                 SYS_LOG_EVT_DETECTION,
                  mrgmsg);
 
         goto errdone;
@@ -249,11 +249,11 @@ SBCStatus SBC_FindProtectedSw(VOID *handle, CHAR8 name[256], CHAR8 *ver, UINTN *
     ret = SBC_DeviceSecuirtyKeyCreate(dec_key);
     if( ret != SBCOK ) {
         sbc_err_sysprn(SBC_LOG_CMN_PRIO_ERR, 1,
-                     L"AT_BOOT",
-                     L"SSBL",
-                     L"SAT",
+                     SYS_LOG_HOST_BOOT,
+                     SYS_LOG_APP_NAME,
+                     SYS_LOG_CSC_NAME,
                      8,
-                     L"Validation",
+                     SYS_LOG_EVT_VALDIATION,
                      L"SBC_RawFS_Key Creation Fail");
         goto errdone;
     }
@@ -323,11 +323,11 @@ SBCStatus SBC_UpdateProtectedSWListVersion(VOID *handle, CHAR8 *sw_name, CHAR8 *
     ret = SBC_DeviceSecuirtyKeyCreate(dec_key);
     if( ret != SBCOK ) {
         sbc_err_sysprn(SBC_LOG_CMN_PRIO_ERR, 1,
-                     L"AT_BOOT",
-                     L"SSBL",
-                     L"SAT",
+                     SYS_LOG_HOST_BOOT,
+                     SYS_LOG_APP_NAME,
+                     SYS_LOG_CSC_NAME,
                      8,
-                     L"Validation",
+                     SYS_LOG_EVT_VALDIATION,
                      L"SBC_RawFS_Key Creation Fail");
         goto errdone;
     }

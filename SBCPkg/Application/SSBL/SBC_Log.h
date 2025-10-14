@@ -15,6 +15,13 @@
 // ANSI escape code to reset color and attributes
 #define ANSI_COLOR_RESET    "\x1b[0m"
 
+
+#define SYS_LOG_EVT_VALDIATION                  L"Validation"
+#define SYS_LOG_EVT_DETECTION                   L"Detection"
+#define SYS_LOG_HOST_BOOT                       L"AT_BOOT"
+#define SYS_LOG_APP_NAME                        L"SSBL"
+#define SYS_LOG_CSC_NAME                        SYS_LOG_CSC_NAME
+
 /*!
     \breif SBC System Log Priority 
  */
@@ -29,7 +36,7 @@ typedef enum {
 }t_sbc_syslog_prio;
 
 #define SBC_LOG_FSBL_APPNAME                        L"FSBL"
-#define SBC_LOG_SSBL_APPNAME                        L"SSBL"
+#define SBC_LOG_SSBL_APPNAME                        SYS_LOG_APP_NAME
 
 #define SBC_LOG_HOSTNAME                            L"N/A"
 
@@ -132,6 +139,29 @@ VOID  SBC_LogPrint(CONST CHAR16* func, UINT32 funcline, UINT32 prio, UINT32 ver,
                         UINT32 sfrid, CHAR16 *evtype,
                         CHAR16 *format, ...);
 
+
+/*!
+  Build a formatted message containing a HEX string of the given public key.
+
+  @param[in]  PubKey         Pointer to public key bytes.
+  @param[in]  PubKeySize     Size of PubKey in bytes (e.g., 32).
+  @param[in]  FormatString   Format string (e.g., L"SBC_Dice_OSID failed to create OSID (%s)\n").
+                             Must contain a single '%s' where the hex string will be inserted.
+  @param[out] OutMsg         Output buffer for the formatted message (CHAR16).
+  @param[in]  OutMsgBytes    Size of OutMsg in BYTES (not CHAR16 count).
+
+  @retval EFI_SUCCESS            Message built successfully.
+  @retval EFI_INVALID_PARAMETER  Null ptrs, zero sizes, or missing %s in format string.
+  @retval EFI_OUT_OF_RESOURCES   Memory allocation failed.
+ */
+EFI_STATUS 
+SBC_BuildHexFormattedMessage (
+  IN  CONST VOID  *PubKey,
+  IN  UINTN        PubKeySize,
+  IN  CONST CHAR16 *FormatString,
+  OUT CHAR16      *OutMsg,
+  IN  UINTN        OutMsgBytes
+  );
 
 
 /*!

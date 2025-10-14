@@ -503,7 +503,7 @@ UefiMain (
 #if 0
     ret = SBC_GenMigrationKey((void *)&btproc, diceid.migid);
     if (ret != SBCOK) {
-      sbc_err_sysprn(SBC_LOG_CMN_PRIO_ERR, 2, L"AT_BOOT", L"SSBL",L"SAT", 4, L"Detection", L"Migration Key creation fail\n");
+      sbc_err_sysprn(SBC_LOG_CMN_PRIO_ERR, 2, SYS_LOG_HOST_BOOT, SYS_LOG_APP_NAME,SYS_LOG_CSC_NAME, 4, SYS_LOG_EVT_DETECTION, L"Migration Key creation fail\n");
       retval = EFI_INVALID_PARAMETER;
       btproc.bootst = SB_PROC_ST_ABNRAM;
       goto errdone;
@@ -517,9 +517,9 @@ UefiMain (
     ret = SBC_SSBL_Verify(h_blkio, &baseansr, btproc.curr_sw_bnk );
     if (ret != SBCOK) {
           sbc_err_sysprn(SBC_LOG_CMN_PRIO_ERR, 2,
-                 L"AT_BOOT",
-                 L"SSBL",
-                 L"SAT",
+                 SYS_LOG_HOST_BOOT,
+                 SYS_LOG_APP_NAME,
+                 SYS_LOG_CSC_NAME,
                  8,
                  L"Detectoin",
                  L"SSBL tampering check fail");
@@ -531,21 +531,21 @@ UefiMain (
     
 
     sbc_err_sysprn(SBC_LOG_CMN_PRIO_ERR, 2,
-         L"AT_BOOT",
-         L"SSBL",
-         L"SAT",
+         SYS_LOG_HOST_BOOT,
+         SYS_LOG_APP_NAME,
+         SYS_LOG_CSC_NAME,
          8,
-         L"Validation",
+         SYS_LOG_EVT_VALDIATION,
          L"SSBL tampering check Done");
 
     ret = SBC_DiceKeysGen(ImageHandle, &diceid,  currbank_id, btproc.bm);
     if (ret != SBCOK) {
         sbc_err_sysprn(SBC_LOG_CMN_PRIO_ERR, 2,
-             L"AT_BOOT",
-             L"SSBL",
-             L"SAT",
+             SYS_LOG_HOST_BOOT,
+             SYS_LOG_APP_NAME,
+             SYS_LOG_CSC_NAME,
              1,
-             L"Validation",
+             SYS_LOG_EVT_VALDIATION,
              L"HW&SW Base Key Creation Fail");
         retval = EFI_INVALID_PARAMETER;
         btproc.bootst = SB_PROC_ST_ABNRAM;
@@ -553,11 +553,11 @@ UefiMain (
     }
 
     sbc_err_sysprn(SBC_LOG_CMN_PRIO_INFO, 2,
-         L"AT_BOOT",
-         L"SSBL",
-         L"SAT",
+         SYS_LOG_HOST_BOOT,
+         SYS_LOG_APP_NAME,
+         SYS_LOG_CSC_NAME,
          1,
-         L"Validation",
+         SYS_LOG_EVT_VALDIATION,
          L"HW&SW Base Key Creation Success");
 
     return EFI_SUCCESS;
@@ -609,7 +609,7 @@ UefiMain (
 #endif
       ret = SBC_GenMigrationKey((void *)&btproc, diceid.migid);
       if (ret != SBCOK) {
-          sbc_err_sysprn(SBC_LOG_CMN_PRIO_ERR, 2, L"AT_BOOT", L"SSBL",L"SAT", 4, L"Detection", L"Migration Key creation fail\n");
+          sbc_err_sysprn(SBC_LOG_CMN_PRIO_ERR, 2, SYS_LOG_HOST_BOOT, SYS_LOG_APP_NAME,SYS_LOG_CSC_NAME, 4, SYS_LOG_EVT_DETECTION, L"Failed the Migraiotn key creation \n");
           retval = EFI_INVALID_PARAMETER;
           btproc.bootst = SB_PROC_ST_ABNRAM;
           goto errdone;
@@ -617,7 +617,7 @@ UefiMain (
 
       SBC_external_mem_print_bin("Migraiotn Key", diceid.migid, 32);
 
-      sbc_err_sysprn(SBC_LOG_CMN_PRIO_INFO, 2, L"AT_BOOT", L"SSBL",L"SAT", 4, L"Validation", L"Migration Key creation Success\n");
+      sbc_err_sysprn(SBC_LOG_CMN_PRIO_INFO, 2, SYS_LOG_HOST_BOOT, SYS_LOG_APP_NAME,SYS_LOG_CSC_NAME, 4, SYS_LOG_EVT_VALDIATION, L"Migration Key creation Success\n");
 
       dprint("Boot State : 0x%x",btproc.bootst);
       ret = SBC_SecureBootCheck((VOID *)&btproc);
@@ -643,9 +643,9 @@ UefiMain (
     ret = SBC_GRUB_LoadAndStart(ImageHandle);
     if(ret != SBCOK) {
         sbc_err_sysprn(SBC_LOG_CMN_PRIO_ERR, 2, 
-                L"AT_BOOT", 
-                L"SSBL", 
-               L"SAT", 
+                SYS_LOG_HOST_BOOT, 
+                SYS_LOG_APP_NAME, 
+               SYS_LOG_CSC_NAME, 
                 8, 
                 L"Detection ", 
                 L"Grub Load fail");
@@ -653,9 +653,9 @@ UefiMain (
     }
 
     sbc_err_sysprn(SBC_LOG_CMN_PRIO_NOTICE, 2, 
-        L"AT_BOOT", 
-        L"SSBL", 
-        L"SAT", 
+        SYS_LOG_HOST_BOOT, 
+        SYS_LOG_APP_NAME, 
+        SYS_LOG_CSC_NAME, 
         8, 
         L"Validation ", 
         L"Grub Load Done");
