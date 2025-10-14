@@ -15,6 +15,7 @@
 
 
 
+
 #ifndef FMT_INT64_DFORMAT
 #define FMT_INT64_DFORMAT   L"ll"   // For signed decimal 64-bit
 #endif
@@ -166,6 +167,19 @@ void SBC_external_mem_print_bin(
 #endif
 
     return;
+}
+
+VOID SBC_LogElapsedTime(const CHAR16 *Tag, UITN Ns)
+{
+    CHAR16 Buf[128] = {0, };
+    UnicdoeSprint(Buf, 
+                  sizeof(Buf),
+                  L"[TIME] %s: %lu ns (%.3f ms)\n",
+                  Tag,
+                  (UINTN)Ns,
+                  (double)Ns/1.0e6);
+    dprint("%s", Buf); 
+
 }
 
 UINTN SBC_LogHexToStrChar8( UINT8 *data, UINTN len, CHAR8 *out, UINTN out_cap, BOOLEAN loweracse, CHAR8 sep)

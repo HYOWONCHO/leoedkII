@@ -4,6 +4,8 @@
 
 #include <Library/DebugLib.h>
 
+#include "SBC_Timer.h"
+
 #ifndef ARG_UNUSED
 #   define ARG_UNUSED   __attribute__ ((unused))
 #endif
