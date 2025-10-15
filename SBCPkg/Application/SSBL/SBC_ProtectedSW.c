@@ -366,6 +366,7 @@ SBCStatus SBC_ReadProtectedSwSlotOffset(VOID *handle, UINTN *check, CHAR8 *sw_na
     ret = SBC_FindProtectedSw(handle, sw_name, NULL, &node_off);
     SBC_RET_VALIDATE_ERRCODEMSG(!(ret != SBCOK), ret, "Failed to Find protected SW");
 
+    dprint("%s s/w node addr 0x%lu", sw_name, node_off);
 
     ret = SBC_RawAlignedReadBlockIO(((boot_proc_t *)handle)->blkhnd,
                                     node_off,
@@ -381,14 +382,20 @@ SBCStatus SBC_ReadProtectedSwSlotOffset(VOID *handle, UINTN *check, CHAR8 *sw_na
     dprint("sw0_off=%lx\n", node.sw0_off);
     dprint("sw1_off=%lx\n", node.sw1_off);
 
+    
+
     if (slot == AT_RP_SW_NODE_SLOT0 || node.sw0 == 1) {
         *check = 1;
         *offset = node.sw0_off;
+        goto errdone;
     } 
     else if(slot == AT_RP_SW_NODE_SLOT1 && node.sw1 == 1) {
         *check = 1;
         *offset = node.sw1_off;
+        goto errdone;
     }
+
+    ret = SBCFAIL;
 
 errdone:
 
@@ -591,7 +598,7 @@ SBCStatus SBC_ProtSWDecrypt(VOID *handle, UINT8 *key, UINT8 *migkey, UINT8 *decb
                                             sw_name,
                                             AT_RP_SW_NODE_SLOT0,
                                             &sw_off);
-        if( ret == SBCOK ) {
+        if( ret == SBCOK  && check) {
             ret = SBC_RecryptoProtectedSW(handle,
                                           sw_off,
                                           key,
@@ -606,7 +613,7 @@ SBCStatus SBC_ProtSWDecrypt(VOID *handle, UINT8 *key, UINT8 *migkey, UINT8 *decb
                                             sw_name,
                                             AT_RP_SW_NODE_SLOT1,
                                             &sw_off);
-        if( ret == SBCOK ) {
+        if( ret == SBCOK  && check ) {
             ret = SBC_RecryptoProtectedSW(handle,
                                           sw_off,
                                           key,
