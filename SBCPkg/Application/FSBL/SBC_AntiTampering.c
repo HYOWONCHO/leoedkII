@@ -247,12 +247,12 @@ EFI_STATUS efi_boot_fsbl_load(LV_t *lv)
                   &HandleBuffer
                   );
   if (EFI_ERROR (Status)) {
-    Print(L"Failed to locate Simple File System Protocol: %r\n", Status);
+    //Print(L"Failed to locate Simple File System Protocol: %r\n", Status);
     return Status;
   }
 
 
-  //Print(L"Number of Handles %d \n", NumberOfHandles);
+  ////Print(L"Number of Handles %d \n", NumberOfHandles);
   // Iterate through found file systems to find the one containing /EFI/BOOT/X64.efi
   // In a real scenario, you might have logic to identify the correct ESP.
   // For simplicity, we'll try the first one here.
@@ -272,7 +272,7 @@ EFI_STATUS efi_boot_fsbl_load(LV_t *lv)
                     (VOID **)&SimpleFileSystem
                     );
     if (EFI_ERROR (Status)) {
-      Print(L"Could not find a HandleProtocol file system.\n");
+      //Print(L"Could not find a HandleProtocol file system.\n");
       continue;
     }
 
@@ -284,14 +284,14 @@ EFI_STATUS efi_boot_fsbl_load(LV_t *lv)
     if (!EFI_ERROR (Status)) {
       // Found a file system, try to open the EFI directory
       //break; // Exit loop, we found a potential file system
-      //Print(L"Could not find a Open the root volume file system.\n");
+      ////Print(L"Could not find a Open the root volume file system.\n");
       //return EFI_NOT_FOUND;
       break;
     }
   }
 
   if (RootFs == NULL) {
-    Print(L"Could not find a suitable file system.\n");
+    //Print(L"Could not find a suitable file system.\n");
     gBS->FreePool(HandleBuffer);
     return EFI_NOT_FOUND;
   }
@@ -306,7 +306,7 @@ EFI_STATUS efi_boot_fsbl_load(LV_t *lv)
                      0 // Attributes are 0 for directories
                      );
   if (EFI_ERROR (Status)) {
-    Print(L"Failed to open EFI directory: %r\n", Status);
+    //Print(L"Failed to open EFI directory: %r\n", Status);
     goto Exit;
   }
 
@@ -319,7 +319,7 @@ EFI_STATUS efi_boot_fsbl_load(LV_t *lv)
                      0
                      );
   if (EFI_ERROR (Status)) {
-    Print(L"Failed to open BOOT directory: %r\n", Status);
+    //Print(L"Failed to open BOOT directory: %r\n", Status);
     goto Exit;
   }
 
@@ -332,7 +332,7 @@ EFI_STATUS efi_boot_fsbl_load(LV_t *lv)
                      0 // Not creating, so attributes are 0
                      );
   if (EFI_ERROR (Status)) {
-    Print(L"Failed to open FSBL.efi: %r\n", Status);
+    //Print(L"Failed to open FSBL.efi: %r\n", Status);
     goto Exit;
   }
 
@@ -352,7 +352,7 @@ EFI_STATUS efi_boot_fsbl_load(LV_t *lv)
                     (VOID **)&FileInfo
                     );
     if (EFI_ERROR (Status)) {
-      Print(L"Failed to allocate memory for FileInfo: %r\n", Status);
+      //Print(L"Failed to allocate memory for FileInfo: %r\n", Status);
       goto Exit;
     }
     // Second call to GetInfo to actually get the info
@@ -364,7 +364,7 @@ EFI_STATUS efi_boot_fsbl_load(LV_t *lv)
                         );
   }
   if (EFI_ERROR (Status)) {
-    Print(L"Failed to get file info for X64.efi: %r\n", Status);
+    //Print(L"Failed to get file info for X64.efi: %r\n", Status);
     goto Exit;
   }
 
@@ -378,7 +378,7 @@ EFI_STATUS efi_boot_fsbl_load(LV_t *lv)
                   (VOID **)&lv->value
                   );
   if (EFI_ERROR (Status)) {
-    Print(L"Failed to allocate memory for file buffer: %r\n", Status);
+    //Print(L"Failed to allocate memory for file buffer: %r\n", Status);
     goto Exit;
   }
 
@@ -388,13 +388,13 @@ EFI_STATUS efi_boot_fsbl_load(LV_t *lv)
                       lv->value
                       );
   if (EFI_ERROR (Status)) {
-    Print(L"Failed to read X64.efi: %r\n", Status);
+    //Print(L"Failed to read X64.efi: %r\n", Status);
     goto Exit;
   }
 
   //SBC_external_mem_print_bin("FSBL Rawe Buff", lv->value, 512);
 
-  //Print(L"Successfully read X64.efi into memory at address 0x%lx. Read %lu bytes.\n", (UINTN)lv->value, lv->length);
+  ////Print(L"Successfully read X64.efi into memory at address 0x%lx. Read %lu bytes.\n", (UINTN)lv->value, lv->length);
 
   // At this point, FileBuffer contains the entire content of X64.efi
   // You can now process this buffer as needed (e.g., parse it, execute it, etc.)
@@ -531,12 +531,12 @@ SBCStatus _nvme_get_serial(hw_uniqueinfo_t *p)
                         &HandleCount,
                         &HandleBuffer);
     if (EFI_ERROR(Status)) {
-        Print(L"Error: No NVMe devices found - %r\n", Status);
+        //Print(L"Error: No NVMe devices found - %r\n", Status);
         ret = SBCFAIL;
         goto errdone;
     }
 
-    //Print(L"Found %u NVMe device(s).\n", HandleCount);
+    ////Print(L"Found %u NVMe device(s).\n", HandleCount);
 
     for (Index = 0; Index < HandleCount; Index++) {
         // Get the NVMe Pass Thru Protocol from the current handle.
@@ -545,7 +545,7 @@ SBCStatus _nvme_get_serial(hw_uniqueinfo_t *p)
                            &gEfiNvmExpressPassThruProtocolGuid,
                            (VOID**)&NvmePassThru);
         if (EFI_ERROR(Status)) {
-            Print(L"Error: Could not access NVMe Pass Thru on device %u - %r\n", Index, Status);
+            //Print(L"Error: Could not access NVMe Pass Thru on device %u - %r\n", Index, Status);
             continue;
         }
 
@@ -554,7 +554,7 @@ SBCStatus _nvme_get_serial(hw_uniqueinfo_t *p)
         UINT32 BufferSize = 4096;
         VOID *Buffer = AllocatePool(BufferSize);
         if (Buffer == NULL) {
-            Print(L"Error: Failed to allocate memory for device %u\n", Index);
+            //Print(L"Error: Failed to allocate memory for device %u\n", Index);
             continue;
         }
         SetMem(Buffer, BufferSize, 0);
@@ -590,7 +590,7 @@ SBCStatus _nvme_get_serial(hw_uniqueinfo_t *p)
                        &CommandPacket,
                        NULL);
         if (EFI_ERROR(Status)) {
-            Print(L"Error: NVMe Identify command failed on device %u - %r\n", Index, Status);
+            //Print(L"Error: NVMe Identify command failed on device %u - %r\n", Index, Status);
             FreePool(Buffer);
             continue;
         }
@@ -614,7 +614,7 @@ SBCStatus _nvme_get_serial(hw_uniqueinfo_t *p)
                 break;
         }
 
-        Print(L"NVMe Device %u Serial Number: %a\n", Index, Serial);
+        //Print(L"NVMe Device %u Serial Number: %a\n", Index, Serial);
         //SBC_mem_print_bin("NVME DEV SN", (UINT8 *)Serial, 32);
         p->nvmesnl = strlen(Serial);
         CopyMem(p->nvmesn, Serial, p->nvmesnl);
@@ -692,7 +692,7 @@ static SBCStatus _baseboard_sn(hw_uniqueinfo_t *p)
                 }
 #endif
                 p->mbsnl = strlen(SerialNumberString);
-                Print(L"Base Board SN : %a \n", SerialNumberString);
+                //Print(L"Base Board SN : %a \n", SerialNumberString);
                 //SBC_external_mem_print_bin("_baseboard_sn", (UINT8 *)SerialNumberString, p->mbsnl);
                 CopyMem(p->mbsn, SerialNumberString, p->mbsnl);
 
@@ -759,13 +759,13 @@ static SBCStatus _memorydevice_sn(hw_uniqueinfo_t *p)
 
                     SerialNumberString++;
                     if (*SerialNumberString == 0) {
-                        Print(L"f you pass in a -1 you will always get here\n");
+                        //Print(L"f you pass in a -1 you will always get here\n");
                     }
                     cnt++;
                 }
 #endif
-                Print(L"Memory Device Serial Number: %a \n",
-                      SerialNumberString);
+                //Print(L"Memory Device Serial Number: %a \n",
+                //      SerialNumberString);
                 p->mmsnl = strlen(SerialNumberString);
                 CopyMem(p->mmsn, SerialNumberString, p->mmsnl);
                 //SBC_mem_print_bin("_memorydevice_sn", (UINT8 *)p->mmsn, p->mmsnl);
@@ -809,7 +809,7 @@ SBCStatus  _baseanswer_store(VOID *blkio, VOID *p)
                               &ldlen, 
                               baseansr_lba);
     if (ret != SBCOK) {
-        Print(L"SBC_RawPrtReadBlock fail (%p)\n", blkio);
+        //Print(L"SBC_RawPrtReadBlock fail (%p)\n", blkio);
         goto errdone;
     }
 
@@ -845,7 +845,7 @@ SBCStatus  _baseanswer_store(VOID *blkio, VOID *p)
     ret = SBC_RawPrtBlockWrite(blkio, loadbuf, ldlen, baseansr_lba);
     if (ret != SBCOK) {
       //dprint();
-      //Print(L"SBC Raw Partition Base Answer write fail \n");
+      ////Print(L"SBC Raw Partition Base Answer write fail \n");
       goto errdone;
     }
     //dprint();
@@ -882,10 +882,10 @@ static SBCStatus _baseanswer_extract_from_disk(VOID *blkio, base_ansid_t *p)
   // NOTES : It SHOLUD be consider for TAG size if Message is encrypt to  AES-GCM mode
   ret = SBC_RawPrtReadBlock(blkio, (VOID *)loadbuf,  &ldlen , baseansr_lba);
   if (ret != SBCOK) {
-    Print(L"SBC_RawPrtReadBlock fail (%p)\n", blkio);
+    //Print(L"SBC_RawPrtReadBlock fail (%p)\n", blkio);
     goto errdone;
   }
-  //Print(L"%a:%d \n",__FUNCTION__, __LINE__);
+  ////Print(L"%a:%d \n",__FUNCTION__, __LINE__);
 
 
   // Copy Length
@@ -907,7 +907,7 @@ static SBCStatus _baseanswer_extract_from_disk(VOID *blkio, base_ansid_t *p)
 
 #ifdef _UNIT_TEST_ON_
 //dprint("Enc Msg Len : %d", p->msglen);
-  Print(L"\t\t***Base Answer Read from Raw-partition \r\n");
+  //Print(L"\t\t***Base Answer Read from Raw-partition \r\n");
   SBC_mem_print_bin("Base Answer Encrypt Message", p->encmsg, p->msglen);
 //SBC_mem_print_bin("Enc IV", p->iv, BASE_ANS_IV_KEY_STR);
 //SBC_mem_print_bin("Tag Message", p->tag, BASE_ANS_TAG_LEN);
@@ -939,15 +939,15 @@ errdone:
 //                                "Blob buffer Nill");
 //
 //    cnt = 0;
-//     //Print(L" cnt : %d \n", cnt);
+//     ////Print(L" cnt : %d \n", cnt);
 //    CopyMem((void *)&computebuf[0], info.mbsn, info.mbsnl);
 //    cnt = info.mbsnl;
 //
-//     //Print(L"Next cnt : %d \n", cnt);
+//     ////Print(L"Next cnt : %d \n", cnt);
 //    CopyMem((void *)&computebuf[cnt], info.mmsn, info.mmsnl);
 //    cnt += info.mmsnl;
 //
-//     //Print(L"Next Next cnt : %d \n", cnt);
+//     ////Print(L"Next Next cnt : %d \n", cnt);
 //    CopyMem((void *)&computebuf[cnt], info.nvmesn, info.nvmesnl);
 //    cnt += info.nvmesnl;
 //
@@ -1024,7 +1024,7 @@ SBCStatus SBC_RootCAVerify(VOID *blkio)
                               &ldlen, 
                               systm_lba);
     if (ret != SBCOK) {
-        Print(L"SBC_RawPrtReadBlock fail (%p)\n", blkio);
+        //Print(L"SBC_RawPrtReadBlock fail (%p)\n", blkio);
         goto errdone;
     }
 
@@ -1069,15 +1069,15 @@ SBCStatus SBC_DeviceSecuirtyKeyCreate(VOID *key)
                                 "Blob buffer Nill");
 
     cnt = 0;
-     //Print(L" cnt : %d \n", cnt);
+     ////Print(L" cnt : %d \n", cnt);
     CopyMem((void *)&computebuf[0], info.mbsn, info.mbsnl);
     cnt = info.mbsnl;
 
-     //Print(L"Next cnt : %d \n", cnt);
+     ////Print(L"Next cnt : %d \n", cnt);
     CopyMem((void *)&computebuf[cnt], info.mmsn, info.mmsnl);
     cnt += info.mmsnl;
 
-     //Print(L"Next Next cnt : %d \n", cnt);
+     ////Print(L"Next Next cnt : %d \n", cnt);
     CopyMem((void *)&computebuf[cnt], info.nvmesn, info.nvmesnl);
     cnt += info.nvmesnl;
 
@@ -1147,7 +1147,7 @@ SBCStatus  SBC_DeviceIdKyeVerify(VOID *blkio, UINT8 *fwid, UINT8 *deckey)
                               &ldlen, 
                               systm_lba);
     if (ret != SBCOK) {
-        Print(L"SBC_RawPrtReadBlock fail (%p)\n", blkio);
+        //Print(L"SBC_RawPrtReadBlock fail (%p)\n", blkio);
         goto errdone;
     }
 
@@ -1350,7 +1350,7 @@ SBCStatus  SBC_FirmwareIdKyeVerify(VOID *blkio, UINT8 *fwid, UINT8 *deckey)
                               &ldlen, 
                               systm_lba);
     if (ret != SBCOK) {
-        Print(L"SBC_RawPrtReadBlock fail (%p)\n", blkio);
+        //Print(L"SBC_RawPrtReadBlock fail (%p)\n", blkio);
         goto errdone;
     }
 
@@ -1606,7 +1606,7 @@ SBCStatus  SBC_BaseAnswerValidate(VOID *blkhnd, UINT8 *answer, UINTN answerl, UI
 
     SBC_RET_VALIDATE_ERRCODEMSG((answer != NULL), SBCNULLP, "Answer is Nill");
 #ifdef _UNIT_TEST_ON_
-    Print(L"\t** Extract Encrypt Base Answer \r\n");
+    //Print(L"\t** Extract Encrypt Base Answer \r\n");
 #endif
 
     // Read the Base Answer from Disk 
@@ -1648,21 +1648,21 @@ SBCStatus  SBC_BaseAnswerValidate(VOID *blkhnd, UINT8 *answer, UINTN answerl, UI
 #endif
 
     if (SBC_AESGcmDecrypt(&aesctx) != SBCOK) {
-      Print(L"Base Answer Decrypt fail \n");
+      //Print(L"Base Answer Decrypt fail \n");
       ret = SBCFAIL;
       goto errdone;
     }
 
 #ifdef _UNIT_TEST_ON_
 
-     Print(L"\t\t*** Decrypt the Base Answer \r\n");
+     //Print(L"\t\t*** Decrypt the Base Answer \r\n");
      SBC_mem_print_bin("Decrypt BaseAnsw" , decbuf, ctx.out.length);
 
-     Print(L"\t\t*** Extract the Base Answer \r\n");
+     //Print(L"\t\t*** Extract the Base Answer \r\n");
      SBC_mem_print_bin("Extract BaseAnsw", answer, answerl);
 #endif
 #ifdef _UNIT_TEST_ON_
-    Print(L"\t\t*** Compare the Base Answer \r\n");
+    //Print(L"\t\t*** Compare the Base Answer \r\n");
 #endif
 
     CopyMem(log_answr, (const void *)answer, answerl);
@@ -1924,7 +1924,7 @@ SBCStatus  SBC_SSBL_Verify(VOID *blkhnd, VOID *ansr,  UINTN nrombank, UINTN bm, 
 //  }
 //
 //  //sbc_err_sysprn(SBC_LOG_CMN_PRIO_INFO, 2, L"SBC", L"FSBL", L"CSC-01", 23, L"VERIFY", L"SSBL Integrate check is Done\n");
-//  Print(L"SSBL Verify Success !!!\n");
+//  //Print(L"SSBL Verify Success !!!\n");
 //
 //  ((LV_t *)ansr)->value = AllocateZeroPool(bsinfo.m.banswlen);
 //  if (((LV_t *)ansr)->value == NULL) {
@@ -2130,7 +2130,7 @@ SBCStatus  SBC_Vmlinuz_Verify(VOID *blkhnd, VOID *ansr, UINTN normbank, UINTN bm
     }
 
     //sbc_err_sysprn(SBC_LOG_CMN_PRIO_INFO, 2, L"SBC", L"FSBL", L"CSC-01", 23, L"VERIFY", L"FSBL Integrate check is Done\n");
-    //Print(L"FSBL Verify Success !!!\n");
+    ////Print(L"FSBL Verify Success !!!\n");
 
     ((LV_t *)ansr)->value = AllocateZeroPool(bsinfo.m.banswlen);
     if (((LV_t *)ansr)->value == NULL) {
@@ -2154,7 +2154,7 @@ SBCStatus  SBC_Vmlinuz_Verify(VOID *blkhnd, VOID *ansr, UINTN normbank, UINTN bm
 ////      ((LV_t *)ansr)->value = AllocateZeroPool(bsinfo.m.banswlen);
 ////      if (((LV_t *)ansr)->value == NULL) {
 ////        ret = SBCNULLP;
-////        Print(L"Base Answer object create fail \n");
+////        //Print(L"Base Answer object create fail \n");
 ////        goto errdone;
 ////      }
 ////      CopyMem(((LV_t *)ansr)->value, info.baseansw, bsinfo.m.banswlen);
@@ -2360,7 +2360,7 @@ SBCStatus  SBC_FSBL_Verify(VOID *blkhnd, VOID *ansr, UINTN normbank, UINTN bm, U
     }
 
     //sbc_err_sysprn(SBC_LOG_CMN_PRIO_INFO, 2, L"SBC", L"FSBL", L"CSC-01", 23, L"VERIFY", L"FSBL Integrate check is Done\n");
-    //Print(L"FSBL Verify Success !!!\n");
+    ////Print(L"FSBL Verify Success !!!\n");
 
     ((LV_t *)ansr)->value = AllocateZeroPool(bsinfo.m.banswlen);
     if (((LV_t *)ansr)->value == NULL) {
@@ -2384,7 +2384,7 @@ SBCStatus  SBC_FSBL_Verify(VOID *blkhnd, VOID *ansr, UINTN normbank, UINTN bm, U
 ////      ((LV_t *)ansr)->value = AllocateZeroPool(bsinfo.m.banswlen);
 ////      if (((LV_t *)ansr)->value == NULL) {
 ////        ret = SBCNULLP;
-////        Print(L"Base Answer object create fail \n");
+////        //Print(L"Base Answer object create fail \n");
 ////        goto errdone;
 ////      }
 ////      CopyMem(((LV_t *)ansr)->value, info.baseansw, bsinfo.m.banswlen);
@@ -2501,20 +2501,20 @@ SBCStatus SBC_GenDeviceID(UINT8 *fwid)
     SBC_RET_VALIDATE_ERRCODEMSG((computebuf != NULL),SBCNULLP, "Compute buffer Nill");
 
     cnt = 0;
-    //Print(L" cnt : %d \n", cnt);
+    ////Print(L" cnt : %d \n", cnt);
     CopyMem((void *)&computebuf[0], info.mbsn, info.mbsnl);
     cnt = info.mbsnl;
 
-    //Print(L"Next cnt : %d \n", cnt);
+    ////Print(L"Next cnt : %d \n", cnt);
     CopyMem((void *)&computebuf[cnt], info.mmsn, info.mmsnl);
     cnt += info.mmsnl;
 
-    //Print(L"Next Next cnt : %d \n", cnt);
+    ////Print(L"Next Next cnt : %d \n", cnt);
     CopyMem((void *)&computebuf[cnt], info.nvmesn, info.nvmesnl);
     cnt += info.nvmesnl;
 
     dprint("DICE message   : %a", computebuf);
-        //Print(L"Next Next cnt : %d \n", cnt);
+        ////Print(L"Next Next cnt : %d \n", cnt);
     CopyMem((void *)&computebuf[cnt], fwidhsah, rdlv.length);
     cnt += rdlv.length;
 
@@ -2618,7 +2618,7 @@ SBCStatus SBC_GenOSID(EFI_HANDLE *h_image, UINT8 *fwid, UINT8 *osid)
   // OS Kernel Image read 
   ret = _kernel_image_load(h_image, &lv);
   if (ret != SBCOK) {
-    Print(L"Kernel Image load fail \n");
+    //Print(L"Kernel Image load fail \n");
     goto errdone;
   }
 
@@ -2696,11 +2696,11 @@ SBCStatus  SBC_GenMigrationKey(VOID *priv, UINT32 currbankid, UINT32 prevbankid,
     CopyMem((void *)&integbuf[0], info.mbsn, info.mbsnl);
     integcnt = info.mbsnl;
 
-    //Print(L"Next cnt : %d \n", cnt);
+    ////Print(L"Next cnt : %d \n", cnt);
     CopyMem((void *)&integbuf[integcnt], info.mmsn, info.mmsnl);
     integcnt += info.mmsnl;
 
-    //Print(L"Next Next cnt : %d \n", cnt);
+    ////Print(L"Next Next cnt : %d \n", cnt);
     CopyMem((void *)&integbuf[integcnt], info.nvmesn, info.nvmesnl);
     integcnt += info.nvmesnl;
 
@@ -2957,7 +2957,7 @@ SBCStatus SBC_ReadFwBootSrvInformation(UINT16 *fblpath, VOID *blobinfo, VOID *sz
     bsinfolen = bsinfo->m.siglen + bsinfo->m.fwinfolen + bsinfo->m.certlen  + bsinfo->m.banswlen;
 
 #ifdef _UNIT_TEST_ON_
-    Print(L"\t** Extract the Base Answer \r\n");
+    //Print(L"\t** Extract the Base Answer \r\n");
 #endif
 
 
@@ -3054,24 +3054,24 @@ errdone:
 //    SBC_RET_VALIDATE_ERRCODEMSG((computebuf != NULL),SBCNULLP, "Compute buffer Nill");
 //
 //    cnt = 0;
-//    //Print(L" cnt : %d \n", cnt);
+//    ////Print(L" cnt : %d \n", cnt);
 //    CopyMem((void *)&computebuf[0], info.mbsn, info.mbsnl);
 //    cnt = info.mbsnl;
 //
-//    //Print(L"Next cnt : %d \n", cnt);
+//    ////Print(L"Next cnt : %d \n", cnt);
 //    CopyMem((void *)&computebuf[cnt], info.mmsn, info.mmsnl);
 //    cnt += info.mmsnl;
 //
-//    //Print(L"Next Next cnt : %d \n", cnt);
+//    ////Print(L"Next Next cnt : %d \n", cnt);
 //    CopyMem((void *)&computebuf[cnt], info.nvmesn, info.nvmesnl);
 //    cnt += info.nvmesnl;
 //
-//        //Print(L"Next Next cnt : %d \n", cnt);
+//        ////Print(L"Next Next cnt : %d \n", cnt);
 //    CopyMem((void *)&computebuf[cnt], rdlv.value, rdlv.length);
 //    cnt += rdlv.length;
 //
 //    dprint("DICE message length  : %d", cnt);
-//    Print(L"DICE message length  : %d \n", cnt);
+//    //Print(L"DICE message length  : %d \n", cnt);
 //    //SBC_mem_print_bin("Device ID Raw Fmt", computebuf, cnt);
 //    ret = SBC_HashCompute(
 //                             NULL, /* Not yet used */

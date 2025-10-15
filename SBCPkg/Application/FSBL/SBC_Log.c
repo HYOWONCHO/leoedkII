@@ -69,6 +69,7 @@ void SBC_mem_print_bin(
         UINT32 length /**< [in] length of buffer */
         )
 {
+#if defined(_SBC_DEBUG_ON_)
     UINT32 i, sz;
 
     if(title) {
@@ -105,6 +106,7 @@ void SBC_mem_print_bin(
         buffer += sz;
         length -= sz;
     }
+#endif
 }
 
 
@@ -114,6 +116,7 @@ void SBC_external_mem_print_bin(
         UINT32 length /**< [in] length of buffer */
         )
 {
+#if defined(_SBC_DEBUG_ON_)
     UINT32 i, sz;
     UINT32 offset = 0;
 
@@ -151,6 +154,31 @@ void SBC_external_mem_print_bin(
         buffer += sz;
         length -= sz;
     }
+#endif
+}
+
+//static double NsToMs(UINTN ns)
+//{
+//  return (double)ns / 1.0e6;
+//}
+
+VOID SBC_LogElapsedTime(const CHAR16 *Tag, UINTN Ns)
+{
+    CHAR16 Buf[128] = {0, };
+    double Ms = (double)Ns / 1.0e6; // conver to ns to ms
+
+    UINTN int_part = (UINTN)Ms;
+    UINTN frac_part = (UINTN)((Ms - (double)int_part) * 1000); // three-digit decimal
+    UnicodeSPrint(Buf, 
+                  sizeof(Buf),
+                  L"[TIME] %s: %lu ns (%u.%03u ms)\n",
+                  Tag,
+                  (UINTN)Ns,
+                  int_part,
+                  frac_part);
+
+    DEBUG((DEBUG_INFO,"%s", Buf)); 
+
 }
 
 

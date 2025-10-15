@@ -70,7 +70,7 @@ EFI_STATUS SBC_LodaDriver(CONST CHAR16 *FileName, CONST BOOLEAN  Connect)
 
   ASSERT (FileName != NULL);
 
-  Print(L"Load %s driver \r\n", FileName);
+  //Print(L"Load %s driver \r\n", FileName);
 
   retval = gBS->LocateHandleBuffer(ByProtocol, 
                           &gEfiSimpleFileSystemProtocolGuid, 
@@ -79,22 +79,22 @@ EFI_STATUS SBC_LodaDriver(CONST CHAR16 *FileName, CONST BOOLEAN  Connect)
                           &Handles);
 
   if (EFI_ERROR(retval)) {
-    Print(L"Load handle buffer loacte failed (%r) \r\n", retval);
+    //Print(L"Load handle buffer loacte failed (%r) \r\n", retval);
   }
 
   //for (UINTN i = 0; i < HandleCount; i++) {
  
     DevicePath = FileDevicePath(Handles[0], FileName);
     if (DevicePath == NULL) {
-      Print(L"%s Device Path not found \r\n", FileName);
+      //Print(L"%s Device Path not found \r\n", FileName);
     }
 //    DevicePath = FileDevicePath(Handles[i], L"\\EFI\\BOOT\\SSBLFactory.efi");
 //  PathStr = ConvertDevicePathToText(DevicePath, TRUE, TRUE);
 //  if (PathStr != NULL) {
-//    Print(L"Device Path: %s\n", PathStr);
+//    //Print(L"Device Path: %s\n", PathStr);
 //    FreePool(PathStr);
 //  } else {
-//    Print(L"Failed to convert device path to string.\n");
+//    //Print(L"Failed to convert device path to string.\n");
 //    //return SBCFAIL;
 //  }
     Status = gBS->LoadImage(FALSE, 
@@ -106,7 +106,7 @@ EFI_STATUS SBC_LodaDriver(CONST CHAR16 *FileName, CONST BOOLEAN  Connect)
 
     if (Status == EFI_SECURITY_VIOLATION) {
       gBS->UnloadImage (LoadedDriverHandle);
-     Print(L"Image '%s' is not an image \r\n",  FileName);
+     //Print(L"Image '%s' is not an image \r\n",  FileName);
     }
 
     if (!EFI_ERROR(Status)) {
@@ -118,7 +118,7 @@ EFI_STATUS SBC_LodaDriver(CONST CHAR16 *FileName, CONST BOOLEAN  Connect)
             && (LoadedDriverImage->ImageCodeType != EfiRuntimeServicesCode))
             )
       {
-        Print(L"Image '%s' is not a driver \r\n",  FileName);
+        //Print(L"Image '%s' is not a driver \r\n",  FileName);
 
         //
         // Exit and unload the non-driver image
@@ -131,13 +131,13 @@ EFI_STATUS SBC_LodaDriver(CONST CHAR16 *FileName, CONST BOOLEAN  Connect)
     if (!EFI_ERROR(Status)) {
       Status = gBS->StartImage(LoadedDriverHandle, NULL, NULL);
       if (EFI_ERROR (Status)) {
-        Print(L"Imasge '%s' error in StartImage: %r \r\n", FileName, Status);
+        //Print(L"Imasge '%s' error in StartImage: %r \r\n", FileName, Status);
       }
       else {
-        Print(L"Image '%s' loaded at %p - %r \r\n", 
-              FileName,
-              LoadedDriverImage->ImageBase,
-              Status );
+        //Print(L"Image '%s' loaded at %p - %r \r\n", 
+        //      FileName,
+        //      LoadedDriverImage->ImageBase,
+        //      Status );
         //return SBCOK;
       }
 
@@ -149,7 +149,7 @@ EFI_STATUS SBC_LodaDriver(CONST CHAR16 *FileName, CONST BOOLEAN  Connect)
     }
 
 
-    Print(L"Last status : %r \r\n", Status);
+    //Print(L"Last status : %r \r\n", Status);
 
 
   return Status;
@@ -185,7 +185,7 @@ LoadKernelImage (
   EFI_DEVICE_PATH_PROTOCOL      *GrubDevicePath;
   CHAR16                        GrubFullPath[256]; // Buffer for the full path
 
-  Print(L"GrubLauncherApp: Starting to search for %s...\n", GRUB_EFI_PATH);
+  //Print(L"GrubLauncherApp: Starting to search for %s...\n", GRUB_EFI_PATH);
   dprint( "GrubLauncherApp: EntryPoint.\n");
 
   ControllerHandleBuffer = NULL;
@@ -207,7 +207,7 @@ LoadKernelImage (
                   );
 
   if (EFI_ERROR (Status)) {
-    Print(L"GrubLauncherApp: No Simple File System Protocol instances found (%r).\n", Status);
+    //Print(L"GrubLauncherApp: No Simple File System Protocol instances found (%r).\n", Status);
     eprint("GrubLauncherApp: LocateHandleBuffer failed: %r\n", Status);
     return Status;
   }
@@ -216,7 +216,7 @@ LoadKernelImage (
   // 2. Iterate through each found file system handle.
   //
   for (Index = 0; Index < NumHandles; Index++) {
-    Print(L"GrubLauncherApp: Checking FS%d...\n", Index);
+    //Print(L"GrubLauncherApp: Checking FS%d...\n", Index);
     dprint( "GrubLauncherApp: Checking handle %p.\n", ControllerHandleBuffer[Index]);
 
     //
@@ -294,7 +294,7 @@ LoadKernelImage (
     // This part is a bit tricky, typically you'd append a FilePathDevicePath node.
     // For simplicity, we'll assume LoadImage can work with the device path of the volume
     // and a file path string, as EDK II's LoadImage has overloaded behavior.
-    // The Print() statement below just shows the expected full path string.
+    // The //Print() statement below just shows the expected full path string.
     UnicodeSPrint(GrubFullPath, sizeof(GrubFullPath), L"%s%s",
       L"\\", // Assuming root is the base, GRUB_EFI_PATH starts with '\'
       GRUB_EFI_PATH + 1 // Skip the leading '\'
@@ -308,7 +308,7 @@ LoadKernelImage (
     // and the file path string if LoadImage supports it directly, which it does.
 
 
-    Print(L"a GrubLauncherApp: Found %s on FS%d. Attempting to load...\n", GrubFullPath, Index);
+    //Print(L"a GrubLauncherApp: Found %s on FS%d. Attempting to load...\n", GrubFullPath, Index);
     dprint( "GrubLauncherApp: Calling LoadImage with %s.\n", GRUB_EFI_PATH);
 
     //
@@ -327,7 +327,7 @@ LoadKernelImage (
                     );
 
     if (EFI_ERROR (Status)) {
-      Print(L"GrubLauncherApp: Failed to load %s: %r\n", GRUB_EFI_PATH, Status);
+      //Print(L"GrubLauncherApp: Failed to load %s: %r\n", GRUB_EFI_PATH, Status);
       eprint("GrubLauncherApp: LoadImage failed for %s: %r\n", GRUB_EFI_PATH, Status);
       // Close resources and try next FS if LoadImage fails
       GrubFile->Close(GrubFile);
@@ -335,7 +335,7 @@ LoadKernelImage (
       continue;
     }
 
-    Print(L"GrubLauncherApp: %s loaded successfully. Starting...\n", GRUB_EFI_PATH);
+    //Print(L"GrubLauncherApp: %s loaded successfully. Starting...\n", GRUB_EFI_PATH);
     dprint( "GrubLauncherApp: Starting loaded GRUB image.\n");
 
     //
@@ -349,7 +349,7 @@ LoadKernelImage (
                     );
 
     if (EFI_ERROR (Status)) {
-      Print(L"GrubLauncherApp: Failed to start %s: %r\n", GRUB_EFI_PATH, Status);
+      //Print(L"GrubLauncherApp: Failed to start %s: %r\n", GRUB_EFI_PATH, Status);
       eprint("GrubLauncherApp: StartImage failed for %s: %r\n", GRUB_EFI_PATH, Status);
       // If StartImage fails, you might want to unload the image.
       gBS->UnloadImage(GrubImageHandle);
@@ -364,7 +364,7 @@ LoadKernelImage (
       // This happens if GRUB exits without booting an OS, or if it
       // returns control under specific circumstances.
       // If GRUB successfully boots an OS, StartImage typically won't return.
-      Print(L"GrubLauncherApp: %s started and returned control.\n", GRUB_EFI_PATH);
+      //Print(L"GrubLauncherApp: %s started and returned control.\n", GRUB_EFI_PATH);
       // Unload the GRUB image as it has returned control.
       gBS->UnloadImage(GrubImageHandle);
       // Success, so clean up and exit.
@@ -376,7 +376,7 @@ LoadKernelImage (
   }
 
   // If we reach here, grubx64.efi was not found on any file system.
-  Print(L"GrubLauncherApp: ERROR - %s not found on any accessible file system.\n", GRUB_EFI_PATH);
+  //Print(L"GrubLauncherApp: ERROR - %s not found on any accessible file system.\n", GRUB_EFI_PATH);
   eprint("GrubLauncherApp: %s not found.\n", GRUB_EFI_PATH);
 
   // Clean up allocated buffer
@@ -399,7 +399,7 @@ LocateDevicePathForFile (
 VOID LoadFile(EFI_HANDLE        ImageHandle,VOID **rdout, UINTN *rdlen)
 {
 
-  EFI_STATUS retval;
+  [[maybe_unused]] EFI_STATUS retval;
   EFI_HANDLE h_img =NULL;
   CHAR16 *ssblpath = L"\\EFI\\boot\\SSBL.efi";
   
@@ -408,17 +408,17 @@ VOID LoadFile(EFI_HANDLE        ImageHandle,VOID **rdout, UINTN *rdlen)
 
   SBC_FileSysFindHndl(&h_img);
   if (SBC_GetFileSize(ssblpath, &len) != SBCOK) {
-    Print(L"File size unknowns \n");
+    //Print(L"File size unknowns \n");
     return;
   }
 
-  Print(L"File Size : %d \n", len);
+  //Print(L"File Size : %d \n", len);
   *rdout = AllocateZeroPool(len);
 
   lvout.value = rdout;
   lvout.length = len;
   retval = SBC_ReadFile(h_img, ssblpath, &lvout);
-  Print(L"Read Status : %r \n", retval);
+  //Print(L"Read Status : %r \n", retval);
 
   *rdlen = lvout.length;
 
@@ -442,10 +442,10 @@ SBCStatus SBC_GRUB_LoadAndStart(EFI_HANDLE ImageHandle)
     DevicePath = FileDevicePath(Handles[i], L"\\EFI\\rocky\\grubx64.efi");
     PathStr = ConvertDevicePathToText(DevicePath, TRUE, TRUE);
     if (PathStr != NULL) {
-      Print(L"Device Path: %s\n", PathStr);
+      //Print(L"Device Path: %s\n", PathStr);
       FreePool(PathStr);
     } else {
-      Print(L"Failed to convert device path to string.\n");
+      //Print(L"Failed to convert device path to string.\n");
       //return SBCFAIL;
     }
     EFI_STATUS Status = gBS->LoadImage(FALSE, gImageHandle, DevicePath, NULL, 0, &gImageHandle);
@@ -479,10 +479,10 @@ SBCStatus SBC_SSBL_LoadAndStart(EFI_HANDLE ImageHandle)
 //    DevicePath = FileDevicePath(Handles[i], L"\\EFI\\BOOT\\SSBLFactory.efi");
     PathStr = ConvertDevicePathToText(DevicePath, TRUE, TRUE);
     if (PathStr != NULL) {
-      Print(L"Device Path: %s\n", PathStr);
+      //Print(L"Device Path: %s\n", PathStr);
       FreePool(PathStr);
     } else {
-      Print(L"Failed to convert device path to string.\n");
+      //Print(L"Failed to convert device path to string.\n");
       //return SBCFAIL;
     }
     EFI_STATUS Status = gBS->LoadImage(FALSE, gImageHandle, DevicePath, NULL, 0, &ImageHandle);
@@ -517,15 +517,15 @@ SSBL_Load (
   // 1. Get the device path to the target EFI executable
   // Assuming TargetApp.efi is in the same directory as MyLauncher.efi
   Status = LocateDevicePathForFile(ImageHandle, L"\\EFI\\boot\\SSBL.efi", &TargetAppDevicePath);
-  Print(L"Return code : %d \n", Status);
+  //Print(L"Return code : %d \n", Status);
   if (EFI_ERROR(Status)) {
-    Print(L"Failed to locate device path for TargetApp.efi: %r\n", Status);
+    //Print(L"Failed to locate device path for TargetApp.efi: %r\n", Status);
     return Status;
   }
 
 
   // 2. Load the target image
-  Print(L"Loading TargetApp.efi...\n");
+  //Print(L"Loading TargetApp.efi...\n");
   Status = gBS->LoadImage(
                   FALSE,                 // Not a driver
                   ImageHandle,           // Parent image handle (this application's handle)
@@ -536,7 +536,7 @@ SSBL_Load (
                   );
 
 
-//Print(L"File Size : %d Buff addr : %p \n" , rdlen, rdbuf);
+////Print(L"File Size : %d Buff addr : %p \n" , rdlen, rdbuf);
 //Status = gBS->LoadImage(
 //              FALSE,                 // Not a driver
 //              ImageHandle,           // Parent image handle (this application's handle)
@@ -546,11 +546,11 @@ SSBL_Load (
 //              &TargetAppImageHandle  // Output: Handle of the loaded image
 //              );
   if (EFI_ERROR(Status)) {
-    Print(L"Failed to load TargetApp.efi: %r\n", Status);
+    //Print(L"Failed to load TargetApp.efi: %r\n", Status);
     FreePool(TargetAppDevicePath); // Free the device path
     return Status;
   }
-  Print(L"TargetApp.efi loaded successfully.\n");
+  //Print(L"TargetApp.efi loaded successfully.\n");
 
   // Optional: Set command-line arguments for the launched application
   CommandLineSize = StrSize(CommandLineArgs); // Size in bytes, including null terminator
@@ -564,16 +564,16 @@ SSBL_Load (
     TargetAppLoadedImage->LoadOptions = AllocateCopyPool(CommandLineSize, CommandLineArgs);
     if (TargetAppLoadedImage->LoadOptions != NULL) {
       TargetAppLoadedImage->LoadOptionsSize = (UINT32)CommandLineSize;
-      Print(L"Set load options for TargetApp.efi: \"%s\"\n", CommandLineArgs);
+      //Print(L"Set load options for TargetApp.efi: \"%s\"\n", CommandLineArgs);
     } else {
-      Print(L"Warning: Failed to allocate memory for load options.\n");
+      //Print(L"Warning: Failed to allocate memory for load options.\n");
     }
   } else {
-    Print(L"Warning: Could not get LoadedImageProtocol for TargetApp.efi: %r\n", Status);
+    //Print(L"Warning: Could not get LoadedImageProtocol for TargetApp.efi: %r\n", Status);
   }
 
   // 3. Start the loaded image
-  Print(L"Starting TargetApp.efi...\n");
+  //Print(L"Starting TargetApp.efi...\n");
   Status = gBS->StartImage(
                   TargetAppImageHandle, // Handle of the image to start
                   &ExitDataSize,        // Output: Size of exit data
@@ -582,11 +582,11 @@ SSBL_Load (
 
   // 4. Handle the return status and cleanup
   if (EFI_ERROR(Status)) {
-    Print(L"Failed to start TargetApp.efi: %r\n", Status);
+    //Print(L"Failed to start TargetApp.efi: %r\n", Status);
   } else {
-    Print(L"TargetApp.efi executed successfully. Exit Status: %r\n", Status);
+    //Print(L"TargetApp.efi executed successfully. Exit Status: %r\n", Status);
     if (ExitDataSize > 0 && ExitData != NULL) {
-      Print(L"  Exit Data: %s\n", ExitData);
+      //Print(L"  Exit Data: %s\n", ExitData);
       gBS->FreePool(ExitData); // Free the exit data if allocated by the launched app
     }
   }
@@ -618,13 +618,13 @@ LocateDevicePathForFile (
   EFI_DEVICE_PATH_PROTOCOL  *Node;
 
   //CHAR16                        FileFullPath[256];
-  CHAR16                          *DevicePathStr = NULL;
+  [[maybe_unused]] CHAR16                          *DevicePathStr = NULL;
   EFI_DEVICE_PATH_FROM_TEXT_PROTOCOL *DevicePathFromText;
   EFI_DEVICE_PATH_TO_TEXT_PROTOCOL *DevicePathToText = NULL;
 
   Status = gBS->LocateProtocol(&gEfiDevicePathFromTextProtocolGuid, NULL, (VOID **)&DevicePathFromText);
   if (EFI_ERROR(Status)) {
-    Print(L"EFI_DEVICE_PATH_FROM_TEXT_PROTOCOL Locate Protocol :%r \n", Status);
+    //Print(L"EFI_DEVICE_PATH_FROM_TEXT_PROTOCOL Locate Protocol :%r \n", Status);
     return Status;
 
   }
@@ -647,16 +647,16 @@ LocateDevicePathForFile (
                   (VOID **)&LoadedImage
                   );
   if (EFI_ERROR(Status)) {
-    Print(L"OpenProtocol :%r \n", Status);
+    //Print(L"OpenProtocol :%r \n", Status);
     return Status;
   }
 
   // Get the device path of the partition where this application is located
   FileSystemDevicePath = LoadedImage->FilePath;
   //DevicePathStr = DevicePathToText->ConvertDevicePathToText(FileSystemDevicePath, FALSE, FALSE);
-  //Print(L"FileSystemDevicePathh str : %s \n" , DevicePathStr);
+  ////Print(L"FileSystemDevicePathh str : %s \n" , DevicePathStr);
   if (FileSystemDevicePath == NULL) {
-    Print(L"Get the device path of the partition where this application is locate not found\n");
+    //Print(L"Get the device path of the partition where this application is locate not found\n");
     return EFI_NOT_FOUND; // Should not happen for a loaded image
   }
 
@@ -668,9 +668,9 @@ LocateDevicePathForFile (
   // Backtrack to the parent directory by removing the file node
   FileDevicePath = DuplicateDevicePath(FileSystemDevicePath);
   //DevicePathStr = DevicePathToText->ConvertDevicePathToText(FileDevicePath, FALSE, FALSE);
-  //Print(L"FileDevicePath str : %s \n" , DevicePathStr);
+  ////Print(L"FileDevicePath str : %s \n" , DevicePathStr);
   if (FileDevicePath == NULL) {
-    Print(L"Backtrack to the parent directory by removing the file node EFI_OUT_OF_RESOURCES\n");
+    //Print(L"Backtrack to the parent directory by removing the file node EFI_OUT_OF_RESOURCES\n");
     return EFI_OUT_OF_RESOURCES;
   }
   SetDevicePathEndNode(Node); // Effectively truncate to parent directory path
@@ -683,23 +683,23 @@ LocateDevicePathForFile (
 //);
 //
 //
-//Print(L"File Full Path : %s \n", FileFullPath);
+////Print(L"File Full Path : %s \n", FileFullPath);
 //// Append the new file name
 
     // Convert text path to device path
   //*DevicePath = DevicePathFromText->ConvertTextToDevicePath(FileFullPath);
 //
 //DevicePathStr = DevicePathToText->ConvertDevicePathToText(*DevicePath, FALSE, FALSE);
-//Print(L"Test Device Path str : %s \n" , DevicePathStr);
+////Print(L"Test Device Path str : %s \n" , DevicePathStr);
 //  *DevicePath = (EFI_DEVICE_PATH_PROTOCOL *)DevicePathFromText->ConvertTextToDevicePath(FileName);
   *DevicePath = AppendDevicePathNode(FileDevicePath,
                                      (EFI_DEVICE_PATH_PROTOCOL *)DevicePathFromText->ConvertTextToDevicePath(FileName));
   FreePool(FileDevicePath); // Free the temporary device path
 
   DevicePathStr = DevicePathToText->ConvertDevicePathToText(*DevicePath, FALSE, FALSE);
-  Print(L"Device Path str : %s \n" , DevicePathStr);
+  //Print(L"Device Path str : %s \n" , DevicePathStr);
   if (*DevicePath == NULL) {
-    Print(L"AppendDevicePathNode Nill\n");
+    //Print(L"AppendDevicePathNode Nill\n");
     return EFI_OUT_OF_RESOURCES;
   }
 
@@ -724,7 +724,7 @@ EFI_STATUS Load_Kernel(EFI_HANDLE ImageHandle, EFI_SYSTEM_TABLE *SystemTable)
     //
     //InitializeLib(ImageHandle, SystemTable);
 
-    Print(L"UEFI Bootloader: Starting initialization...\n");
+    //Print(L"UEFI Bootloader: Starting initialization...\n");
 
     //
     // 2. Obtain necessary UEFI services (already available via SystemTable here)
@@ -751,12 +751,12 @@ EFI_STATUS Load_Kernel(EFI_HANDLE ImageHandle, EFI_SYSTEM_TABLE *SystemTable)
     EFI_STATUS Status = LoadKernelIntoMemory(ImageHandle, SystemTable, &KernelEntry, &InitrdAddress, &KernelSize, &InitrdSize);
 
     if (EFI_ERROR(Status)) {
-        Print(L"UEFI Bootloader: Failed to load kernel! Status: %r\n", Status);
+        //Print(L"UEFI Bootloader: Failed to load kernel! Status: %r\n", Status);
         // Loop indefinitely on error for debugging, or return.
         while (1);
     }
 
-    Print(L"UEFI Bootloader: Kernel loaded successfully at %p.\n", KernelEntry);
+    //Print(L"UEFI Bootloader: Kernel loaded successfully at %p.\n", KernelEntry);
 
     //
     // 4. Get the Memory Map
@@ -776,7 +776,7 @@ EFI_STATUS Load_Kernel(EFI_HANDLE ImageHandle, EFI_SYSTEM_TABLE *SystemTable)
         MapSize += EFI_PAGE_SIZE; // Add a page just in case for growth
         Status = SystemTable->BootServices->AllocatePool(EfiLoaderData, MapSize, (void**)&MemoryMap);
         if (EFI_ERROR(Status)) {
-            Print(L"UEFI Bootloader: Failed to allocate memory map buffer! Status: %r\n", Status);
+            //Print(L"UEFI Bootloader: Failed to allocate memory map buffer! Status: %r\n", Status);
             while(1);
         }
         // Second call to GetMemoryMap to actually fill the buffer
@@ -784,33 +784,33 @@ EFI_STATUS Load_Kernel(EFI_HANDLE ImageHandle, EFI_SYSTEM_TABLE *SystemTable)
     }
 
     if (EFI_ERROR(Status)) {
-        Print(L"UEFI Bootloader: Failed to get memory map! Status: %r\n", Status);
+        //Print(L"UEFI Bootloader: Failed to get memory map! Status: %r\n", Status);
         // Free pool if allocated
         if (MemoryMap) SystemTable->BootServices->FreePool(MemoryMap);
         while (1);
     }
 
-    Print(L"UEFI Bootloader: Memory Map obtained. MapKey: %d\n", MapKey);
+    //Print(L"UEFI Bootloader: Memory Map obtained. MapKey: %d\n", MapKey);
 
     //
     // 5. Exit Boot Services (CRUCIAL HANDOVER)
     //    This tells the UEFI firmware that the OS is taking over. After this,
     //    most UEFI services are no longer available.
     //
-    Print(L"UEFI Bootloader: Calling ExitBootServices()...\n");
+    //Print(L"UEFI Bootloader: Calling ExitBootServices()...\n");
     Status = SystemTable->BootServices->ExitBootServices(ImageHandle, MapKey);
 
     if (EFI_ERROR(Status)) {
         // If ExitBootServices fails, we are in a bad state.
         // This usually means the memory map key is invalid (e.g., memory map changed).
         // A robust bootloader would retry getting the memory map and calling ExitBootServices.
-        Print(L"UEFI Bootloader: ExitBootServices FAILED! Status: %r\n", Status);
+        //Print(L"UEFI Bootloader: ExitBootServices FAILED! Status: %r\n", Status);
         // Cannot use Print after a failed ExitBootServices in a real scenario,
         // as print services are usually boot services. This is for conceptual demo.
         while (1);
     }
 
-    Print(L"UEFI Bootloader: Successfully exited Boot Services. Jumping to kernel...\n");
+    //Print(L"UEFI Bootloader: Successfully exited Boot Services. Jumping to kernel...\n");
 
     //
     // 6. Jump to Kernel Entry Point
@@ -845,7 +845,7 @@ EFI_STATUS LoadFileFromEsp(
     EFI_FILE_PROTOCOL *Root, *FileHandle;
     UINTN ReadSize;
 
-    Print(L"  Attempting to load file: %s\n", FileName);
+    //Print(L"  Attempting to load file: %s\n", FileName);
 
     // Get the EFI_LOADED_IMAGE_PROTOCOL for the current image
     Status = SystemTable->BootServices->HandleProtocol(
@@ -854,7 +854,7 @@ EFI_STATUS LoadFileFromEsp(
         (void**)&LoadedImage
     );
     if (EFI_ERROR(Status)) {
-        Print(L"  Failed to get LoadedImageProtocol: %r\n", Status);
+        //Print(L"  Failed to get LoadedImageProtocol: %r\n", Status);
         return Status;
     }
 
@@ -865,21 +865,21 @@ EFI_STATUS LoadFileFromEsp(
         (void**)&FileSystem
     );
     if (EFI_ERROR(Status)) {
-        Print(L"  Failed to get FileSystemProtocol: %r\n", Status);
+        //Print(L"  Failed to get FileSystemProtocol: %r\n", Status);
         return Status;
     }
 
     // Open the root directory of the file system
     Status = FileSystem->OpenVolume(FileSystem, &Root);
     if (EFI_ERROR(Status)) {
-        Print(L"  Failed to open volume: %r\n", Status);
+        //Print(L"  Failed to open volume: %r\n", Status);
         return Status;
     }
 
     // Open the file
     Status = Root->Open(Root, &FileHandle, FileName, EFI_FILE_MODE_READ, 0);
     if (EFI_ERROR(Status)) {
-        Print(L"  Failed to open file %s: %r\n", FileName, Status);
+        //Print(L"  Failed to open file %s: %r\n", FileName, Status);
         Root->Close(Root); // Close root even if file open fails
         return Status;
     }
@@ -892,7 +892,7 @@ EFI_STATUS LoadFileFromEsp(
     if (Status == EFI_BUFFER_TOO_SMALL) {
         Status = SystemTable->BootServices->AllocatePool(EfiLoaderData, FileInfoSize, (void**)&FileInfo);
         if (EFI_ERROR(Status)) {
-            Print(L"  Failed to allocate FileInfo buffer: %r\n", Status);
+            //Print(L"  Failed to allocate FileInfo buffer: %r\n", Status);
             FileHandle->Close(FileHandle);
             Root->Close(Root);
             return Status;
@@ -901,7 +901,7 @@ EFI_STATUS LoadFileFromEsp(
     }
 
     if (EFI_ERROR(Status)) {
-        Print(L"  Failed to get file info: %r\n", Status);
+        //Print(L"  Failed to get file info: %r\n", Status);
         if (FileInfo) SystemTable->BootServices->FreePool(FileInfo);
         FileHandle->Close(FileHandle);
         Root->Close(Root);
@@ -914,7 +914,7 @@ EFI_STATUS LoadFileFromEsp(
     // Allocate memory for the file content
     Status = SystemTable->BootServices->AllocatePages(AllocateAnyPages, EfiLoaderData, EFI_SIZE_TO_PAGES(*FileSize), (EFI_PHYSICAL_ADDRESS*)FileData);
     if (EFI_ERROR(Status)) {
-        Print(L"  Failed to allocate pages for file data: %r\n", Status);
+        //Print(L"  Failed to allocate pages for file data: %r\n", Status);
         FileHandle->Close(FileHandle);
         Root->Close(Root);
         return Status;
@@ -924,14 +924,14 @@ EFI_STATUS LoadFileFromEsp(
     ReadSize = *FileSize;
     Status = FileHandle->Read(FileHandle, &ReadSize, *FileData);
     if (EFI_ERROR(Status)) {
-        Print(L"  Failed to read file data: %r\n", Status);
+        //Print(L"  Failed to read file data: %r\n", Status);
         SystemTable->BootServices->FreePages((EFI_PHYSICAL_ADDRESS)*FileData, EFI_SIZE_TO_PAGES(*FileSize));
         FileHandle->Close(FileHandle);
         Root->Close(Root);
         return Status;
     }
 
-    Print(L"  File %s loaded successfully. Size: %ld bytes.\n", FileName, *FileSize);
+    //Print(L"  File %s loaded successfully. Size: %ld bytes.\n", FileName, *FileSize);
 
     FileHandle->Close(FileHandle);
     Root->Close(Root);
@@ -950,13 +950,13 @@ EFI_STATUS LoadKernelIntoMemory(
 
     EFI_STATUS Status;
 
-    Print(L"  Loading kernel and initramfs...\n");
+    //Print(L"  Loading kernel and initramfs...\n");
 
     // Load Kernel (example path, adjust as needed for your setup)
     // Common paths: \EFI\LINUX\vmlinuz, \vmlinuz-linux, etc.
     Status = LoadFileFromEsp(SystemTable, ImageHandle, L"\\efi\\rocky\vmlinuz", KernelEntryAddress, KernelSize);
     if (EFI_ERROR(Status)) {
-        Print(L"  Failed to load kernel file!\n");
+        //Print(L"  Failed to load kernel file!\n");
         return Status;
     }
 
@@ -964,7 +964,7 @@ EFI_STATUS LoadKernelIntoMemory(
     // Common paths: \EFI\LINUX\initramfs-linux.img, \initrd.img, etc.
     Status = LoadFileFromEsp(SystemTable, ImageHandle, L"\\SSBL.efi", InitrdEntryAddress, InitrdSize);
     if (EFI_ERROR(Status)) {
-        Print(L"  Failed to load initramfs file!\n");
+        //Print(L"  Failed to load initramfs file!\n");
         // Free kernel memory if initramfs fails to load
         SystemTable->BootServices->FreePages((EFI_PHYSICAL_ADDRESS)*KernelEntryAddress, EFI_SIZE_TO_PAGES(*KernelSize));
         return Status;
@@ -989,10 +989,10 @@ void JumpToKernel(
     UINTN InitrdSize,
     CHAR16 *CommandLine) {
 
-    Print(L"  (Conceptual) Performing final jump to kernel at %p...\n", KernelEntry);
-    Print(L"  (Conceptual) Kernel Command Line: %s\n", CommandLine);
-    Print(L"  (Conceptual) Memory Map Address: %p, Size: %ld, Descriptor Size: %ld\n", MemoryMap, MapSize, DescriptorSize);
-    Print(L"  (Conceptual) Initrd Address: %p, Size: %ld\n", InitrdAddress, InitrdSize);
+    //Print(L"  (Conceptual) Performing final jump to kernel at %p...\n", KernelEntry);
+    //Print(L"  (Conceptual) Kernel Command Line: %s\n", CommandLine);
+    //Print(L"  (Conceptual) Memory Map Address: %p, Size: %ld, Descriptor Size: %ld\n", MemoryMap, MapSize, DescriptorSize);
+    //Print(L"  (Conceptual) Initrd Address: %p, Size: %ld\n", InitrdAddress, InitrdSize);
 
     // --- REAL IMPLEMENTATION for x86-64 Linux kernel would involve: ---
     // 1. Disable interrupts.

@@ -68,6 +68,13 @@
 #include "SBC_UnitTest.h"
 #include "SBC_Nvram.h"
 #include "SBC_SystemControl.h"
+#include "SBC_Timer.h"
+
+
+UINTN   sys_start_time = 0ULL;
+UINTN   sys_end_time = 0ULL;
+UINTN   sys_ns_var = 0ULL;
+
 
 VOID *h_blkio;               // Block I/O handle
 #ifndef _FSBL_TEST_
@@ -76,6 +83,7 @@ static rawprt_hdr_t *tmp_prtheader;    // Raw Partition Header handle
 static BOOLEAN        is_boot_status; 
 
 extern SBCStatus SBC_SSBL_LoadAndStart(EFI_HANDLE ImageHandle);
+
 
 #ifdef LEO_EMUPKG
 RETURN_STATUS EFIAPI SerialPortInitialize(VOID)
@@ -120,14 +128,14 @@ SBCStatus  SBC_DiceKeysGen(EFI_HANDLE ImageHandle, VOID *p,UINTN normbank, UINTN
 
     ret = SBC_GenDeviceID(h->devid);
     if (ret != SBCOK) {
-        Print(L"Device ID generate fail \n");
+        //Print(L"Device ID generate fail \n");
         goto errdone;
     }
 //
     SBC_mem_print_bin("Device ID", h->devid, sizeof h->devid);
     ret = SBC_GenFWID(ImageHandle, h->devid, h->fwid, normbank, bm);
     if (ret != SBCOK) {
-        Print(L"FW ID generate fail \n");
+        //Print(L"FW ID generate fail \n");
         goto errdone;
     }
 
@@ -135,7 +143,7 @@ SBCStatus  SBC_DiceKeysGen(EFI_HANDLE ImageHandle, VOID *p,UINTN normbank, UINTN
 
     ret = SBC_GenOSID(ImageHandle,  h->fwid, h->osid);
     if (ret != SBCOK) {
-        Print(L"FW ID generate fail \n");
+        //Print(L"FW ID generate fail \n");
         goto errdone;
     }
 
@@ -177,7 +185,7 @@ SBCStatus SBC_BootModeFactory(VOID *blkhnd, VOID *ImageHandle)
 
   ret = SBC_RawPrtReadBlock(blkhnd, (void *)imghdr, &imglen, startlba);
   if (ret != SBCOK) {
-    Print(L"SSBL Factory Block Read Fail \n");
+    //Print(L"SSBL Factory Block Read Fail \n");
     goto errdone;
   }
 
@@ -199,12 +207,12 @@ SBCStatus SBC_BootModeFactory(VOID *blkhnd, VOID *ImageHandle)
 
   ret = SBC_RawPrtReadBlock(blkhnd, (void *)loadimg, &imglen, startlba);
   if (ret != SBCOK) {
-    Print(L"SSBL Factory Block Read Fail \n");
+    //Print(L"SSBL Factory Block Read Fail \n");
     goto errdone;
   }
 
   if ((hndlcnt = SBC_FindEfiFileSystemProtocol(&ssbl_img_hndl)) <= 0) {
-    Print(L"File SYstem Handle Found fail \n");
+    //Print(L"File SYstem Handle Found fail \n");
     ret = SBCIO;
     goto errdone;
   }
@@ -232,7 +240,7 @@ SBCStatus SBC_BootModeFactory(VOID *blkhnd, VOID *ImageHandle)
 
 
 
-  Print(L"SSBL Write is Done \n");
+  //Print(L"SSBL Write is Done \n");
   //SBC_mem_print_bin("SSBL Header", imghdr, imglen);
 #ifndef _FSBL_TEST_
   if (tmp_prtheader->keymode != KEY_MODE_NORMAL) {
@@ -249,7 +257,7 @@ SBCStatus SBC_BootModeFactory(VOID *blkhnd, VOID *ImageHandle)
 #endif 
   ret = SBC_SSBL_LoadAndStart(ImageHandle);
   if (ret != SBCOK) {
-    Print(L"SSBL Factory Running Fail \n");
+    //Print(L"SSBL Factory Running Fail \n");
     goto errdone;
   }
 #else
@@ -289,7 +297,7 @@ SBCStatus SBC_BootModeNormalAndpUdate(VOID *blkhnd, VOID *ImageHandle, UINTN nro
   [[maybe_unused]]INTN       hndlcnt = 0;
   __attribute__((unused))EFI_STATUS retval;
   [[gnu::unused]]CHAR16 *fname = L"\\EFI\\BOOT\\SSBL.efi";
-  int idx;
+  [[maybe_unused]] int idx;
 
 
 
@@ -306,7 +314,7 @@ SBCStatus SBC_BootModeNormalAndpUdate(VOID *blkhnd, VOID *ImageHandle, UINTN nro
 
   ret = SBC_RawPrtReadBlock(blkhnd, (void *)imghdr, &imglen, startlba);
   if (ret != SBCOK) {
-    Print(L"SSBL Factory Block Read Fail \n");
+    //Print(L"SSBL Factory Block Read Fail \n");
     goto errdone;
   }
 
@@ -324,17 +332,17 @@ SBCStatus SBC_BootModeNormalAndpUdate(VOID *blkhnd, VOID *ImageHandle, UINTN nro
 
   ret = SBC_RawPrtReadBlock(blkhnd, (void *)loadimg, &imglen, startlba);
   if (ret != SBCOK) {
-    Print(L"SSBL Factory Block Read Fail \n");
+    //Print(L"SSBL Factory Block Read Fail \n");
     goto errdone;
   }
 
   if ((hndlcnt = SBC_FindEfiFileSystemProtocol(&ssbl_img_hndl)) <= 0) {
-    Print(L"File SYstem Handle Found fail \n");
+    //Print(L"File SYstem Handle Found fail \n");
     ret = SBCIO;
     goto errdone;
   }
 
-  //Print(L"File System Handle Found (Handle Count : %d) \n", hndlcnt);
+  ////Print(L"File System Handle Found (Handle Count : %d) \n", hndlcnt);
 
   _lv_set_data(&wrlv,&loadimg[4], imglen - 4);
 
@@ -379,12 +387,19 @@ SBCStatus SBC_BootModeNormalAndpUdate(VOID *blkhnd, VOID *ImageHandle, UINTN nro
     goto errdone;
   }
   dprint("idx : %d , hndlecount : %d", idx, hndlcnt);
-  Print(L"SSBL Write is Done \n");
+  //Print(L"SSBL Write is Done \n");
   //SBC_mem_print_bin("SSBL Header", imghdr, imglen);
   
+  sys_end_time = SBC_PerfNowTicks();
+  //dprint("sys_end_time : %ld (%ld)", sys_end_time, sys_end_time - sys_start_time);
+  sys_ns_var  = SBC_PerfTicksTons(_PerfDeltaTicks(sys_start_time, sys_end_time));
+  //dprint("sys_ns_var : %ld", sys_ns_var);
+
+  SBC_LogElapsedTime(L"FSBL Boot Time", sys_ns_var);
+
   ret = SBC_SSBL_LoadAndStart(ImageHandle);
   if (ret != SBCOK) {
-    Print(L"SSBL  Running Fail \n");
+    //Print(L"SSBL  Running Fail \n");
     goto errdone;
   }
 #else
@@ -534,7 +549,7 @@ IntToUnicodeStringManual (
 
 /**
   가변 인자를 받아 포맷된 유니코드 문자열을 콘솔에 출력하는 사용자 정의 함수입니다.
-  이 함수는 PrintLib의 Print() 함수와 유사하게 작동하지만,
+  이 함수는 //PrintLib의 //Print() 함수와 유사하게 작동하지만,
   간단한 포맷 지정자 (%d, %s)만 지원합니다.
 
   @param  Format          유니코드 포맷 문자열입니다 (예: L"Hello %s, Value: %d\n").
@@ -675,7 +690,7 @@ Exit:
     Status = gST->ConOut->OutputString(gST->ConOut, Buffer);
   } else {
     // 오류 발생 시 디버그 메시지만 출력
-    DEBUG((DEBUG_ERROR, "SBC_LogCustomPrint: Failed to format string, attempting to print partial buffer.\n"));
+    DEBUG((DEBUG_ERROR, "SBC_LogCustomPrint: Failed to format string, attempting to //Print partial buffer.\n"));
     gST->ConOut->OutputString(gST->ConOut, Buffer); // 부분적으로라도 출력 시도
   }
 
@@ -693,7 +708,7 @@ static VOID _get_fw_bankid(UINT32 val, UINT32 *cur, UINT32 *prev)
     bank_first  = (UINT8)((val >> 8) & 0xFF);
     bank_second = (UINT8)((val >> 24) & 0xFF);
 
-    Print(L"Banke First : %c , Bank Second : %c \n", bank_first, bank_second);
+    //Print(L"Banke First : %c , Bank Second : %c \n", bank_first, bank_second);
 
     if(bank_first == 'C') {
         *cur = (val) & 0xFF;
@@ -755,10 +770,13 @@ UefiMain (
     UINTN boot_oredr_mode = 0;
 #endif
 
+
+    sys_start_time = SBC_PerfNowTicks();
+    dprint("sys_start_tick : %ld", sys_start_time);
 #ifdef _SBC_DRIVER_LOAD_
     retval = SBC_LodaDriver(SERIAL_DXE_PATH, TRUE);
     if (EFI_ERROR (retval)){
-      Print(L"SERIAL_DXE_PATH Dxe driver load fail \n");
+      //Print(L"SERIAL_DXE_PATH Dxe driver load fail \n");
       goto errdone;
     }
 
@@ -767,21 +785,21 @@ UefiMain (
 
     retval = SBC_LodaDriver(FTDI_USB_SERIAL_DXE_PATH, TRUE);
     if (EFI_ERROR (retval)){
-      Print(L"FTDI_USB_SERIAL_DXE_PATH Dxe driver load fail \n");
+      //Print(L"FTDI_USB_SERIAL_DXE_PATH Dxe driver load fail \n");
       goto errdone;
     }
 
     //sleep(1);
     retval = SBC_LodaDriver(TERMINAL_DXE_PATH, TRUE);
     if (EFI_ERROR (retval)){
-      Print(L"TERMINAL_DXE_PATH Dxe driver load fail \n");
+      //Print(L"TERMINAL_DXE_PATH Dxe driver load fail \n");
       goto errdone;
     }
 
     //sleep(1);
     retval = SBC_LodaDriver(XFS64_PATH, TRUE);
     if (EFI_ERROR (retval)){
-      Print(L"XFS64_PATH Dxe driver load fail \n");
+      //Print(L"XFS64_PATH Dxe driver load fail \n");
       goto errdone;
     }
 
@@ -806,7 +824,7 @@ UefiMain (
     // Get the NVMe SSD Raw Partiton handle and Header information
     ret = SBC_BlkIoHandleInit(&h_blkio, &h_rawprtheader);
     if (ret != SBCOK) {
-      Print(L"Raw Partitino find fail !!! \n");
+      //Print(L"Raw Partitino find fail !!! \n");
       goto errdone;
     }
 #if 0
@@ -1004,19 +1022,19 @@ UefiMain (
        L"Determine Firmare Tampering ",
        L"SSBL tampering check Done");
 
-      ret =  SBC_DeviceIdKyeVerify(h_blkio, diceid.devid, diceid.osid);
-      if (ret != SBCOK) {
-              sbc_err_sysprn(SBC_LOG_CMN_PRIO_ERR, 2, 
-                     L"SBC", 
-                     L"FSBL", 
-                     L"Weapon System", 
-                     8, 
-                     L"EVT", 
-                     L"Device ID verify fail ");
-              retval = EFI_INVALID_PARAMETER;
-              is_boot_status = FALSE;
-              goto errdone;
-      }
+//    ret =  SBC_DeviceIdKyeVerify(h_blkio, diceid.devid, diceid.osid);
+//    if (ret != SBCOK) {
+//            sbc_err_sysprn(SBC_LOG_CMN_PRIO_ERR, 2,
+//                   L"SBC",
+//                   L"FSBL",
+//                   L"Weapon System",
+//                   8,
+//                   L"EVT",
+//                   L"Device ID verify fail ");
+//            retval = EFI_INVALID_PARAMETER;
+//            is_boot_status = FALSE;
+//            goto errdone;
+//    }
 #endif         
 
       ret = SBC_BootModeNormalAndpUdate(h_blkio, ImageHandle, currbank_id);
@@ -1028,7 +1046,7 @@ UefiMain (
       }
       break;
     case BOOT_MODE_FACTORY:
-      Print(L"Factory Boot Mode !!! \n");
+      //Print(L"Factory Boot Mode !!! \n");
 
 #ifdef _SBC_DEVID_VERIFY_
       ret = SBC_SSBL_Verify(h_blkio, NULL, currbank_id, BOOT_MODE_FACTORY, STR_SSBL_F_NAME);
@@ -1079,7 +1097,7 @@ UefiMain (
 //      goto errdone;
 //    }
 
-      //Print(L"Factory BOot Mode end !!! \n");
+      ////Print(L"Factory BOot Mode end !!! \n");
       break;
     case BOOT_MODE_UPDATE:
 #ifdef _SBC_DEVID_VERIFY_
@@ -1180,7 +1198,7 @@ UefiMain (
       }
       break;
     default:
-      Print(L"Unknown (%d)  Boot Mode ... SHOULD go to Abort\n",h_rawprtheader.bootmode);
+      //Print(L"Unknown (%d)  Boot Mode ... SHOULD go to Abort\n",h_rawprtheader.bootmode);
       is_boot_status = FALSE;
       break;
     }
@@ -1214,9 +1232,14 @@ errdone:
 
     }
 
-    SBC_ShutdownSystem();
 #endif
+    sys_end_time = SBC_PerfNowTicks();
+    //dprint("sys_end_time : %ld (%ld)", sys_end_time, sys_end_time - sys_start_time);
+    sys_ns_var  = SBC_PerfTicksTons(_PerfDeltaTicks(sys_start_time, sys_end_time));
+    //dprint("sys_ns_var : %ld", sys_ns_var);
 
+    SBC_LogElapsedTime(L"x FSBL Boot Time", sys_ns_var);
+    SBC_ShutdownSystem();
     return retval;
 }
 

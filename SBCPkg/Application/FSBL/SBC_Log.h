@@ -45,6 +45,8 @@ void SBC_external_mem_print_bin(
         UINT32 length /**< [in] length of buffer */
         );
 
+VOID SBC_LogElapsedTime(const CHAR16 *Tag, UINTN Ns);
+
 VOID SBC_LogBoolean(BOOLEAN expression, CONST CHAR8 *funcname, UINTN linenumber, 
                     CONST CHAR8 *filename, CONST CHAR8 *description);
 

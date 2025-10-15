@@ -119,7 +119,7 @@ void D_SAT_PWT_SFR_001(void *priv)
                               &ldlen, 
                               baseansr_lba);
     if (ret != SBCOK) {
-        Print(L"SBC_RawPrtReadBlock fail (%p)\n", blkio);
+        //Print(L"SBC_RawPrtReadBlock fail (%p)\n", blkio);
         goto errdone;
     }
 
@@ -186,7 +186,7 @@ void D_SAT_PWT_SFR_002(void *priv)
     atp_ident_t *dicekey = (atp_ident_t *)p->keyinfo;
 
 
-    Print(L"* D-SAT-PWT-SFR-002 Unit Test \r\n");
+    //Print(L"* D-SAT-PWT-SFR-002 Unit Test \r\n");
 
     HandleCount  = SBC_FindEfiFileSystemProtocol(&hndl);
 
@@ -230,7 +230,7 @@ void D_SAT_PWT_SFR_002(void *priv)
 
     bsinfolen = bsinfo.m.siglen + bsinfo.m.fwinfolen + bsinfo.m.certlen  + bsinfo.m.banswlen;
 
-    Print(L"\t** Extract the Base Answer \r\n");
+    //Print(L"\t** Extract the Base Answer \r\n");
       
     fsbl_len = last_of_fsbl = rdlv.length - FSBL_BNIFO_SIZE - bsinfolen;
     infostart = &((UINT8 *)rdlv.value)[last_of_fsbl];
@@ -260,16 +260,16 @@ void D_SAT_PWT_SFR_002(void *priv)
     info.signature = (VOID *)&infostart[bsptrcnt];
     bsptrcnt += bsinfo.m.siglen;   
 
-    Print(L"\t\t*Base Answer : \"%a\" \r\n", base_answer);
+    //Print(L"\t\t*Base Answer : \"%a\" \r\n", base_answer);
 
-    Print(L"\t**Base Answer Encrypt and Store \r\n");
+    //Print(L"\t**Base Answer Encrypt and Store \r\n");
 
     ret = SBC_BaseAnswerEncryptStore(p->blkhnd, 
                                      (UINT8 *)base_answer, sizeof base_answer, 
                                      dicekey->osid,
                                      SYS_OSID_KEY_LEN);
 
-    Print(L"\t**(Expected Results) Base Answer Validate \r\n");
+    //Print(L"\t**(Expected Results) Base Answer Validate \r\n");
     ret = SBC_BaseAnswerValidate(p->blkhnd,
                                  (UINT8 *)base_answer, sizeof base_answer,
                                  dicekey->osid,
@@ -308,10 +308,10 @@ static SBCStatus _unit_test_baseanswer_extract_from_disk(VOID *blkio, base_ansid
   // NOTES : It SHOLUD be consider for TAG size if Message is encrypt to  AES-GCM mode
   ret = SBC_RawPrtReadBlock(blkio, (VOID *)loadbuf,  &ldlen , baseansr_lba);
   if (ret != SBCOK) {
-    Print(L"SBC_RawPrtReadBlock fail (%p)\n", blkio);
+    //Print(L"SBC_RawPrtReadBlock fail (%p)\n", blkio);
     goto errdone;
   }
-  //Print(L"%a:%d \n",__FUNCTION__, __LINE__);
+  ////Print(L"%a:%d \n",__FUNCTION__, __LINE__);
 
 
   // Copy Length
@@ -333,7 +333,7 @@ static SBCStatus _unit_test_baseanswer_extract_from_disk(VOID *blkio, base_ansid
 
 #ifdef _UNIT_TEST_ON_
 //dprint("Enc Msg Len : %d", p->msglen);
-  Print(L"\t\t***Base Answer Read from Raw-partition \r\n");
+  //Print(L"\t\t***Base Answer Read from Raw-partition \r\n");
   SBC_mem_print_bin("Base Answer Encrypt Message", p->encmsg, p->msglen);
 //SBC_mem_print_bin("Enc IV", p->iv, BASE_ANS_IV_KEY_STR);
 //SBC_mem_print_bin("Tag Message", p->tag, BASE_ANS_TAG_LEN);
@@ -352,7 +352,7 @@ void D_SAT_PWT_SFR_003(void *priv)
     atp_ident_t *dicekey = (atp_ident_t *)p->keyinfo;
     base_ansid_t bs_ansid;
 
-    Print(L"* D-SAT-PWT-SFR-003 Unit Test \r\n");
+    //Print(L"* D-SAT-PWT-SFR-003 Unit Test \r\n");
     ret = SBC_ReadFwBootSrvInformation(STR_FSBL_F_NAME, (void *)&blobinfo, (void *)&bsinfo);
     SBC_RET_VALIDATE_ERRCODEMSG((ret == SBCOK), ret, "Boot Service Info Load Fail");
 
@@ -365,18 +365,18 @@ void D_SAT_PWT_SFR_003(void *priv)
 //  dprint("Spec.1 Value      : %d", bsinfo.m.reserv1 );
 //  dprint("Spec.2 Value      : %d", bsinfo.m.reserv2 );
 
-    Print(L"\t** Encrypted Base-answer and OSID load \r\n");
+    //Print(L"\t** Encrypted Base-answer and OSID load \r\n");
 
     _unit_test_baseanswer_extract_from_disk(p->blkhnd, &bs_ansid);
 
-    Print(L"\t\t*** Encrypt Base Answer Extract \r\n");
+    //Print(L"\t\t*** Encrypt Base Answer Extract \r\n");
     SBC_mem_print_bin("Encrypted Base Answer", (UINT8 *)bs_ansid.encmsg, bsinfo.m.banswlen);
 
-    Print(L"\t\t*** OSID Key Load \r\n");
+    //Print(L"\t\t*** OSID Key Load \r\n");
     SBC_mem_print_bin("OSID", (UINT8 *)dicekey->osid, 32);
 
    
-    Print(L"\t** Base Answer Validation \r\n");
+    //Print(L"\t** Base Answer Validation \r\n");
     ret = SBC_BaseAnswerValidate(p->blkhnd, 
                                  blobinfo.baseansw, bsinfo.m.banswlen, 
                                  dicekey->osid, 32);
@@ -397,7 +397,7 @@ void D_SAT_PWT_SFR_003_Tampre(void *priv)
     atp_ident_t *dicekey = (atp_ident_t *)p->keyinfo;
     base_ansid_t bs_ansid;
 
-    Print(L"* D-SAT-PWT-SFR-003 Tamper Unit Test \r\n");
+    //Print(L"* D-SAT-PWT-SFR-003 Tamper Unit Test \r\n");
     ret = SBC_ReadFwBootSrvInformation(L"\\EFI\\BOOT\\FSBL.efi.tamper", (void *)&blobinfo, (void *)&bsinfo);
     SBC_RET_VALIDATE_ERRCODEMSG((ret == SBCOK), ret, "Boot Service Info Load Fail");
 
@@ -410,18 +410,18 @@ void D_SAT_PWT_SFR_003_Tampre(void *priv)
 //  dprint("Spec.1 Value      : %d", bsinfo.m.reserv1 );
 //  dprint("Spec.2 Value      : %d", bsinfo.m.reserv2 );
 
-    Print(L"\t** Encrypted Base-answer and OSID load \r\n");
+    //Print(L"\t** Encrypted Base-answer and OSID load \r\n");
 
     _unit_test_baseanswer_extract_from_disk(p->blkhnd, &bs_ansid);
 
-    Print(L"\t\t*** Encrypt Base Answer Extract \r\n");
+    //Print(L"\t\t*** Encrypt Base Answer Extract \r\n");
     SBC_mem_print_bin("Encrypted Base Answer", (UINT8 *)bs_ansid.encmsg, bsinfo.m.banswlen);
 
-    Print(L"\t\t*** OSID Key Load \r\n");
+    //Print(L"\t\t*** OSID Key Load \r\n");
     SBC_mem_print_bin("OSID", (UINT8 *)dicekey->osid, 32);
 
    
-    Print(L"\t** Base Answer Validation \r\n");
+    //Print(L"\t** Base Answer Validation \r\n");
     ret = SBC_BaseAnswerValidate(p->blkhnd, 
                                  blobinfo.baseansw, bsinfo.m.banswlen, 
                                  dicekey->osid, 32);
@@ -448,9 +448,9 @@ void D_SAT_PWT_SFR_006_FSBL(void *priv)
     LV_t baseansr;
 
 
-    Print(L"* D-SAT-PWT-SFR-006 FSBL&SSBL Tamper Unit Test \r\n");
+    //Print(L"* D-SAT-PWT-SFR-006 FSBL&SSBL Tamper Unit Test \r\n");
 
-    Print(L"\t** FSBL Normal Boot ( Verify the FSBL signature ) \r\n");
+    //Print(L"\t** FSBL Normal Boot ( Verify the FSBL signature ) \r\n");
     ret = SBC_FSBL_Verify(p->blkhnd, &baseansr,  p->curr_sw_bnk, p->bm, STR_FSBL_F_NAME);
     if (ret != SBCOK) {
         goto errdone;
@@ -458,13 +458,13 @@ void D_SAT_PWT_SFR_006_FSBL(void *priv)
 
 
     //L"\\EFI\\BOOT\\SSBL.efi.bin"
-    Print(L"\t** SSBL Normal Boot ( Verify the SSBL signature ) \r\n");
+    //Print(L"\t** SSBL Normal Boot ( Verify the SSBL signature ) \r\n");
     ret = SBC_SSBL_Verify(p->blkhnd, &baseansr,  p->curr_sw_bnk, p->bm, L"\\EFI\\BOOT\\SSBL.efi.bin");
     if (ret != SBCOK) {
         goto errdone;
     }
 
-    Print(L"\t** Vmlinuz Normal Boot ( Verify the Vmlinuz signature ) \r\n");
+    //Print(L"\t** Vmlinuz Normal Boot ( Verify the Vmlinuz signature ) \r\n");
     ret = SBC_Vmlinuz_Verify(p->blkhnd, &baseansr,  p->curr_sw_bnk, p->bm, L"\\vmlinuz.bin");
     if (ret != SBCOK) {
         goto errdone;
@@ -494,9 +494,9 @@ void D_SAT_PWT_SFR_006_TamperFSBL(void *priv)
     LV_t baseansr;
 
 
-    Print(L"* D-SAT-PWT-SFR-006 FSBL&SSBL Tamper Unit Test \r\n");
+    //Print(L"* D-SAT-PWT-SFR-006 FSBL&SSBL Tamper Unit Test \r\n");
 
-    Print(L"\t** FSBL Normal Boot ( Verify the FSBL signature ) \r\n");
+    //Print(L"\t** FSBL Normal Boot ( Verify the FSBL signature ) \r\n");
     ret = SBC_FSBL_Verify(p->blkhnd, &baseansr,  p->curr_sw_bnk, p->bm, STR_FSBL_F_NAME);
     if (ret != SBCOK) {
         goto errdone;
@@ -504,13 +504,13 @@ void D_SAT_PWT_SFR_006_TamperFSBL(void *priv)
 
 
     //L"\\EFI\\BOOT\\SSBL.efi.bin"
-    Print(L"\t** SSBL AbNormal Boot ( Verify the SSBL signature ) \r\n");
+    //Print(L"\t** SSBL AbNormal Boot ( Verify the SSBL signature ) \r\n");
     ret = SBC_SSBL_Verify(p->blkhnd, &baseansr,  p->curr_sw_bnk, p->bm, L"\\EFI\\BOOT\\SSBL.efi.tamper");
     if (ret != SBCOK) {
         //goto errdone;
     }
 
-    Print(L"\t** Vmlinuz AbNormal Boot ( Verify the Vmlinuz signature ) \r\n");
+    //Print(L"\t** Vmlinuz AbNormal Boot ( Verify the Vmlinuz signature ) \r\n");
     ret = SBC_Vmlinuz_Verify(p->blkhnd, &baseansr,  p->curr_sw_bnk, p->bm, L"\\vmlinuz.bin.tamper");
     if (ret != SBCOK) {
         goto errdone;
