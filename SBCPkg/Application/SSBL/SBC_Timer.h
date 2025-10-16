@@ -5,6 +5,18 @@
 
 /*!
  * \code
+ * 
+ *      STATIC
+        TIME_RESULT
+        TimeFunctionCall(UEFI_TASK_FN Fn, VOID *Context) {
+          TIME_RESULT R;
+          UINT64 t0 = PerfNowTicks();
+          R.Status = Fn(Context);
+          UINT64 t1 = PerfNowTicks();
+          R.Ticks = PerfDeltaTicks(t0, t1);
+          R.NanoSeconds = PerfTicksToNs(R.Ticks);
+          return R;
+        }
  *    VOID ExampleBlockTiming(VOID) {
  *     UINT64 ns = 0;
  *     TIME_BLOCK_NS(ns, {
@@ -25,7 +37,7 @@
 
 
 
-UINTN _PerfDeltaTicks(UINTN T-2, UINTN T1);
+UINTN _PerfDeltaTicks(UINTN T0, UINTN T1);
 UINTN SBC_PerfNowTicks(VOID);
 UINTN SBC_PerfTicksTons(UINTN ticks);
 

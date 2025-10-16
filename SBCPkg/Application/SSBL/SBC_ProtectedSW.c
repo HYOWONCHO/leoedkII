@@ -261,11 +261,16 @@ SBCStatus SBC_FindProtectedSw(VOID *handle, CHAR8 name[256], CHAR8 *ver, UINTN *
     ret = SBC_LoadRawPrt(handle, dec_key, data, &readn, SYS_CONF_START_OFS + SYS_CONF_SW_LIST_OFS);
     SBC_RET_VALIDATE_ERRCODEMSG(!(ret != SBCOK), ret, "System Configuration Partition Read fail");
 
+    line = readn/len;
+    dprint("line : %d", line);
+
     for(cnt = 0; cnt < line; cnt++) {
+        dprint("name :%a , path->name :%a node : %lx" , name, path->name, path->sw_node_off);
         if( AsciiStrCmp(name, path->name) == 0 ) {
             ret = SBCOK;
             if( sw_node_off != NULL ) {
                 CopyMem(sw_node_off, &path->sw_node_off, sizeof *sw_node_off);
+                //dprint("copy node off  : %lx", sw_node_off);
             }
 
             if( ver != NULL ) {
@@ -366,7 +371,7 @@ SBCStatus SBC_ReadProtectedSwSlotOffset(VOID *handle, UINTN *check, CHAR8 *sw_na
     ret = SBC_FindProtectedSw(handle, sw_name, NULL, &node_off);
     SBC_RET_VALIDATE_ERRCODEMSG(!(ret != SBCOK), ret, "Failed to Find protected SW");
 
-    dprint("%s s/w node addr 0x%lu", sw_name, node_off);
+    //dprint("%s s/w node addr 0x%lu", sw_name, node_off);
 
     ret = SBC_RawAlignedReadBlockIO(((boot_proc_t *)handle)->blkhnd,
                                     node_off,
@@ -449,9 +454,10 @@ SBCStatus SBC_RecryptoProtectedSW(VOID *handle, UINTN ofs,  UINT8* sw_secret_key
     SBC_RET_VALIDATE_ERRCODEMSG(!(ret != SBCOK), ret, "Failed to read the Protected SW Size");
     SBC_RET_VALIDATE_ERRCODEMSG((length != 0), SBCZEROL, "Can't found the Protecde SW");
 
+    dprint("re-crypto sw length : %lu (0x%lx) ", length, length);
 
     buf = AllocateZeroPool(length + SBC_AT_RP_IV_LEN + SBC_AT_RP_TAG_LEN);
-    SBC_RET_VALIDATE_ERRCODEMSG((buf != NULL), SBCNULLP, "Out of Resource");
+    SBC_RET_VALIDATE_ERRCODEMSG((buf != NULL), SBCNULLP, "Out of Resource");                                                                                                                    
 
     ret = SBC_RawAlignedReadBlockIO(p->blkhnd,
                                     ofs + SBC_RAW_PRTHDR_LEN_OFS,

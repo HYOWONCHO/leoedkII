@@ -169,18 +169,25 @@ void SBC_external_mem_print_bin(
     return;
 }
 
-VOID SBC_LogElapsedTime(const CHAR16 *Tag, UITN Ns)
+VOID SBC_LogElapsedTime(const CHAR16 *Tag, UINTN Ns)
 {
     CHAR16 Buf[128] = {0, };
-    UnicdoeSprint(Buf, 
+    double Ms = (double)Ns / 1.0e6; // conver to ns to ms
+
+    UINTN int_part = (UINTN)Ms;
+    UINTN frac_part = (UINTN)((Ms - (double)int_part) * 1000); // three-digit decimal
+    UnicodeSPrint(Buf, 
                   sizeof(Buf),
-                  L"[TIME] %s: %lu ns (%.3f ms)\n",
+                  L"[TIME] %s: %lu ns (%u.%03u ms)\n",
                   Tag,
                   (UINTN)Ns,
-                  (double)Ns/1.0e6);
-    dprint("%s", Buf); 
+                  int_part,
+                  frac_part);
+
+    DEBUG((DEBUG_INFO,"%s", Buf)); 
 
 }
+
 
 UINTN SBC_LogHexToStrChar8( UINT8 *data, UINTN len, CHAR8 *out, UINTN out_cap, BOOLEAN loweracse, CHAR8 sep)
 {

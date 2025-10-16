@@ -1826,7 +1826,11 @@ errdone:
     return ret;
 }
 
-SBCStatus SBC_LoadRawPrt(VOID *handle, UINT8 *shared_secret, UINT8 *decbuf, UINTN *rdlen, UINTN rd_ofs)
+SBCStatus SBC_LoadRawPrt(VOID *handle, 
+                         UINT8 *shared_secret, 
+                         UINT8 *decbuf, 
+                         UINTN *rdlen, 
+                         UINTN rd_ofs)
 {
     SBCStatus ret = SBCOK;
 
