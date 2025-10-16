@@ -69,6 +69,11 @@
 #include "SBC_Hashing.h"
 
 
+UINTN   sys_start_time = 0ULL;
+UINTN   sys_end_time = 0ULL;
+UINTN   sys_ns_var = 0ULL;
+
+
 VOID *h_blkio;               // Block I/O handle
 CHAR16 mrgmsg[8192];
 
@@ -285,7 +290,12 @@ SBCStatus  SBC_BootModeNormal(UINT16 km, VOID *priv)
     switch (((boot_proc_t *)priv)->km) {
     case KEY_MODE_NORMAL:
       //VOID *hnd_load_img = NULL;
-      
+      sys_end_time = SBC_PerfNowTicks();
+      //dprint("sys_end_time : %ld (%ld)", sys_end_time, sys_end_time - sys_start_time);
+      sys_ns_var  = SBC_PerfTicksTons(_PerfDeltaTicks(sys_start_time, sys_end_time));
+      //dprint("sys_ns_var : %ld", sys_ns_var);
+
+      SBC_LogElapsedTime(L"FSBL Boot Time", sys_ns_var);      
       SBC_GRUB_LoadAndStart(((boot_proc_t *)priv)->ldhndl);
       while (TRUE) { }
       break;
@@ -408,10 +418,15 @@ UefiMain (
     boot_proc_t       btproc;
     [[gnu::unused]] CHAR8 bank_find;
  
-#ifdef _SBC_DEBUG_ON_
-//#warning   "Enable to the SBC debugmode is on"
-    intgreen_dprint("------------- SSBL Factory System START -------------\n");
-#endif
+    sbc_err_sysprn(SBC_LOG_CMN_PRIO_INFO, 2,
+         L"SBC",
+         L"FSBL",
+         L"Weapon System",
+         0,
+         L"Information ",
+         L"SBC_SP_FW SSBL Running");
+
+    sys_start_time = SBC_PerfNowTicks();
 
     ZeroMem(&btproc, sizeof btproc);
     ZeroMem(&h_rawptrheader, sizeof h_rawptrheader);
@@ -662,6 +677,12 @@ UefiMain (
         goto errdone;
     }
 
+    sys_end_time = SBC_PerfNowTicks();
+    //dprint("sys_end_time : %ld (%ld)", sys_end_time, sys_end_time - sys_start_time);
+    sys_ns_var  = SBC_PerfTicksTons(_PerfDeltaTicks(sys_start_time, sys_end_time));
+    //dprint("sys_ns_var : %ld", sys_ns_var);
+
+    SBC_LogElapsedTime(L"FSBL Boot Time", sys_ns_var); 
     ret = SBC_GRUB_LoadAndStart(ImageHandle);
     if(ret != SBCOK) {
         sbc_err_sysprn(SBC_LOG_CMN_PRIO_ERR, 2, 

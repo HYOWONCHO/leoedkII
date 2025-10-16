@@ -115,7 +115,7 @@ errdone:
 }
 
 
-static VOID _sbc_abnormal_processing(VOID *priv)
+VOID _sbc_abnormal_processing(VOID *priv)
 {
     //SBCStatus ret = SBCOK;
 
@@ -892,7 +892,9 @@ SBCStatus  SBC_SecureBootCheck(VOID *priv)
         if(bp->bootst == SB_PROC_ST_ABNRAM) {
 
             // In case of the Boot Mode is Normal and Boot State is Abnormal.
-            _sbc_abnormal_processing(priv);
+            // It MUST remove the comment in the release 
+            //_sbc_abnormal_processing(priv); 
+
                 // TODO : error processing
             SBC_RebootSystem();
         }

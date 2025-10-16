@@ -1091,12 +1091,25 @@ UefiMain (
       ret = SBC_SSBL_Verify(h_blkio, NULL, currbank_id, BOOT_MODE_FACTORY, STR_SSBL_F_NAME);
       dprint();
       if (ret != SBCOK) {
+            sbc_err_sysprn(SBC_LOG_CMN_PRIO_ERR, 2,
+                 L"SBC",
+                 L"FSBL",
+                 L"Weapon System",
+                 8,
+                 L"Detection",
+                 L"SBC_SP_FW SSBL self-verify Fail");
             is_boot_status = FALSE;
             retval = EFI_INVALID_PARAMETER;
             goto errdone;
       }
 
-      dprint();
+      sbc_err_sysprn(SBC_LOG_CMN_PRIO_ERR, 2,
+           L"SBC",
+           L"FSBL",
+           L"Weapon System",
+           8,
+           L"Validation",
+           L"SBC_SP_FW SSBL self-verify Success");
 
       ret =  SBC_DeviceIdKyeVerify(h_blkio, diceid.devid, diceid.osid);
       //ret = SBCOK;
@@ -1144,34 +1157,34 @@ UefiMain (
       ret = SBC_SSBL_Verify(h_blkio, NULL, currbank_id, BOOT_MODE_UPDATE, STR_SSBL_F_NAME);
       if (ret != SBCOK) {
             sbc_err_sysprn(SBC_LOG_CMN_PRIO_ERR, 2,
-                   L"SBC",
-                   L"FSBL",
-                   L"Weapon System",
-                   8,
-                   L"Determine Firmare Tampering ",
-                   L"FSBL tampering check fail");
+                 L"SBC",
+                 L"FSBL",
+                 L"Weapon System",
+                 8,
+                 L"Detection",
+                 L"SBC_SP_FW SSBL self-verify Fail");
             is_boot_status = FALSE;
             retval = EFI_INVALID_PARAMETER;
             //goto errdone;
       }
 
-     sbc_err_sysprn(SBC_LOG_CMN_PRIO_ERR, 2,
-       L"SBC",
-       L"FSBL",
-       L"Weapon System",
-       8,
-       L"Determine Firmare Tampering ",
-       L"FSBL tampering check Done");
+      sbc_err_sysprn(SBC_LOG_CMN_PRIO_ERR, 2,
+           L"SBC",
+           L"FSBL",
+           L"Weapon System",
+           8,
+           L"Validation",
+           L"SBC_SP_FW SSBL self-verify Success");
 
       ret =  SBC_DeviceIdKyeVerify(h_blkio, diceid.devid, diceid.migid);
       if (ret != SBCOK) {
-//            sbc_err_sysprn(SBC_LOG_CMN_PRIO_ERR, 2,
-//                   L"SBC",
-//                   L"FSBL",
-//                   L"Weapon System",
-//                   8,
-//                   L"EVT",
-//                   L"Device ID verify fail ");
+        sbc_err_sysprn(SBC_LOG_CMN_PRIO_ERR, 2,
+               L"SBC",
+               L"FSBL",
+               L"Weapon System",
+               8,
+               L"Detection",
+               L"Device ID verify fail ");
               retval = EFI_INVALID_PARAMETER;
               is_boot_status = FALSE;
               goto errdone;

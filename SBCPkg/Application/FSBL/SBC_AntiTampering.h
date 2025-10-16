@@ -8,7 +8,7 @@
 #endif
 
 #ifndef _FSBL_TEST_
-#   define STR_FSBL_F_NAME             L"\\EFI\\BOOT\\FSBL.efi"
+#   define STR_FSBL_F_NAME             L"\\EFI\\BOOT\\bootx64.efi"
 #   define STR_SSBL_F_NAME             L"\\EFI\\BOOT\\SSBL.efi"
 #else
 #   define STR_FSBL_F_NAME             L"\\EFI\\BOOT\\FSBL.efi"

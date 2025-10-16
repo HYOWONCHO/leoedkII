@@ -232,5 +232,6 @@ typedef enum {
 } LOG_EVENT;
 
 VOID UefiLog(LOG_LEVEL Level, LOG_EVENT Event, CONST CHAR16 *Format, ...);
+VOID SBC_LogElapsedTime(const CHAR16 *Tag, UINTN Ns);
 #endif
 

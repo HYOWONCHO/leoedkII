@@ -30,7 +30,3 @@ UINTN SBC_PerfTicksTons(UINTN ticks)
     return GetTimeInNanoSecond(ticks);
 }
 
-UINTN SBC_PerfTicksTons(UINTN ticks)
-{
-    return GetTimeInNanoSecond(Ticks);
-}
