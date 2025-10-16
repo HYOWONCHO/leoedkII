@@ -1,7 +1,7 @@
 #ifndef _SBC_TIMER_H_
 #define _SBC_TIMER_H_
 
-
+#include "SBC_Log.h"
 
 /*!
  * \code

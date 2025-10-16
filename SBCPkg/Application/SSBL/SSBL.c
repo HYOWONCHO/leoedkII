@@ -464,7 +464,7 @@ UefiMain (
 
     //dprint("Chaeck Boot Mode read from BlkIO is %d", h_rawptrheader.bootmode);
 
-#if 1
+#if 0
     ret = SBC_GenMigrationKey((void *)&btproc, diceid.migid);
     SBC_external_mem_print_bin("Migration Key", diceid.migid, 32);
 
@@ -583,8 +583,6 @@ UefiMain (
          1,
          SYS_LOG_EVT_VALDIATION,
          L"HW&SW Base Key Creation Success");
-
-    return EFI_SUCCESS;
     
 #if defined(_FILE_RD_BM_)
 //#warning   "SBC Boot Mode Read from File"

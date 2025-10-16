@@ -724,11 +724,11 @@ static SBCStatus _memorydevice_sn(hw_uniqueinfo_t *p)
                     cnt++;
                 }
 #endif
-               dprint("_memorydevice_sn Serial Number: %a (%d)\n",
-                      SerialNumberString,cnt);
+               //dprint("_memorydevice_sn Serial Number: %a (%d)\n",
+                //      SerialNumberString,cnt);
                 p->mmsnl = strlen(SerialNumberString);
                 CopyMem(p->mmsn, SerialNumberString, p->mmsnl);
-                SBC_mem_print_bin("_memorydevice_sn", (UINT8 *)p->mmsn, p->mmsnl);
+                //SBC_mem_print_bin("_memorydevice_sn", (UINT8 *)p->mmsn, p->mmsnl);
 
             }
         }
@@ -2015,29 +2015,29 @@ SBCStatus  SBC_SSBL_Verify(VOID *blkhnd, VOID *ansr, UINTN normbank)
     infostart = &((UINT8 *)rdlv.value)[last_of_fsbl];
 
     //dprint("FSBL Last : %d", last_of_fsbl);
-    SBC_external_mem_print_bin("Addtional Information", infostart,bsinfolen  );
+    //SBC_external_mem_print_bin("Addtional Information", infostart,bsinfolen  );
 
     fsbl_bsinfo_ptr_t info = {NULL, NULL, NULL, NULL};
 
     info.baseansw = (VOID *)&infostart[bsptrcnt];
     bsptrcnt += bsinfo.m.banswlen;
 
-    SBC_external_mem_print_bin("Base Answer", (UINT8 *)info.baseansw,  bsinfo.m.banswlen );
+    //SBC_external_mem_print_bin("Base Answer", (UINT8 *)info.baseansw,  bsinfo.m.banswlen );
 
     info.fwinfo = (VOID *)&infostart[bsptrcnt];
     bsptrcnt += bsinfo.m.fwinfolen;
 
-    SBC_external_mem_print_bin("FW Info", (UINT8 *)info.fwinfo,  bsinfo.m.fwinfolen );
+    //SBC_external_mem_print_bin("FW Info", (UINT8 *)info.fwinfo,  bsinfo.m.fwinfolen );
 
     info.certi = (VOID *)&infostart[bsptrcnt];
     bsptrcnt += bsinfo.m.certlen;
 
-    SBC_external_mem_print_bin("Certificate", (UINT8 *)info.certi,  bsinfo.m.certlen );
+    //SBC_external_mem_print_bin("Certificate", (UINT8 *)info.certi,  bsinfo.m.certlen );
 
     info.signature = (VOID *)&infostart[bsptrcnt];
     bsptrcnt += bsinfo.m.siglen;
 
-    SBC_external_mem_print_bin("Signature", (UINT8 *)info.signature,  bsinfo.m.siglen );
+    //SBC_external_mem_print_bin("Signature", (UINT8 *)info.signature,  bsinfo.m.siglen );
 
     // Verify the FSBL certificate using RootCA certificate
     // Later not comment 
@@ -2059,7 +2059,7 @@ SBCStatus  SBC_SSBL_Verify(VOID *blkhnd, VOID *ansr, UINTN normbank)
 
     fsbl_len += (bsinfo.m.fwinfolen + bsinfo.m.certlen  + bsinfo.m.banswlen);
 
-    dprint("SSBL image len : %d", fsbl_len);
+    //dprint("SSBL image len : %d", fsbl_len);
     HashSize = 32;
     ret = SBC_HashCompute(
                          NULL, /* Not yet used */
@@ -2069,7 +2069,7 @@ SBCStatus  SBC_SSBL_Verify(VOID *blkhnd, VOID *ansr, UINTN normbank)
                       ) ; 
 
 
-    SBC_external_mem_print_bin("SSBL Image Hash", (UINT8 *)HashValue,   HashSize);
+    //SBC_external_mem_print_bin("SSBL Image Hash", (UINT8 *)HashValue,   HashSize);
 
    
 
@@ -2234,8 +2234,8 @@ SBCStatus SBC_GenDeviceID(UINT8 *devid)
     CopyMem((void *)&computebuf[cnt], devidhsah, rdlv.length);
     cnt += rdlv.length;
 
-    dprint("DICE message length  : %d", cnt);
-   dprint("DICE message length  : %d \n", cnt);
+    //dprint("DICE message length  : %d", cnt);
+    //dprint("DICE message length  : %d \n", cnt);
     //SBC_mem_print_bin("Device ID Raw Fmt", computebuf, cnt);
     ret = SBC_HashCompute(
                              NULL, /* Not yet used */

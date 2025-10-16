@@ -71,6 +71,10 @@
 #include "SBC_Timer.h"
 
 
+
+extern VOID SBC_ShutdownSystem(VOID);
+extern SBCStatus SBC_GRUB_LoadAndStart(EFI_HANDLE ImageHandle);
+
 UINTN   sys_start_time = 0ULL;
 UINTN   sys_end_time = 0ULL;
 UINTN   sys_ns_var = 0ULL;
@@ -398,6 +402,7 @@ SBCStatus SBC_BootModeNormalAndpUdate(VOID *blkhnd, VOID *ImageHandle, UINTN nro
   SBC_LogElapsedTime(L"FSBL Boot Time", sys_ns_var);
 
   ret = SBC_SSBL_LoadAndStart(ImageHandle);
+  //SBC_GRUB_LoadAndStart(NULL); 
   if (ret != SBCOK) {
     //Print(L"SSBL  Running Fail \n");
     goto errdone;
@@ -728,51 +733,14 @@ static VOID _get_fw_bankid(UINT32 val, UINT32 *cur, UINT32 *prev)
 
 }
 
-
-extern VOID SBC_ShutdownSystem(VOID);
-extern SBCStatus SBC_GRUB_LoadAndStart(EFI_HANDLE ImageHandle);
-extern EFI_STATUS SBC_LodaDriver(CONST CHAR16 *FileName, CONST BOOLEAN  Connect);
-
-
-EFI_STATUS
-EFIAPI
-UefiMain (
-//EntryPoint(
-  IN EFI_HANDLE        ImageHandle,
-  IN EFI_SYSTEM_TABLE  *SystemTable
-  )
+static EFI_STATUS SBC_DrveriInit(VOID)
 {
-
+extern EFI_STATUS SBC_LodaDriver(CONST CHAR16 *FileName, CONST BOOLEAN  Connect);
 #define SERIAL_DXE_PATH                 L"\\EFI\\BOOT\\SerialDxe.efi"
 #define FTDI_USB_SERIAL_DXE_PATH        L"\\EFI\\BOOT\\FtdiUsbSerialDxe.efi"
 #define TERMINAL_DXE_PATH               L"\\EFI\\BOOT\\TerminalDxe.efi"
 #define XFS64_PATH                      L"\\EFI\\BOOT\\xfs_x64.efi"
-
-    atp_ident_t diceid;
-    EFI_STATUS retval = EFI_SUCCESS;
-    SBCStatus  ret = SBCOK;
-    rawprt_hdr_t h_rawprtheader;    // Raw Partition Header handle
-    //rawprt_hdr_t tmp_prtheader;    // Raw Partition Header handle
-    
-    //UINT32 pres_hi = 0;
-    UINT32 pres_low = 0;
-    UINT32 currbank_id = 0;
-    UINT32 prevbank_id = 0;
-    __attribute__((unused)) UINT32 bootmd = 0; // Boot Mode
-    LV_t baseansr;
-    [[maybe_unused]] UINTN testid = 0xAA55AA55;
-
-    [[gnu::unused]] EFI_HANDLE ssbl_img_hndl = NULL;
-
-    unit_proc_t btproc;
-#ifdef _UNIT_TEST_ON_
-    CHAR16 *varname = L"SBCBOOTORDER";
-    UINTN boot_oredr_mode = 0;
-#endif
-
-
-    sys_start_time = SBC_PerfNowTicks();
-    dprint("sys_start_tick : %ld", sys_start_time);
+  EFI_STATUS retval = EFI_SUCCESS;
 #ifdef _SBC_DRIVER_LOAD_
     retval = SBC_LodaDriver(SERIAL_DXE_PATH, TRUE);
     if (EFI_ERROR (retval)){
@@ -804,14 +772,73 @@ UefiMain (
     }
 
     //sleep(3);
+#else
+    if (retval != EFI_SUCCESS) {
+        goto errdone;
+    }
+#endif
+
+errdone:
+    return retval;
+}
+
+
+
+
+
+EFI_STATUS
+EFIAPI
+UefiMain (
+//EntryPoint(
+  IN EFI_HANDLE        ImageHandle,
+  IN EFI_SYSTEM_TABLE  *SystemTable
+  )
+{
+
+
+
+    atp_ident_t diceid;
+    EFI_STATUS retval = EFI_SUCCESS;
+    SBCStatus  ret = SBCOK;
+    rawprt_hdr_t h_rawprtheader;    // Raw Partition Header handle
+    //rawprt_hdr_t tmp_prtheader;    // Raw Partition Header handle
+    
+    //UINT32 pres_hi = 0;
+    UINT32 pres_low = 0;
+    UINT32 currbank_id = 0;
+    UINT32 prevbank_id = 0;
+    __attribute__((unused)) UINT32 bootmd = 0; // Boot Mode
+    LV_t baseansr;
+    [[maybe_unused]] UINTN testid = 0xAA55AA55;
+
+    [[gnu::unused]] EFI_HANDLE ssbl_img_hndl = NULL;
+
+    unit_proc_t btproc;
+
+    UINTN driver_load_ns = 0ULL;
+
+#ifdef _UNIT_TEST_ON_
+    CHAR16 *varname = L"SBCBOOTORDER";
+    UINTN boot_oredr_mode = 0;
 #endif
 
 
-#ifndef _FSBL_TEST_ 
-    dprint("------------- FSBL START -------------\n");
-#else
-    dprint("------------- FSBL Test Mode START !!! -------------\n");
-#endif    
+    sys_start_time = SBC_PerfNowTicks();
+
+    SBC_TIME_BLOCKS_NS (driver_load_ns,
+        { retval = SBC_DrveriInit(); });
+
+    SBC_LogElapsedTime(L"SBC Driver Load", driver_load_ns);
+
+
+    sbc_err_sysprn(SBC_LOG_CMN_PRIO_INFO, 2,
+         L"SBC",
+         L"FSBL",
+         L"Weapon System",
+         0,
+         L"Information ",
+         L"SBC_SP_FW FSBL Running");
+
 
     is_boot_status = TRUE;
 
@@ -969,13 +996,13 @@ UefiMain (
     }
 
     ZeroMem(mrgmsg, sizeof mrgmsg);
-    UnicodeSPrint(mrgmsg, sizeof mrgmsg, L"FSBL Verify Success %s\n", baseansr.value);
+    UnicodeSPrint(mrgmsg, sizeof mrgmsg, L"SBC_SP_FW FSBL self-verify Success (%s)\n", baseansr.value);
     sbc_err_sysprn(SBC_LOG_CMN_PRIO_ERR, 2,
          L"SBC",
          L"FSBL",
          L"Weapon System",
          8,
-         L"Determine Firmare Tampering ",
+         L"Validation",
          mrgmsg);
   
     
@@ -996,6 +1023,16 @@ UefiMain (
 #endif
 
     dprint("Boot Mode is %d", h_rawprtheader.bootmode);
+    ZeroMem(mrgmsg, sizeof mrgmsg);
+    UnicodeSPrint(mrgmsg, sizeof mrgmsg, L"SBC_SP_FW FSBL Boot Mode Check (0x%x)\n", h_rawprtheader.bootmode);
+    sbc_err_sysprn(SBC_LOG_CMN_PRIO_ERR, 2,
+         L"SBC",
+         L"FSBL",
+         L"Weapon System",
+         8,
+         L"Information",
+         mrgmsg);
+
     switch (h_rawprtheader.bootmode) {
     case BOOT_MODE_NORMAL:
       dprint("Boot Mode is BOOT_MODE_NORMAL");
@@ -1003,24 +1040,24 @@ UefiMain (
       ret = SBC_SSBL_Verify(h_blkio, NULL, currbank_id, BOOT_MODE_NORMAL, STR_SSBL_F_NAME);
       if (ret != SBCOK) {
             sbc_err_sysprn(SBC_LOG_CMN_PRIO_ERR, 2,
-                   L"SBC",
-                   L"FSBL",
-                   L"Weapon System",
-                   8,
-                   L"Determine Firmare Tampering ",
-                   L"SSBL tampering check fail");
+                 L"SBC",
+                 L"FSBL",
+                 L"Weapon System",
+                 8,
+                 L"Detection",
+                 L"SBC_SP_FW SSBL self-verify Fail");
             is_boot_status = FALSE;
             retval = EFI_INVALID_PARAMETER;
             //goto errdone;
       }
 
       sbc_err_sysprn(SBC_LOG_CMN_PRIO_ERR, 2,
-       L"SBC",
-       L"FSBL",
-       L"Weapon System",
-       8,
-       L"Determine Firmare Tampering ",
-       L"SSBL tampering check Done");
+           L"SBC",
+           L"FSBL",
+           L"Weapon System",
+           8,
+           L"Validation",
+           L"SBC_SP_FW SSBL self-verify Success");
 
 //    ret =  SBC_DeviceIdKyeVerify(h_blkio, diceid.devid, diceid.osid);
 //    if (ret != SBCOK) {
@@ -1035,7 +1072,9 @@ UefiMain (
 //            is_boot_status = FALSE;
 //            goto errdone;
 //    }
-#endif         
+#endif
+         
+      //SBC_GRUB_LoadAndStart(NULL);         
 
       ret = SBC_BootModeNormalAndpUdate(h_blkio, ImageHandle, currbank_id);
       if (ret != SBCOK) {
