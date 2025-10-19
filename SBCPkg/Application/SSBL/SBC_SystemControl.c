@@ -17,7 +17,6 @@
 #include "SBC_ProtectedSW.h"
 
 //EFI_GUID g_sbc_guid  = {0x1F3F7E80, 0xDB6B, 0x93FA, {0x9E, 0x61, 0x4C, 0x31, 0x3D, 0x3A}};
-static SBCStatus _update_protected_software(VOID *priv);
 
 
 static 
@@ -261,24 +260,8 @@ static SBCStatus _update_behavior_for_km(void *priv)
         // Operation for this is processing in 
         // _update_reset_check_scenario function
 
-//      if(_check_prev_fw(bp->pvs_sw_bnk) == TRUE) {
-//          // Previously exist in Raw Part.
-//          SBC_BootKeyModeChange(BOOT_MODE_RECOVERY,
-//                                KEY_MODE_UPDATE,
-//                                priv);
-//      }
-//      else {
-//          SBC_BootKeyModeChange(BOOT_MODE_FACTORY,
-//                                KEY_MODE_UPDATE,
-//                                priv);
-//      }
+        ret = SBCFAIL;
 
-        ret = _update_protected_software(priv);
-        if(ret != SBCOK) {
-            eprint("Detection SBC_tamper_ProtSW derived"
-                            "Not Protected");
-            goto errdone;
-        }
         break;
     case SB_PROC_ST_NRMA:
         dprint("Base Answer re-encrypt and write in Update Mode");
@@ -308,11 +291,11 @@ static SBCStatus _update_behavior_for_km(void *priv)
             goto errdone;
         }
 
-//      ret = SBC_BootKeyModeChange(BOOT_MODE_RECOVERY, KEY_MODE_NORMAL, priv);
-//      if(ret != SBCOK) {
-//          eprint("Boot Mode and Key Mode change fail");
-//          goto errdone;
-//      }
+        ret = SBC_BootKeyModeChange(BOOT_MODE_RECOVERY, KEY_MODE_NORMAL, priv);
+        if(ret != SBCOK) {
+            eprint("Boot Mode and Key Mode change fail");
+            goto errdone;
+        }
 
         break;
     default:
@@ -322,6 +305,23 @@ static SBCStatus _update_behavior_for_km(void *priv)
 
 
 errdone:
+
+    // 
+    // 
+    //
+    if(ret != SBCOK) {
+        if(_check_prev_fw(bp->pvs_sw_bnk) == TRUE) {
+            // Previously exist in Raw Part.
+            SBC_BootKeyModeChange(BOOT_MODE_RECOVERY,
+                                  KEY_MODE_UPDATE,
+                                  priv);
+        }
+        else {
+            SBC_BootKeyModeChange(BOOT_MODE_FACTORY,
+                                  KEY_MODE_UPDATE,
+                                  priv);
+        }
+    }
 
     return ret;
 }
@@ -735,7 +735,7 @@ errdone:
     return ;
 }
 
-static SBCStatus _update_protected_software(VOID *priv)
+SBCStatus _update_protected_software(VOID *priv)
 {
     SBCStatus ret = SBCOK;
     UINT8 secret_key[SBC_OSID_KEY_LEN] = {0, };
@@ -775,7 +775,8 @@ static void _update_reset_check_and_behavior(VOID *priv)
             //dprint();
             dprint("Boot is Normal ");
             // bug fixed at 20250814 
-            SBC_BootKeyModeChange(BOOT_MODE_NORMAL, KEY_MODE_NORMAL, priv);
+            // bug fixed at 20251019 - Normal to Recovery in Update
+            SBC_BootKeyModeChange(BOOT_MODE_RECOVERY, KEY_MODE_NORMAL, priv);
             break;
         case SB_PROC_ST_ABNRAM:
             dprint("Boot is AbNormal");
@@ -877,6 +878,9 @@ SBCStatus  SBC_SecureBootCheck(VOID *priv)
         ret = SBC_DiceIDKeyVerify((VOID *)bp);
         SBC_RET_VALIDATE_ERRCODEMSG((ret == SBCOK), ret, "Certificate ID Verify Fail");
 
+
+        
+
         // TODO : Baseanswer verify
         ret = SBC_BaseAnswerValidate(bp->blkhnd,
                                      ((LV_t *)bp->baseansr)->value,
@@ -887,6 +891,16 @@ SBCStatus  SBC_SecureBootCheck(VOID *priv)
         if(ret != SBCOK) {
             //TODO : SysLog
             bp->bootst = SB_PROC_ST_ABNRAM;
+        }
+        else {
+            sbc_err_sysprn(SBC_LOG_CMN_PRIO_INFO, 2,
+                 SYS_LOG_HOST_BOOT,
+                 SYS_LOG_APP_NAME,
+                 SYS_LOG_CSC_NAME,
+                 8,
+                 SYS_LOG_EVT_VALDIATION,
+                 L"SBC_Integrity_All boot components passed signature verification \n");
+
         }
 
         if(bp->bootst == SB_PROC_ST_ABNRAM) {
@@ -919,6 +933,16 @@ SBCStatus  SBC_SecureBootCheck(VOID *priv)
 
 
         //dprint();
+        break;
+    case BOOT_MODE_FACTORY:
+        //
+        // Added at 20251019 - In factory mode, boot is not normal
+        // System need to begin shutdown 
+        //
+        if(bp->bootst == SB_PROC_ST_ABNRAM) {
+            SBC_ShutdownSystem();
+        }
+        
         break;
     default:
       goto errdone;

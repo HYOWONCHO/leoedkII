@@ -101,7 +101,7 @@ EFI_STATUS SBC_NvramSetVar(VOID *varname, VOID *payload, VOID *sz_pl)
 {
     UINTN var_len = *(UINTN *)sz_pl;
 
-    Print(L"SetVar Name : %s, Var Size : %d \n", (CHAR16 *)varname, var_len);
+    //Print(L"SetVar Name : %s, Var Size : %d \n", (CHAR16 *)varname, var_len);
     return gRT->SetVariable(
         (CHAR16 *)varname,                 // 변수 이름 (UTF-16)
         &gSpImVendorGuid,           // 벤더 GUID (네임스페이스 구분용)

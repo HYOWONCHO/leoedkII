@@ -169,6 +169,55 @@ void SBC_external_mem_print_bin(
     return;
 }
 
+#ifdef _USECASE_TEST_
+void _uc_mem_print_bin(
+        CHAR8 *title /**< [in] display name strings */,
+        UINT8* buffer /**< [in] print buffer  */,
+        UINT32 length /**< [in] length of buffer */
+        )
+{
+    UINT32 i, sz;
+    UINT32 offset = 0;
+
+    if(title) {
+        DEBUG((DEBUG_INFO,"%a (length of buffer: %d) \r\r\n", title, length)) ;
+    }
+
+    if (!buffer) {
+        return;
+    }
+
+    while (length > 0) {
+        sz = length;
+        if (sz > LINE_LEN)
+            sz = LINE_LEN;
+
+        DEBUG((DEBUG_INFO," [0x%08X] :  ", offset));
+        for (i = 0; i < LINE_LEN; i++) {
+            if (i < length)
+                DEBUG((DEBUG_INFO,"%02x ", buffer[i]));
+            else
+                DEBUG((DEBUG_INFO,"   "));
+        }
+        DEBUG((DEBUG_INFO," | "));
+        for (i = 0; i < sz; i++) {
+            if (buffer[i] > 31 && buffer[i] < 127)
+                DEBUG((DEBUG_INFO,"%c", buffer[i]));
+            else
+                DEBUG((DEBUG_INFO,"."));
+        }
+        offset += LINE_LEN;
+        DEBUG((DEBUG_INFO,"\r\n"));
+
+
+        buffer += sz;
+        length -= sz;
+    }
+
+    return;
+}
+#endif
+
 VOID SBC_LogElapsedTime(const CHAR16 *Tag, UINTN Ns)
 {
     CHAR16 Buf[128] = {0, };
@@ -295,7 +344,7 @@ SBC_BuildHexFormattedMessage (
       PubKeySize,
       HexStr,
       HexChars + 1,
-      FALSE,   // 대문자/소문자 구분 옵션
+      TRUE,   // 대문자/소문자 구분 옵션
       0
   );
 

@@ -67,7 +67,11 @@
 #include "SBC_SystemControl.h"
 #include "SBC_ProtectedSW.h"
 #include "SBC_Hashing.h"
+#include "SBC_Nvram.h"
+#include "SBC_TypeDefs.h"
 
+extern SBCStatus SBC_GRUB_LoadAndStart(EFI_HANDLE ImageHandle);
+extern SBCStatus SBC_BootKeyModeChange(UINT32 newbm, UINT32 newkey, VOID *priv);
 
 UINTN   sys_start_time = 0ULL;
 UINTN   sys_end_time = 0ULL;
@@ -279,7 +283,7 @@ errdone:
 }
 
 
-extern SBCStatus SBC_GRUB_LoadAndStart(EFI_HANDLE ImageHandle);
+
 SBCStatus  SBC_BootModeNormal(UINT16 km, VOID *priv)
 {
     SBCStatus ret = SBCOK;
@@ -295,7 +299,7 @@ SBCStatus  SBC_BootModeNormal(UINT16 km, VOID *priv)
       sys_ns_var  = SBC_PerfTicksTons(_PerfDeltaTicks(sys_start_time, sys_end_time));
       //dprint("sys_ns_var : %ld", sys_ns_var);
 
-      SBC_LogElapsedTime(L"FSBL Boot Time", sys_ns_var);      
+      SBC_LogElapsedTime(L"SSBL Boot Time", sys_ns_var);      
       SBC_GRUB_LoadAndStart(((boot_proc_t *)priv)->ldhndl);
       while (TRUE) { }
       break;
@@ -389,10 +393,6 @@ static VOID _get_fw_bankid(UINT32 val, UINT32 *cur, UINT32 *prev)
 }
 
 
-
-extern SBCStatus SBC_GRUB_LoadAndStart(EFI_HANDLE ImageHandle);
-extern SBCStatus SBC_BootKeyModeChange(UINT32 newbm, UINT32 newkey, VOID *priv);
-
 EFI_STATUS
 EFIAPI
 UefiMain (
@@ -474,10 +474,88 @@ UefiMain (
     btproc.rawprt_hdr = &h_rawptrheader;
     btproc.baseansr = (void *)&baseansr;
 
-    dprint("Boot Mode : %d , Key Mode : %d, Recovery Mode : %d",
+    _ucprint("Boot Mode : %d , Key Mode : %d, Recovery Mode : %d",
            btproc.bm, btproc.km, h_rawptrheader.rcvmode);
 
     //dprint("Chaeck Boot Mode read from BlkIO is %d", h_rawptrheader.bootmode);
+
+
+#if 0 //def _USECASE_TEST_
+
+    {
+        extern CHAR16 *sec_upt_name;
+        extern UINTN boot_order_mode;
+        extern SBCStatus UC_BootFWTamperingCheck(VOID *handle);
+        extern SBCStatus UC_RecoveryAbnormalAndNormal(VOID *handle);
+        EFI_STATUS retval = EFI_SUCCESS;
+        SBCStatus ret = SBCOK;
+        UINTN  varsz =  0;
+        boot_proc_t *bp = &btproc;
+        UINTN  set_order = 0;
+        set_order = SBC_UC_MODE_UPDATE;
+        varsz = sizeof set_order;
+        //_ucprint("UINTN size :%d", sizeof set_order);
+        SBC_NvramSetVar((VOID *)sec_upt_name, (VOID *)&set_order, (VOID *)&varsz);
+
+        return EFI_SUCCESS;
+        retval = SBC_NvramGetVar((VOID *)sec_upt_name, 
+                                 (VOID *)&boot_order_mode,
+                                 (VOID *)&varsz);
+
+        if(EFI_ERROR(retval)) {
+            if(retval == EFI_NOT_FOUND) {
+                set_order = SBC_UC_MODE_UPDATE;
+                varsz = sizeof set_order;
+                //_ucprint("UINTN size :%d", sizeof set_order);
+                SBC_NvramSetVar((VOID *)sec_upt_name, (VOID *)&set_order, (VOID *)&varsz);
+            }
+            //_ucprint("NVRAM get variable %d (%r)", varsz, retval);
+        }
+
+        switch (boot_order_mode) {
+        case SBC_UC_MODE_UPDATE:
+            sbc_err_sysprn(SBC_LOG_CMN_PRIO_INFO, 2,
+                 SYS_LOG_HOST_BOOT,
+                 SYS_LOG_APP_NAME,
+                 SYS_LOG_CSC_NAME,
+                 0,
+                 L"Information",
+                 L"Update Mode Testing");
+            ret = UC_BootFWTamperingCheck(bp);
+            if (ret != SBCOK) {
+                goto uc_errdone;
+            }
+            break;
+        case SBC_UC_MODE_RECOVERY:
+            sbc_err_sysprn(SBC_LOG_CMN_PRIO_INFO, 2,
+                 SYS_LOG_HOST_BOOT,
+                 SYS_LOG_APP_NAME,
+                 SYS_LOG_CSC_NAME,
+                 0,
+                 L"Information",
+                 L"Recovery Mode Testing");
+            ret = UC_RecoveryAbnormalAndNormal(bp);
+
+            set_order = SBC_UC_MODE_UPDATE;
+            varsz = sizeof set_order;
+            //_ucprint("UINTN size :%d", sizeof set_order);
+            SBC_NvramSetVar((VOID *)sec_upt_name, (VOID *)&set_order, (VOID *)&varsz);
+            SBC_RebootSystem();
+            break;
+
+        default:
+            set_order = SBC_UC_MODE_UPDATE;
+            varsz = sizeof set_order;
+            //_ucprint("UINTN size :%d", sizeof set_order);
+            SBC_NvramSetVar((VOID *)sec_upt_name, (VOID *)&set_order, (VOID *)&varsz);
+            SBC_RebootSystem();
+            break;
+                
+        }
+uc_errdone:
+        return retval;
+    }
+#endif
 
 #if 0
     ret = SBC_GenMigrationKey((void *)&btproc, diceid.migid);
@@ -552,8 +630,11 @@ UefiMain (
     return EFI_SUCCESS;
 #endif
 
+#ifdef _USECASE_TEST_
+    _ucprint("*** SSBL Boot FW Self-validation \n");
+#endif
 
-    ret = SBC_SSBL_Verify(h_blkio, &baseansr, btproc.curr_sw_bnk );
+    ret = SBC_SSBL_Verify(h_blkio, &baseansr, btproc.curr_sw_bnk, btproc.bm );
     if (ret != SBCOK) {
           sbc_err_sysprn(SBC_LOG_CMN_PRIO_ERR, 2,
                  SYS_LOG_HOST_BOOT,
@@ -561,7 +642,7 @@ UefiMain (
                  SYS_LOG_CSC_NAME,
                  8,
                  L"Detectoin",
-                 L"SSBL tampering check fail");
+                 L"SBC_SP_FW SSBL tampering check fail \n");
           retval = EFI_INVALID_PARAMETER;
           btproc.bootst = SB_PROC_ST_ABNRAM;
           goto errdone;
@@ -569,13 +650,7 @@ UefiMain (
 
     
 
-    sbc_err_sysprn(SBC_LOG_CMN_PRIO_ERR, 2,
-         SYS_LOG_HOST_BOOT,
-         SYS_LOG_APP_NAME,
-         SYS_LOG_CSC_NAME,
-         8,
-         SYS_LOG_EVT_VALDIATION,
-         L"SSBL tampering check Done");
+
 
     ret = SBC_DiceKeysGen(ImageHandle, &diceid,  currbank_id, btproc.bm);
     if (ret != SBCOK) {
@@ -585,20 +660,30 @@ UefiMain (
              SYS_LOG_CSC_NAME,
              1,
              SYS_LOG_EVT_VALDIATION,
-             L"HW&SW Base Key Creation Fail");
+             L"SBC_Dice_Key HW&SW Base Key Creation Fail");
         retval = EFI_INVALID_PARAMETER;
         btproc.bootst = SB_PROC_ST_ABNRAM;
         goto errdone;
     }
 
-    sbc_err_sysprn(SBC_LOG_CMN_PRIO_INFO, 2,
-         SYS_LOG_HOST_BOOT,
-         SYS_LOG_APP_NAME,
-         SYS_LOG_CSC_NAME,
-         1,
-         SYS_LOG_EVT_VALDIATION,
-         L"HW&SW Base Key Creation Success");
-    
+//  sbc_err_sysprn(SBC_LOG_CMN_PRIO_INFO, 2,
+//       SYS_LOG_HOST_BOOT,
+//       SYS_LOG_APP_NAME,
+//       SYS_LOG_CSC_NAME,
+//       1,
+//       SYS_LOG_EVT_VALDIATION,
+//       L"SBC_Dice_Key HW&SW Base Key Creation Success");
+
+    if (h_rawptrheader.bootmode != BOOT_MODE_NORMAL) {
+        
+        sbc_err_sysprn(SBC_LOG_CMN_PRIO_INFO, 2,
+             SYS_LOG_HOST_BOOT,
+             SYS_LOG_APP_NAME,
+             SYS_LOG_CSC_NAME,
+             8,
+             SYS_LOG_EVT_VALDIATION,
+             L"SBC_Integrity_All boot components passed signature verification \n");
+    }
 #if defined(_FILE_RD_BM_)
 //#warning   "SBC Boot Mode Read from File"
     UINT32 bootmd = SBC_ReadBootMode();
@@ -646,17 +731,36 @@ UefiMain (
 #endif
       ret = SBC_GenMigrationKey((void *)&btproc, diceid.migid);
       if (ret != SBCOK) {
-          sbc_err_sysprn(SBC_LOG_CMN_PRIO_ERR, 2, SYS_LOG_HOST_BOOT, SYS_LOG_APP_NAME,SYS_LOG_CSC_NAME, 4, SYS_LOG_EVT_DETECTION, L"Failed the Migraiotn key creation \n");
+          sbc_err_sysprn(SBC_LOG_CMN_PRIO_ERR, 
+                         2, 
+                         SYS_LOG_HOST_BOOT, 
+                         SYS_LOG_APP_NAME,SYS_LOG_CSC_NAME, 
+                         4, 
+                         SYS_LOG_EVT_DETECTION, 
+                         L"SBC_BootFW_Update Fail to MigrationKey Creation \n");
           retval = EFI_INVALID_PARAMETER;
           btproc.bootst = SB_PROC_ST_ABNRAM;
-          goto errdone;
+
+          // 
+          // No need to return because change the boot mode and reset the system.
+          //
       }
 
-      SBC_external_mem_print_bin("Migraiotn Key", diceid.migid, 32);
+      if (ret == SBCOK) {
+          SBC_BuildHexFormattedMessage(
+                (CONST VOID *)diceid.migid, 32,
+                L"SBC_BootFW_Update Migration Key OSID (%s)\n",
+                mrgmsg, sizeof mrgmsg);
 
-      sbc_err_sysprn(SBC_LOG_CMN_PRIO_INFO, 2, SYS_LOG_HOST_BOOT, SYS_LOG_APP_NAME,SYS_LOG_CSC_NAME, 4, SYS_LOG_EVT_VALDIATION, L"Migration Key creation Success\n");
+          sbc_err_sysprn(SBC_LOG_CMN_PRIO_INFO, 2,
+                 SYS_LOG_HOST_BOOT,
+                 SYS_LOG_APP_NAME,
+                 SYS_LOG_CSC_NAME,
+                 1,
+                 L"Detectoin",
+                 mrgmsg);
+      }
 
-      dprint("Boot State : 0x%x",btproc.bootst);
       ret = SBC_SecureBootCheck((VOID *)&btproc);
       if (ret != SBCOK) {
           eprint("Secure Boot check fail for BOOT_MODE_UPDATE");
@@ -682,7 +786,7 @@ UefiMain (
     sys_ns_var  = SBC_PerfTicksTons(_PerfDeltaTicks(sys_start_time, sys_end_time));
     //dprint("sys_ns_var : %ld", sys_ns_var);
 
-    SBC_LogElapsedTime(L"FSBL Boot Time", sys_ns_var); 
+    SBC_LogElapsedTime(L"SSBL Boot Time", sys_ns_var); 
     ret = SBC_GRUB_LoadAndStart(ImageHandle);
     if(ret != SBCOK) {
         sbc_err_sysprn(SBC_LOG_CMN_PRIO_ERR, 2, 
@@ -714,9 +818,15 @@ UefiMain (
 
 errdone:
     if (ret != SBCOK) {
-        SBC_ShutdownSystem();
+        //
+        // Not existense the shutd-down scenario
+        //
+        
+        ret = SBC_SecureBootCheck((VOID *)&btproc);
+
+        //SBC_ShutdownSystem();
     }
-   return retval;
+    return retval;
 }
 
 // Shell Reboot but do not jump to Grub 

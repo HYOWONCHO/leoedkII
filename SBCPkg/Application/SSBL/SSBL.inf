@@ -44,6 +44,8 @@
   SBC_Nvram.c
   SBC_Timer.c
 
+  #SBC_UseCaseUpdateTest.c
+
 
 [Packages]
   EmulatorPkg/EmulatorPkg.dec
@@ -126,6 +128,7 @@
 [BuildOptions]
     #Firmware Verify Real
     *_*_*_CC_FLAGS = -D_FW_VERIFY_UPTO_CRT_
+    *_*_*_CC_FLAGS = -D_USECASE_TEST_
 
     #Test Mode 
     #*_*_*_CC_FLAGS = -D_FILE_RD_BM_ -D_SBC_DEBUG_ON_
@@ -135,8 +138,8 @@
 
     #Debug On
     #*_*_*_CC_FLAGS = -D_SBC_DEBUG_ON_ 
-    *_*_*_CC_FLAGS = -D_DEBUG_PRINT_ON_
-    #*_*_*_CC_FLAGS = -D_SSBL_TEST_
+    #*_*_*_CC_FLAGS = -D_DEBUG_PRINT_ON_
+    *_*_*_CC_FLAGS = -D_SSBL_TEST_
 
     
 

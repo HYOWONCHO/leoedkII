@@ -1940,7 +1940,7 @@ errdone:
 }
 #endif
 
-SBCStatus  SBC_SSBL_Verify(VOID *blkhnd, VOID *ansr, UINTN normbank)
+SBCStatus  SBC_SSBL_Verify(VOID *blkhnd, VOID *ansr, UINTN normbank, UINT16 bm)
 {
     SBCStatus       ret = SBCOK;
     EFI_STATUS      retval = EFI_SUCCESS;
@@ -2039,10 +2039,15 @@ SBCStatus  SBC_SSBL_Verify(VOID *blkhnd, VOID *ansr, UINTN normbank)
 
     //SBC_external_mem_print_bin("Signature", (UINT8 *)info.signature,  bsinfo.m.siglen );
 
-    // Verify the FSBL certificate using RootCA certificate
+    // Verify the SSBL certificate using RootCA certificate
     // Later not comment 
-//  ret = SBC_FSBLIntgCheck(NULL , blkhnd, info.certi, bsinfo.m.certlen, normbank, bm);
-//  SBC_RET_VALIDATE_ERRCODEMSG((ret == SBCOK), ret, "FSBL certificate validation fail");
+    ret = SBC_FSBLIntgCheck(NULL , 
+                            blkhnd, 
+                            info.certi, 
+                            bsinfo.m.certlen, 
+                            normbank, 
+                            bm);
+    SBC_RET_VALIDATE_ERRCODEMSG((ret == SBCOK), ret, "SSBL certificate validation fail");
 
 
     BOOLEAN retbool = TRUE;
@@ -2385,7 +2390,14 @@ SBCStatus SBC_GenOSID(EFI_HANDLE *h_image, UINT8 *fwid, UINT8 *osid)
   // OS Kernel Image read 
   ret = _kernel_image_load(h_image, &lv);
   if (ret != SBCOK) {
-   dprint("Kernel Image load fail \n");
+    dprint("Kernel Image load fail \n");
+    sbc_err_sysprn(SBC_LOG_CMN_PRIO_ERR, 2,
+          SYS_LOG_HOST_BOOT, 
+          SYS_LOG_APP_NAME, 
+          SYS_LOG_CSC_NAME, 
+          1, 
+          L"Detection ", 
+          L"SBC_SP_FILE_RD OS File Not Found \n");
     goto errdone;
   }
 
@@ -2395,10 +2407,31 @@ SBCStatus SBC_GenOSID(EFI_HANDLE *h_image, UINT8 *fwid, UINT8 *osid)
                          lv.value,
                          lv.length,
                          os_hash );
-  SBC_RET_VALIDATE_ERRCODEMSG((ret == SBCOK), ret, "SSBL hash compute failed");
+
+  if ( ret != SBCOK) {
+    sbc_err_sysprn(SBC_LOG_CMN_PRIO_ERR, 2,
+          SYS_LOG_HOST_BOOT, 
+          SYS_LOG_APP_NAME, 
+          SYS_LOG_CSC_NAME, 
+          0, 
+          L"Detection ", 
+          L"SBC_Vendor OS Hash Create Fail \n");
+    goto errdone;
+  }
+  //SBC_RET_VALIDATE_ERRCODEMSG((ret == SBCOK), ret, "SSBL hash compute failed");
 
   temp = AllocateZeroPool(SBC_AT_HASH_LEN << 1);
-  SBC_RET_VALIDATE_ERRCODEMSG((temp != NULL), SBCNULLP, "memeory creation fail");
+  if (temp == NULL) {
+    sbc_err_sysprn(SBC_LOG_CMN_PRIO_ERR, 2,
+          SYS_LOG_HOST_BOOT, 
+          SYS_LOG_APP_NAME, 
+          SYS_LOG_CSC_NAME, 
+          0, 
+          L"Detection ", 
+          L"SBC_Vendor Not enough resource \n");
+    goto errdone;
+  }
+  //SBC_RET_VALIDATE_ERRCODEMSG((temp != NULL), SBCNULLP, "memeory creation fail");
 
   CopyMem((void *)&temp[0], fwid, SBC_AT_HASH_LEN);
   CopyMem((void *)&temp[SBC_AT_HASH_LEN], os_hash,  SBC_AT_HASH_LEN);
@@ -2409,6 +2442,18 @@ SBCStatus SBC_GenOSID(EFI_HANDLE *h_image, UINT8 *fwid, UINT8 *osid)
                              SBC_AT_HASH_LEN << 1,
                              osid
                           ) ;
+
+  if (ret != SBCOK) {
+        sbc_err_sysprn(SBC_LOG_CMN_PRIO_ERR, 2,
+          SYS_LOG_HOST_BOOT, 
+          SYS_LOG_APP_NAME, 
+          SYS_LOG_CSC_NAME, 
+          0, 
+          L"Detection ", 
+          L"SBC_Vendor OSID compute Fail \n");
+
+        goto errdone;
+  }
 
   SBC_mem_print_bin("OS ID", osid, 32);
 
@@ -2841,9 +2886,21 @@ SBCStatus  SBC_FSBLIntgCheck([[gnu::unused]]EFI_HANDLE *h_image , VOID *blkio, V
 
 
     ret = SBC_AESGcmDecrypt(&aesctx);
-    SBC_RET_VALIDATE_ERRCODEMSG((ret == SBCOK), 
-                                SBCENCFAIL, 
-                                "CA decrypt fail");    
+    if (ret != SBCOK) {
+        SBC_BuildHexFormattedMessage(
+            (CONST VOID *)secret_key,
+            32,
+            L"SFR-Vendor-SP RooTCA decrypt fail (%s) \n",
+            mrgmsg, sizeof mrgmsg);
+
+        sbc_err_sysprn(SBC_LOG_CMN_PRIO_ERR, 2,
+                     SYS_LOG_HOST_BOOT,
+                     SYS_LOG_APP_NAME,
+                     SYS_LOG_CSC_NAME,
+                     0,
+                     L"Detectoin",
+                     mrgmsg);
+    }
 
     SBC_mem_print_bin("RootCA", decbuf, calen);
 
@@ -2865,8 +2922,31 @@ SBCStatus  SBC_FSBLIntgCheck([[gnu::unused]]EFI_HANDLE *h_image , VOID *blkio, V
 
     if (ret != SBCOK) {
       int_eprint("RootCA Signature Verify fail \n");
+//      SBC_BuildHexFormattedMessage(
+//          (CONST VOID *)secret_key,
+//          32,
+//          L"SFR-Vendor-SP RooTCA decrypt fail (%s) \n",
+//          mrgmsg, sizeof mrgmsg);
+
+        sbc_err_sysprn(SBC_LOG_CMN_PRIO_ERR, 2,
+                     SYS_LOG_HOST_BOOT,
+                     SYS_LOG_APP_NAME,
+                     SYS_LOG_CSC_NAME,
+                     0,
+                     L"Detectoin",
+                     L"SFR-Vendor-SP RootCA Verify Fail \n");
       goto errdone;
     }
+
+
+
+    sbc_err_sysprn(SBC_LOG_CMN_PRIO_INFO, 2,
+             SYS_LOG_HOST_BOOT,
+             SYS_LOG_APP_NAME,
+             SYS_LOG_CSC_NAME,
+             0,
+             L"Validation",
+             L"SFR-Vendor-SP RootCA Verify Success \n");
 
 
     

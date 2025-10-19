@@ -77,6 +77,12 @@ typedef struct _kdf_t {
 //#define SBCUNUSED       [[gnu::unused]]
 //#define SBCUNUSED       __attribute__((unused))
 
+
+#define SBC_UC_MODE_UPDATE              0xAA000001
+#define SBC_UC_MODE_RECOVERY            0xAA000002
+#define SBC_UC_MODE_NORMAL              0xAA000003
+#define SBC_UC_MODE_FACTORY             0xAA000003
+
 static inline void _lv_set_data(LV_t *lv, void *buf, int bufl)
 {
   lv->value = buf;

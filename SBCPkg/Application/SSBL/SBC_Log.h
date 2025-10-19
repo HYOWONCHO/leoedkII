@@ -85,6 +85,7 @@ VOID SBC_LogMsg(CHAR8* logmsg, CONST CHAR8 *funcname, UINTN linenumber,
 #define int_eprint(fmt,...) \
     Print(ANSI_COLOR_RED_BOLD L"(%a:%d) : "fmt" \n" ANSI_COLOR_RESET, __FUNCTION__, __LINE__,##__VA_ARGS__)
 #else
+//#error "Use Case test"
 #define SBCLOGBOOLEAN(expression)    
 
 #define SBCLOGMSG(logmsg) 
@@ -100,7 +101,18 @@ VOID SBC_LogMsg(CHAR8* logmsg, CONST CHAR8 *funcname, UINTN linenumber,
 #define int_eprint(fmt,...) 
 #endif
 
+#ifdef _USECASE_TEST_
+#define _ucprint(fmt,...) \
+    DEBUG((DEBUG_INFO, "(%a:%d) : "fmt"\n",__FUNCTION__, __LINE__,##__VA_ARGS__))
 
+void _uc_mem_print_bin(
+        CHAR8 *title /**< [in] display name strings */,
+        UINT8* buffer /**< [in] print buffer  */,
+        UINT32 length /**< [in] length of buffer */
+        );
+#else
+#define _ucprint(fmt,...) 
+#endif
 /*
 extern VOID  SBC_LogWrite(UINT32 prio, CHAR16 *ver, CHAR16 *host,                                                
                         CHAR16 *appname, CHAR16 *csc,                                                            

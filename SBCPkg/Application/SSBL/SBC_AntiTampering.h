@@ -8,7 +8,7 @@
 #   define EFI_BOOT_FSBL_PATH          L"\\EFI\\BOOT\\FSBL.efi"
 #   define EFI_BOOT_SSBL_PATH          L"\\EFI\\BOOT\\SSBL.efi"
 #else
-#   define OSID_KERNEL_PATH            L"\\EFI\\rocky\\vmlinuz"         
+#   define OSID_KERNEL_PATH            L"\\vmlinuz"         
 #   define EFI_BOOT_FSBL_PATH          L"\\EFI\\BOOT\\FSBL.efi.bin"
 #   define EFI_BOOT_SSBL_PATH          L"\\EFI\\BOOT\\SSBL.efi.bin"
 #endif
@@ -249,7 +249,7 @@ SBCStatus  SBC_DeviceIdKyeVerify(VOID *blkio, UINT8 *devid, UINT8 *deckey);
  */
 SBCStatus SBC_DeviceSecuirtyKeyCreate(VOID *key);
 
-SBCStatus  SBC_SSBL_Verify(VOID *blkhnd, VOID *ansr,  UINTN nrombank);
+SBCStatus  SBC_SSBL_Verify(VOID *blkhnd, VOID *ansr,  UINTN nrombank, UINT16 bm);
 
 /*!
  * \fn SBCStatus SBC_DiceIDKeyVerify(VOID *priv)
