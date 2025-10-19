@@ -325,6 +325,10 @@ SBC_BuildHexFormattedMessage (
     return EFI_INVALID_PARAMETER;
   }
 
+//SBC_mem_print_bin("SBC_BuildHexFormattedMessage original",
+//                  (UINT8 *)PubKey,
+//                  (UINT32)PubKeySize);
+
   // %s 자리가 존재하는지 간단 검증 (선택사항)
   if (StrStr(FormatString, L"%s") == NULL) {
     return EFI_INVALID_PARAMETER;
@@ -345,9 +349,12 @@ SBC_BuildHexFormattedMessage (
       HexStr,
       HexChars + 1,
       FALSE,   // 대문자/소문자 구분 옵션
-      TRUE
+      0
   );
 
+//SBC_mem_print_bin("SBC_BuildHexFormattedMessage Hex",
+//                  (UINT8 *)HexStr,
+//                  (UINT32)HexChars + 1);
   ZeroMem(OutMsg, OutMsgBytes);
 
   // 포맷 문자열과 HEX 문자열을 합침
@@ -357,6 +364,8 @@ SBC_BuildHexFormattedMessage (
       FormatString,
       HexStr
   );
+
+//Print(L"OutMsg (%ld) : %s\n",OutMsgBytes, OutMsg);
 
   FreePool(HexStr);
   return EFI_SUCCESS;

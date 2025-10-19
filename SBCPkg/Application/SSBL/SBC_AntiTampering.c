@@ -1720,7 +1720,19 @@ SBCStatus  SBC_BaseAnswerValidate(VOID *blkhnd, UINT8 *answer, UINTN answerl, UI
 
 
     if (SBC_AESGcmDecrypt(&aesctx) != SBCOK) {
-        eprint("Base Answer Decrypt fail \n");
+        SBC_BuildHexFormattedMessage(
+            (CONST VOID *)ctx.key.value,
+            32,
+            L"SFR-Vendor-SP BaseAnswer decrypt fail (Key - %s) \n",
+            mrgmsg, sizeof mrgmsg);
+
+        sbc_err_sysprn(SBC_LOG_CMN_PRIO_ERR, 2,
+                     SYS_LOG_HOST_BOOT,
+                     SYS_LOG_APP_NAME,
+                     SYS_LOG_CSC_NAME,
+                     3,
+                     L"Detectoin",
+                     mrgmsg);
         ret = SBCFAIL;
         goto errdone;
     }
