@@ -344,8 +344,8 @@ SBC_BuildHexFormattedMessage (
       PubKeySize,
       HexStr,
       HexChars + 1,
-      TRUE,   // 대문자/소문자 구분 옵션
-      0
+      FALSE,   // 대문자/소문자 구분 옵션
+      TRUE
   );
 
   ZeroMem(OutMsg, OutMsgBytes);

@@ -2616,14 +2616,14 @@ SBCStatus SBC_GenMigrationKey(void *priv, void *outmsg)
     cpyofs += ATP_IDENT_KEY_STG;
 
     if (fbuf != NULL) {
-        lv.value = NULL;
+        //lv.value = NULL;
         FreePool(fbuf);
     }
 
     //
     // Read the SSBL flie
     //
-    fbuf = AllocateZeroPool(len_fsbl);
+    fbuf = AllocateZeroPool(len_ssbl);
     lv.value = fbuf;
     lv.length = len_ssbl;
 
@@ -2638,9 +2638,11 @@ SBCStatus SBC_GenMigrationKey(void *priv, void *outmsg)
     cpyofs += ATP_IDENT_KEY_STG;
 
     if (fbuf != NULL) {
-        lv.value = NULL;
+        dprint();
         FreePool(fbuf);
+        dprint();
     }
+    dprint();
 
 
     //
