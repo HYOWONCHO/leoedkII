@@ -1730,7 +1730,7 @@ SBCStatus  SBC_BaseAnswerValidate(VOID *blkhnd, UINT8 *answer, UINTN answerl, UI
                      SYS_LOG_HOST_BOOT,
                      SYS_LOG_APP_NAME,
                      SYS_LOG_CSC_NAME,
-                     3,
+                     0,
                      L"Detectoin",
                      mrgmsg);
         ret = SBCFAIL;
@@ -1756,6 +1756,19 @@ SBCStatus  SBC_BaseAnswerValidate(VOID *blkhnd, UINT8 *answer, UINTN answerl, UI
 //      ZeroMem(mrgmsg, sizeof mrgmsg);
 //      UnicodeSPrint(mrgmsg, sizeof mrgmsg, L"Base Answer validate fail(%s:%s) \n",answer,decbuf);
 
+            SBC_BuildHexFormattedMessage(
+                (CONST VOID *)ctx.key.value,
+                ctx.out.length,
+                L"SFR-Vendor-SP Mismatched Base Answer (%s) \n",
+                mrgmsg, sizeof mrgmsg);
+
+            sbc_err_sysprn(SBC_LOG_CMN_PRIO_ERR, 2,
+                         SYS_LOG_HOST_BOOT,
+                         SYS_LOG_APP_NAME,
+                         SYS_LOG_CSC_NAME,
+                         0,
+                         L"Detectoin",
+                         mrgmsg);
             ret = SBCFAIL;
             goto errdone;
 
