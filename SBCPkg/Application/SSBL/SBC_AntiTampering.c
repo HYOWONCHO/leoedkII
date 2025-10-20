@@ -1623,13 +1623,19 @@ SBCStatus SBC_BaseAnswerEncryptStore(VOID *blkhnd, UINT8* msg, UINT32 msgl, UINT
 
     ret = SBC_AESEncrypt(&aesctx);
     if (ret != SBCOK) {
-//          sbc_err_sysprn(SBC_LOG_CMN_PRIO_ERR, 2,
-//                   L"SBC",
-//                   L"FSBL",
-//                   L"Weapon System",
-//                   4,
-//                   L"EVT",
-//                   L"Base Answer Encrypt error");
+        SBC_BuildHexFormattedMessage(
+            (CONST VOID *)ctx.key.value,
+            32,
+            L"SFR-Vendor-SP Base Answer Encrypt Fail (%s) \n",
+            mrgmsg, sizeof mrgmsg);
+
+        sbc_err_sysprn(SBC_LOG_CMN_PRIO_ERR, 2,
+                     SYS_LOG_HOST_BOOT,
+                     SYS_LOG_APP_NAME,
+                     SYS_LOG_CSC_NAME,
+                     0,
+                     L"Detectoin",
+                     mrgmsg);
       goto errdone;
     }
 
@@ -2860,6 +2866,7 @@ SBCStatus  SBC_FSBLIntgCheck([[gnu::unused]]EFI_HANDLE *h_image , VOID *blkio, V
     switch (mode) {
     case BOOT_MODE_NORMAL:
     case BOOT_MODE_UPDATE:
+    case BOOT_MODE_RECOVERY:
       startlba = (SYS_CONF_START_OFS >> SBC_RAWPRT_DFLT_SHIFT);
       imglen = ALIGN_VALUE(SYS_SETTING_STORAGE_LEN, ((EFI_BLOCK_IO_PROTOCOL *)blkio)->Media->BlockSize);
       break;

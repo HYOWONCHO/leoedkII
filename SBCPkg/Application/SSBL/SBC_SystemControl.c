@@ -482,6 +482,8 @@ static SBCStatus _store_fw_os_keypair_store(VOID *priv, VOID *fwid, VOID *osid)
 
     ctx.msg.value = (UINT8 *)&fw_key;
     ctx.msg.length = sizeof fw_key;
+    ctx.out.value = encbuf;
+    ctx.out.length = ctx.msg.length;
     ret = SBC_AESGcmEncrypt(&aesctx);
     SBC_RET_VALIDATE_ERRCODEMSG((ret == SBCOK),
                                 ret,
@@ -518,6 +520,8 @@ static SBCStatus _store_fw_os_keypair_store(VOID *priv, VOID *fwid, VOID *osid)
 
     ctx.msg.value = (UINT8 *)&os_key;
     ctx.msg.length = sizeof os_key;
+    ctx.out.value = encbuf;
+    ctx.out.length = ctx.msg.length;
     ret = SBC_AESGcmEncrypt(&aesctx);
     SBC_RET_VALIDATE_ERRCODEMSG((ret == SBCOK),
                                 ret,
@@ -570,6 +574,10 @@ static SBCStatus _store_fw_os_keypair_store(VOID *priv, VOID *fwid, VOID *osid)
                              buf,
                               &id_len,
                               0);
+    if(ret != SBCOK) {
+        eprint("Block Read Fail for Raw-Partition Header");
+        goto errdone;
+    }
 
     CopyMem((void *)&h_rawptrheader, buf, 128);
 
@@ -579,11 +587,14 @@ static SBCStatus _store_fw_os_keypair_store(VOID *priv, VOID *fwid, VOID *osid)
             (void *)&h_rawptrheader, 
             sizeof h_rawptrheader);
 
-    SBC_RawPrtBlockWrite(bp->blkhnd,
+    ret = SBC_RawPrtBlockWrite(bp->blkhnd,
                          buf,
                          id_len,
                          0);
-
+    if(ret != SBCOK) {
+        eprint("Block Write Fail for Raw-Partition Header");
+        goto errdone;
+    }
 errdone:
 
     if(buf != NULL) {
@@ -635,7 +646,8 @@ void SBC_RecoveryBootProcessing(VOID *priv)
                                ((atp_ident_t *)bt_proc->keyinfo)->fwid,
                                ((atp_ident_t *)bt_proc->keyinfo)->osid);
 
-    if(ret != SBCFAIL) {
+    if(ret != SBCOK) {
+        eprint("_store_fw_os_keypair_store fail, that is, Abnormal");
         bt_proc->bootst = SB_PROC_ST_ABNRAM;
     }
     // Create the OSID
@@ -670,6 +682,7 @@ void SBC_RecoveryBootProcessing(VOID *priv)
         // later need to create the New API
         switch(bt_proc->km) {
         case KEY_MODE_BOOT:
+            dprint("Key Mode Boot");
         //case KEY_MODE_NORMAL:
             // Baseanswer Ecnrypt and Store
             ret = SBC_BaseAnswerEncryptStore(
@@ -684,10 +697,11 @@ void SBC_RecoveryBootProcessing(VOID *priv)
             SBC_RET_VALIDATE_ERRCODEMSG((ret == SBCOK)
                                         ,ret, 
                                         "Detection SBC_tamper_OSID derived answer "
-                                "mismatched known answer");
+                                        "mismatched known answer");
             ret = SBC_BootKeyModeChange(BOOT_MODE_NORMAL, KEY_MODE_NORMAL, priv);
             break;
         case KEY_MODE_UPDATE:
+            dprint("KEY_MODE_UPDATE");
             ret = SBC_BaseAnswerEncryptStore(
                             bt_proc->blkhnd,
                             ((LV_t *)bt_proc->baseansr)->value,
@@ -710,6 +724,7 @@ void SBC_RecoveryBootProcessing(VOID *priv)
 
         break;
     case SB_PROC_ST_ABNRAM:
+        dprint("Boot is Abnormal in Recovery Mode ");
         // later need to create the New API
         if(bt_proc->km != KEY_MODE_UPDATE) {
             eprint("Not support this key mode in Recovery Boot");
