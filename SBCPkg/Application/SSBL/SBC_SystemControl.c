@@ -694,10 +694,15 @@ void SBC_RecoveryBootProcessing(VOID *priv)
             );
 
 
-            SBC_RET_VALIDATE_ERRCODEMSG((ret == SBCOK)
-                                        ,ret, 
-                                        "Detection SBC_tamper_OSID derived answer "
-                                        "mismatched known answer");
+            if(ret != SBCOK) {
+                //
+                // Abnromal state , added at 20251021
+                //
+                bt_proc->bootst = SB_PROC_ST_ABNRAM;
+                SBC_BootKeyModeChange(BOOT_MODE_FACTORY, KEY_MODE_BOOT, priv);
+                goto errdone;
+            }
+
             ret = SBC_BootKeyModeChange(BOOT_MODE_NORMAL, KEY_MODE_NORMAL, priv);
             break;
         case KEY_MODE_UPDATE:
@@ -710,11 +715,17 @@ void SBC_RecoveryBootProcessing(VOID *priv)
                             BASE_ANS_KEY_STR
             );
 
+            if(ret != SBCOK) {
+                //
+                // Abnromal state added at 20251021
+                //
+                bt_proc->bootst = SB_PROC_ST_ABNRAM;
+                SBC_BootKeyModeChange(BOOT_MODE_FACTORY, KEY_MODE_UPDATE, priv);
+                goto errdone;
+            }
 
-            SBC_RET_VALIDATE_ERRCODEMSG((ret == SBCOK)
-                                        ,ret, 
-                                        "Detection SBC_tamper_OSID derived answer "
-                                        "mismatched known answer");
+
+
             ret = SBC_BootKeyModeChange(BOOT_MODE_NORMAL, KEY_MODE_NORMAL, priv);
             break;
         default:
@@ -742,12 +753,12 @@ void SBC_RecoveryBootProcessing(VOID *priv)
         goto errdone;
     }
 
-    SBC_RebootSystem();
-    return;
+
 
 errdone:
-    SBC_ShutdownSystem();
-    return ;
+
+    SBC_RebootSystem();
+    return;
 }
 
 SBCStatus _update_protected_software(VOID *priv)
@@ -823,13 +834,48 @@ static void _update_reset_check_and_behavior(VOID *priv)
     return;
 }
 
+static VOID _handling_sb_process_for_bm_normal(VOID *priv)
+{
+    boot_proc_t *p = (boot_proc_t *)priv;
+
+    switch(p->bootst) {
+    case SB_PROC_ST_NRMA:
+        SBC_BootKeyModeChange(BOOT_MODE_NORMAL, KEY_MODE_NORMAL, priv);
+        break;
+    case SB_PROC_ST_ABNRAM:
+        if(p->pvs_sw_bnk) {
+            SBC_BootKeyModeChange(BOOT_MODE_RECOVERY, KEY_MODE_BOOT, priv);
+        }
+        else {
+            SBC_BootKeyModeChange(BOOT_MODE_FACTORY, KEY_MODE_BOOT, priv);
+        }
+
+        //
+        // System Reboot 
+        //
+        SBC_RebootSystem();
+
+        break;
+    default:
+        eprint("Unknown Boot State");
+        break;
+    }
+}
+
 VOID SBC_ResetScenario(VOID *priv)
 {
     boot_proc_t *bp = (boot_proc_t *)priv;
     //dprint("Boot Mode : %d", bp->bm);
     switch(bp->bm) {
     case BOOT_MODE_NORMAL:
-        dprint("Boot Mode BOOT_MODE_NORMAL");
+        dprint("Boot Mode BOOT_MODE_NORMAL in Reset Scenario");
+        //
+        // Handlnig the Abnomral operation
+        //
+        _handling_sb_process_for_bm_normal(priv);
+
+        
+
         break;
     case BOOT_MODE_UPDATE:
         {   
@@ -905,7 +951,8 @@ SBCStatus  SBC_SecureBootCheck(VOID *priv)
                                      TRUE);
         if(ret != SBCOK) {
             //TODO : SysLog
-            bp->bootst = SB_PROC_ST_ABNRAM;
+            //bp->bootst = SB_PROC_ST_ABNRAM;
+            goto errdone;
         }
         else {
             sbc_err_sysprn(SBC_LOG_CMN_PRIO_INFO, 2,
@@ -918,15 +965,15 @@ SBCStatus  SBC_SecureBootCheck(VOID *priv)
 
         }
 
-        if(bp->bootst == SB_PROC_ST_ABNRAM) {
-
-            // In case of the Boot Mode is Normal and Boot State is Abnormal.
-            // It MUST remove the comment in the release 
-            //_sbc_abnormal_processing(priv); 
-
-                // TODO : error processing
-            SBC_RebootSystem();
-        }
+//      if(bp->bootst == SB_PROC_ST_ABNRAM) {
+//
+//          // In case of the Boot Mode is Normal and Boot State is Abnormal.
+//          // It MUST remove the comment in the release
+//          //_sbc_abnormal_processing(priv);
+//
+//              // TODO : error processing
+//          SBC_RebootSystem();
+//      }
 
         if(((rawprt_hdr_t *)bp->rawprt_hdr)->rcvmode) {
             // It is boot-up from Recovery
