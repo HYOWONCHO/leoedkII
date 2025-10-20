@@ -648,10 +648,6 @@ uc_errdone:
           goto errdone;
     }
 
-    
-
-
-
     ret = SBC_DiceKeysGen(ImageHandle, &diceid,  currbank_id, btproc.bm);
     if (ret != SBCOK) {
         sbc_err_sysprn(SBC_LOG_CMN_PRIO_ERR, 2,
