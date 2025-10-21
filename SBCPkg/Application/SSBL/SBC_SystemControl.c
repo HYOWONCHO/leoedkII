@@ -972,11 +972,14 @@ SBCStatus  SBC_SecureBootCheck(VOID *priv)
     switch(bp->bm) {
     case BOOT_MODE_NORMAL:
 
-        ret = SBC_DiceIDKeyVerify((VOID *)bp);
-        SBC_RET_VALIDATE_ERRCODEMSG((ret == SBCOK), ret, "Certificate ID Verify Fail");
-
-
-        
+        if(!((rawprt_hdr_t *)bp->rawprt_hdr)->rcvmode) {
+            //
+            // Firmware is not discover from Recover Mode
+            // So, it SHOULD be perform the Key Verify
+            //
+            ret = SBC_DiceIDKeyVerify((VOID *)bp);
+            SBC_RET_VALIDATE_ERRCODEMSG((ret == SBCOK), ret, "Certificate ID Verify Fail");
+        }
 
         // TODO : Baseanswer verify
         ret = SBC_BaseAnswerValidate(bp->blkhnd,

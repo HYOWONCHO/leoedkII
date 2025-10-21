@@ -18,12 +18,13 @@ typedef struct _boot_proc_t {
     VOID        *blkhnd;
     VOID        *rawprt_hdr; 
     VOID        *baseansr;
-    VOID        *keyinfo;                  /*! It's point to atp_ident_t structure */
-    UINTN       pvs_sw_bnk;             /*! Previously SW Bank ID */
-    UINTN       curr_sw_bnk;            /*! Current SW Bank ID */
-    UINT16      bm;                     /*! Boot Mode */
-    UINT16      km;                     /*! Key Mode */
-    UINT32      bootst;                 /*! Boot Status */
+    VOID        *keyinfo;                   /*! It's point to atp_ident_t structure */
+    UINTN       pvs_sw_bnk;                 /*! Previously SW Bank ID */
+    UINTN       curr_sw_bnk;                /*! Current SW Bank ID */
+    UINT16      bm;                         /*! Boot Mode */
+    UINT16      km;                         /*! Key Mode */
+    UINT32      bootst;                     /*! Boot Status */
+    UINTN       rcvmode;                    /*! Firmware is boot-up from Recover Mode*/
 }boot_proc_t;
 #pragma pack()
 

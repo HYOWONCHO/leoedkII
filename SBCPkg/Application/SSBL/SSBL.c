@@ -419,12 +419,12 @@ UefiMain (
     [[gnu::unused]] CHAR8 bank_find;
  
     sbc_err_sysprn(SBC_LOG_CMN_PRIO_INFO, 2,
-         L"SBC",
-         L"FSBL",
-         L"Weapon System",
-         0,
-         L"Information ",
-         L"SBC_SP_FW SSBL Running");
+                 SYS_LOG_HOST_BOOT,
+                 SYS_LOG_APP_NAME,
+                 SYS_LOG_CSC_NAME,
+                 0,
+                 L"Detetion",
+                 L"SBC_VENDOR_SP SSBL Statring");
 
     sys_start_time = SBC_PerfNowTicks();
 
@@ -435,8 +435,15 @@ UefiMain (
     // Get the NVMe SSD Raw Partiton handle and Header information
     ret = SBC_BlkIoHandleInit(&h_blkio, &h_rawptrheader);
     if (ret != SBCOK) {
-      dprint("Raw Partitino find fail !!! \n");
-      goto errdone;
+          dprint("Raw Partitino find fail !!! \n");
+          sbc_err_sysprn(SBC_LOG_CMN_PRIO_ERR, 2,
+                     SYS_LOG_HOST_BOOT,
+                     SYS_LOG_APP_NAME,
+                     SYS_LOG_CSC_NAME,
+                     0,
+                     L"Detetion",
+                     L"SBC_SP_BlkIO Raw-Partition Not Detected");
+          goto errdone;
     }
 
     SBC_mem_print_bin("Raw Prt Header", (UINT8 *)&h_rawptrheader, sizeof h_rawptrheader);
@@ -473,6 +480,12 @@ UefiMain (
     btproc.keyinfo = (VOID *)&diceid;
     btproc.rawprt_hdr = &h_rawptrheader;
     btproc.baseansr = (void *)&baseansr;
+
+    //
+    // Added by Leon
+    // Run from Recovry Mode 
+    //
+    btproc.rcvmode = h_rawptrheader.rcvmode;
 
     _ucprint("Boot Mode : %d , Key Mode : %d, Recovery Mode : %d",
            btproc.bm, btproc.km, h_rawptrheader.rcvmode);
