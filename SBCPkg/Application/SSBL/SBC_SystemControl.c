@@ -500,7 +500,7 @@ static SBCStatus _store_fw_os_keypair_store(VOID *priv, VOID *fwid, VOID *osid)
     aesctx.gcm = &ctx;
     aesctx.algoid = SBC_CIPHER_AES_GCM;
 
-    SBC_RngGeneration((UINT8 *)osid, 
+    SBC_RngGeneration((UINT8 *)osid,        // Seed 
                       SYS_OSID_KEY_LEN,
                       SBC_AT_IV_LEN,
                       auth_iv);

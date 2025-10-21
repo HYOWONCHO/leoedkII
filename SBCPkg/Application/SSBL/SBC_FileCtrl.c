@@ -943,6 +943,13 @@ SBCStatus SBC_RawPrtReadBlock(VOID *blkhnd, VOID *rdbuf,  UINT32 *rdlen, UINTN r
 
     if (EFI_ERROR(retval)) {
         dprint("Read Heade Info fail(%r) %r \n", retval, retval);
+        sbc_err_sysprn(SBC_LOG_CMN_PRIO_NOTICE, 2, 
+                SYS_LOG_HOST_BOOT, 
+                SYS_LOG_APP_NAME, 
+                SYS_LOG_CSC_NAME, 
+                8, 
+                L"Detectrion ", 
+                L"SBC_SP_RAWPRT Failed to the Raw-partition read");
         ret = SBCIO;
         goto errdone;
     }
@@ -991,6 +998,13 @@ SBCStatus  SBC_RawPrtBlockWrite(VOID *blkio, UINT8 *wrbuf, UINT32 wrlen, UINT32 
 
     if(EFI_ERROR(retval)) {
         dprint("Write Block I/O fail : %r", retval);
+        sbc_err_sysprn(SBC_LOG_CMN_PRIO_NOTICE, 2, 
+                SYS_LOG_HOST_BOOT, 
+                SYS_LOG_APP_NAME, 
+                SYS_LOG_CSC_NAME, 
+                8, 
+                L"Detectrion ", 
+                L"SBC_SP_RAWPRT Failed to the Raw-partition write");
         ret = SBCIO;
         goto errdone;
     }
@@ -1657,7 +1671,15 @@ SBCStatus SBC_RawAlignedWriteBlockIO(VOID *blk, UINTN off, UINTN sz, CONST VOID 
 
 
 errdone:
-
+    if (EFI_ERROR(retval)) {
+        sbc_err_sysprn(SBC_LOG_CMN_PRIO_NOTICE, 2, 
+                SYS_LOG_HOST_BOOT, 
+                SYS_LOG_APP_NAME, 
+                SYS_LOG_CSC_NAME, 
+                8, 
+                L"Detectrion ", 
+                L"SBC_SP_RAWPRT Failed to the Raw-partition read");
+    }
     return ret;
 
 }
@@ -1749,6 +1771,15 @@ SBCStatus SBC_RawAlignedReadBlockIO(VOID *blk, UINTN off, UINTN sz, VOID *buf)
 
 errdone:
 
+    if (EFI_ERROR(retval)) {
+        sbc_err_sysprn(SBC_LOG_CMN_PRIO_NOTICE, 2, 
+                SYS_LOG_HOST_BOOT, 
+                SYS_LOG_APP_NAME, 
+                SYS_LOG_CSC_NAME, 
+                8, 
+                L"Detectrion ", 
+                L"SBC_SP_RAWPRT Failed to the Raw-partition read");
+    }
     //SBC_mem_print_bin("Read Buf", (UINT8 *)buf, sz);
     if (tmp) {
         FreePool(tmp);

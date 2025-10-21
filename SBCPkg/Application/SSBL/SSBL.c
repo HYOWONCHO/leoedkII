@@ -791,7 +791,7 @@ uc_errdone:
                SYS_LOG_CSC_NAME, 
                 8, 
                 L"Detection ", 
-                L"Grub Load fail");
+                L"SBC_VENDOR_SP Grub Load fail");
         retval = EFI_INVALID_PARAMETER;
     }
 
@@ -801,7 +801,7 @@ uc_errdone:
         SYS_LOG_CSC_NAME, 
         8, 
         L"Validation ", 
-        L"Grub Load Done");
+        L"SBC_VENDOR_SP Grub Load Done");
 
     //ret = SBC_FSBL_Verify(h_blkio, &baseansr);
 
