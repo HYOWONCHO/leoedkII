@@ -520,6 +520,12 @@ static SBCStatus _store_fw_os_keypair_store(VOID *priv, VOID *fwid, VOID *osid)
                                 "Firmware ID Encrypt fail");
 
 
+    //
+    // |------|-------|------|------|
+    // | len  | data  |  iv  |  tag |
+    // |------|-------|------|------|
+    //
+
     // Copy the Length for Ecnrypt Data
     cpy_offset = SYS_CONF_OSID_CRT_OFS;
     id_len = ctx.out.length;

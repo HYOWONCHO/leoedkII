@@ -139,6 +139,18 @@ SBCStatus SBC_AESGcmEncrypt(SBC_AESContext *ctx)
                        gcm->msg.value, gcm->msg.length,
                        gcm->tag.value, gcm->tag.length,
                        gcm->out.value, &gcm->out.length) == FALSE) {
+        SBC_BuildHexFormattedMessage(
+                (CONST VOID *)gcm->key.value, gcm->key.length,
+                L"SBC_SP_GcmEncrypt Failed the Encrypt (%s)\n",
+                mrgmsg, sizeof mrgmsg);
+
+        sbc_err_sysprn(SBC_LOG_CMN_PRIO_ERR, 2,
+                 SYS_LOG_HOST_BOOT,
+                 SYS_LOG_APP_NAME,
+                 SYS_LOG_CSC_NAME,
+                 1,
+                 L"Detectoin",
+                 mrgmsg);
     DEBUG((DEBUG_ERROR,"%a:%d GCM Encrypt fail \r\n",__FUNCTION__,__LINE__));
     return SBCENCFAIL;
   }
@@ -162,6 +174,18 @@ SBCStatus SBC_AESGcmDecrypt(SBC_AESContext *ctx)
                        gcm->tag.value, gcm->tag.length,
                        gcm->out.value, &gcm->out.length) == FALSE) {
     //eprint("GCM Decrypt fail \r\n");
+        SBC_BuildHexFormattedMessage(
+                (CONST VOID *)gcm->key.value, gcm->key.length,
+                L"SBC_SP_GcmDecrypt Failed the Decrypt (%s)\n",
+                mrgmsg, sizeof mrgmsg);
+
+        sbc_err_sysprn(SBC_LOG_CMN_PRIO_ERR, 2,
+                 SYS_LOG_HOST_BOOT,
+                 SYS_LOG_APP_NAME,
+                 SYS_LOG_CSC_NAME,
+                 1,
+                 L"Detectoin",
+                 mrgmsg);
     return SBCENCFAIL;
   }
 
