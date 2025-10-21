@@ -928,10 +928,33 @@ SBCStatus SBC_DeviceSecuirtyKeyCreate(VOID *key)
                           key);
 
 
-    SBC_external_mem_print_bin("Security Key", key, 32);
-    SBC_RET_VALIDATE_ERRCODEMSG((ret == SBCOK),
-                                ret, 
-                                "Device Secret Key create fail");
+    //SBC_external_mem_print_bin("Security Key", key, 32);
+    if (ret != SBCOK) {
+    
+        sbc_err_sysprn(SBC_LOG_CMN_PRIO_ERR, 2,
+                     SYS_LOG_HOST_BOOT,
+                     SYS_LOG_APP_NAME,
+                     SYS_LOG_CSC_NAME,
+                     1,
+                     L"Detectoin",
+                     L"SBC_RawFS_Key Failed the security key create \n"
+                    );
+
+        goto errdone;
+    }
+
+    SBC_BuildHexFormattedMessage(
+                (CONST VOID *)computebuf, 32,
+                L"SBC_RawFS_Key Create security key  (%s)\n",
+                mrgmsg, sizeof mrgmsg);
+
+    sbc_err_sysprn(SBC_LOG_CMN_PRIO_INFO, 2,
+                  SYS_LOG_HOST_BOOT,
+                  SYS_LOG_APP_NAME,
+                  SYS_LOG_CSC_NAME,
+                  1,
+                  L"Validation",
+                  mrgmsg);
 
 
 errdone:

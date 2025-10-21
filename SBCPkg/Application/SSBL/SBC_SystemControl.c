@@ -436,10 +436,40 @@ static SBCStatus _store_fw_os_keypair_store(VOID *priv, VOID *fwid, VOID *osid)
 
 
     ret = SBC_DICESeedKeyPair((UINT8 *)fwid, &fw_key);
-    SBC_RET_VALIDATE_ERRCODEMSG((ret == SBCOK), ret, "FWID key pair create fail");
+    if( ret != SBCOK ) {
+        SBC_BuildHexFormattedMessage(
+                (CONST VOID *)fwid, 32,
+                L"SBC_Dice_Key Failed the Create FWID key-pair (%s)\n",
+                mrgmsg, sizeof mrgmsg);
+
+        sbc_err_sysprn(SBC_LOG_CMN_PRIO_ERR, 2,
+                 SYS_LOG_HOST_BOOT,
+                 SYS_LOG_APP_NAME,
+                 SYS_LOG_CSC_NAME,
+                 1,
+                 L"Detectoin",
+                 mrgmsg);
+        goto errdone;
+    }
+    //SBC_RET_VALIDATE_ERRCODEMSG((ret == SBCOK), ret, "FWID key pair create fail");
 
     ret = SBC_DICESeedKeyPair((UINT8 *)osid, &os_key);
-    SBC_RET_VALIDATE_ERRCODEMSG((ret == SBCOK), ret, "OSID key pair create fail");
+    if( ret != SBCOK ) {
+        SBC_BuildHexFormattedMessage(
+                (CONST VOID *)osid, 32,
+                L"SBC_Dice_Key Failed the Create OSID key-pair (%s)\n",
+                mrgmsg, sizeof mrgmsg);
+
+        sbc_err_sysprn(SBC_LOG_CMN_PRIO_ERR, 2,
+                 SYS_LOG_HOST_BOOT,
+                 SYS_LOG_APP_NAME,
+                 SYS_LOG_CSC_NAME,
+                 1,
+                 L"Detectoin",
+                 mrgmsg);
+        goto errdone;
+    }
+    //SBC_RET_VALIDATE_ERRCODEMSG((ret == SBCOK), ret, "OSID key pair create fail");
 
 
     // Getting the security key to encrypting.
