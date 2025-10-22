@@ -1674,17 +1674,35 @@ SBCStatus SBC_BaseAnswerEncryptStore(VOID *blkhnd, UINT8* msg, UINT32 msgl, UINT
 
     ret = _baseanswer_store(blkhnd, (VOID *)&ansid);
     if (ret != SBCOK) {
-//    sbc_err_sysprn(SBC_LOG_CMN_PRIO_ERR, 2,
-//                   L"SBC",
-//                   L"FSBL",
-//                   L"Weapon System",
-//                   4,
-//                   L"EVT",
-//                   L"Base Answer Storing error");
+        SBC_BuildHexFormattedMessage(
+            (CONST VOID *)ansid.encmsg,
+            ansid.msglen,
+            L"SFR-Vendor-SP Base Answer Storet Fail (%s) \n",
+            mrgmsg, sizeof mrgmsg);
+
+        sbc_err_sysprn(SBC_LOG_CMN_PRIO_ERR, 2,
+                     SYS_LOG_HOST_BOOT,
+                     SYS_LOG_APP_NAME,
+                     SYS_LOG_CSC_NAME,
+                     0,
+                     L"Detectoin",
+                     mrgmsg);
       goto errdone;
     }
 
+    SBC_BuildHexFormattedMessage(
+            (CONST VOID *)ansid.encmsg,
+            ansid.msglen,
+            L"SFR-Vendor-SP Base Answer Store Success (%s) \n",
+            mrgmsg, sizeof mrgmsg);
 
+    sbc_err_sysprn(SBC_LOG_CMN_PRIO_ERR, 2,
+                     SYS_LOG_HOST_BOOT,
+                     SYS_LOG_APP_NAME,
+                     SYS_LOG_CSC_NAME,
+                     0,
+                     L"Validation",
+                     mrgmsg);
     ret = SBCOK;
 errdone:
 

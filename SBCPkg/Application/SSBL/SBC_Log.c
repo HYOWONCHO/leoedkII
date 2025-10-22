@@ -269,7 +269,7 @@ UINTN SBC_LogHexToStrChar16( UINT8 *data, UINTN len, CHAR16 *out, UINTN out_cap,
     CHAR16 HEXL16[] = L"0123456789abcdef";
     CHAR16 *HEX = loweracse ? HEXL16 : HEXU16;
     UINTN need = (sep ? (len ? (len * 2 + (len - 1)) : 0) : (len * 2)) + 1; // +1 for L'\0'
-    dprint("out cap : %d , need : %d", out_cap, need);
+    //dprint("out cap : %d , need : %d", out_cap, need);
     if (out_cap < need) {
         return 0;
     }

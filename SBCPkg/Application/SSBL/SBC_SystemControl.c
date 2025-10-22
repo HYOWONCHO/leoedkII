@@ -97,6 +97,10 @@ SBCStatus SBC_BootKeyModeChange(UINT32 newbm, UINT32 newkey, VOID *priv)
     hdr->bootmode = newbm;
     hdr->keymode = newkey;
 
+    if(bp->bm == BOOT_MODE_RECOVERY) {
+        hdr->rcvmode = 1;
+    }
+
     //dprint();
     SBC_RET_VALIDATE_ERRCODEMSG((bp->blkhnd != NULL), SBCNULLP, "Raw Partition Block IO Handle Nill");
 
@@ -191,7 +195,7 @@ errdone:
 
     return ret;
 }
-
+#ifdef _HANDLE_PROTSW_
 static SBCStatus _proetcted_sw_re_enc_dec(VOID *handle)
 {
     SBCStatus ret = SBCOK;
@@ -235,6 +239,7 @@ static SBCStatus _proetcted_sw_re_enc_dec(VOID *handle)
                SYS_LOG_EVT_VALDIATION,
                L"SBC_ProtSW_Update Protected Software update success");
 
+
 errdone:
 
     if(ret != SBCOK) {
@@ -249,7 +254,7 @@ errdone:
 
     return ret;
 }
-
+#endif
 static SBCStatus _update_behavior_for_km(void *priv)
 {
     SBCStatus ret = SBCOK;
@@ -284,14 +289,14 @@ static SBCStatus _update_behavior_for_km(void *priv)
         }
 
 
-
+#ifdef _HANDLE_PROTSW_
         ret =  _proetcted_sw_re_enc_dec((void *)bp);
         if(ret != SBCOK) {
             eprint("Detection _proetcted_sw_re_enc_dec ");
             goto errdone;
         }
-
-        ret = SBC_BootKeyModeChange(BOOT_MODE_RECOVERY, KEY_MODE_NORMAL, priv);
+#endif
+        ret = SBC_BootKeyModeChange(BOOT_MODE_NORMAL, KEY_MODE_NORMAL, priv);
         if(ret != SBCOK) {
             eprint("Boot Mode and Key Mode change fail");
             goto errdone;
@@ -304,12 +309,21 @@ static SBCStatus _update_behavior_for_km(void *priv)
     }
 
 
+
+
 errdone:
 
     // 
     // 
     //
     if(ret != SBCOK) {
+        sbc_err_sysprn(SBC_LOG_CMN_PRIO_INFO, 2,
+             SYS_LOG_HOST_BOOT,
+             SYS_LOG_APP_NAME,
+             SYS_LOG_CSC_NAME,
+             0,
+             L"Validation",
+             L"SBC_VENDOR_SP Update Mode operation fail \n");
         if(_check_prev_fw(bp->pvs_sw_bnk) == TRUE) {
             // Previously exist in Raw Part.
             SBC_BootKeyModeChange(BOOT_MODE_RECOVERY,
@@ -321,6 +335,15 @@ errdone:
                                   KEY_MODE_UPDATE,
                                   priv);
         }
+    }
+    else {
+        sbc_err_sysprn(SBC_LOG_CMN_PRIO_INFO, 2,
+             SYS_LOG_HOST_BOOT,
+             SYS_LOG_APP_NAME,
+             SYS_LOG_CSC_NAME,
+             0,
+             L"Validation",
+             L"SBC_VENDOR_SP Update Mode operation done \n");
     }
 
     return ret;
@@ -623,6 +646,8 @@ static SBCStatus _store_fw_os_keypair_store(VOID *priv, VOID *fwid, VOID *osid)
             (void *)&h_rawptrheader, 
             sizeof h_rawptrheader);
 
+//  SBC_mem_print_bin("WR Recovery Bits", (UINT8 *)buf, 128);
+
     ret = SBC_RawPrtBlockWrite(bp->blkhnd,
                          buf,
                          id_len,
@@ -631,6 +656,12 @@ static SBCStatus _store_fw_os_keypair_store(VOID *priv, VOID *fwid, VOID *osid)
         eprint("Block Write Fail for Raw-Partition Header");
         goto errdone;
     }
+
+//  ret = SBC_RawPrtReadBlock(bp->blkhnd,
+//                           buf,
+//                            &id_len,
+//                            0);
+//  SBC_mem_print_bin("RD Recovery Bits", (UINT8 *)buf, 128);
 errdone:
 
     if(buf != NULL) {
@@ -838,7 +869,8 @@ static void _update_reset_check_and_behavior(VOID *priv)
             dprint("Boot is Normal ");
             // bug fixed at 20250814 
             // bug fixed at 20251019 - Normal to Recovery in Update
-            SBC_BootKeyModeChange(BOOT_MODE_RECOVERY, KEY_MODE_NORMAL, priv);
+            // bug fixed at 20201022 - Recoveyr to Normal
+            SBC_BootKeyModeChange(BOOT_MODE_NORMAL, KEY_MODE_NORMAL, priv);
             break;
         case SB_PROC_ST_ABNRAM:
             dprint("Boot is AbNormal");
