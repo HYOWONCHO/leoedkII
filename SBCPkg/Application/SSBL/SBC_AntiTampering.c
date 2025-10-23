@@ -1802,7 +1802,7 @@ SBCStatus  SBC_BaseAnswerValidate(VOID *blkhnd, UINT8 *answer, UINTN answerl, UI
 
 //      ZeroMem(mrgmsg, sizeof mrgmsg);
 //      UnicodeSPrint(mrgmsg, sizeof mrgmsg, L"Base Answer validate fail(%s:%s) \n",answer,decbuf);
-
+#ifndef _ATSW_INTGR_TEST_
             SBC_BuildHexFormattedMessage(
                 (CONST VOID *)ctx.key.value,
                 ctx.out.length,
@@ -1816,8 +1816,11 @@ SBCStatus  SBC_BaseAnswerValidate(VOID *blkhnd, UINT8 *answer, UINTN answerl, UI
                          0,
                          L"Detectoin",
                          mrgmsg);
+
             ret = SBCFAIL;
+
             goto errdone;
+#endif
 
     }
     else if(ischeck == FALSE) {

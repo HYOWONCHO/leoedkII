@@ -711,6 +711,49 @@ uc_errdone:
         SBC_BootKeyModeChange(BOOT_MODE_NORMAL, KEY_MODE_NORMAL, (void *)&btproc);
 #endif
        dprint("Boot Mode is BOOT_MODE_NORMAL");
+
+       if (h_rawptrheader.rcvmode) {
+            sbc_err_sysprn(SBC_LOG_CMN_PRIO_INFO, 
+                             2, 
+                             SYS_LOG_HOST_BOOT, 
+                             SYS_LOG_APP_NAME,SYS_LOG_CSC_NAME, 
+                             0, 
+                             SYS_LOG_EVT_DETECTION, 
+                             L"SBC_BootFW The System has booted from recovery mode \n");
+
+            ret = SBC_GenMigrationKey((void *)&btproc, diceid.migid);
+            if (ret != SBCOK) {
+                sbc_err_sysprn(SBC_LOG_CMN_PRIO_ERR, 
+                             2, 
+                             SYS_LOG_HOST_BOOT, 
+                             SYS_LOG_APP_NAME,SYS_LOG_CSC_NAME, 
+                             4, 
+                             SYS_LOG_EVT_DETECTION, 
+                             L"SBC_BootFW_Update Fail to MigrationKey Creation \n");
+                retval = EFI_INVALID_PARAMETER;
+                btproc.bootst = SB_PROC_ST_ABNRAM;
+
+              // 
+              // No need to return because change the boot mode and reset the system.
+              //
+            }
+
+            if (ret == SBCOK) {
+                SBC_BuildHexFormattedMessage(
+                    (CONST VOID *)diceid.migid, 32,
+                    L"SBC_BootFW_Update Migration Key  (%s)\n",
+                    mrgmsg, sizeof mrgmsg);
+
+                sbc_err_sysprn(SBC_LOG_CMN_PRIO_INFO, 2,
+                     SYS_LOG_HOST_BOOT,
+                     SYS_LOG_APP_NAME,
+                     SYS_LOG_CSC_NAME,
+                     1,
+                     L"Detectoin",
+                     mrgmsg);
+            }
+       }
+
        ret = SBC_SecureBootCheck((VOID *)&btproc);
 
        break;
@@ -758,7 +801,7 @@ uc_errdone:
       if (ret == SBCOK) {
           SBC_BuildHexFormattedMessage(
                 (CONST VOID *)diceid.migid, 32,
-                L"SBC_BootFW_Update Migration Key OSID (%s)\n",
+                L"SBC_BootFW_Update Migration Key  (%s)\n",
                 mrgmsg, sizeof mrgmsg);
 
           sbc_err_sysprn(SBC_LOG_CMN_PRIO_INFO, 2,
@@ -779,6 +822,38 @@ uc_errdone:
       break;
     case BOOT_MODE_RECOVERY:
         dprint("Boot Mode BOOT_MODE_RECOVERY");
+
+        ret = SBC_GenMigrationKey((void *)&btproc, diceid.migid);
+        if (ret != SBCOK) {
+            sbc_err_sysprn(SBC_LOG_CMN_PRIO_ERR, 
+                         2, 
+                         SYS_LOG_HOST_BOOT, 
+                         SYS_LOG_APP_NAME,SYS_LOG_CSC_NAME, 
+                         4, 
+                         SYS_LOG_EVT_DETECTION, 
+                         L"SBC_BootFW_Update Fail to MigrationKey Creation \n");
+            retval = EFI_INVALID_PARAMETER;
+            btproc.bootst = SB_PROC_ST_ABNRAM;
+
+          // 
+          // No need to return because change the boot mode and reset the system.
+          //
+        }
+
+        if (ret == SBCOK) {
+            SBC_BuildHexFormattedMessage(
+                (CONST VOID *)diceid.migid, 32,
+                L"SBC_BootFW_Update Migration Key  (%s)\n",
+                mrgmsg, sizeof mrgmsg);
+
+            sbc_err_sysprn(SBC_LOG_CMN_PRIO_INFO, 2,
+                 SYS_LOG_HOST_BOOT,
+                 SYS_LOG_APP_NAME,
+                 SYS_LOG_CSC_NAME,
+                 1,
+                 L"Detectoin",
+                 mrgmsg);
+        }
         ret = SBC_SecureBootCheck((VOID *)&btproc);
         break;
     default:

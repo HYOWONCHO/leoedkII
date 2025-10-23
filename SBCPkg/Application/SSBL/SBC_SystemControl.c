@@ -455,7 +455,7 @@ static SBCStatus _store_fw_os_keypair_store(VOID *priv, VOID *fwid, VOID *osid)
     UINT32 rdlen = 0;
 
     UINTN lba = 0;
-    rawprt_hdr_t h_rawptrheader;
+    [[maybe_unused]] rawprt_hdr_t h_rawptrheader;
 
 
     ret = SBC_DICESeedKeyPair((UINT8 *)fwid, &fw_key);
@@ -628,34 +628,34 @@ static SBCStatus _store_fw_os_keypair_store(VOID *priv, VOID *fwid, VOID *osid)
 
 
 
-    id_len = 512;
-    ret = SBC_RawPrtReadBlock(bp->blkhnd,
-                             buf,
-                              &id_len,
-                              0);
-    if(ret != SBCOK) {
-        eprint("Block Read Fail for Raw-Partition Header");
-        goto errdone;
-    }
-
-    CopyMem((void *)&h_rawptrheader, buf, 128);
-
-    h_rawptrheader.rcvmode = 1;
-
-    CopyMem((void *)buf, 
-            (void *)&h_rawptrheader, 
-            sizeof h_rawptrheader);
-
-//  SBC_mem_print_bin("WR Recovery Bits", (UINT8 *)buf, 128);
-
-    ret = SBC_RawPrtBlockWrite(bp->blkhnd,
-                         buf,
-                         id_len,
-                         0);
-    if(ret != SBCOK) {
-        eprint("Block Write Fail for Raw-Partition Header");
-        goto errdone;
-    }
+//    id_len = 512;
+//    ret = SBC_RawPrtReadBlock(bp->blkhnd,
+//                             buf,
+//                              &id_len,
+//                              0);
+//    if(ret != SBCOK) {
+//        eprint("Block Read Fail for Raw-Partition Header");
+//        goto errdone;
+//    }
+//
+//    CopyMem((void *)&h_rawptrheader, buf, 128);
+//
+//    h_rawptrheader.rcvmode = 1;
+//
+//    CopyMem((void *)buf,
+//            (void *)&h_rawptrheader,
+//            sizeof h_rawptrheader);
+//
+////  SBC_mem_print_bin("WR Recovery Bits", (UINT8 *)buf, 128);
+//
+//    ret = SBC_RawPrtBlockWrite(bp->blkhnd,
+//                         buf,
+//                         id_len,
+//                         0);
+//    if(ret != SBCOK) {
+//        eprint("Block Write Fail for Raw-Partition Header");
+//        goto errdone;
+//    }
 
 //  ret = SBC_RawPrtReadBlock(bp->blkhnd,
 //                           buf,
@@ -709,14 +709,7 @@ void SBC_RecoveryBootProcessing(VOID *priv)
        
     }
 
-    ret = _store_fw_os_keypair_store(priv, 
-                               ((atp_ident_t *)bt_proc->keyinfo)->fwid,
-                               ((atp_ident_t *)bt_proc->keyinfo)->osid);
 
-    if(ret != SBCOK) {
-        eprint("_store_fw_os_keypair_store fail, that is, Abnormal");
-        bt_proc->bootst = SB_PROC_ST_ABNRAM;
-    }
     // Create the OSID
 
     // TODO : 
@@ -774,6 +767,16 @@ void SBC_RecoveryBootProcessing(VOID *priv)
             break;
         case KEY_MODE_UPDATE:
             dprint("KEY_MODE_UPDATE");
+
+            ret = _store_fw_os_keypair_store(priv, 
+                               ((atp_ident_t *)bt_proc->keyinfo)->fwid,
+                               ((atp_ident_t *)bt_proc->keyinfo)->osid);
+
+            if(ret != SBCOK) {
+                eprint("_store_fw_os_keypair_store fail, that is, Abnormal");
+                bt_proc->bootst = SB_PROC_ST_ABNRAM;
+            }
+
             ret = SBC_BaseAnswerEncryptStore(
                             bt_proc->blkhnd,
                             ((LV_t *)bt_proc->baseansr)->value,
@@ -980,6 +983,7 @@ SBCStatus  SBC_SecureBootCheck(VOID *priv)
     boot_proc_t *bp = (boot_proc_t *)priv;
     sb_rcv_proc_t srp;
     [[gnu::unused]] UINTN         swcnt = 0;
+    VOID *dec_key = NULL;
 
     ZeroMem((VOID *)&blob, sizeof blob);
     ZeroMem((VOID *)&srp, sizeof srp);
@@ -1011,18 +1015,22 @@ SBCStatus  SBC_SecureBootCheck(VOID *priv)
             //
             ret = SBC_DiceIDKeyVerify((VOID *)bp);
             SBC_RET_VALIDATE_ERRCODEMSG((ret == SBCOK), ret, "Certificate ID Verify Fail");
+            dec_key = ((atp_ident_t *)bp->keyinfo)->osid;
+        }
+        else {
+            dec_key = ((atp_ident_t *)bp->keyinfo)->migid;
         }
 
         // TODO : Baseanswer verify
         ret = SBC_BaseAnswerValidate(bp->blkhnd,
                                      ((LV_t *)bp->baseansr)->value,
                                      SBC_BASE_ANSR_LEN,
-                                     ((atp_ident_t *)bp->keyinfo)->osid,
+                                     dec_key,
                                      SBC_OSID_KEY_LEN,
                                      TRUE);
         if(ret != SBCOK) {
             //TODO : SysLog
-            //bp->bootst = SB_PROC_ST_ABNRAM;
+            bp->bootst = SB_PROC_ST_ABNRAM;
             goto errdone;
         }
         else {
