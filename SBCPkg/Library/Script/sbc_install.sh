@@ -14,11 +14,11 @@ usage() {
       --ssbl-copy[=FILENAME]        Copy the SSBL image in Bank of Raw Partition 
       --fsbl-copy[=FILENAME]        Copy the FSBL image in Bank of Raw Partition 
       --make-img[=FILENAME]         Add the header reagrd to File length
+      --dump-img[=FILENAME]         Selected File dump to Raw-Partition(/dev/nvme0n1p4)
       -h, --help                    Help 
 
     Examples:
-      ./getlongopt.sh -i in.bin --mode fast -v --threshold=7 extra1 extra2
-      ./getlongopt.sh --input in.bin --output out.bin -- -filename-starts-with-dash
+	./sbc_instll --dump-img=File Name
 EOF
 }
 
@@ -54,6 +54,13 @@ adding_length_in_image()
     #    $(((size >> 24) & 0xFF)))" \
     #| cat - "$1" > "$2"
 
+}
+
+dump_image_dump_to_nvme()
+{
+		local dump_file=$1
+
+		$(which dd) if=$1 of=/dev/nvme0n1p4 bs=512 count=1M
 }
 
 fsbl-img-copy_on_bank()
@@ -104,7 +111,7 @@ ssbl-img-copy_on_bank()
 
 
 SHORT_OPTS="h"
-LONG_OPTS="ssbl-copy::,fsbl-copy::,make-img::,help"
+LONG_OPTS="ssbl-copy::,fsbl-copy::,make-img::,dump-img::,help"
 
 # parse
 PARSED_OPTS="$(getopt -o "$SHORT_OPTS" -l "$LONG_OPTS" -n "$0" -- "$@")" || {
@@ -118,48 +125,57 @@ eval set -- "$PARSED_OPTS"
 # 옵션 해석 루프
 # -----------------------------
 while true; do
-  case "$1" in
-    -h|--help)
-      usage; exit 0 ;;
-    --ssbl-copy)
-        case "$2" in
-            ""|--) usage; shift 2 ;;
-            * ) 
-                ssbl-img-copy_on_bank 1 $2 $OF_DEV_NAME 0x400200
-                sleep 1
-                ssbl-img-copy_on_bank 2 $2 $OF_DEV_NAME 0x8400200
-                sleep 1
-                shift 2
-                ;;
-        esac
-        ;;
-    --fsbl-copy)
-        case "$2" in
-            ""|--) usage; shift 2 ;;
-            * ) 
-                fsbl-img-copy_on_bank 1 $2 $OF_DEV_NAME 0x200
-                sleep 1
-                fsbl-img-copy_on_bank 2 $2 $OF_DEV_NAME 0x8000200
-                sleep 1
-                shift 2
-                ;;
-        esac
-        ;;
-    --make-img)
-        case "$2" in
-            ""|--) usage; shift 2 ;;
-            * ) 
-                adding_length_in_image $2 $2.len
-                shift 2
-                ;;
-        esac
-        ;;
-    --)
-      shift; break ;;
-    *)
-      printf "Internal parsing error: $1" >&2
-      exit 3 ;;
-  esac
+	case "$1" in
+		-h|--help)
+			usage; exit 0 ;;
+		--ssbl-copy)
+			case "$2" in
+				""|--) usage; shift 2 ;;
+				* ) 
+					ssbl-img-copy_on_bank 1 $2 $OF_DEV_NAME 0x400200
+					sleep 1
+					ssbl-img-copy_on_bank 2 $2 $OF_DEV_NAME 0x8400200
+					sleep 1
+					shift 2
+					;;
+			esac
+			;;
+		--fsbl-copy)
+			case "$2" in
+				""|--) usage; shift 2 ;;
+				* ) 
+					fsbl-img-copy_on_bank 1 $2 $OF_DEV_NAME 0x200
+					sleep 1
+					fsbl-img-copy_on_bank 2 $2 $OF_DEV_NAME 0x8000200
+					sleep 1
+					shift 2
+					;;
+			esac
+			;;
+		--make-img)
+			case "$2" in
+				""|--) usage; shift 2 ;;
+				* ) 
+					adding_length_in_image $2 $2.len
+					shift 2
+					;;
+			esac
+			;;
+		--dump-img)
+			case "$2" in
+				""|--) usage; shift 2 ;;
+				* ) 
+					dump_image_dump_to_nvme $2
+					shift 2
+					;;
+			esac
+			;;
+		--)
+			shift; break ;;
+		*)
+			printf "Internal parsing error: $1" >&2
+			exit 3 ;;
+	esac
 done
 
 # -----------------------------
