@@ -8,10 +8,16 @@
 #endif
 
 #ifndef _FSBL_TEST_
-#   define STR_FSBL_F_NAME             L"\\EFI\\BOOT\\bootx64.efi"
-#   define STR_SSBL_F_NAME             L"\\EFI\\BOOT\\SSBL.efi"
+#   define OSID_KERNEL_PATH            L"\\vmlinuz"         
+#   define EFI_BOOT_FSBL_PATH          L"\\EFI\\BOOT\\FSBL.efi"
+#   define EFI_BOOT_SSBL_PATH          L"\\EFI\\BOOT\\SSBL.efi"
+#   define STR_FSBL_F_NAME             EFI_BOOT_FSBL_PATH
+#   define STR_SSBL_F_NAME             EFI_BOOT_SSBL_PATH
 #else
-#   define STR_FSBL_F_NAME             L"\\EFI\\BOOT\\FSBL.efi"
+#   define OSID_KERNEL_PATH            L"\\vmlinuz"         
+#   define EFI_BOOT_FSBL_PATH          L"\\EFI\\BOOT\\FSBL.efi.bin"
+#   define EFI_BOOT_SSBL_PATH          L"\\EFI\\BOOT\\SSBL.efi.bin"
+#   define STR_FSBL_F_NAME             EFI_BOOT_FSBL_PATH
 #endif
 
 #define SBC_AT_IV_LEN               12
@@ -243,7 +249,17 @@ SBCStatus  SBC_FSBL_Verify(VOID *blkhnd, VOID *ansr, UINTN normbank, UINTN bm, U
 
 SBCStatus  SBC_BlkIoHandleInit(OUT VOID **hblk, OUT VOID *hdr);
 
-SBCStatus  SBC_GenMigrationKey(VOID *priv, UINT32 currbankid, UINT32 prevbankid, VOID *out);
+/*!
+ * Generate the Migration Key
+ * 
+ * \author leoc (10/24/25)
+ * 
+ * \param priv   
+ * \param outmsg 
+ * 
+ * \return SBCStatus 
+ */
+SBCStatus SBC_GenMigrationKey(void *priv, void *outmsg);
 
 /*!
  * \fn SBCStatus  SBC_DeviceIdKyeVerify(VOID *blkio, UINT8 *devid, UINT8 *deckey)

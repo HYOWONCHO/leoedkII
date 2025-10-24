@@ -832,12 +832,12 @@ UefiMain (
 
 
     sbc_err_sysprn(SBC_LOG_CMN_PRIO_INFO, 2,
-         L"SBC",
-         L"FSBL",
-         L"Weapon System",
-         0,
-         L"Information ",
-         L"SBC_SP_FW FSBL Running");
+                 SYS_LOG_HOST_BOOT,
+                 SYS_LOG_APP_NAME,
+                 SYS_LOG_CSC_NAME,
+                 0,
+                 L"Detetion",
+                 L"SBC_VENDOR_SP FSBL Statring");
 
 
     is_boot_status = TRUE;
@@ -851,7 +851,13 @@ UefiMain (
     // Get the NVMe SSD Raw Partiton handle and Header information
     ret = SBC_BlkIoHandleInit(&h_blkio, &h_rawprtheader);
     if (ret != SBCOK) {
-      //Print(L"Raw Partitino find fail !!! \n");
+      sbc_err_sysprn(SBC_LOG_CMN_PRIO_INFO, 2,
+                 SYS_LOG_HOST_BOOT,
+                 SYS_LOG_APP_NAME,
+                 SYS_LOG_CSC_NAME,
+                 0,
+                 L"Detetion",
+                 L"SBC_VENDOR_SP SSBL Statring");
       goto errdone;
     }
 #if 0
@@ -895,8 +901,10 @@ UefiMain (
 //      retval = EFI_INVALID_PARAMETER;
 //      goto errdone;
 //  }
+    dprint("Boot Mode : %d , Key Mode : %d, Recovery Mode : %d",
+           btproc.bm, btproc.km, h_rawptrheader.rcvmode);
+
     dprint("Currently Valid FW Bank ID : %d , Previously Bank ID : %d \n", currbank_id, prevbank_id);
-    dprint("Boot Mode : %d", h_rawprtheader.bootmode);
 
     btproc.curr_sw_bnk = currbank_id;
     btproc.pvs_sw_bnk = prevbank_id;
@@ -909,6 +917,12 @@ UefiMain (
     btproc.rawprt_hdr = &h_rawprtheader;
     btproc.baseansr = (void *)&baseansr;
     btproc.imghndl = ImageHandle;
+
+    //
+    // Added by Leon
+    // Run from Recovry Mode 
+    //
+    btproc.rcvmode = h_rawprtheader.rcvmode;
 
    // Step 1-1 )  FSBL, self sign and verify
     SBC_AntiTamperingInit(NULL);
@@ -989,30 +1003,41 @@ UefiMain (
 
     ret = SBC_FSBL_Verify(h_blkio, &baseansr, currbank_id, h_rawprtheader.bootmode, STR_FSBL_F_NAME);
     if (ret != SBCOK) {
-          is_boot_status = FALSE;
-          btproc.bootst = SB_PROC_ST_ABNRAM;
+          sbc_err_sysprn(SBC_LOG_CMN_PRIO_ERR, 2,
+                 SYS_LOG_HOST_BOOT,
+                 SYS_LOG_APP_NAME,
+                 SYS_LOG_CSC_NAME,
+                 8,
+                 L"Detectoin",
+                 L"SBC_SP_FW FSBL tampering check fail \n");
           retval = EFI_INVALID_PARAMETER;
+          btproc.bootst = SB_PROC_ST_ABNRAM;
           goto errdone;
     }
 
     ZeroMem(mrgmsg, sizeof mrgmsg);
-    UnicodeSPrint(mrgmsg, sizeof mrgmsg, L"SBC_SP_FW FSBL self-verify Success (%s)\n", baseansr.value);
-    sbc_err_sysprn(SBC_LOG_CMN_PRIO_ERR, 2,
-         L"SBC",
-         L"FSBL",
-         L"Weapon System",
-         8,
-         L"Validation",
-         mrgmsg);
-  
+//  UnicodeSPrint(mrgmsg, sizeof mrgmsg, L"SBC_SP_FW FSBL self-verify Success (%s)\n", baseansr.value);
+//  sbc_err_sysprn(SBC_LOG_CMN_PRIO_ERR, 2,
+//       L"SBC",
+//       L"FSBL",
+//       L"Weapon System",
+//       8,
+//       L"Validation",
+//       mrgmsg);
+//
     
 
 
     ret = SBC_DiceKeysGen(ImageHandle, &diceid, currbank_id, h_rawprtheader.bootmode);
     if (ret != SBCOK) {
-        //sbc_err_sysprn(SBC_LOG_CMN_PRIO_ERR, 2, L"SBC", L"FSBL", L"Weapon System", 4, L"EVT", L"Dice Key creation fail\n");
+        sbc_err_sysprn(SBC_LOG_CMN_PRIO_ERR, 2,
+             SYS_LOG_HOST_BOOT,
+             SYS_LOG_APP_NAME,
+             SYS_LOG_CSC_NAME,
+             1,
+             SYS_LOG_EVT_VALDIATION,
+             L"SBC_Dice_Key HW&SW Base Key Creation Fail");
         retval = EFI_INVALID_PARAMETER;
-        is_boot_status = FALSE;
         btproc.bootst = SB_PROC_ST_ABNRAM;
         goto errdone;
     }
@@ -1037,15 +1062,43 @@ UefiMain (
     case BOOT_MODE_NORMAL:
       dprint("Boot Mode is BOOT_MODE_NORMAL");
 #ifdef _SBC_DEVID_VERIFY_
+
+      if (h_rawprtheader.rcvmode) {
+          sbc_err_sysprn(SBC_LOG_CMN_PRIO_INFO, 
+                         2, 
+                         SYS_LOG_HOST_BOOT, 
+                         SYS_LOG_APP_NAME,SYS_LOG_CSC_NAME, 
+                         0, 
+                         SYS_LOG_EVT_DETECTION, 
+                         L"SBC_BootFW The System has booted from recovery mode \n");
+
+          ret = SBC_GenMigrationKey((void *)&btproc, diceid.migid);
+          if (ret != SBCOK) {
+            sbc_err_sysprn(SBC_LOG_CMN_PRIO_ERR, 
+                         2, 
+                         SYS_LOG_HOST_BOOT, 
+                         SYS_LOG_APP_NAME,SYS_LOG_CSC_NAME, 
+                         4, 
+                         SYS_LOG_EVT_DETECTION, 
+                         L"SBC_BootFW_Update Fail to MigrationKey Creation \n");
+            retval = EFI_INVALID_PARAMETER;
+            btproc.bootst = SB_PROC_ST_ABNRAM;
+          }
+
+          // 
+          // No need to return because change the boot mode and reset the system.
+          //
+      }
+
       ret = SBC_SSBL_Verify(h_blkio, NULL, currbank_id, BOOT_MODE_NORMAL, STR_SSBL_F_NAME);
       if (ret != SBCOK) {
             sbc_err_sysprn(SBC_LOG_CMN_PRIO_ERR, 2,
-                 L"SBC",
-                 L"FSBL",
-                 L"Weapon System",
-                 8,
-                 L"Detection",
-                 L"SBC_SP_FW SSBL self-verify Fail");
+                     SYS_LOG_HOST_BOOT,
+                     SYS_LOG_APP_NAME,
+                     SYS_LOG_CSC_NAME,
+                     8,
+                     L"Detectoin",
+                     L"SBC_SP_FW FSBL tampering check fail \n");
             is_boot_status = FALSE;
             retval = EFI_INVALID_PARAMETER;
             //goto errdone;
@@ -1059,19 +1112,27 @@ UefiMain (
            L"Validation",
            L"SBC_SP_FW SSBL self-verify Success");
 
-//    ret =  SBC_DeviceIdKyeVerify(h_blkio, diceid.devid, diceid.osid);
-//    if (ret != SBCOK) {
-//            sbc_err_sysprn(SBC_LOG_CMN_PRIO_ERR, 2,
-//                   L"SBC",
-//                   L"FSBL",
-//                   L"Weapon System",
-//                   8,
-//                   L"EVT",
-//                   L"Device ID verify fail ");
-//            retval = EFI_INVALID_PARAMETER;
-//            is_boot_status = FALSE;
-//            goto errdone;
-//    }
+      ret =  SBC_DeviceIdKyeVerify(h_blkio, diceid.devid, diceid.osid);
+      if (ret != SBCOK) {
+              sbc_err_sysprn(SBC_LOG_CMN_PRIO_ERR, 2,
+                     L"SBC",
+                     L"FSBL",
+                     L"Weapon System",
+                     8,
+                     L"EVT",
+                     L"Device ID verify fail ");
+              retval = EFI_INVALID_PARAMETER;
+              is_boot_status = FALSE;
+              goto errdone;
+      }
+
+      sbc_err_sysprn(SBC_LOG_CMN_PRIO_INFO, 2,
+             SYS_LOG_HOST_BOOT,
+             SYS_LOG_APP_NAME,
+             SYS_LOG_CSC_NAME,
+             8,
+             SYS_LOG_EVT_VALDIATION,
+             L"SBC_Integrity_All boot components passed signature verification \n");
 #endif
          
       //SBC_GRUB_LoadAndStart(NULL);         

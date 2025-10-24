@@ -21,8 +21,11 @@ typedef struct _unit_proc_t {
     UINT16      bm;                         /*! Boot Mode */
     UINT16      km;                         /*! Key Mode */
     UINT32      bootst;                     /*! Boot Status */
+    UINT16      rcvmode;
     VOID        *imghndl;
 }unit_proc_t;
+
+typedef unit_proc_t boot_proc_t;
 #pragma pack()
 
 

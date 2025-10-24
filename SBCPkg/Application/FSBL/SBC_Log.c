@@ -182,6 +182,140 @@ VOID SBC_LogElapsedTime(const CHAR16 *Tag, UINTN Ns)
 }
 
 
+UINTN SBC_LogHexToStrChar8( UINT8 *data, UINTN len, CHAR8 *out, UINTN out_cap, BOOLEAN loweracse, CHAR8 sep)
+{
+    CHAR8 HEXU16[] = "0123456789ABCDEF";
+    CHAR8 HEXL16[] = "0123456789abcdef";
+    CHAR8 *HEX = loweracse ? HEXL16 : HEXU16;
+    UINTN need = (sep ? (len ? (len * 2 + (len - 1)) : 0) : (len * 2)) + 1; // +1 for L'\0'
+    dprint("out cap : %d , need : %d", out_cap, need);
+    if (out_cap < need) {
+        return 0;
+    }
+
+    UINTN pos = 0;
+    for (UINTN i = 0; i < len; i++) {
+        UINT8 b = data[i];
+        out[pos++] = HEX[(b >> 4) & 0xFF];
+        out[pos++] = HEX[b & 0x0F];
+        if (sep && i + 1 < len) {
+            out[pos++] = sep;
+        }
+    }
+
+    out[pos] = L'\0';
+    return pos;
+}
+
+UINTN SBC_LogHexToStrChar16( UINT8 *data, UINTN len, CHAR16 *out, UINTN out_cap, BOOLEAN loweracse, CHAR16 sep)
+{
+    CHAR16 HEXU16[] = L"0123456789ABCDEF";
+    CHAR16 HEXL16[] = L"0123456789abcdef";
+    CHAR16 *HEX = loweracse ? HEXL16 : HEXU16;
+    UINTN need = (sep ? (len ? (len * 2 + (len - 1)) : 0) : (len * 2)) + 1; // +1 for L'\0'
+    //dprint("out cap : %d , need : %d", out_cap, need);
+    if (out_cap < need) {
+        return 0;
+    }
+
+    UINTN pos = 0;
+    for (UINTN i = 0; i < len; i++) {
+        UINT8 b = data[i];
+        out[pos++] = HEX[(b >> 4) & 0xFF];
+        out[pos++] = HEX[b & 0x0F];
+        if (sep && i + 1 < len) {
+            out[pos++] = sep;
+        }
+    }
+
+    out[pos] = L'\0';
+    return pos;
+}
+
+
+
+
+VOID SBC_LogHexKeyConvToChar16(VOID *out, VOID *msgbuf, VOID *keymsg)
+{
+    UINT8 *keybuf = (UINT8 *)keymsg;
+    CONST UINT16 *msg = (CONST UINT16 *)msgbuf;
+    CHAR16 out_key[128] = {0,};
+
+    ZeroMem(keybuf, 32);
+    ZeroMem(msgbuf, 8192);
+
+    dprint("msg : %s", msg);
+
+    SBC_LogHexToStrChar16(keybuf, 32, out_key, sizeof(out_key)/sizeof(out_key[0]), FALSE, 0);
+
+
+    UnicodeSPrint(out,  8192, msg , out_key);
+
+    return;
+}
+
+EFI_STATUS 
+SBC_BuildHexFormattedMessage (
+  IN  CONST VOID  *PubKey,
+  IN  UINTN        PubKeySize,
+  IN  CONST CHAR16 *FormatString,
+  OUT CHAR16      *OutMsg,
+  IN  UINTN        OutMsgBytes
+  )
+{
+  if (PubKey == NULL || PubKeySize == 0 ||
+      FormatString == NULL || OutMsg == NULL ||
+      OutMsgBytes < sizeof(CHAR16)) {
+    return EFI_INVALID_PARAMETER;
+  }
+
+//SBC_mem_print_bin("SBC_BuildHexFormattedMessage original",
+//                  (UINT8 *)PubKey,
+//                  (UINT32)PubKeySize);
+
+  // %s 자리가 존재하는지 간단 검증 (선택사항)
+  if (StrStr(FormatString, L"%s") == NULL) {
+    return EFI_INVALID_PARAMETER;
+  }
+
+  const UINTN HexChars = PubKeySize * 2;
+  const UINTN HexBytes = (HexChars + 1) * sizeof(CHAR16);
+
+  CHAR16 *HexStr = AllocateZeroPool(HexBytes);
+  if (HexStr == NULL) {
+    return EFI_OUT_OF_RESOURCES;
+  }
+
+  // 바이너리 → HEX 문자열 변환
+  SBC_LogHexToStrChar16(
+      (VOID *)PubKey,
+      PubKeySize,
+      HexStr,
+      HexChars + 1,
+      FALSE,   // 대문자/소문자 구분 옵션
+      0
+  );
+
+//SBC_mem_print_bin("SBC_BuildHexFormattedMessage Hex",
+//                  (UINT8 *)HexStr,
+//                  (UINT32)HexChars + 1);
+  ZeroMem(OutMsg, OutMsgBytes);
+
+  // 포맷 문자열과 HEX 문자열을 합침
+  UnicodeSPrint(
+      OutMsg,
+      OutMsgBytes,
+      FormatString,
+      HexStr
+  );
+
+//Print(L"OutMsg (%ld) : %s\n",OutMsgBytes, OutMsg);
+
+  FreePool(HexStr);
+  return EFI_SUCCESS;
+}
+
+
 CHAR16 *SBC_LogMrg(CONST CHAR16 *fmt, ...)
 {
 

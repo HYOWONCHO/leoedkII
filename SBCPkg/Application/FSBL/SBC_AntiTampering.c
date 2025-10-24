@@ -34,6 +34,7 @@
 #include "SBC_X509.h"
 #include "SBC_Kdf.h" 
 #include "SBC_Log.h"
+#include "SBC_UnitTest.h"
 
 [[maybe_unused]] static LV_t fsbl_certi_lv;
 [[maybe_unused]] static LV_t rootca_certi_lv;
@@ -1276,7 +1277,18 @@ SBCStatus  SBC_DeviceIdKyeVerify(VOID *blkio, UINT8 *fwid, UINT8 *deckey)
     SBC_external_mem_print_bin("Device ID Pubkey", key_pair.q.value, key_pair.ql);
     SBC_external_mem_print_bin("Device Certificate Pubkey", pubkey, pubkeyl);
     if(CompareMem(key_pair.q.value,  pubkey, pubkeyl) != 0) {
-        eprint("CA public key verify fail");
+        SBC_BuildHexFormattedMessage(
+            (CONST VOID *)pubkey, (UINTN)pubkeyl,
+            L"SBC_Dice_OSID failed to create OSID (%s)\n",
+            mrgmsg, sizeof mrgmsg);
+
+        sbc_err_sysprn(SBC_LOG_CMN_PRIO_ERR, 2,
+                 SYS_LOG_HOST_BOOT,
+                 SYS_LOG_APP_NAME,
+                 SYS_LOG_CSC_NAME,
+                 1,
+                 L"Detectoin",
+                 mrgmsg);
         ret = SBCINVPARAM;
         goto errdone;
     }
@@ -2658,134 +2670,327 @@ errdone:
 
 }
 
-SBCStatus  SBC_GenMigrationKey(VOID *priv, UINT32 currbankid, UINT32 prevbankid, VOID *out)
+//SBCStatus  SBC_GenMigrationKey(VOID *priv, UINT32 currbankid, UINT32 prevbankid, VOID *out)
+//{
+//  //Migration Key = H(H(Unique HW ID)||H(Current FSBL)||H(Current SSBL)||H(Current KERNEL)||H(Newer SSBL)||H(Newer KERNEL))
+//    SBCStatus ret = SBCOK;
+//    UINTN integcnt = 0;
+//    UINTN migkeycnt = 0;
+////  mig_key_t *key = NULL;
+//
+//    UINT8 *migkey_hash = NULL;
+//
+//    hw_uniqueinfo_t info;
+//    UINT8 *integbuf = NULL; // Integration bufefr
+//    UINTN startaddr = 0;
+//    UINTN startlba = 0;
+//    UINTN imglen = 0;
+//    boot_fw_inf_t *fwinf;
+//
+//    dprint("Migration Key creation startnig !!!");
+//
+//    SBC_RET_VALIDATE_ERRCODEMSG((priv != NULL), SBCNULLP, "Invalid Parameter");
+//
+//    ZeroMem((void *)&info, sizeof info);
+//
+//    // Step 1. Compute the HW ID
+//    _baseboard_sn(&info);
+//    _memorydevice_sn(&info);
+//    _nvme_get_serial(&info);
+//
+//    fwinf = AllocatePool(sizeof(boot_fw_inf_t));
+//    SBC_RET_VALIDATE_ERRCODEMSG((fwinf != NULL),SBCNULLP, "Firmware Info Memory allocate Nill");
+//
+//    integbuf = AllocatePool(info.mbsnl + info.mmsnl + info.nvmesnl);
+//    SBC_RET_VALIDATE_ERRCODEMSG((integbuf != NULL),SBCNULLP, "HW Info Compute buffer Nill");
+//
+//    integcnt = 0;
+//    CopyMem((void *)&integbuf[0], info.mbsn, info.mbsnl);
+//    integcnt = info.mbsnl;
+//
+//    ////Print(L"Next cnt : %d \n", cnt);
+//    CopyMem((void *)&integbuf[integcnt], info.mmsn, info.mmsnl);
+//    integcnt += info.mmsnl;
+//
+//    ////Print(L"Next Next cnt : %d \n", cnt);
+//    CopyMem((void *)&integbuf[integcnt], info.nvmesn, info.nvmesnl);
+//    integcnt += info.nvmesnl;
+//
+//    migkey_hash = AllocatePool(SBC_AT_HASH_LEN * 6);
+//    SBC_RET_VALIDATE_ERRCODEMSG((migkey_hash != NULL),SBCNULLP, "MigKEy Compute buffer Nill");
+//    migkeycnt = 0;
+//
+//    ret = SBC_HashCompute(
+//                             NULL, /* Not yet used */
+//                             integbuf,
+//                             integcnt,
+//                             &migkey_hash[migkeycnt]
+//                          ) ;
+//
+//    if (ret != SBCOK) {
+//      eprint("Device Dice Message Hash compute fail \n");
+//      goto errdone;
+//    }
+//
+//    migkeycnt +=  SBC_AT_HASH_LEN;
+//
+//    //Step 2. Read Current Image and Hash compute
+//    startaddr = (BOOT_SECTOR1_OFS | (BOOT_FW_IMGMAX *  (currbankid - 1)));
+//    startlba = (startaddr >> SBC_RAWPRT_DFLT_SHIFT);
+//    imglen = ALIGN_VALUE(sizeof *fwinf, SBC_RAWPRT_DFLT_BLK_SZ);
+//
+//
+//    ret = SBC_RawPrtReadBlock(priv, (void *)fwinf->value, (UINT32 *)&imglen, startlba);
+//    SBC_RET_VALIDATE_ERRCODEMSG((ret == SBCOK), ret, "Raw Partition read fail");
+//
+//    // Hash compute
+//
+//    ret = SBC_HashCompute(NULL, fwinf->mbr.fsblimg, fwinf->mbr.fsbln, &migkey_hash[migkeycnt]);
+//    SBC_RET_VALIDATE_ERRCODEMSG((ret == SBCOK), ret, "Hash Compue fail");
+//    migkeycnt +=  SBC_AT_HASH_LEN;
+//
+//    ret = SBC_HashCompute(NULL, fwinf->mbr.ssblimg, fwinf->mbr.ssbln,  &migkey_hash[migkeycnt]);
+//    SBC_RET_VALIDATE_ERRCODEMSG((ret == SBCOK), ret, "Hash Compue fail");
+//    migkeycnt +=  SBC_AT_HASH_LEN;
+//
+//    ret = SBC_HashCompute(NULL, fwinf->mbr.osimg, fwinf->mbr.osln,  &migkey_hash[migkeycnt]);
+//    SBC_RET_VALIDATE_ERRCODEMSG((ret == SBCOK), ret, "Hash Compue fail");
+//    migkeycnt +=  SBC_AT_HASH_LEN;
+//
+//    // Step 3. Read the New Image and hash compute
+//
+//    ZeroMem(fwinf->value, sizeof fwinf);
+//    startaddr = (BOOT_SECTOR1_OFS | (BOOT_FW_IMGMAX *  (prevbankid - 1)));
+//    startlba = (startaddr >> SBC_RAWPRT_DFLT_SHIFT);
+//    imglen = ALIGN_VALUE(sizeof fwinf, SBC_RAWPRT_DFLT_BLK_SZ);
+//
+//    ret = SBC_RawPrtReadBlock(priv, (void *)fwinf->value, (UINT32 *)&imglen, startlba);
+//    SBC_RET_VALIDATE_ERRCODEMSG((ret == SBCOK), ret, "Raw Partition read fail");
+//
+//    ret = SBC_HashCompute(NULL, fwinf->mbr.ssblimg, fwinf->mbr.ssbln,  &migkey_hash[migkeycnt]);
+//    SBC_RET_VALIDATE_ERRCODEMSG((ret == SBCOK), ret, "Hash Compue fail");
+//    migkeycnt +=  SBC_AT_HASH_LEN;
+//
+//    ret = SBC_HashCompute(NULL, fwinf->mbr.osimg, fwinf->mbr.osln,  &migkey_hash[migkeycnt]);
+//    SBC_RET_VALIDATE_ERRCODEMSG((ret == SBCOK), ret, "Hash Compue fail");
+//    migkeycnt +=  SBC_AT_HASH_LEN;
+//
+//
+//    ret = SBC_HashCompute(NULL, migkey_hash, migkeycnt,  (UINT8 *)out);
+//    SBC_RET_VALIDATE_ERRCODEMSG((ret == SBCOK), ret, "Hash Compue fail");
+//
+//
+//
+//
+//errdone:
+//    if (integbuf != NULL) {
+//        FreePool(integbuf);
+//    }
+//
+//    if (migkey_hash != NULL) {
+//        FreePool(migkey_hash);
+//    }
+//
+//    if (fwinf != NULL) {
+//      FreePool(fwinf);
+//    }
+//
+//    return ret;
+//
+//}
+
+SBCStatus SBC_GenMigrationKey(void *priv, void *outmsg)
 {
-  //Migration Key = H(H(Unique HW ID)||H(Current FSBL)||H(Current SSBL)||H(Current KERNEL)||H(Newer SSBL)||H(Newer KERNEL))
     SBCStatus ret = SBCOK;
-    UINTN integcnt = 0;
-    UINTN migkeycnt = 0;
-//  mig_key_t *key = NULL;
 
-    UINT8 *migkey_hash = NULL;
+    boot_proc_t *p = (boot_proc_t *)priv;
 
+    UINTN msglen = 0UL;
+    UINTN len_fsbl = 0UL;
+    UINTN len_ssbl = 0UL;
+    UINTN len_hwifno = 0UL;
+    [[gnu::unused]] UINTN len_blkfsbl = 0UL;
+    [[gnu::unused]] UINTN len_blkssbl = 0UL;
+    UINT8 *msg = NULL;
     hw_uniqueinfo_t info;
-    UINT8 *integbuf = NULL; // Integration bufefr
     UINTN startaddr = 0;
     UINTN startlba = 0;
-    UINTN imglen = 0;
     boot_fw_inf_t *fwinf;
+    UINTN imglen = 0;
+    UINTN cpyofs = 0;
 
-    dprint("Migration Key creation startnig !!!");
+    UINT8 *fbuf = NULL;
+    [[maybe_unused]] UINTN flen = 0UL;
+    LV_t lv;
 
-    SBC_RET_VALIDATE_ERRCODEMSG((priv != NULL), SBCNULLP, "Invalid Parameter");
+    EFI_HANDLE *f_hndl;
+    UINT8 temp_hash[ATP_IDENT_KEY_STG] = {0, };
+    
 
+    SBC_RET_VALIDATE_ERRCODEMSG((p != NULL),
+                               SBCNULLP,
+                               "Invalid Parameter");
+
+
+    // Get the Hardware Unique Information
     ZeroMem((void *)&info, sizeof info);
 
-    // Step 1. Compute the HW ID 
     _baseboard_sn(&info);
     _memorydevice_sn(&info);
     _nvme_get_serial(&info);
 
-    fwinf = AllocatePool(sizeof(boot_fw_inf_t));
+    len_hwifno = info.mbsnl + info.mmsnl + info.nvmesnl;
+    msglen = len_hwifno;
+
+    // Getting the FSBL and SSBL file size
+    ret = SBC_GetFileSize(EFI_BOOT_FSBL_PATH, &len_fsbl);
+    SBC_RET_VALIDATE_ERRCODEMSG((ret == SBCOK),
+                               ret,
+                               "Not Found the FSBL");
+
+    ret = SBC_GetFileSize(EFI_BOOT_SSBL_PATH, &len_ssbl);
+    SBC_RET_VALIDATE_ERRCODEMSG((ret == SBCOK),
+                               ret,
+                               "Not Found the SSBL");
+
+    dprint("Existing FSBL (%d) & SSBL (%d) Length", len_fsbl, len_ssbl);
+
+    msglen += (len_fsbl + len_ssbl);
+
+    dprint();
+    // Obtain the length for SSBL and FSBL in Raw-partition
+    fwinf = AllocateZeroPool(sizeof(boot_fw_inf_t));
     SBC_RET_VALIDATE_ERRCODEMSG((fwinf != NULL),SBCNULLP, "Firmware Info Memory allocate Nill");
 
-    integbuf = AllocatePool(info.mbsnl + info.mmsnl + info.nvmesnl);
-    SBC_RET_VALIDATE_ERRCODEMSG((integbuf != NULL),SBCNULLP, "HW Info Compute buffer Nill");
-
-    integcnt = 0;
-    CopyMem((void *)&integbuf[0], info.mbsn, info.mbsnl);
-    integcnt = info.mbsnl;
-
-    ////Print(L"Next cnt : %d \n", cnt);
-    CopyMem((void *)&integbuf[integcnt], info.mmsn, info.mmsnl);
-    integcnt += info.mmsnl;
-
-    ////Print(L"Next Next cnt : %d \n", cnt);
-    CopyMem((void *)&integbuf[integcnt], info.nvmesn, info.nvmesnl);
-    integcnt += info.nvmesnl;
-
-    migkey_hash = AllocatePool(SBC_AT_HASH_LEN * 6);
-    SBC_RET_VALIDATE_ERRCODEMSG((migkey_hash != NULL),SBCNULLP, "MigKEy Compute buffer Nill");
-    migkeycnt = 0;
-
-    ret = SBC_HashCompute(
-                             NULL, /* Not yet used */
-                             integbuf,
-                             integcnt,
-                             &migkey_hash[migkeycnt]
-                          ) ;
-
-    if (ret != SBCOK) {
-      eprint("Device Dice Message Hash compute fail \n");
-      goto errdone;
-    }
-
-    migkeycnt +=  SBC_AT_HASH_LEN;
-
+    dprint("Previously Bank ID : %d", p->pvs_sw_bnk - 1);
     //Step 2. Read Current Image and Hash compute
-    startaddr = (BOOT_SECTOR1_OFS | (BOOT_FW_IMGMAX *  (currbankid - 1)));
+    //pvs_sw_bank means that "Previously Firware location"
+    
+    startaddr = (BOOT_SECTOR1_OFS | (BOOT_FW_IMGMAX *  (p->pvs_sw_bnk - 1)));
     startlba = (startaddr >> SBC_RAWPRT_DFLT_SHIFT);
     imglen = ALIGN_VALUE(sizeof *fwinf, SBC_RAWPRT_DFLT_BLK_SZ);
 
-    
-    ret = SBC_RawPrtReadBlock(priv, (void *)fwinf->value, (UINT32 *)&imglen, startlba);
+    dprint("Start Address : 0x%04x", startaddr);
+
+    ret = SBC_RawPrtReadBlock(p->blkhnd, (void *)fwinf->value, (UINT32 *)&imglen, startlba);
     SBC_RET_VALIDATE_ERRCODEMSG((ret == SBCOK), ret, "Raw Partition read fail");
 
-    // Hash compute
-    
-    ret = SBC_HashCompute(NULL, fwinf->mbr.fsblimg, fwinf->mbr.fsbln, &migkey_hash[migkeycnt]);
-    SBC_RET_VALIDATE_ERRCODEMSG((ret == SBCOK), ret, "Hash Compue fail");
-    migkeycnt +=  SBC_AT_HASH_LEN;
+    dprint("FSBL len : %d , SSBL Length : %d \n", fwinf->mbr.fsbln, fwinf->mbr.ssbln);
 
-    ret = SBC_HashCompute(NULL, fwinf->mbr.ssblimg, fwinf->mbr.ssbln,  &migkey_hash[migkeycnt]);
-    SBC_RET_VALIDATE_ERRCODEMSG((ret == SBCOK), ret, "Hash Compue fail");
-    migkeycnt +=  SBC_AT_HASH_LEN;
+    //
+    // If previoulsy firmwrae not existense, it's compute using FACTORY image 
+    //
+    if (fwinf->mbr.fsbln == 0) {
+        startaddr = BOOT_SECTOR3_OFS; //(BOOT_SECTOR1_OFS | (BOOT_FW_IMGMAX *  (p->pvs_sw_bnk - 1)));
+        startlba = (startaddr >> SBC_RAWPRT_DFLT_SHIFT);
+        imglen = ALIGN_VALUE(sizeof *fwinf, SBC_RAWPRT_DFLT_BLK_SZ);
 
-    ret = SBC_HashCompute(NULL, fwinf->mbr.osimg, fwinf->mbr.osln,  &migkey_hash[migkeycnt]);
-    SBC_RET_VALIDATE_ERRCODEMSG((ret == SBCOK), ret, "Hash Compue fail");
-    migkeycnt +=  SBC_AT_HASH_LEN;
+        dprint("It's load from FACTORY bank because previously firmware is not existense");
+        ret = SBC_RawPrtReadBlock(p->blkhnd, (void *)fwinf->value, (UINT32 *)&imglen, startlba);
+        SBC_RET_VALIDATE_ERRCODEMSG((ret == SBCOK), ret, "Raw Partition read fail");
 
-    // Step 3. Read the New Image and hash compute
+        dprint("Factory FSBL len : %d , SSBL Length : %d \n", fwinf->mbr.fsbln, fwinf->mbr.ssbln);
+    }
 
-    ZeroMem(fwinf->value, sizeof fwinf);
-    startaddr = (BOOT_SECTOR1_OFS | (BOOT_FW_IMGMAX *  (prevbankid - 1)));
-    startlba = (startaddr >> SBC_RAWPRT_DFLT_SHIFT);
-    imglen = ALIGN_VALUE(sizeof fwinf, SBC_RAWPRT_DFLT_BLK_SZ);
+    msglen += (fwinf->mbr.fsbln + fwinf->mbr.ssbln);
 
-    ret = SBC_RawPrtReadBlock(priv, (void *)fwinf->value, (UINT32 *)&imglen, startlba);
-    SBC_RET_VALIDATE_ERRCODEMSG((ret == SBCOK), ret, "Raw Partition read fail");
-
-    ret = SBC_HashCompute(NULL, fwinf->mbr.ssblimg, fwinf->mbr.ssbln,  &migkey_hash[migkeycnt]);
-    SBC_RET_VALIDATE_ERRCODEMSG((ret == SBCOK), ret, "Hash Compue fail");
-    migkeycnt +=  SBC_AT_HASH_LEN;
-
-    ret = SBC_HashCompute(NULL, fwinf->mbr.osimg, fwinf->mbr.osln,  &migkey_hash[migkeycnt]);
-    SBC_RET_VALIDATE_ERRCODEMSG((ret == SBCOK), ret, "Hash Compue fail");
-    migkeycnt +=  SBC_AT_HASH_LEN;
+    msg = AllocateZeroPool(msglen);
+    SBC_RET_VALIDATE_ERRCODEMSG((msg != NULL), SBCNULLP, "Not enough resource");
 
 
-    ret = SBC_HashCompute(NULL, migkey_hash, migkeycnt,  (UINT8 *)out);
-    SBC_RET_VALIDATE_ERRCODEMSG((ret == SBCOK), ret, "Hash Compue fail");
+    CopyMem((void *)&msg[cpyofs], info.mbsn , info.mbsnl);
+    cpyofs += info.mbsnl;
 
-    
-    
+    CopyMem((void *)&msg[cpyofs], info.mmsn, info.mmsnl);
+    cpyofs += info.mmsnl;
 
+    CopyMem((void *)&msg[cpyofs], info.nvmesn, info.nvmesnl);
+    cpyofs += info.nvmesnl;
+
+    //
+    // Read the FSBL file 
+    //
+
+    SBC_FindEfiFileSystemProtocol(&f_hndl);
+
+    fbuf = AllocateZeroPool(len_fsbl);
+    lv.value = fbuf;
+    lv.length = len_fsbl;
+
+    ret = SBC_ReadFile(f_hndl[0], EFI_BOOT_FSBL_PATH, &lv);
+    SBC_RET_VALIDATE_ERRCODEMSG((ret == SBCOK), SBCNULLP, "FSBL File Reaed Fail");
+
+    ret = SBC_HashCompute(NULL, lv.value, lv.length, temp_hash);
+    SBC_RET_VALIDATE_ERRCODEMSG((ret == SBCOK), SBCNULLP, "FSBL File HASH Fail");
+
+    SBC_mem_print_bin("FSBL File Hash", (UINT8 *)temp_hash, ATP_IDENT_KEY_STG);
+    CopyMem((void *)&msg[cpyofs], temp_hash, ATP_IDENT_KEY_STG);
+    cpyofs += ATP_IDENT_KEY_STG;
+
+    if (fbuf != NULL) {
+        //lv.value = NULL;
+        FreePool(fbuf);
+    }
+
+    //
+    // Read the SSBL flie
+    //
+    fbuf = AllocateZeroPool(len_ssbl);
+    lv.value = fbuf;
+    lv.length = len_ssbl;
+
+    ret = SBC_ReadFile(f_hndl[0], EFI_BOOT_SSBL_PATH, &lv);
+    SBC_RET_VALIDATE_ERRCODEMSG((ret == SBCOK), SBCNULLP, "SSBL File Reaed Fail");
+
+    ZeroMem((void *)temp_hash, 32);
+    ret = SBC_HashCompute(NULL, lv.value, lv.length, temp_hash);
+    SBC_RET_VALIDATE_ERRCODEMSG((ret == SBCOK), SBCNULLP, "SSBL File HASH Fail");
+    SBC_mem_print_bin("SSBL File Hash", (UINT8 *)temp_hash, ATP_IDENT_KEY_STG);
+    CopyMem((void *)&msg[cpyofs], temp_hash, ATP_IDENT_KEY_STG);
+    cpyofs += ATP_IDENT_KEY_STG;
+
+    if (fbuf != NULL) {
+        dprint();
+        FreePool(fbuf);
+        dprint();
+    }
+    dprint();
+
+
+    //
+    // Un-used FSBL  ( into the Raw-partiiont)
+    //
+    ret = SBC_HashCompute(NULL, fwinf->mbr.fsblimg, fwinf->mbr.fsbln, (void *)&msg[cpyofs]);
+    SBC_mem_print_bin("Previously FSBL File Hash", (UINT8 *)&msg[cpyofs], ATP_IDENT_KEY_STG);
+    SBC_RET_VALIDATE_ERRCODEMSG((ret == SBCOK), SBCNULLP, "Raw Partition FSBL HASH Fail");
+    cpyofs += ATP_IDENT_KEY_STG;
+
+    ret = SBC_HashCompute(NULL, fwinf->mbr.ssblimg, fwinf->mbr.ssbln, (void *)&msg[cpyofs]);
+    SBC_mem_print_bin("Previously SSBL File Hash", (UINT8 *)&msg[cpyofs], ATP_IDENT_KEY_STG);
+    SBC_RET_VALIDATE_ERRCODEMSG((ret == SBCOK), SBCNULLP, "Raw Partition SSBL File HASH Fail");
+    cpyofs += ATP_IDENT_KEY_STG;
+
+
+
+    //
+    // Final message digest 
+    // 
+    ret = SBC_HashCompute(NULL, (UINT8 *)&msg[0], cpyofs, outmsg);
+    SBC_RET_VALIDATE_ERRCODEMSG((ret == SBCOK), SBCNULLP, "Raw Partition SSBL File HASH Fail");
 errdone:
-    if (integbuf != NULL) {
-        FreePool(integbuf);
-    }
-
-    if (migkey_hash != NULL) {
-        FreePool(migkey_hash);
-    }
 
     if (fwinf != NULL) {
-      FreePool(fwinf);
+        FreePool(fwinf);
     }
 
-    return ret;
+    if (msg != NULL) {
+        FreePool(msg);
+    }
 
+
+    return ret;
 }
+
 
 // FSBL Integrity check 
 SBCStatus  SBC_FSBLIntgCheck([[gnu::unused]]EFI_HANDLE *h_image , VOID *blkio, VOID *cert, UINTN certlen, UINTN nrombank, UINTN mode)

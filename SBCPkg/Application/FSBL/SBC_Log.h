@@ -14,6 +14,13 @@
 // ANSI escape code to reset color and attributes
 #define ANSI_COLOR_RESET    "\x1b[0m"
 
+
+#define SYS_LOG_EVT_VALDIATION                  L"Validation"
+#define SYS_LOG_EVT_DETECTION                   L"Detection"
+#define SYS_LOG_HOST_BOOT                       L"AT_BOOT"
+#define SYS_LOG_APP_NAME                        L"SSBL"
+#define SYS_LOG_CSC_NAME                        L"SAT"
+
 /*!
     \breif SBC System Log Priority 
  */
@@ -157,4 +164,27 @@ typedef enum {
 } LOG_EVENT;
 
 VOID UefiLog(LOG_LEVEL Level, LOG_EVENT Event, CONST CHAR16 *Format, ...);
+
+/*!
+ * Create a log format that converts strings into hexadecimal format
+ * 
+ * \author leoc (10/24/25)
+ * 
+ * \param PubKey       Hexadecimal buffer
+ * \param PubKeySize   Size of buffer 
+ * \param FormatString Print out format string 
+ * \param OutMsg       Output buffer include "FormatString" 
+ * \param OutMsgBytes  Length of Output
+ * 
+ * \return On Success, return the EFI_SUCCESS, otherwise, return the apporiate
+   error value.
+ */
+EFI_STATUS 
+SBC_BuildHexFormattedMessage (
+  IN  CONST VOID  *PubKey,
+  IN  UINTN        PubKeySize,
+  IN  CONST CHAR16 *FormatString,
+  OUT CHAR16      *OutMsg,
+  IN  UINTN        OutMsgBytes
+  );
 #endif
