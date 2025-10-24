@@ -1952,7 +1952,7 @@ SBCStatus  SBC_SSBL_Verify(VOID *blkhnd, VOID *ansr,  UINTN nrombank, UINTN bm, 
 #endif
 
     ZeroMem(mrgmsg, sizeof mrgmsg);
-    UnicodeSPrint(mrgmsg, sizeof mrgmsg, L"SBC_tamper_SSBL signature verification success\n");
+    UnicodeSPrint(mrgmsg, sizeof mrgmsg, L"SBC_tamper_SSBL On FSBL, signature verification success\n");
     sbc_err_sysprn(SBC_LOG_CMN_PRIO_ERR, 2,
            L"AT_BOOT",
            L"FSBL",
@@ -1965,7 +1965,7 @@ errdone:
 
     if (ret != SBCOK) {
       ZeroMem(mrgmsg, sizeof mrgmsg);
-      UnicodeSPrint(mrgmsg, sizeof mrgmsg, L"SBC_tamper_SSBL signature verification faied\n");
+      UnicodeSPrint(mrgmsg, sizeof mrgmsg, L"SBC_tamper_SSBL On SSBL, signature verification faied\n");
       sbc_err_sysprn(SBC_LOG_CMN_PRIO_ERR, 2,
              L"AT_BOOT",
              L"FSBL",
@@ -1975,15 +1975,15 @@ errdone:
              mrgmsg);
     }
 
-//  if (EcPubKey != NULL) {
-//    EcFree(EcPubKey);
-//  }
+    if (EcPubKey != NULL) {
+      EcFree(EcPubKey);
+    }
 
 
-//  if (rdlv.value != NULL) {
-//    FreePool(rdlv.value);
-//    rdlv.value = NULL;
-//  }
+    if (loadimg != NULL) {
+      FreePool(loadimg);
+      rdlv.value = NULL;
+    }
 
 //  if (ret != SBCOK) {
 //      sbc_err_sysprn(SBC_LOG_CMN_PRIO_INFO, 2, L"SBC", L"FSBL", L"CSC-01", 23, L"VERIFY", L"SSBL Integrate check is Fail\n");

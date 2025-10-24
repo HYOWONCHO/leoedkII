@@ -385,6 +385,54 @@ SBCStatus  SBC_RawPrtBlockWrite(VOID *blkio, UINT8 *wrbuf, UINT32 wrlen, UINT32 
  */
 UINT32  SBC_ReadBootMode(VOID);
 
+
+/*!
+ * \fn SBCStatus SBC_RawAlignedReadBlockIO(VOID *blk, UINTN off, UINTN sz, CONsST VOID *buf)
+ * 
+ * \brief Writes arbitrary-length data to an EFI Block I/O device
+ * 
+ * \author leoc (10/24/25)
+ * 
+ * \param[in] blk       Pointer to an EFI_BLOCK_IO_PROTOCOL instance
+ * \param[in] off       Byte offset from the beginning of the block device
+ * \param[in] sz        Number of bytes to read from output buffer
+ * \param[out] buf      Pointer to the data buffer to store the read data
+ * 
+ * \retval SBCOK            Complete successfully
+ * \retval SBCIO            Device I/O or media error occurred during read/write
+ * \retval SBCINVPARAM      Invalid offset ot size
+ * \retval SBCNULLP         Memory allocation failed
+ * 
+ * \see
+ *      EFI_BLOCK_IO_PROTOCOL, EFI_BLOCK_IO_MEDIA, AllocatePool(), FreePool()
+ *  
+ */
+SBCStatus SBC_RawAlignedReadBlockIO(VOID *blk, UINTN off, UINTN sz, VOID *buf);
+
+
+/*!
+ * \fn SBCStatus SBC_RawAlignedWriteBlockIO(VOID *blk, UINTN off, UINTN sz, CONST VOID *buf)
+ * 
+ * \brief Writes arbitrary-length data to an EFI Block I/O device
+ * 
+ * \author leoc (10/24/25)
+ * 
+ * \param[in] blk    Pointer to an EFI_BLOCK_IO_PROTOCOL instance
+ * \param[in] off    Byte offset from the beginning of the block device
+ * \param[in] sz     Number of bytes to write from input buffer
+ * \param[in] buf    Pointer to the data buffer to be written
+ * 
+ * \retval SBCOK            Complete successfully
+ * \retval SBCIO            Device I/O or media error occurred during read/write
+ * \retval SBCINVPARAM      Invalid offset ot size
+ * \retval SBCNULLP         Memory allocation failed
+ * 
+ * \see
+ *      EFI_BLOCK_IO_PROTOCOL, EFI_BLOCK_IO_MEDIA, AllocatePool(), FreePool()
+ *  
+ */
+SBCStatus SBC_RawAlignedWriteBlockIO(VOID *blk, UINTN off, UINTN sz, CONST VOID *buf);
+
 EFI_STATUS SBC_WriteFile(EFI_HANDLE ImageHandle, CHAR16 *FileNames, LV_t *out);
 
 UINTN SBC_FindEfiFileSystemProtocol(EFI_HANDLE **handle);

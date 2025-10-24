@@ -9,7 +9,7 @@
 
 #ifndef _FSBL_TEST_
 #   define OSID_KERNEL_PATH            L"\\vmlinuz"         
-#   define EFI_BOOT_FSBL_PATH          L"\\EFI\\BOOT\\FSBL.efi"
+#   define EFI_BOOT_FSBL_PATH          L"\\EFI\\BOOT\\bootx64.efi"
 #   define EFI_BOOT_SSBL_PATH          L"\\EFI\\BOOT\\SSBL.efi"
 #   define STR_FSBL_F_NAME             EFI_BOOT_FSBL_PATH
 #   define STR_SSBL_F_NAME             EFI_BOOT_SSBL_PATH
@@ -18,6 +18,7 @@
 #   define EFI_BOOT_FSBL_PATH          L"\\EFI\\BOOT\\FSBL.efi.bin"
 #   define EFI_BOOT_SSBL_PATH          L"\\EFI\\BOOT\\SSBL.efi.bin"
 #   define STR_FSBL_F_NAME             EFI_BOOT_FSBL_PATH
+#   define STR_SSBL_F_NAME             EFI_BOOT_SSBL_PATH
 #endif
 
 #define SBC_AT_IV_LEN               12

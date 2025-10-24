@@ -1358,6 +1358,237 @@ EFI_STATUS SBCGetDirFile(VOID)
 
 }
 
+SBCStatus SBC_RawAlignedWriteBlockIO(VOID *blk, UINTN off, UINTN sz, CONST VOID *buf)
+{
+    SBCStatus ret = SBCOK;
+    EFI_BLOCK_IO_PROTOCOL *io = (EFI_BLOCK_IO_PROTOCOL *)blk; 
+    UINT32 B;
+    UINTN total;
+    EFI_LBA lba;
+    EFI_STATUS retval;
+    UINTN cur;
+    UINT8 *p;
+    UINTN intra;
+
+
+    EFI_BLOCK_IO_MEDIA *m = io->Media;
+
+    if ( !m || !m->MediaPresent) {
+        eprint("EFI NO MEDIA");
+        ret = SBCIO;
+        goto errdone;
+    }
+
+    B = m->BlockSize;
+    total =(m->LastBlock + 1ULL) *  (UINT64)B;
+
+    //
+    // Check the Block IO device boundary
+    //
+    if (off > total || off + sz > total) {
+        eprint("Invalid Parameter");
+        ret = SBCINVPARAM;
+        goto errdone;
+    }
+
+    cur = off;
+    p = (UINT8 *)buf;
+
+    lba = cur / B;
+    intra = (UINTN)(cur % B);
+
+
+    //
+    // Head ( Partial Block )
+    //
+    if (intra) {
+        UINT8 *tmp = AllocatePool(B);
+        SBC_RET_VALIDATE_ERRCODEMSG((tmp != NULL), SBCNULLP, "Allocation Fail");
+
+        retval=  io->ReadBlocks(io, m->MediaId, lba, B, tmp);
+        if (EFI_ERROR(retval)) {
+            eprint("Read Block fail (%r)", retval);
+            FreePool(tmp);
+            return SBCIO;
+        }
+
+        UINTN c = MIN(sz, B - intra);
+        CopyMem(tmp + intra, p, c);
+
+        retval = io->WriteBlocks(io, m->MediaId, lba, B, tmp);
+        FreePool(tmp);
+        if (EFI_ERROR(retval)) {
+            return SBCIO;
+        }
+
+        p += c;
+        sz -= c;
+        cur += c;
+        lba++;
+    }
+
+    //
+    // Body ( pure write block )
+    //
+    while (sz >= B) {
+        retval = io->WriteBlocks(io, m->MediaId, lba, B, (VOID *)p);
+        if (EFI_ERROR(retval)) {
+            eprint("Write Blocks fail (%r)", retval);
+            return SBCIO;
+        }
+
+        p += B;
+        sz -= B;
+        cur += B;
+        lba++;
+    }
+
+    //
+    // remind blocks
+    //
+    if (sz) {
+        UINT8 *tmp = AllocatePool(B);
+        SBC_RET_VALIDATE_ERRCODEMSG((tmp != NULL), SBCNULLP, "Allocation Fail");
+
+        retval = io->ReadBlocks(io, m->MediaId, lba, B, tmp);
+        if (EFI_ERROR(retval)) {
+            FreePool(tmp);
+            return SBCIO;
+        }
+
+        CopyMem(tmp, p, sz);
+        retval = io->WriteBlocks(io, m->MediaId, lba, B, tmp);
+        FreePool(tmp);
+        if (EFI_ERROR(retval)) {
+            return SBCIO;
+        }
+    }
+
+
+    ret = SBCOK;
+
+
+
+
+
+errdone:
+    if (EFI_ERROR(retval)) {
+        sbc_err_sysprn(SBC_LOG_CMN_PRIO_NOTICE, 2, 
+                SYS_LOG_HOST_BOOT, 
+                SYS_LOG_APP_NAME, 
+                SYS_LOG_CSC_NAME, 
+                8, 
+                L"Detectrion ", 
+                L"SBC_SP_RAWPRT Failed to the Raw-partition read");
+    }
+    return ret;
+
+}
+
+SBCStatus SBC_RawAlignedReadBlockIO(VOID *blk, UINTN off, UINTN sz, VOID *buf)
+{
+
+    SBCStatus               ret = SBCOK;
+    EFI_STATUS              retval = EFI_SUCCESS;
+    EFI_BLOCK_IO_PROTOCOL  *io = (EFI_BLOCK_IO_PROTOCOL *)blk;
+    UINT32                  B = io->Media->BlockSize;
+    EFI_LBA                 lba = off / B;
+
+    UINTN                   o = (UINTN)(off % B);
+    UINT8                   *p = NULL;
+    UINT8                   *tmp = NULL;
+
+    //dprint("newer Offset : 0x%lx, LBA : %ld, O : %ld, Size : %ld", 
+    //       off, lba, o, sz);
+
+    if ( o == 0 && (sz % B) == 0) {
+        return io->ReadBlocks(io, io->Media->MediaId, lba, sz, buf);
+    }
+
+
+    // 
+    // Unaligned : read-modify-copy
+    //
+    p = buf;
+    tmp = AllocatePool(B);
+    SBC_RET_VALIDATE_ERRCODEMSG((tmp != NULL), SBCNULLP, "Out Of Resource");
+
+    // Head
+
+    if (o) {
+
+        //dprint("lba of head : %ld", lba);
+        retval = io->ReadBlocks(io, io->Media->MediaId, lba, B ,tmp);
+        if (EFI_ERROR(retval)) {
+            dprint("(Offset : %lx, %ld LBA read block fail (%r)", off, lba, retval);
+            ret = SBCIO;
+            goto errdone;
+        }
+        UINTN c = MIN(sz, B - o);
+        CopyMem(p, tmp + o, c);
+
+        //SBC_mem_print_bin("Head Read Buf", (UINT8 *)p, c);
+        p += c;
+        sz -= c;
+        lba++;
+
+        
+    }
+
+
+
+    // Body Copy
+    while (sz >= B) {
+
+        //dprint("lba of body : %ld", lba);
+        retval = io->ReadBlocks(io, io->Media->MediaId, lba, B, p);
+        if (EFI_ERROR(retval)) {
+            dprint("(Offset : %lx, %ld LBA read block fail (%r)", off, lba, retval);
+            ret = SBCIO;
+            goto errdone;
+        }
+
+        p += B;
+        sz -= B;
+        lba++;
+
+        //dprint("size of body : %ld", sz);
+    }
+
+    //
+    // tail
+    //
+    if (sz) {
+        //dprint("lba of tail : %ld", lba);
+        retval = io->ReadBlocks(io, io->Media->MediaId, lba, B, tmp);
+        if (EFI_ERROR(retval)) {
+            dprint("(Offset : %lx, %ld LBA read block fail (%r)", off, lba, retval);
+            ret = SBCIO;
+            goto errdone;
+        }
+        CopyMem(p, tmp, sz);
+        //SBC_mem_print_bin("Tail Read Buf", (UINT8 *)p, sz);
+    }
+
+errdone:
+
+    if (EFI_ERROR(retval)) {
+        sbc_err_sysprn(SBC_LOG_CMN_PRIO_NOTICE, 2, 
+                SYS_LOG_HOST_BOOT, 
+                SYS_LOG_APP_NAME, 
+                SYS_LOG_CSC_NAME, 
+                8, 
+                L"Detectrion ", 
+                L"SBC_SP_RAWPRT Failed to the Raw-partition read");
+    }
+    //SBC_mem_print_bin("Read Buf", (UINT8 *)buf, sz);
+    if (tmp) {
+        FreePool(tmp);
+    }
+    return ret;
+
+}
+
 VOID SBC_FileCtrlTestMain(VOID)
 {
     SBCStatus ret = SBCOK;

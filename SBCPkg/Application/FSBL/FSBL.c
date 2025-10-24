@@ -783,6 +783,15 @@ errdone:
 }
 
 
+static void factory_md_abnormal_boot_state(VOID *priv)
+{
+    boot_proc_t *p = (boot_proc_t *)priv;
+
+    SBC_BootKeyModeChange(BOOT_MODE_FACTORY, KEY_MODE_NORMAL, p->blkhnd);
+
+    return;
+}
+
 
 
 
@@ -816,6 +825,10 @@ UefiMain (
     unit_proc_t btproc;
 
     UINTN driver_load_ns = 0ULL;
+
+//  UINTN change_bm = BOOT_MODE_NORMAL;
+//  UINTN change_km = KEY_MODE_NORMAL;
+
 
 #ifdef _UNIT_TEST_ON_
     CHAR16 *varname = L"SBCBOOTORDER";
@@ -1161,6 +1174,7 @@ UefiMain (
                  L"SBC_SP_FW SSBL self-verify Fail");
             is_boot_status = FALSE;
             retval = EFI_INVALID_PARAMETER;
+            factory_md_abnormal_boot_state(&btproc);
             goto errdone;
       }
 
@@ -1182,6 +1196,8 @@ UefiMain (
 //                   8,
 //                   L"EVT",
 //                   L"Device ID verify fail ");
+
+              factory_md_abnormal_boot_state(&btproc);
               retval = EFI_INVALID_PARAMETER;
               is_boot_status = FALSE;
               goto errdone;
@@ -1191,6 +1207,7 @@ UefiMain (
       ret = SBC_BootModeFactory(h_blkio, ImageHandle);
       if (ret != SBCOK) {
           eprint("Factory Boot Fail");
+          factory_md_abnormal_boot_state(&btproc);
           retval = EFI_INVALID_PARAMETER;
           is_boot_status = FALSE;
           goto errdone;
