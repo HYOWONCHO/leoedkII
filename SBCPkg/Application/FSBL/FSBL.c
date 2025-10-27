@@ -787,7 +787,7 @@ static void factory_md_abnormal_boot_state(VOID *priv)
 {
     boot_proc_t *p = (boot_proc_t *)priv;
 
-    SBC_BootKeyModeChange(BOOT_MODE_FACTORY, KEY_MODE_NORMAL, p->blkhnd);
+    SBC_BootKeyModeChange(BOOT_MODE_FACTORY, KEY_MODE_NORMAL, (VOID *)p);
 
     return;
 }

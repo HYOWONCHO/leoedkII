@@ -3,6 +3,8 @@
 
 #include "SBC_Log.h"
 
+#define SBC_BOOT_DISCOVER_FROM_REOCVERY                         0x0001
+
 
 /**<! X_RET_VALIDATE_ERRCODE set errno and return error code*/
 #define SBC_RET_VALIDATE_ERRCODE( expr , errorcode )							\

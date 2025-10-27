@@ -1697,8 +1697,8 @@ SBCStatus SBC_RawAlignedReadBlockIO(VOID *blk, UINTN off, UINTN sz, VOID *buf)
     UINT8                   *p = NULL;
     UINT8                   *tmp = NULL;
 
-    //dprint("newer Offset : 0x%lx, LBA : %ld, O : %ld, Size : %ld", 
-    //       off, lba, o, sz);
+    dprint("newer Offset : 0x%lx, LBA : %ld, O : %ld, Size : %ld",
+           off, lba, o, sz);
 
     if ( o == 0 && (sz % B) == 0) {
         return io->ReadBlocks(io, io->Media->MediaId, lba, sz, buf);
@@ -1716,7 +1716,7 @@ SBCStatus SBC_RawAlignedReadBlockIO(VOID *blk, UINTN off, UINTN sz, VOID *buf)
 
     if (o) {
 
-        //dprint("lba of head : %ld", lba);
+        dprint("lba of head : %ld (0xlx)", lba, lba*512);
         retval = io->ReadBlocks(io, io->Media->MediaId, lba, B ,tmp);
         if (EFI_ERROR(retval)) {
             dprint("(Offset : %lx, %ld LBA read block fail (%r)", off, lba, retval);
@@ -1726,7 +1726,7 @@ SBCStatus SBC_RawAlignedReadBlockIO(VOID *blk, UINTN off, UINTN sz, VOID *buf)
         UINTN c = MIN(sz, B - o);
         CopyMem(p, tmp + o, c);
 
-        //SBC_mem_print_bin("Head Read Buf", (UINT8 *)p, c);
+        SBC_mem_print_bin("Head Read Buf", (UINT8 *)p, c);
         p += c;
         sz -= c;
         lba++;
@@ -1739,7 +1739,7 @@ SBCStatus SBC_RawAlignedReadBlockIO(VOID *blk, UINTN off, UINTN sz, VOID *buf)
     // Body Copy
     while (sz >= B) {
 
-        //dprint("lba of body : %ld", lba);
+        dprint("lba of body : %ld (0xlx)", lba, lba*512);
         retval = io->ReadBlocks(io, io->Media->MediaId, lba, B, p);
         if (EFI_ERROR(retval)) {
             dprint("(Offset : %lx, %ld LBA read block fail (%r)", off, lba, retval);
@@ -1747,18 +1747,24 @@ SBCStatus SBC_RawAlignedReadBlockIO(VOID *blk, UINTN off, UINTN sz, VOID *buf)
             goto errdone;
         }
 
+         SBC_mem_print_bin("Body Read Buf", (UINT8 *)p, sz);
+
         p += B;
         sz -= B;
         lba++;
 
-        //dprint("size of body : %ld", sz);
+        
+
+       
     }
+
+    dprint("size of body : %ld", sz);
 
     //
     // tail
     //
     if (sz) {
-        //dprint("lba of tail : %ld", lba);
+        dprint("lba of tail : %ld (0xlx)", lba, lba*512);
         retval = io->ReadBlocks(io, io->Media->MediaId, lba, B, tmp);
         if (EFI_ERROR(retval)) {
             dprint("(Offset : %lx, %ld LBA read block fail (%r)", off, lba, retval);
@@ -1766,7 +1772,7 @@ SBCStatus SBC_RawAlignedReadBlockIO(VOID *blk, UINTN off, UINTN sz, VOID *buf)
             goto errdone;
         }
         CopyMem(p, tmp, sz);
-        //SBC_mem_print_bin("Tail Read Buf", (UINT8 *)p, sz);
+        SBC_mem_print_bin("Tail Read Buf", (UINT8 *)p, sz);
     }
 
 errdone:

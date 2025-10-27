@@ -30,7 +30,7 @@ SBCStatus SBC_BootKeyModeChange(UINT32 newbm, UINT32 newkey, VOID *priv)
     hdr->keymode = newkey;
 
     if(bp->bm == BOOT_MODE_RECOVERY) {
-        hdr->rcvmode = 1;
+        hdr->rcvmode = SBC_BOOT_DISCOVER_FROM_REOCVERY;
     }
 
     //dprint();
