@@ -104,7 +104,10 @@ function setup_env()
 function package_build()
 {
 
-  shift 1
+  echo "p0"
+  #shift 1
+
+  echo "p1"
 
   #if [[ $# != 1 ]]; then
   #  echo " help : leo_build.sh --build-pkgX64 PackageName"
@@ -125,10 +128,14 @@ function package_build()
     exit
   fi
 
+  echo "p2"
   echo $pkg
 
+
+  echo "p3"
   build -p $pkg -t GCC5 -a X64 -b DEBUG -D DEBUG_ON_SERIAL_PORT=TRUE
 
+  echo "p4"
 
   #build -p $PackageName -t $Compiler -a $Architecture
 
@@ -251,7 +258,7 @@ while _getopts_long long p:m:x opt "$@"; do
       setup_env
       ;;
     build-pkgX64)
-        echo "build-pkgX64"
+      echo "build-pkgX64"
       build_flag="pkgx64"
       package_build
       #package_build
