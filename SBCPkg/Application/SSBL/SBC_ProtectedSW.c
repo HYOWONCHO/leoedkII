@@ -67,6 +67,8 @@ SBCStatus SBC_LoadSysFile(VOID *handle, UINTN offset, UINT8 *deckey, UINT8* data
                          (void *)deckey,
                          (void *)iv,
                          (void *)tag);
+
+
     if( SBC_AESGcmDecrypt(&aesctx) != SBCOK ) {
         eprint("System Partition Decrypt fail");
         ret = SBCFAIL;
@@ -468,6 +470,7 @@ SBCStatus SBC_RecryptoProtectedSW(VOID *handle, UINTN ofs,  UINT8* sw_secret_key
     aesbuf.buf = &buf[mvofs];
     mvofs += length;
 
+    SBC_mem_print_bin("aes encrypt buf", (UINT8 *)aesbuf.buf, 512);
     aesbuf.iv = &buf[mvofs];
     mvofs += SBC_AT_RP_IV_LEN;
 
@@ -502,13 +505,29 @@ SBCStatus SBC_RecryptoProtectedSW(VOID *handle, UINTN ofs,  UINT8* sw_secret_key
     decctx.out.value = (void *)dec_mem;
     decctx.out.length = decctx.msg.length;
 
-    SBC_AESGcmSetContext(&aesctx, sw_mig_key, aesbuf.iv, aesbuf.tag);
+    aesctx.gcm = &decctx;
+    aesctx.algoid = SBC_CIPHER_AES_GCM;
+
+    SBC_AESGcmSetContext(aesctx.gcm, sw_mig_key, aesbuf.iv, aesbuf.tag);
+
+//  SBC_external_mem_print_bin("SBC_RecryptoProtectedSW Dec Key",
+//                           (UINT8 *)aesctx.gcm->key.value,
+//                           aesctx.gcm->key.length);
+
+
+
     ret = SBC_AESGcmDecrypt(&aesctx);
 
-    SBC_RET_VALIDATE_ERRCODEMSG(!(ret != SBCOK), ret, "Failed to decrypt"
+    dprint("ret : %d \n", ret);
+
+    SBC_RET_VALIDATE_ERRCODEMSG(!(ret != SBCOK), ret,   "Failed to decrypt"
                                 "the Prot SW using MigKey");
 
 
+
+    SBC_external_mem_print_bin("Protected SW Dec Buf", 
+                               (UINT8 *)decctx.out.value,
+                               512);
 
     //
     // TODO : Re-encrypt
@@ -520,7 +539,10 @@ SBCStatus SBC_RecryptoProtectedSW(VOID *handle, UINTN ofs,  UINT8* sw_secret_key
     encctx.out.value = (void *)enc_mem;
     encctx.out.length = encctx.msg.length;
 
-    SBC_AESGcmSetContext(&aesctx, sw_secret_key, aesbuf.iv, aesbuf.tag);
+    aesctx.gcm = &encctx;
+    aesctx.algoid = SBC_CIPHER_AES_GCM;
+
+    SBC_AESGcmSetContext(aesctx.gcm, sw_secret_key, aesbuf.iv, aesbuf.tag);
     ret = SBC_AESGcmEncrypt(&aesctx);
     SBC_RET_VALIDATE_ERRCODEMSG(!(ret != SBCOK), ret, "Failed to encrypt"
                                 "the Prot SW using Security Key");
@@ -528,6 +550,10 @@ SBCStatus SBC_RecryptoProtectedSW(VOID *handle, UINTN ofs,  UINT8* sw_secret_key
     //
     // Re-write the protected SW
     //
+
+    SBC_external_mem_print_bin("Protected SW Enc Buf", 
+                           (UINT8 *)encctx.out.value,
+                           512);
 
     // Write the Encrypt Data 
     

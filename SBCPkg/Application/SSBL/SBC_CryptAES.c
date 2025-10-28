@@ -167,6 +167,19 @@ SBCStatus SBC_AESGcmDecrypt(SBC_AESContext *ctx)
 
   gcm = ctx->gcm;
 
+  SBC_external_mem_print_bin("GCM Dec Key",
+                             (UINT8 *)gcm->key.value,
+                             gcm->key.length);
+
+  SBC_external_mem_print_bin("GCM IV Key",
+                       (UINT8 *)gcm->iv.value,
+                       gcm->iv.length);
+
+  SBC_external_mem_print_bin("GCM TAG Key",
+                       (UINT8 *)gcm->tag.value,
+                       gcm->tag.length);
+
+
   if(AeadAesGcmDecrypt(gcm->key.value, gcm->key.length,
                        gcm->iv.value, gcm->iv.length,
                        gcm->aad.value, gcm->aad.length,
