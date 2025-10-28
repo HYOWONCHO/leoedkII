@@ -7,6 +7,7 @@
 #include "SBC_BootProc.h"
 #include "SBC_AntiTampering.h"
 #include "SBC_CryptAES.h"
+#include "SBC_Hashing.h"
 
 #include "SBC_Config.h"
 
@@ -486,6 +487,13 @@ SBCStatus SBC_RecryptoProtectedSW(VOID *handle, UINTN ofs,  UINT8* sw_secret_key
     dprint("Key info ");
     SBC_mem_print_bin("Migration Key", sw_mig_key, 32);
     SBC_mem_print_bin("Security Key", sw_secret_key, 32);
+
+    {
+        UINT8 hash_check[32] = {0, };
+        SBC_HashCompute(NULL, (UINT8 *)aesbuf.buf, length, hash_check);
+
+        SBC_mem_print_bin("Protected SW Hash", hash_check, 32);
+    }
 
     //
     // Allocate the Encrypt and Decrypt memory 
