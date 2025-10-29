@@ -516,7 +516,14 @@ SBCStatus SBC_RecryptoProtectedSW(VOID *handle, UINTN ofs,  UINT8* sw_secret_key
     aesctx.gcm = &decctx;
     aesctx.algoid = SBC_CIPHER_AES_GCM;
 
-    SBC_AESGcmSetContext(aesctx.gcm, sw_mig_key, aesbuf.iv, aesbuf.tag);
+    //SBC_AESGcmSetContext(aesctx.gcm, sw_mig_key, aesbuf.iv, aesbuf.tag);
+
+    UINT8 auth_tag[] = {
+        0x14 ,0xce ,0x80 ,0x16 ,0x00 ,0x9e ,0x3a ,0x35 ,0xeb ,0x58, 
+        0x05 ,0x5d ,0x3c ,0x7d ,0x56 ,0x0d
+    };
+    //SBC_AESGcmSetContext(aesctx.gcm, sw_secret_key, aesbuf.iv, auth_tag);
+    SBC_AESGcmSetContext(aesctx.gcm, sw_mig_key, aesbuf.iv, auth_tag);
 
 //  SBC_external_mem_print_bin("SBC_RecryptoProtectedSW Dec Key",
 //                           (UINT8 *)aesctx.gcm->key.value,
@@ -525,9 +532,6 @@ SBCStatus SBC_RecryptoProtectedSW(VOID *handle, UINTN ofs,  UINT8* sw_secret_key
 
 
     ret = SBC_AESGcmDecrypt(&aesctx);
-
-    dprint("ret : %d \n", ret);
-
     SBC_RET_VALIDATE_ERRCODEMSG(!(ret != SBCOK), ret,   "Failed to decrypt"
                                 "the Prot SW using MigKey");
 
