@@ -843,7 +843,7 @@ uc_errdone:
         if (ret == SBCOK) {
             SBC_BuildHexFormattedMessage(
                 (CONST VOID *)diceid.migid, 32,
-                L"SBC_BootFW_Update Migration Key  (%s)\n",
+                L"SBC_BootFW_Recovery Migration Key  (%s)\n",
                 mrgmsg, sizeof mrgmsg);
 
             sbc_err_sysprn(SBC_LOG_CMN_PRIO_INFO, 2,

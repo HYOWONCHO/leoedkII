@@ -443,6 +443,7 @@ SBCStatus SBC_RecryptoProtectedSW(VOID *handle, UINTN ofs,  UINT8* sw_secret_key
     SBC_AESGcmCtx   encctx;
     SBC_AESContext  aesctx;
     UINT8 *buf = NULL;
+    //UINT8 *buf = NULL;
 
     SBC_RET_VALIDATE_ERRCODEMSG((handle != NULL), SBCNULLP, "Handle Object NULL");
     SBC_RET_VALIDATE_ERRCODEMSG((sw_secret_key != NULL), SBCNULLP, "Handle Object NULL");

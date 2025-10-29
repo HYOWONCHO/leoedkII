@@ -211,7 +211,7 @@ static SBCStatus _proetcted_sw_re_enc_dec(VOID *handle)
                           SBC_AT_RP_KEY_LEN,
                           deckey);
     SBC_RET_VALIDATE_ERRCODEMSG(!(ret != SBCOK), ret, 
-                                "Failed to Dec secret key creation");
+                                "Failed to Dec secret key Screation");
 
     ret = SBC_HashCompute(NULL, 
                           ((atp_ident_t *)bp->keyinfo)->osid,
@@ -694,21 +694,20 @@ void SBC_RecoveryBootProcessing(VOID *priv)
     // Boot Mode is change from Recovery to Factory
     // Than, Key mode is Boot
     if(bt_proc->bootst == SB_PROC_ST_ABNRAM) {
-        SBC_BootKeyModeChange(BOOT_MODE_FACTORY, KEY_MODE_BOOT, priv);
+        SBC_BootKeyModeChange(BOOT_MODE_FACTORY, bt_proc->km, priv);
         SBC_RebootSystem();
         return;
     }
 
-
-    if(_check_prev_fw(bt_proc->pvs_sw_bnk) != TRUE) {
-        SBC_BootKeyModeChange(BOOT_MODE_FACTORY, KEY_MODE_BOOT, priv);
-        SBC_RebootSystem();
-        return;
-//      eprint("Previously Boot Firmware not existense");
-//      // System Shutdown
-//      goto errdone;
-       
-    }
+//    if(_check_prev_fw(bt_proc->pvs_sw_bnk) != TRUE) {
+//        SBC_BootKeyModeChange(BOOT_MODE_FACTORY, KEY_MODE_BOOT, priv);
+//        SBC_RebootSystem();
+//        return;
+////      eprint("Previously Boot Firmware not existense");
+////      // System Shutdown
+////      goto errdone;
+//
+//    }
 
 
     // Create the OSID
@@ -718,25 +717,6 @@ void SBC_RecoveryBootProcessing(VOID *priv)
     // B. Decrypt the BaseAnswer using Migration Key
     // C. Re-encrypt the decrypted baseanswer using OSID
     // D. Re-write the baseanswer in System Setting block of Block IO
-
-
-
-
-#ifdef SAT_PROT_SW_ENABLE
-    // Create the secret key
-    ret = SBC_HashCompute(NULL, p->osid, BASE_ANS_KEY_STR, sk);
-    SBC_RET_VALIDATE_ERRCODEMSG((ret == SBCOK), ret, "Secret key create fail");
-
-    // Load protected SW  List
-    ret = SBC_LoadSystemSetting(bt_proc->blkhnd, (VOID *)&sysconf);
-    SBC_RET_VALIDATE_ERRCODEMSG((ret == SBCOK),
-                                ret,
-                                "Load System Setting repository fail");
-
-    CopyMem((void *)&auth_list, 
-            (void *)&((UINT8 *)sysconf.value)[SYS_CONF_SW_LIST_OFS],
-            sizeof auth_list);
-#endif
 
     switch(bt_proc->bootst) {
     case SB_PROC_ST_NRMA:
@@ -795,6 +775,15 @@ void SBC_RecoveryBootProcessing(VOID *priv)
                 goto errdone;
             }
 
+            ret = _proetcted_sw_re_enc_dec((VOID *)bt_proc);
+            if(ret != SBCOK) {
+                //
+                // Abnromal state added at 20251021
+                //
+                bt_proc->bootst = SB_PROC_ST_ABNRAM;
+                SBC_BootKeyModeChange(BOOT_MODE_FACTORY, KEY_MODE_UPDATE, priv);
+                goto errdone;
+            }
 
 
             ret = SBC_BootKeyModeChange(BOOT_MODE_NORMAL, KEY_MODE_NORMAL, priv);
