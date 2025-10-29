@@ -226,6 +226,7 @@ static SBCStatus _proetcted_sw_re_enc_dec(VOID *handle)
                             enckey,
                             deckey,
                             NULL, NULL);
+
     SBC_RET_VALIDATE_ERRCODEMSG(!(ret != SBCOK),
                                 ret,
                                 "Failed to Re-crypto");

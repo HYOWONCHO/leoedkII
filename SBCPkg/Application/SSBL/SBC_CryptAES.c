@@ -155,6 +155,19 @@ SBCStatus SBC_AESGcmEncrypt(SBC_AESContext *ctx)
     return SBCENCFAIL;
   }
 
+  SBC_BuildHexFormattedMessage(
+        (CONST VOID *)gcm->key.value, gcm->key.length,
+        L"SBC_SP_GcmEncrypt Done (Key - %s)\n",
+        mrgmsg, sizeof mrgmsg);
+
+  sbc_err_sysprn(SBC_LOG_CMN_PRIO_ERR, 2,
+         SYS_LOG_HOST_BOOT,
+         SYS_LOG_APP_NAME,
+         SYS_LOG_CSC_NAME,
+         1,
+         L"Information",
+         mrgmsg);
+
   //SBC_external_mem_print_bin("GCM enc result", gcm->out.value, gcm->out.length);
 
   return SBCOK;
@@ -201,6 +214,20 @@ SBCStatus SBC_AESGcmDecrypt(SBC_AESContext *ctx)
                  mrgmsg);
     return SBCENCFAIL;
   }
+
+
+  SBC_BuildHexFormattedMessage(
+        (CONST VOID *)gcm->key.value, gcm->key.length,
+        L"SBC_SP_GcmDecrypt Done (Key - %s)\n",
+        mrgmsg, sizeof mrgmsg);
+
+  sbc_err_sysprn(SBC_LOG_CMN_PRIO_ERR, 2,
+         SYS_LOG_HOST_BOOT,
+         SYS_LOG_APP_NAME,
+         SYS_LOG_CSC_NAME,
+         1,
+         L"Information",
+         mrgmsg);
 
   return SBCOK;
 

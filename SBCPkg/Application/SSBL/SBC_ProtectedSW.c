@@ -390,8 +390,6 @@ SBCStatus SBC_ReadProtectedSwSlotOffset(VOID *handle, UINTN *check, CHAR8 *sw_na
     dprint("sw0_off=%lx\n", node.sw0_off);
     dprint("sw1_off=%lx\n", node.sw1_off);
 
-    
-
     if (slot == AT_RP_SW_NODE_SLOT0 && node.sw0 == 1) {
         *check = 1;
         *offset = node.sw0_off;
@@ -403,7 +401,7 @@ SBCStatus SBC_ReadProtectedSwSlotOffset(VOID *handle, UINTN *check, CHAR8 *sw_na
         goto errdone;
     }
 
-    ret = SBCFAIL;
+    //ret = SBCFAIL;
 
 errdone:
 
