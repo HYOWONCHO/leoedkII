@@ -1758,7 +1758,7 @@ SBCStatus SBC_RawAlignedReadBlockIO(VOID *blk, UINTN off, UINTN sz, VOID *buf)
        
     }
 
-    dprint("size of body : %ld", sz);
+    //dprint("size of body : %ld", sz);
 
     //
     // tail

@@ -392,7 +392,7 @@ SBCStatus SBC_ReadProtectedSwSlotOffset(VOID *handle, UINTN *check, CHAR8 *sw_na
 
     
 
-    if (slot == AT_RP_SW_NODE_SLOT0 || node.sw0 == 1) {
+    if (slot == AT_RP_SW_NODE_SLOT0 && node.sw0 == 1) {
         *check = 1;
         *offset = node.sw0_off;
         goto errdone;
@@ -518,12 +518,12 @@ SBCStatus SBC_RecryptoProtectedSW(VOID *handle, UINTN ofs,  UINT8* sw_secret_key
 
     //SBC_AESGcmSetContext(aesctx.gcm, sw_mig_key, aesbuf.iv, aesbuf.tag);
 
-    UINT8 auth_tag[] = {
-        0x14 ,0xce ,0x80 ,0x16 ,0x00 ,0x9e ,0x3a ,0x35 ,0xeb ,0x58, 
-        0x05 ,0x5d ,0x3c ,0x7d ,0x56 ,0x0d
-    };
-    //SBC_AESGcmSetContext(aesctx.gcm, sw_secret_key, aesbuf.iv, auth_tag);
-    SBC_AESGcmSetContext(aesctx.gcm, sw_mig_key, aesbuf.iv, auth_tag);
+//  UINT8 auth_tag[] = {
+//      0x14 ,0xce ,0x80 ,0x16 ,0x00 ,0x9e ,0x3a ,0x35 ,0xeb ,0x58,
+//      0x05 ,0x5d ,0x3c ,0x7d ,0x56 ,0x0d
+//  };
+//  SBC_AESGcmSetContext(aesctx.gcm, sw_secret_key, aesbuf.iv, auth_tag);
+    SBC_AESGcmSetContext(aesctx.gcm, sw_mig_key, aesbuf.iv, aesbuf.tag);
 
 //  SBC_external_mem_print_bin("SBC_RecryptoProtectedSW Dec Key",
 //                           (UINT8 *)aesctx.gcm->key.value,
@@ -636,7 +636,8 @@ SBCStatus SBC_ProtSWDecrypt(VOID *handle, UINT8 *key, UINT8 *migkey, UINT8 *decb
         ret = SBC_GetProtectedSwName(handle, x, sw_name,  sizeof(sw_name));
         SBC_RET_VALIDATE_ERRCODEMSG(!(ret != SBCOK), ret, "Protected SW Name obtain fail");
 
-        // Software Slot 1
+        // Software Slot 0
+        dprint("Read Protected Sw Slot 0 Offset ");
         ret = SBC_ReadProtectedSwSlotOffset(handle,
                                             &check,
                                             sw_name,
@@ -651,7 +652,11 @@ SBCStatus SBC_ProtSWDecrypt(VOID *handle, UINT8 *key, UINT8 *migkey, UINT8 *decb
             SBC_RET_VALIDATE_ERRCODEMSG(!(ret != SBCOK), ret, "Failed to Re-crypto for Software Slot 1");
         }
 
-        // Software Slot 2
+        sw_off = 0ULL;
+        check = 0ULL;
+
+        // Software Slot 1
+        dprint("Read Protected Sw Slot 1 Offset ");
         ret = SBC_ReadProtectedSwSlotOffset(handle,
                                             &check,
                                             sw_name,
