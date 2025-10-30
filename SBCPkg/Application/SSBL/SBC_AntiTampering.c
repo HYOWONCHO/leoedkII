@@ -47,6 +47,83 @@ typedef struct {
 } NVME_CONTROLLER_DATA;
 #pragma pack()
 
+SBCStatus _find_kernel_path(CHAR16 *fname)
+{
+
+    //UINT8 errmsg[512] = {0, };
+    SBCStatus ret = SBCOK;
+    UINTN               len_of_kernel = 0;
+    UINTN               hndlcnt;
+    EFI_HANDLE          *hndl;
+    UINTN               idx;
+    LV_t lv;
+    EFI_STATUS          Status;
+    CHAR8   *ascii_str;
+    UINTN x;
+
+    SBC_RET_VALIDATE_ERRCODEMSG((fname != NULL), SBCNULLP, "Object point to NILL");
+
+    ret = SBC_GetFileSize( KERNEL_DIR_FILE, &len_of_kernel);
+    SBC_RET_VALIDATE_ERRCODEMSG((ret == SBCOK), ret, "File Not Found");
+
+    hndlcnt = SBC_FindEfiFileSystemProtocol(&hndl);
+    if (hndlcnt <= 0) {
+        eprint("File System Handle find fail : %d", hndlcnt);
+        return SBCFAIL;
+    }
+
+    for (idx = 0; idx < hndlcnt; idx++) {
+        Status = SBC_IsFlieAccess(hndl[idx], KERNEL_DIR_FILE);
+        if (EFI_ERROR(Status)) {
+            continue;
+        }
+
+        break;
+    }
+
+    if (EFI_ERROR(Status)) {
+        eprint("%s  : %r", KERNEL_DIR_FILE, Status);
+        return SBCFAIL;
+    }
+
+    lv.value = AllocateZeroPool(len_of_kernel);
+    lv.length = len_of_kernel;
+    dprint("%s size %d", KERNEL_DIR_FILE, lv.length);
+    SBC_RET_VALIDATE_ERRCODEMSG((lv.value != NULL), SBCNULLP, "Out of Memory");
+
+    Status = SBC_ReadFile(hndl[idx], KERNEL_DIR_FILE, &lv);
+    if (EFI_ERROR(Status)) {
+        eprint("%s file read fail with %r", KERNEL_DIR_FILE, Status);
+        ret = SBCNOTFND;
+        goto errdone;
+    }
+
+    //AsciiStrToUnicodeStr(lv.value, fname);
+    //CopyMem((void *)fname, (const void *)lv.value, lv.length);
+    //fname[lv.length] = '\0';
+
+    // File name convert from Ascii to Unicode string 
+    ascii_str = (CHAR8 *)lv.value;
+    SBC_mem_print_bin("Kernel Path", (UINT8 *)lv.value, lv.length );
+    dprint("kernel name : %a", lv.value);
+    //ascii_str[lv.length] = '\0';
+    for ( x = 0;x < lv.length /* ascii_str[x] != '\0' */; x++) {
+        fname[x] = (CHAR16)ascii_str[x];
+    }
+
+    fname[x] = L'\0';
+
+errdone:
+
+    if (lv.value != NULL) {
+        FreePool(lv.value);
+        lv.value = NULL;
+    }
+
+    return ret;
+
+}
+
 SBCStatus _kernel_image_load(EFI_HANDLE ImageHandle, LV_t *lv)
 {
     SBCStatus           ret = SBCOK;
@@ -55,10 +132,14 @@ SBCStatus _kernel_image_load(EFI_HANDLE ImageHandle, LV_t *lv)
     UINTN               hndlcnt;
     UINTN               idx;
     EFI_HANDLE          *hndl;
+    CHAR16 kernel_name[512] = {
+        [0 ... 511] = 0
+    };
 
 
+    _find_kernel_path(kernel_name);
     //dprint();
-    ret = SBC_GetFileSize( OSID_KERNEL_PATH, &len_of_kernel);
+    ret = SBC_GetFileSize( kernel_name, &len_of_kernel);
     SBC_RET_VALIDATE_ERRCODEMSG((ret == SBCOK), ret, "File Not Found");
     //dprint();
     hndlcnt = SBC_FindEfiFileSystemProtocol(&hndl);
@@ -68,7 +149,7 @@ SBCStatus _kernel_image_load(EFI_HANDLE ImageHandle, LV_t *lv)
     }
     //dprint();
     for (idx = 0; idx < hndlcnt; idx++) {
-      Status = SBC_IsFlieAccess(hndl[idx], OSID_KERNEL_PATH);
+      Status = SBC_IsFlieAccess(hndl[idx], kernel_name);
       if (EFI_ERROR(Status)) {
         continue;
       }
@@ -78,21 +159,21 @@ SBCStatus _kernel_image_load(EFI_HANDLE ImageHandle, LV_t *lv)
     //dprint();
 
     if (EFI_ERROR(Status)) {
-        eprint("%s  : %r", OSID_KERNEL_PATH, Status);
+        eprint("%s  : %r", kernel_name, Status);
         return SBCFAIL;
     }
 
     //dprint();
     lv->value = AllocateZeroPool(len_of_kernel);
     lv->length = len_of_kernel;
-    dprint("%s size %d", OSID_KERNEL_PATH, lv->length);
+    dprint("%s size %d", kernel_name, lv->length);
     SBC_RET_VALIDATE_ERRCODEMSG((lv->value != NULL), SBCNULLP, "Out of Memory");
 
     //dprint();
 
-    Status = SBC_ReadFile(hndl[idx], OSID_KERNEL_PATH, lv);
+    Status = SBC_ReadFile(hndl[idx], kernel_name, lv);
     if (EFI_ERROR(Status)) {
-      eprint("%s file read fail with %r", OSID_KERNEL_PATH, Status);
+      eprint("%s file read fail with %r", kernel_name, Status);
       ret = SBCNOTFND;
       goto errdone;
     }

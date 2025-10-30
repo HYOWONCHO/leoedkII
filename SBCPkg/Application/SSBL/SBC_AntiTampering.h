@@ -2,6 +2,7 @@
 #define _SBC_ANTITAMPERING_
 
 
+#define KERNEL_DIR_FILE                L"\\EFI\\BOOT\\kernel_path.txt"
 
 #ifndef _SSBL_TEST_
 #   define OSID_KERNEL_PATH            L"\\vmlinuz"         

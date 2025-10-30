@@ -492,7 +492,25 @@ UefiMain (
 
     //dprint("Chaeck Boot Mode read from BlkIO is %d", h_rawptrheader.bootmode);
 
+#if 0
+    extern SBCStatus _find_kernel_path(CHAR16 *fname);
 
+    CHAR16 kernel_name[512] = {
+        [0 ... 511] = 0
+    };
+
+    _find_kernel_path(kernel_name);
+
+    SBC_mem_print_bin("Kernel Path", (UINT8 *)kernel_name, 64);
+    dprint("kernel name : %s", kernel_name);
+
+
+
+
+
+
+    return EFI_SUCCESS;
+#endif
 #if 0 //def _USECASE_TEST_
 
     {
