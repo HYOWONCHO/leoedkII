@@ -1,3 +1,27 @@
+/********************************************************************************
+ * Copyright (C) 2024 by Security Platform Inc.                                 *
+ * This file is part of the Project.                                            *
+ *                                                                              *
+ * This software contains confidential and proprietary information of           *
+ * Security Platform Inc. Unauthorized reproduction, distribution, or           *
+ * disclosure of this software, in whole or in part, is strictly prohibited.    *
+ ********************************************************************************/
+
+/**
+ * @file SBC_FileCtrl.c
+ * @brief Data is write and read from/to the specified File or
+ *        in SBC Raw-partition
+ *
+ * @author LEON
+ * @version 1.0
+ * @date 2025-10-31
+ *
+ * @copyright (c) 2025 Security Platform Inc. All rights
+ *            reserved.
+ *
+ * @details
+ */
+
 #include <Uefi.h>
 #include <Library/UefiBootServicesTableLib.h>
 #include <Library/UefiRuntimeServicesTableLib.h>
@@ -57,10 +81,12 @@ errdone:
 
 SBCStatus  SBC_FindFileBufHndl(UINT16 *f_path, UINTN *hndlcnt, VOID **hndl)
 {
-    EFI_STATUS  retval = EFI_SUCCESS;
+    
     SBCStatus   ret = SBCOK;
-    UINTN       idx = 0;
 
+#if 0
+    EFI_STATUS  retval = EFI_SUCCESS;
+    UINTN       idx = 0;
     SBC_RET_VALIDATE_ERRCODEMSG((f_path != NULL), SBCNULLP, "File Path obj Nill");
     SBC_RET_VALIDATE_ERRCODEMSG((*hndl != NULL), SBCNULLP, "Handle Obj Nill");
 
@@ -79,7 +105,24 @@ SBCStatus  SBC_FindFileBufHndl(UINT16 *f_path, UINTN *hndlcnt, VOID **hndl)
     }
 
     *hndlcnt = idx;
+#else
+    if (f_path == NULL) {
+        SBC_RET_VALIDATE_ERRCODEMSG(FALSE, SBCNULLP, "File Path obj Nill");
+    }
 
+    if (hndl == NULL || *hndl == NULL) {
+        SBC_RET_VALIDATE_ERRCODEMSG(FALSE, SBCNULLP, "Handle Obj Nill");
+    }
+
+    for (UINTN idx = 0; idx < *hndlcnt; idx++) {
+        if (!EFI_ERROR(SBC_IsFlieAccess(hndl[idx], f_path))) {
+            *hndlcnt = idx;
+            return SBCOK;
+        }
+    }
+
+    return SBCNOTFND;
+#endif
 errdone:
     return ret;
 
@@ -486,6 +529,7 @@ BOOLEAN SBC_IsDirExist(EFI_HANDLE ImageHandle, CHAR16 *DirectoryName)
 
 EFI_STATUS SBC_LogWriteFile(EFI_HANDLE ImageHandle, CHAR16 *FileNames, LV_t *out)
 {
+#if 0
   EFI_STATUS Status;
   //SBCStatus ret = SBCOK;
   EFI_SIMPLE_FILE_SYSTEM_PROTOCOL *FileSystem;
@@ -547,7 +591,56 @@ EFI_STATUS SBC_LogWriteFile(EFI_HANDLE ImageHandle, CHAR16 *FileNames, LV_t *out
   RootDir->Close(RootDir);
 
   return Status;
+#else
+    EFI_STATUS Status;
+    EFI_SIMPLE_FILE_SYSTEM_PROTOCOL *FileSystem;
+    EFI_FILE_PROTOCOL *RootDir = NULL, *File = NULL;
 
+    if (out == NULL || out->value == NULL || out->length == 0) {
+        DEBUG((DEBUG_ERROR, "%a:%d Invalid output buffer\n", __FUNCTION__, __LINE__));
+        return EFI_INVALID_PARAMETER;
+    }
+
+    // Locate file system
+    Status = gBS->HandleProtocol(ImageHandle,
+                                 &gEfiSimpleFileSystemProtocolGuid,
+                                 (VOID **)&FileSystem);
+    if (EFI_ERROR(Status)) {
+        DEBUG((DEBUG_ERROR, "%a:%d Locate File System failed (%r)\n", __FUNCTION__, __LINE__, Status));
+        return Status;
+    }
+
+    // Open root directory
+    Status = FileSystem->OpenVolume(FileSystem, &RootDir);
+    if (EFI_ERROR(Status)) {
+        DEBUG((DEBUG_ERROR, "%a:%d OpenVolume failed (%r)\n", __FUNCTION__, __LINE__, Status));
+        return Status;
+    }
+
+    // Open or create the file
+    Status = RootDir->Open(RootDir, &File, FileNames,
+                           EFI_FILE_MODE_READ | EFI_FILE_MODE_WRITE, 0);
+    if (EFI_ERROR(Status)) {
+        DEBUG((DEBUG_ERROR, "%a:%d File open failed (%r)\n", __FUNCTION__, __LINE__, Status));
+        RootDir->Close(RootDir);
+        return Status;
+    }
+
+    // Move to end of file
+    File->SetPosition(File, (UINT64)-1);
+
+    // Write data
+    Status = File->Write(File, (UINTN *)&out->length, out->value);
+    if (EFI_ERROR(Status)) {
+        DEBUG((DEBUG_ERROR, "%a:%d File write failed (%r)\n", __FUNCTION__, __LINE__, Status));
+    }
+
+    // Cleanup
+    if (File) File->Close(File);
+    if (RootDir) RootDir->Close(RootDir);
+
+    return Status;
+#endif
 
 }
 
@@ -1863,7 +1956,7 @@ errdone:
     return ret;
 }
 
-SBCStatus SBC_LoadRawPrt(VOID *handle, 
+SBCStatus SBC_ProtSwLoadRawPrt(VOID *handle, 
                          UINT8 *shared_secret, 
                          UINT8 *decbuf, 
                          UINTN *rdlen, 

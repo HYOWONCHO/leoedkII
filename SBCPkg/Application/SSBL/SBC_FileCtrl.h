@@ -1,3 +1,12 @@
+/********************************************************************************
+ * Copyright (C) 2024 by Security Platform Inc.                                 *
+ * This file is part of the Project.                                            *
+ *                                                                              *
+ * This software contains confidential and proprietary information of           *
+ * Security Platform Inc. Unauthorized reproduction, distribution, or           *
+ * disclosure of this software, in whole or in part, is strictly prohibited.    *
+ ********************************************************************************/
+
 #ifndef SBC_FILECTRL_H
 #define SBC_FILECTRL_H
 
@@ -10,28 +19,42 @@
 #define BOOT_MODE_STRUPDATE     "update"
 #define BOOT_MODE_STRFACTORY    "factory"
 
+
+
+/**
+ * @enum boot_mode_t
+ * @brief Defines the various boot modes supported by the system.
+ */
 typedef enum _t_boot_mode {
-    BOOT_MODE_NONE      = 0,
-    BOOT_MODE_NORMAL,                     /// Normal Boot Mode
-    BOOT_MODE_UPDATE,                     /// Image update
-    BOOT_MODE_RECOVERY,
-    BOOT_MODE_FACTORY,                    /// Factory mode boot 
-    BOOT_MODE_UNKNOWN 
-}boot_mode_t;
-
+    BOOT_MODE_NONE      = 0,  /**< No boot mode specified. */
+    BOOT_MODE_NORMAL,         /**< Normal boot mode. */
+    BOOT_MODE_UPDATE,         /**< Firmware image update mode. */
+    BOOT_MODE_RECOVERY,       /**< Recovery mode boot. */
+    BOOT_MODE_FACTORY,        /**< Factory mode boot. */
+    BOOT_MODE_UNKNOWN         /**< Unknown or unsupported boot mode. */
+} boot_mode_t;
+/**
+ * @enum key_mode_t
+ * @brief Defines the key handling mode used during secure boot or update.
+ */
 typedef enum _t_key_mode {
-    KEY_MODE_NONE = 0,
-    KEY_MODE_NORMAL, 
-    KEY_MODE_BOOT,
-    KEY_MODE_UPDATE,
-    KEY_MODE_UNKNOWN
-}key_mode_t;
+    KEY_MODE_NONE = 0,    /**< No key mode specified. */
+    KEY_MODE_NORMAL,      /**< Normal key usage mode. */
+    KEY_MODE_BOOT,        /**< Key used during boot-time validation. */
+    KEY_MODE_UPDATE,      /**< Key used during firmware update. */
+    KEY_MODE_UNKNOWN      /**< Unknown or unsupported key mode. */
+} key_mode_t;
 
+#pragma pack(push, 1)
+/**
+ * @struct bm_lookup_table_t
+ * @brief Represents a key-value mapping used for boot mode or key mode lookup.
+ */
 typedef struct _t_bm_lookup_table {
-    CHAR8 *key;
-    UINT32 val;
-}bm_lookup_table_t;
-
+    CHAR8 *key;     /**< String key representing the mode or identifier. */
+    UINT32 val;     /**< Numeric value associated with the key. */
+} bm_lookup_table_t;
+#pragma pack(pop)
 
 
 #define SBC_RAWPRT_DFLT_SHIFT                       0x9
@@ -73,8 +96,9 @@ typedef struct _t_bm_lookup_table {
 #define SBC_KEY_MODE_LEN                    2
 #define SBC_RECOVERY_LEN                    2
 
-#pragma pack(1)
+#pragma pack(push, 1)
 /*!
+    \struct rawprt_hdr_t
     \brief Raw Partition Header  structure
 */
 typedef struct _rawprt_hdr_t {
@@ -88,7 +112,7 @@ typedef struct _rawprt_hdr_t {
     UINT8       bootpres_reserv[SBC_BOOT_PRES_LEN];    /**< Boot pres */
 }rawprt_hdr_t;
 
-#pragma pack()
+#pragma pack(pop)
 
 #define BOOT_BLKIO_DFTSZ                    0x00000200
 
@@ -294,10 +318,15 @@ UINTN  SBC_FileSysFindHndl(EFI_HANDLE *handle);
  *                                                                                                           
  * \author leoc (5/21/25)                                                                                    
  *                                                                                                           
- * \param h                                                                                                  
- * \param fname                                                                                              
+ * \param h       EFI image handle used to locate the file
+   system.
+ * \param fname   Pointer to the UTF-16 string representing the
+   file name to create.
  *                                                                                                           
- * \return SBCStatus                                                                                         
+ * \return SBCStatus
+ *         - SBCOK: File was successfully created.
+ *         - SBCNULLP: Null pointer input detected.
+ *         - SBCFAIL: File creation failed due to I/O or protocol error.                                                                                        
  * \note                                                                                                     
  *  MUST call the SBC_FileSysFindHndl to obtain a FileProtocolHandle before using this function              
  */                                                                                                          
@@ -356,25 +385,32 @@ SBCStatus SBC_RawPrtReadBlock(VOID *blkhnd, VOID *rdbuf,  UINT32 *rdlen, UINTN r
  * 
  * \author leoc (6/5/25)
  * 
- * \param hblk   
+ * \param hblk   Context handle for Block IO
  * 
- * \return SBCStatus 
+ * \retval  SBCOK   Data ws read correctly form the device
+ * \retval  Othrewise value is Error 
  */
 SBCStatus  SBC_FindBlkIoHandle(OUT VOID **hblk);  
                     
 /*!
  * \fn SBCStatus  SBC_RawPrtBlockWrite(VOID *blkio, UINT8 *wrbuf, UINT32 wrlen, UINT32 wrlba)
  * 
- * Write the data in Raw Partition 
+ * \brief Write the data in Raw Partition block at the specified
+   LBA
  * 
  * \author leoc (6/9/25)
  * 
- * \param blkio  
- * \param wrbuf  
- * \param wrlen  
- * \param wrlba  
- * 
- * \return SBCStatus 
+ * \param blkio  Context handle for Block IO
+ * \param wrbuf  Pointer to the buffer containing data to be
+   written
+ * \param wrlen  Length of the data to write, in bytes.
+ * \param wrlba  Logicl Block Address where the data should be
+   written
+ * \return 
+ *         - SBCOK: Write operation succeeded.
+ *         - SBCNULLP: Null pointer encountered.
+ *         - SBCFAIL: Write operation failed.
+ *         - SBCIO: I/O error occurred during write
  */
 SBCStatus  SBC_RawPrtBlockWrite(VOID *blkio, UINT8 *wrbuf, UINT32 wrlen, UINT32 wrlba);                    
 
@@ -382,11 +418,12 @@ SBCStatus  SBC_RawPrtBlockWrite(VOID *blkio, UINT8 *wrbuf, UINT32 wrlen, UINT32 
 /*!
  * \fn UINT32  SBC_ReadBootMode(VOID)
  * 
+ * \brief Read the boot mode from /EFI/BOOT/boot_mode.txt file
  * \author leoc (6/17/25)
  * 
  * \param void   
  * 
- * \return UINT32 
+ * \return None 
  */
 UINT32  SBC_ReadBootMode(VOID);
 
@@ -399,12 +436,17 @@ UINT32  SBC_ReadBootMode(VOID);
  * 
  * \author leonc (8/14/25)
  * 
- * \param blkio  
- * \param buf    
- * \param len    
- * \param bnkid  
+ * \param blkio  Pointer to the block I/O interface or handle.
+ * \param buf    Pointer to the buffer containing data to be
+   written
+ * \param len    Length of the data to write, in bytes.
+ * \param bnkid  Protected SW Bank Index in Raw Partition 
  * 
- * \return SBCStatus 
+ * \return 
+ *         - SBCOK: Write operation succeeded.
+ *         - SBCNULLP: Null pointer encountered.
+ *         - SBCFAIL: Write operation failed.
+ *         - SBCIO: I/O error occurred during writ
  */
 SBCStatus SBC_ProtectedSWWrite(VOID *blkio, 
                               VOID *buf, UINT32 *len, 
@@ -412,17 +454,23 @@ SBCStatus SBC_ProtectedSWWrite(VOID *blkio,
 
 /*!
  * \fn SBCStatus SBC_ProtectedSWRead(VOID *blkio, 
-                              VOID **buf, UINT32 *len, 
+                              VOID *buf, UINT32 *len, 
                               UINT32 bnkid)
- * \brief Protected SW read from Raw Partition 
+ * \brief Protected SW blob write to Raw Partition
+ * 
  * \author leonc (8/14/25)
  * 
- * \param blkio  
- * \param buf    
- * \param len    
- * \param bnkid  
+ * \param blkio  Pointer to the block I/O interface or handle.
+ * \param buf    Pointer to the buffer containing data to be
+   read
+ * \param len    Length of the data to read, in bytes.
+ * \param bnkid  Protected SW Bank Index in Raw Partition 
  * 
- * \return SBCStatus 
+ * \return 
+ *         - SBCOK: Read operation succeeded.
+ *         - SBCNULLP: Null pointer encountered.
+ *         - SBCFAIL: Write operation failed.
+ *         - SBCIO: I/O error occurred during writ
  */
 SBCStatus SBC_ProtectedSWRead(VOID *blkio, 
                               VOID **buf, UINT32 *len, 
@@ -461,32 +509,198 @@ SBCStatus SBC_RawAlignedWriteBlockIO(VOID *blk, UINTN off, UINTN sz, CONST VOID 
  */
 SBCStatus SBC_RawAlignedReadBlockIO(VOID *blk, UINTN off, UINTN sz, VOID *buf);
 
-
-/*!
- * 
- * 
- * \author leonc (9/26/25)
- * 
- * \param handle        
- * \param shared_secret 
- * \param decbuf        
- * \param rd_ofs        
- * 
- * \return SBCStatus 
+/**
+ * @fn SBC_ProtSwLoadRawPrt
+ * @brief Loads and decrypts protected software data from a raw partition.
+ *
+ *
+ * @param[in]  handle         Pointer to the boot context (`boot_proc_t`) containing block I/O handle.
+ * @param[in]  shared_secret  Pointer to the shared secret key used for AES-GCM decryption.
+ * @param[out] decbuf         Buffer to store the decrypted data.
+ * @param[out] rdlen          Pointer to variable that receives the length of decrypted data.
+ * @param[in]  rd_ofs         Offset in the raw partition from which to begin reading.
+ *
+ * @return SBCStatus
+ *         - SBCOK: Decryption succeeded and data loaded.
+ *         - SBCENCFAIL: Decryption failed.
+ *         - SBCNULLP: Null pointer or memory allocation failure.
+ *         - SBCFAIL: I/O or internal error during read or decrypt.
  */
-SBCStatus SBC_LoadRawPrt(VOID *handle, UINT8 *shared_secret, UINT8 *decbuf, UINTN *rdlen, UINTN rd_ofs);
+SBCStatus SBC_ProtSwLoadRawPrt(VOID *handle, UINT8 *shared_secret, UINT8 *decbuf, UINTN *rdlen, UINTN rd_ofs);
 
+/**
+ * @fn SBC_WriteFile
+ * @brief Writes the user data in specified file.
+ * 
+ * @author leonc (10/31/25)
+ * 
+ * @param ImageHandle Pointer to EFH_HANDLE 
+ * @param FileNames   Pointer to the File path string
+ * @param out         Pointer to the buffer containing data to be
+   written 
+ * 
+ * @return On Success, return the SBCOK, otherwise, return the
+ *         apporiate value.
+ */
 EFI_STATUS SBC_WriteFile(EFI_HANDLE ImageHandle, CHAR16 *FileNames, LV_t *out);
 
+
+/**
+ * @fn SBC_FindEfiFileSystemProtocol
+ * @brief Locates all handles that support the EFI Simple File System Protocol.
+ *
+ * This function queries the UEFI firmware to find all handles that implement the
+ * `gEfiSimpleFileSystemProtocolGuid`. These handles can be used to access EFI-compatible
+ * file systems such as FAT32 partitions.
+ *
+ * @param[out] handle Pointer to a buffer that receives the array of EFI handles.
+ *                    The buffer is allocated by the UEFI boot services.
+ *
+ * @return UINTN
+ *         - Number of handles found that support the Simple File System Protocol.
+ *         - Returns 0 if no handles are found or if an error occurs.
+ *
+ * @note
+ * - The caller must ensure that `handle` is a valid pointer to receive the handle array.
+ * - The returned handle array must be freed using `FreePool()` when no longer needed.
+ * - This function is typically used during boot-time file access (e.g., loading FSBL/SSBL).
+ *
+ * @warning
+ * If the protocol is not found, the function logs an error and returns 0.
+ */
 UINTN SBC_FindEfiFileSystemProtocol(EFI_HANDLE **handle);
 
+
+/**
+ * @fn SBC_IsFlieAccess
+ * @brief Checks if a specified file is accessible in the EFI file system.
+ *
+ * This function attempts to open a file in read mode using the EFI Simple File System Protocol.
+ * It verifies whether the file exists and is readable from the given image handle.
+ *
+ * @param[in] ImageHandle EFI image handle used to locate the file system protocol.
+ * @param[in] FileNames   Pointer to the filename (UTF-16 string) to be accessed.
+ *
+ * @return EFI_STATUS
+ *         - EFI_SUCCESS: File was found and is accessible.
+ *         - EFI_NOT_FOUND: File does not exist.
+ *         - EFI_INVALID_PARAMETER: Invalid input parameters.
+ *         - Other EFI error codes depending on protocol or volume access failure.
+ *
+ * @note
+ * - The function uses `HandleProtocol` to locate the file system and attempts to open the volume and file.
+ * - If the file is successfully opened, it is immediately closed and `EFI_SUCCESS` is returned.
+ * - This function does not read or process the file contents.
+ *
+ * @warning
+ * The caller must ensure that `FileNames` points to a valid null-terminated CHAR16 string.
+ */
 EFI_STATUS SBC_IsFlieAccess(EFI_HANDLE ImageHandle, CHAR16 *FileNames);
 
+/**
+ * @fn SBC_IsDirExist
+ * @brief Checks whether a specified directory exists in the EFI file system.
+ *
+ * This function attempts to open a directory from the root of the EFI volume using the
+ * Simple File System Protocol. If the directory exists and is valid, it returns TRUE.
+ *
+ * @param[in] ImageHandle    EFI image handle used to locate the file system protocol.
+ * @param[in] DirectoryName  Pointer to the UTF-16 string representing the directory path.
+ *
+ * @return BOOLEAN
+ *         - TRUE: Directory exists and is valid.
+ *         - FALSE: Directory does not exist or is not accessible.
+ *
+ * @note
+ * - The function uses `EFI_FILE_MODE_READ` and `EFI_FILE_DIRECTORY` flags to open the target directory.
+ * - It verifies the directory by checking the `EFI_FILE_DIRECTORY` attribute in the file info.
+ * - All opened handles are properly closed before returning.
+ *
+ * @warning
+ * The caller must ensure that `DirectoryName` is a valid null-terminated CHAR16 string.
+ * If memory allocation for file info fails, the function will return FALSE.
+ */
 BOOLEAN SBC_IsDirExist(EFI_HANDLE ImageHandle, CHAR16 *DirectoryName);
 
+
+/**
+ * @fn SBC_FindFileBufHndl
+ * @brief Searches for a valid EFI handle that can access the specified file.
+ *
+ * This function iterates through a list of EFI handles and checks which one can successfully
+ * access the file specified by `f_path`. The index of the valid handle is returned via `hndlcnt`.
+ *
+ * @param[in]     f_path    Pointer to the UTF-16 file path to search for.
+ * @param[in,out] hndlcnt   Pointer to the number of handles to check. On success, updated with the index of the valid handle.
+ * @param[in]     hndl      Pointer to an array of EFI handles to search.
+ *
+ * @return SBCStatus
+ *         - SBCOK: A valid handle was found that can access the file.
+ *         - SBCNOTFND: No handle could access the file.
+ *         - SBCNULLP: Null pointer input detected.
+ *
+ * @note
+ * - The function uses `SBC_IsFlieAccess()` to test file accessibility for each handle.
+ * - On success, `*hndlcnt` is updated to the index of the first valid handle.
+ * - The caller must ensure that `hndl` points to a valid array of EFI handles.
+ *
+ * @warning
+ * The function stops at the first successful access and does not check all handles.
+ */
 SBCStatus  SBC_FindFileBufHndl(UINT16 *f_path, UINTN *hndlcnt, VOID **hndl);
 
+/**
+ * @fn SBC_LogWriteFile
+ * @brief Appends log data to a file in the EFI file system.
+ *
+ * This function locates the EFI Simple File System Protocol, opens the specified file,
+ * moves the file pointer to the end, and writes the contents of the provided buffer.
+ *
+ * @param[in]  ImageHandle EFI image handle used to locate the file system.
+ * @param[in]  FileNames   Pointer to the UTF-16 string representing the target file name.
+ * @param[in]  out         Pointer to an LV_t structure containing the data to be written.
+ *
+ * @return EFI_STATUS
+ *         - EFI_SUCCESS: Data was successfully written to the file.
+ *         - EFI_INVALID_PARAMETER: Input buffer is null or invalid.
+ *         - EFI_NOT_FOUND / other EFI errors: File system or file access failed.
+ *
+ * @note
+ * - The file is opened in read/write mode. If it does not exist, this function will fail unless modified to create it.
+ * - The file pointer is moved to the end before writing, so this function appends data.
+ * - The caller must ensure that `out->value` points to valid data and `out->length` is non-zero.
+ *
+ * @warning
+ * This function does not perform file creation or truncation. It assumes the file already exists.
+ */
 EFI_STATUS SBC_LogWriteFile(EFI_HANDLE ImageHandle, CHAR16 *FileNames, LV_t *out);
 
+
+/**
+ * @fn SBC_LoadSystemSetting
+ * @brief Loads system configuration data from a block I/O device into a memory blob.
+ *
+ * This function reads system settings or configuration data from a secure storage region
+ * (typically a raw partition) using the provided block I/O handle, and stores the result
+ * into the specified memory blob.
+ *
+ * @param[in]  blkio  Pointer to the block I/O interface used to access the storage device.
+ * @param[out] blob   Pointer to the memory buffer where the loaded configuration will be stored.
+ *
+ * @return SBCStatus
+ *         - SBCOK: System settings successfully loaded.
+ *         - SBCNULLP: Null pointer input detected.
+ *         - SBCFAIL: Read or parse operation failed.
+ *         - SBCDECFAIL: Decryption of system settings failed.
+ *
+ * @note
+ * - The caller must ensure that `blob` points to a valid memory region with sufficient size.
+ * - This function may internally perform decryption or integrity checks depending on the system design.
+ * - Used during boot initialization to retrieve platform configuration, security policies, or provisioning data.
+ *
+ * @warning
+ * The function assumes that the system settings are stored in a known offset and format.
+ * If the format is corrupted or the key is invalid, the operation may fail.
+ */
 SBCStatus SBC_LoadSystemSetting(VOID *blkio, VOID *blob);
 #endif

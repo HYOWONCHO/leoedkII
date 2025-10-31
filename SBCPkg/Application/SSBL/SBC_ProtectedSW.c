@@ -142,7 +142,7 @@ SBCStatus SBC_GetProtectedSwName(VOID *handle, UINTN st, CHAR8 *sw_name, UINTN s
 
 
     //boot_proc_t *p = (boot_proc_t *)handle; 
-    ret = SBC_LoadRawPrt(handle, deckey, decbuf, &rdlen, SYS_CONF_START_OFS + SYS_CONF_SW_LIST_OFS);
+    ret = SBC_ProtSwLoadRawPrt(handle, deckey, decbuf, &rdlen, SYS_CONF_START_OFS + SYS_CONF_SW_LIST_OFS);
     if( ret != SBCOK ) {
         SBC_LogHexToStrChar16(deckey, 32, err_out_key_val, sizeof(err_out_key_val)/sizeof(err_out_key_val[0]),  FALSE, 0);
         UnicodeSPrint(mrgmsg,  sizeof mrgmsg, L"SBC_ProtSW_Update Failed to decrypt (%s) \n", err_out_key_val);
@@ -261,7 +261,7 @@ SBCStatus SBC_FindProtectedSw(VOID *handle, CHAR8 name[256], CHAR8 *ver, UINTN *
         goto errdone;
     }
 
-    ret = SBC_LoadRawPrt(handle, dec_key, data, &readn, SYS_CONF_START_OFS + SYS_CONF_SW_LIST_OFS);
+    ret = SBC_ProtSwLoadRawPrt(handle, dec_key, data, &readn, SYS_CONF_START_OFS + SYS_CONF_SW_LIST_OFS);
     SBC_RET_VALIDATE_ERRCODEMSG(!(ret != SBCOK), ret, "System Configuration Partition Read fail");
 
     line = readn/len;
@@ -340,7 +340,7 @@ SBCStatus SBC_UpdateProtectedSWListVersion(VOID *handle, CHAR8 *sw_name, CHAR8 *
         goto errdone;
     }
 
-    ret = SBC_LoadRawPrt(handle, dec_key, data, &readn, SYS_CONF_START_OFS + SYS_CONF_SW_LIST_OFS);
+    ret = SBC_ProtSwLoadRawPrt(handle, dec_key, data, &readn, SYS_CONF_START_OFS + SYS_CONF_SW_LIST_OFS);
     SBC_RET_VALIDATE_ERRCODEMSG(!(ret != SBCOK), ret, "System Configuration Partition Read fail");
 
     line = readn / len;
