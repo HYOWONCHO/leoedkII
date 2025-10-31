@@ -1,3 +1,12 @@
+/********************************************************************************
+ * Copyright (C) 2024 by Security Platform Inc.                                 *
+ * This file is part of the Project.                                            *
+ *                                                                              *
+ * This software contains confidential and proprietary information of           *
+ * Security Platform Inc. Unauthorized reproduction, distribution, or           *
+ * disclosure of this software, in whole or in part, is strictly prohibited.    *
+ ********************************************************************************/
+
 #ifndef _SBC_ANTITAMPERING_
 #define _SBC_ANTITAMPERING_
 
@@ -153,6 +162,25 @@ typedef struct _t_baseansr {
 }baseansr_t;
 #pragma pack()
 
+/*!
+ * \brief Initializes the Anti-Tampering context and module 
+ * 
+ * \author leonc (10/31/25)
+ * 
+ * \param[in] priv   Pointer to a boot_proc_t structure containing initialization 
+ * \retrun None
+ */
+VOID SBC_AntiTamperInit(VOID *priv);
+
+/*!
+ * \brief De-Initializes the Anti-Tampering context and module 
+ * 
+ * \author leonc (10/31/25)
+ * 
+ * \param[in] priv   Pointer to a boot_proc_t structure containing initialization 
+ * \retrun None
+ */
+VOID SBC_AntiTamperDeinit(VOID *priv);
 
 /**
  * @fn SBCStatus SBC_GenDeviceID(UINT8 *devid)
@@ -215,27 +243,87 @@ SBCStatus  SBC_BaseAnswerValidate(VOID *blkhnd, UINT8 *answer, UINTN answerl, UI
  */
 SBCStatus SBC_GenFWID(EFI_HANDLE *h_image, UINT8 *devid, UINT8 *fwid, UINTN normbank, UINTN bm);
 
+
+/**
+ * @fn SBCStatus SBC_GenOSID(EFI_HANDLE *h_image, UINT8 *fwid,
+ *     UINT8 *osid)
+ * 
+ * @author leoc (6/2/25)
+ * 
+ * @param h_image EFI Image Handle
+ * @param devid   Pointer to Firmware ID buffer where computed 
+ * @param osid    Pointer to OS ID buffer 
+ * 
+ * @return On Success, return the SBCOK, otherwise, return the apporiate error
+ *         value.
+ */
 SBCStatus SBC_GenOSID(EFI_HANDLE *h_image, UINT8 *fwid, UINT8 *osid);
 
-
+/*!
+ * \fn SBCStatus  SBC_FSBLIntgCheck(EFI_HANDLE *h_image ,
+   VOID *blkio, VOID *cert, UINTN certlen, UINTN nrombank,
+   UINTN mode)
+ * 
+ * \author leonc (10/31/25)
+ * 
+ * \param h_image  Unused EFI Image handle  ( reserved for
+   future use)
+ * \param blkio    Pointer to a EFI_BLOCK_IO_PROTOCOL
+ * \param cert     Pointer to a Root CA
+ * \param certle   Length of Cert. in bytes
+ * \param nrombank Bank ID for SSBL Firmware of Raw-partition
+ * \param mode     Boot Mode indicator
+ * 
+ * \return SBCStatus
+ *          - SBCOK : Verification Succeeded
+ *          - SBCINVPARAM : Invalid Parameters
+ *          - SBCNULLP : Memory Allocation fail
+ *          
+ */
 SBCStatus  SBC_FSBLIntgCheck(EFI_HANDLE *h_image , VOID *blkio, VOID *cert, UINTN certle, UINTN nrombank, UINTN mode);
+
 
 SBCStatus  SBC_FSBL_Verify(VOID *blkhnd, VOID *ansr, UINTN normbank, UINTN bm);
 
 SBCStatus  SBC_BlkIoHandleInit(OUT VOID **hblk, OUT VOID *hdr);
 
 //SBCStatus  SBC_GenMigrationKey(VOID *priv, UINT32 currbankid, UINT32 prevbankid, VOID *out);
+
+/**
+ * @fn SBC_GenMigrationKey
+ * @brief Generates a migration key based on hardware identifiers and firmware hashes.
+ *
+ * This function collects hardware-unique information (baseboard, memory, NVMe serials),
+ * reads FSBL and SSBL firmware images from both EFI and raw partitions, computes their hashes,
+ * and combines all data into a single digest to produce a migration key.
+ *
+ * @param[in]  priv     Pointer to boot_proc_t structure containing boot context and block handle.
+ * @param[out] outmsg   Pointer to buffer where the final migration key (hash digest) will be stored.
+ *
+ * @return SBCStatus
+ *         - SBCOK: Migration key generated successfully.
+ *         - SBCNULLP: Memory allocation failure or null pointer.
+ *         - SBCINVPARAM: Invalid input or missing firmware.
+ *         - Other error codes from internal hash or file read failures.
+ *
+ */
 SBCStatus SBC_GenMigrationKey(void *priv, void *outmsg);
-/*!
- * De
- * 
- * \author leoc (7/10/25)
- * 
- * \param blkio  
- * \param devid  
- * \param deckey 
- * 
- * \return SBCStatus 
+
+/**
+ * @fn SBC_DeviceIdKyeVerify
+ * @brief Verifies the device identity by comparing the generated public key with the decrypted certificate key.
+ *
+ *
+ * @param[in] blkio   Pointer to the EFI_BLOCK_IO_PROTOCOL used to access the device storage.
+ * @param[in] devid   Pointer to the device ID used to generate the key pair.
+ * @param[in] deckey  Pointer to the decryption key used for AES-GCM decryption of the certificate.
+ *
+ * @return SBCStatus
+ *         - SBCOK: Verification succeeded.
+ *         - SBCNULLP: Memory allocation failure.
+ *         - SBCDECFAIL: Decryption failed.
+ *         - SBCINVPARAM: Key generation or public key mismatch.
+ *         - SBCFAIL: Public key extraction failure.
  */
 SBCStatus  SBC_DeviceIdKyeVerify(VOID *blkio, UINT8 *devid, UINT8 *deckey);
 
@@ -250,6 +338,23 @@ SBCStatus  SBC_DeviceIdKyeVerify(VOID *blkio, UINT8 *devid, UINT8 *deckey);
  */
 SBCStatus SBC_DeviceSecuirtyKeyCreate(VOID *key);
 
+
+/**
+ * @fn SBC_SSBL_Verify
+ * 
+ * @author leonc (10/31/25)
+ * 
+ * @param[in]  blkhnd     Pointer to the block I/O handle 
+ * @param[out] ansr       Pointer to an LV_t structure to receive the base answer data.
+ * @param[in]  normbank   Firmware bank ID of Raw-Partition 
+ * @param[in]  bm         Boot mode indicator 
+ * 
+ * @return SBCStatus
+ *         - SBCOK: SSBL verification succeeded.
+ *         - SBCNULLP: Memory allocation failure.
+ *         - SBCFAIL: Signature verification or public key extraction failed.
+ *         - SBCIO: File I/O error during SSBL read.
+ */
 SBCStatus  SBC_SSBL_Verify(VOID *blkhnd, VOID *ansr,  UINTN nrombank, UINT16 bm);
 
 /*!
