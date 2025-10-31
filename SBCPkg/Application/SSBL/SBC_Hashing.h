@@ -1,9 +1,6 @@
 #ifndef __SBC_HASHING_H
 #define __SBC_HASHING_H
 
-
-
-
 /**
  * @brif Obtain the Hash of message
  *

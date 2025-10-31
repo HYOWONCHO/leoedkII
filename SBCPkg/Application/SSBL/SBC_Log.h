@@ -1,3 +1,11 @@
+/********************************************************************************
+ * Copyright (C) 2024 by Security Platform Inc.                                 *
+ * This file is part of the SBC Project.                                            *
+ *                                                                              *
+ * This software contains confidential and proprietary information of           *
+ * Security Platform Inc. Unauthorized reproduction, distribution, or           *
+ * disclosure of this software, in whole or in part, is strictly prohibited.    *
+ ********************************************************************************/
 
 #ifndef __SBCLOG__
 #define __SBCLOG__
@@ -24,8 +32,30 @@
 #define SYS_LOG_APP_NAME                        L"SSBL"
 #define SYS_LOG_CSC_NAME                        L"SAT"
 
-/*!
-    \breif SBC System Log Priority 
+/**
+ * @enum t_sbc_syslog_prio
+ * @brief Defines priority levels for system logging messages.
+ *
+ * @var SBS_LOG_CMN_PRIO_ALERT
+ *      Priority level for alert conditions. Requires immediate attention. (Value: 185)
+ *
+ * @var SBC_LOG_CMN_PRIO_CRIT
+ *      Critical conditions. Indicates serious failures or system instability.
+ *
+ * @var SBC_LOG_CMN_PRIO_ERR
+ *      Error conditions. Used for recoverable errors or failed operations.
+ *
+ * @var SBC_LOG_CMN_PRIO_WRN
+ *      Warning conditions. Indicates potential issues that may require attention.
+ *
+ * @var SBC_LOG_CMN_PRIO_NOTICE
+ *      Normal but significant events. Used for informational notices.
+ *
+ * @var SBC_LOG_CMN_PRIO_INFO
+ *      Informational messages. General runtime information.
+ *
+ * @var SBC_LOG_CMN_PRIO_DBG
+ *      Debug-level messages. Used for detailed internal diagnostics.
  */
 typedef enum {
     SBS_LOG_CMN_PRIO_ALERT              = 185,
@@ -244,6 +274,14 @@ typedef enum {
 } LOG_EVENT;
 
 VOID UefiLog(LOG_LEVEL Level, LOG_EVENT Event, CONST CHAR16 *Format, ...);
+
+/**
+ * @fn SBC_LogElapsedTime
+ * @brief Logs the elapsed time associated with a specific tag.
+ *
+ * @param[in] Tag  A null-terminated UTF-16 string representing the label or identifier for the timing event.
+ * @param[in] Ns   Elapsed time in nanoseconds to be logged.
+ */
 VOID SBC_LogElapsedTime(const CHAR16 *Tag, UINTN Ns);
 #endif
 

@@ -1,3 +1,27 @@
+/********************************************************************************
+ * Copyright (C) 2024 by Security Platform Inc.                                 *
+ * This file is part of the SBC Project.                                            *
+ *                                                                              *
+ * This software contains confidential and proprietary information of           *
+ * Security Platform Inc. Unauthorized reproduction, distribution, or           *
+ * disclosure of this software, in whole or in part, is strictly prohibited.    *
+ ********************************************************************************/
+
+/**
+ * @file SBC_Kdf.c
+ * @brief Key Derivation Function (KDF) and Random Number
+ *        Generator implementation
+ *
+ * @author LEON
+ * @version 1.0
+ * @date 2025-10-31
+ *
+ * @copyright (c) 2025 Security Platform Inc. All rights
+ *            reserved.
+ *
+ * @details
+ */
+
 #include <Library/BaseCryptLib.h>
 #include <Library/BaseMemoryLib.h>
 
