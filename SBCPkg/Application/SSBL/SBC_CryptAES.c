@@ -1,3 +1,28 @@
+/********************************************************************************
+ * Copyright (C) 2024 by Security Platform Inc.                                 *
+ * This file is part of the SBC Project.                                            *
+ *                                                                              *
+ * This software contains confidential and proprietary information of           *
+ * Security Platform Inc. Unauthorized reproduction, distribution, or           *
+ * disclosure of this software, in whole or in part, is strictly prohibited.    *
+ ********************************************************************************/
+
+/**
+ * @file SBC_CryptAES.c
+ * @brief Message are encrypt and decrypt using AES
+ *        confidentiality algorithms. 
+ *
+ * @author LEON
+ * @version 1.0
+ * @date 2025-10-31
+ *
+ * @copyright (c) 2025 Security Platform Inc. All rights
+ *            reserved.
+ *
+ * @details
+ */
+
+
 #include <Library/BaseCryptLib.h>
 #include <Library/BaseMemoryLib.h>
 #include <Library/MemoryAllocationLib.h>
@@ -8,14 +33,6 @@
 #include "SBC_Util.h"
 #include "SBC_Config.h"
 
-
-/**
- * Initialize the AES context for use
- *
- * @param[in,out] ctx       ponter to AES context being initialize
- *
- * @return On success, return the SBCOK, otherwise apporiate value
- */
 SBCStatus SBC_AESInit(SBC_AESContext *ctx)
 {
   if(ctx == NULL) {
@@ -55,29 +72,6 @@ static SBCStatus SBC_AES_CBCEncrypt(SBC_AESCBCCtx *ctx)
 {
 
   SBCStatus ret = SBCOK;
-
-////DEBUG((DEBUG_INFO , "%s:%d \n",__func__, __LINE__));
-//SBC_AES_RET_VAL_IF_FAIL((ctx != NULL), SBCNULLP);
-////DEBUG((DEBUG_INFO , "%s:%d \n",__func__, __LINE__));
-//SBC_AES_RET_VAL_IF_FAIL((ctx->handle != NULL), SBCNULLP);
-////DEBUG((DEBUG_INFO , "%s:%d \n",__func__, __LINE__));
-//SBC_AES_RET_VAL_IF_FAIL((ctx->iv != NULL), SBCNULLP);
-////DEBUG((DEBUG_INFO , "%s:%d \n",__func__, __LINE__));
-//SBC_AES_RET_VAL_IF_FAIL((ctx->keylv.value != NULL), SBCNULLP);
-////DEBUG((DEBUG_INFO , "%s:%d \n",__func__, __LINE__));
-//SBC_AES_RET_VAL_IF_FAIL((ctx->keylv.length != 0), SBCZEROL);
-////DEBUG((DEBUG_INFO , "%s:%d \n",__func__, __LINE__));
-//
-//Print(L"Ctx Handle : 0x%08x \r\n", ctx->handle);
-//Print(L"Ctx Iv \r\n");
-//SBC_mem_print_bin(NULL, ctx->iv, 16);
-//
-//Print(L"Ctx Key \r\n");
-//SBC_mem_print_bin(NULL, ctx->keylv.value, SBC_KEY_LEN_128);
-//
-//Print(L"Ctx PlainText \r\n");
-//SBC_mem_print_bin(NULL, ctx->inlv->value, ctx->inlv->length);
-
 
 #if 1
   if(AesCbcEncrypt(ctx->handle, 

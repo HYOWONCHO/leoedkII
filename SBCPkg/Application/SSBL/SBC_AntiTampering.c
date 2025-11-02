@@ -1,3 +1,27 @@
+/********************************************************************************
+ * Copyright (C) 2024 by Security Platform Inc.                                 *
+ * This file is part of the SBC Project.                                            *
+ *                                                                              *
+ * This software contains confidential and proprietary information of           *
+ * Security Platform Inc. Unauthorized reproduction, distribution, or           *
+ * disclosure of this software, in whole or in part, is strictly prohibited.    *
+ ********************************************************************************/
+
+/**
+ * @file SBC_Antitampering.c
+ * @brief Secure Boot Certificate verification and integrity check for SSBL (Second Stage Boot Loader).
+ *
+ * @author LEON
+ * @version 1.0
+ * @date 2025-10-31
+ *
+ * @copyright (c) 2025 Security Platform Inc. All rights
+ *            reserved.
+ *
+ * @details
+ */
+
+
 #include <Library/BaseMemoryLib.h>
 #include <Library/MemoryAllocationLib.h>
 #include <Library/BaseLib.h>
@@ -39,6 +63,8 @@
 extern CHAR16 mrgmsg[8192];
 CHAR16 print_out_key[128];
 
+static boot_proc_t *btctx = NULL;
+
 #pragma pack(1)
 typedef struct {
     UINT8   Reserved[4];
@@ -46,6 +72,18 @@ typedef struct {
     // The rest of the 4096-byte structure is not used in this example.
 } NVME_CONTROLLER_DATA;
 #pragma pack()
+
+
+VOID SBC_AntiTamperInit(VOID *priv)
+{
+    btctx = (boot_proc_t *)priv;
+}
+
+VOID SBC_AntiTamperDeinit(VOID *priv)
+{
+
+}
+
 
 SBCStatus _find_kernel_path(CHAR16 *fname)
 {
