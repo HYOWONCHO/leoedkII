@@ -77,6 +77,7 @@ UINTN   sys_start_time = 0ULL;
 UINTN   sys_end_time = 0ULL;
 UINTN   sys_ns_var = 0ULL;
 
+static boot_proc_t       btproc;
 
 VOID *h_blkio;               // Block I/O handle
 CHAR16 mrgmsg[8192];
@@ -415,7 +416,7 @@ UefiMain (
     //UINT32 bootmd = 0; // Boot Mode
     LV_t baseansr;
 
-    boot_proc_t       btproc;
+    
     [[gnu::unused]] CHAR8 bank_find;
  
     sbc_err_sysprn(SBC_LOG_CMN_PRIO_INFO, 2,

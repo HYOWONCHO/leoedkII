@@ -39,7 +39,8 @@
 [[maybe_unused]] static LV_t fsbl_certi_lv;
 [[maybe_unused]] static LV_t rootca_certi_lv;
   
-
+extern CHAR16 mrgmsg[8192];
+CHAR16 print_out_key[128];
 
 #pragma pack(1)
 typedef struct {
@@ -70,6 +71,83 @@ VOID SBC_AntiTamperingDeInit(VOID *priv)
     return;
 }
 
+SBCStatus _find_kernel_path(CHAR16 *fname)
+{
+
+    //UINT8 errmsg[512] = {0, };
+    SBCStatus ret = SBCOK;
+    UINTN               len_of_kernel = 0;
+    UINTN               hndlcnt;
+    EFI_HANDLE          *hndl;
+    UINTN               idx;
+    LV_t lv;
+    EFI_STATUS          Status;
+    CHAR8   *ascii_str;
+    UINTN x;
+
+    SBC_RET_VALIDATE_ERRCODEMSG((fname != NULL), SBCNULLP, "Object point to NILL");
+
+    ret = SBC_GetFileSize( KERNEL_DIR_FILE, &len_of_kernel);
+    SBC_RET_VALIDATE_ERRCODEMSG((ret == SBCOK), ret, "File Not Found");
+
+    hndlcnt = SBC_FindEfiFileSystemProtocol(&hndl);
+    if (hndlcnt <= 0) {
+        eprint("File System Handle find fail : %d", hndlcnt);
+        return SBCFAIL;
+    }
+
+    for (idx = 0; idx < hndlcnt; idx++) {
+        Status = SBC_IsFlieAccess(hndl[idx], KERNEL_DIR_FILE);
+        if (EFI_ERROR(Status)) {
+            continue;
+        }
+
+        break;
+    }
+
+    if (EFI_ERROR(Status)) {
+        eprint("%s  : %r", KERNEL_DIR_FILE, Status);
+        return SBCFAIL;
+    }
+
+    lv.value = AllocateZeroPool(len_of_kernel);
+    lv.length = len_of_kernel;
+    dprint("%s size %d", KERNEL_DIR_FILE, lv.length);
+    SBC_RET_VALIDATE_ERRCODEMSG((lv.value != NULL), SBCNULLP, "Out of Memory");
+
+    Status = SBC_ReadFile(hndl[idx], KERNEL_DIR_FILE, &lv);
+    if (EFI_ERROR(Status)) {
+        eprint("%s file read fail with %r", KERNEL_DIR_FILE, Status);
+        ret = SBCNOTFND;
+        goto errdone;
+    }
+
+    //AsciiStrToUnicodeStr(lv.value, fname);
+    //CopyMem((void *)fname, (const void *)lv.value, lv.length);
+    //fname[lv.length] = '\0';
+
+    // File name convert from Ascii to Unicode string 
+    ascii_str = (CHAR8 *)lv.value;
+    SBC_mem_print_bin("Kernel Path", (UINT8 *)lv.value, lv.length );
+    dprint("kernel name : %a", lv.value);
+    //ascii_str[lv.length] = '\0';
+    for ( x = 0;x < lv.length /* ascii_str[x] != '\0' */; x++) {
+        fname[x] = (CHAR16)ascii_str[x];
+    }
+
+    fname[x] = L'\0';
+
+errdone:
+
+    if (lv.value != NULL) {
+        FreePool(lv.value);
+        lv.value = NULL;
+    }
+
+    return ret;
+
+}
+
 SBCStatus _kernel_image_load(EFI_HANDLE ImageHandle, LV_t *lv)
 {
     SBCStatus           ret = SBCOK;
@@ -78,43 +156,54 @@ SBCStatus _kernel_image_load(EFI_HANDLE ImageHandle, LV_t *lv)
     UINTN               hndlcnt;
     UINTN               idx;
     EFI_HANDLE          *hndl;
+    CHAR16 kernel_name[512] = {
+        [0 ... 511] = 0
+    };
 
 
-    ret = SBC_GetFileSize( OSID_KERNEL_PATH, &len_of_kernel);
+    _find_kernel_path(kernel_name);
+    //dprint();
+    ret = SBC_GetFileSize( kernel_name, &len_of_kernel);
     SBC_RET_VALIDATE_ERRCODEMSG((ret == SBCOK), ret, "File Not Found");
+    //dprint();
     hndlcnt = SBC_FindEfiFileSystemProtocol(&hndl);
     if (hndlcnt <= 0) {
       eprint("File System Handle find fail : %d", hndlcnt);
       return SBCFAIL;
     }
+    //dprint();
     for (idx = 0; idx < hndlcnt; idx++) {
-      Status = SBC_IsFlieAccess(hndl[idx], OSID_KERNEL_PATH);
+      Status = SBC_IsFlieAccess(hndl[idx], kernel_name);
       if (EFI_ERROR(Status)) {
         continue;
       }
 
       break;
     }
+    //dprint();
 
     if (EFI_ERROR(Status)) {
-        eprint("%s  : %r", OSID_KERNEL_PATH, Status);
+        eprint("%s  : %r", kernel_name, Status);
         return SBCFAIL;
     }
 
+    //dprint();
     lv->value = AllocateZeroPool(len_of_kernel);
     lv->length = len_of_kernel;
-    //dprint("%s size %d", OSID_KERNEL_PATH, lv->length);
+    dprint("%s size %d", kernel_name, lv->length);
     SBC_RET_VALIDATE_ERRCODEMSG((lv->value != NULL), SBCNULLP, "Out of Memory");
 
+    //dprint();
 
-    Status = SBC_ReadFile(hndl[idx], OSID_KERNEL_PATH, lv);
+    Status = SBC_ReadFile(hndl[idx], kernel_name, lv);
     if (EFI_ERROR(Status)) {
-      eprint("%s file read fail with %r", OSID_KERNEL_PATH, Status);
+      eprint("%s file read fail with %r", kernel_name, Status);
       ret = SBCNOTFND;
       goto errdone;
     }
 
 
+    //dprint();
 errdone:
     return ret;
 }
@@ -2452,7 +2541,7 @@ errdone:
 
 }
 
-SBCStatus SBC_GenDeviceID(UINT8 *fwid)
+SBCStatus SBC_GenDeviceID(UINT8 *devid)
 {
     SBCStatus ret = SBCOK;
     //at_key_t key;
@@ -2465,9 +2554,9 @@ SBCStatus SBC_GenDeviceID(UINT8 *fwid)
     UINT8 *computebuf = NULL;
     UINTN cnt = 0;
 
-    UINT8 fwidhsah[SBC_AT_HASH_LEN] = {0,};
+    UINT8 devidhsah[SBC_AT_HASH_LEN] = {0,};
 
-    SBC_RET_VALIDATE_ERRCODEMSG((fwid != NULL),SBCNULLP, "Out buffer Nill");
+    SBC_RET_VALIDATE_ERRCODEMSG((devid != NULL),SBCNULLP, "Out buffer Nill");
 
    
 
@@ -2496,7 +2585,7 @@ SBCStatus SBC_GenDeviceID(UINT8 *fwid)
                          NULL, /* Not yet used */
                          rdlv.value,
                          rdlv.length,
-                         fwidhsah
+                         devidhsah
                       ) ; 
 
     if (ret != SBCOK) {
@@ -2504,13 +2593,22 @@ SBCStatus SBC_GenDeviceID(UINT8 *fwid)
       goto errdone;
     }
 
-    //SBC_external_mem_print_bin("FSBL File Hash", (UINT8 *)fwidhsah, 32);
+    //SBC_external_mem_print_bin("FSBL File Hash", (UINT8 *)devidhsah, 32);
 
 
     rdlv.length = SBC_AT_HASH_LEN;
 
     computebuf = AllocatePool(info.mbsnl + info.mmsnl + info.nvmesnl + rdlv.length);
-    SBC_RET_VALIDATE_ERRCODEMSG((computebuf != NULL),SBCNULLP, "Compute buffer Nill");
+    if (computebuf == NULL) {
+        sbc_err_sysprn(SBC_LOG_CMN_PRIO_ERR, 2,
+              SYS_LOG_HOST_BOOT, 
+              SYS_LOG_APP_NAME, 
+              SYS_LOG_CSC_NAME, 
+              0, 
+              L"Detection ", 
+              L"SBC_Vendor Not enough resource \n");
+        goto errdone;
+    }
 
     cnt = 0;
     ////Print(L" cnt : %d \n", cnt);
@@ -2527,7 +2625,7 @@ SBCStatus SBC_GenDeviceID(UINT8 *fwid)
 
     dprint("DICE message   : %a", computebuf);
         ////Print(L"Next Next cnt : %d \n", cnt);
-    CopyMem((void *)&computebuf[cnt], fwidhsah, rdlv.length);
+    CopyMem((void *)&computebuf[cnt], devidhsah, rdlv.length);
     cnt += rdlv.length;
 
     
@@ -2536,7 +2634,7 @@ SBCStatus SBC_GenDeviceID(UINT8 *fwid)
                              NULL, /* Not yet used */
                              computebuf,
                              cnt,
-                             fwid
+                             devid
                           ) ;
 
     if (ret != SBCOK) {
@@ -2544,11 +2642,37 @@ SBCStatus SBC_GenDeviceID(UINT8 *fwid)
       goto errdone;
     }
 
-    //SBC_mem_print_bin("Device ID", fwid, 32);
+    //SBC_mem_print_bin("Device ID", devid, 32);
+
+    SBC_mem_print_bin("Device ID", devid, 32);
+    ZeroMem(print_out_key, 32);
+    ZeroMem(mrgmsg, sizeof mrgmsg);
+    SBC_LogHexToStrChar16(devid, 32, print_out_key, sizeof(print_out_key)/sizeof(print_out_key[0]),  FALSE, 0);
+
+    ///SBC_mem_print_bin("Print out key", (UINT8 *)print_out_key, sizeof print_out_key);
+
+    UnicodeSPrint(mrgmsg,  sizeof mrgmsg, L"SBC_Dice_DEVID Creation Succeess (%s) \n", print_out_key);
 
 
+    sbc_err_sysprn(SBC_LOG_CMN_PRIO_INFO, 2, 
+              SYS_LOG_HOST_BOOT, 
+              SYS_LOG_APP_NAME, 
+              SYS_LOG_CSC_NAME, 
+              1, 
+              L"Validation ", 
+              mrgmsg);
     
 errdone:
+
+    if (ret != SBCOK) {
+        sbc_err_sysprn(SBC_LOG_CMN_PRIO_ERR, 2, 
+              SYS_LOG_HOST_BOOT, 
+              SYS_LOG_APP_NAME, 
+              SYS_LOG_CSC_NAME, 
+              1, 
+              L"Validation ", 
+              L"SBC_Dice_DEVID Creation Fail");
+    }
 
     if(computebuf) {
         FreePool(computebuf);
@@ -2586,7 +2710,16 @@ SBCStatus SBC_GenFWID(EFI_HANDLE *h_image, UINT8 *devid, UINT8 *fwid, UINTN norm
   SBC_RET_VALIDATE_ERRCODEMSG((ret == SBCOK), ret, "SSBL hash compute failed");
 
   temp = AllocateZeroPool(SBC_AT_HASH_LEN << 1);
-  SBC_RET_VALIDATE_ERRCODEMSG((temp != NULL), SBCNULLP, "memeory creation fail");
+  if (temp == NULL) {
+    sbc_err_sysprn(SBC_LOG_CMN_PRIO_ERR, 2,
+          SYS_LOG_HOST_BOOT, 
+          SYS_LOG_APP_NAME, 
+          SYS_LOG_CSC_NAME, 
+          0, 
+          L"Detection ", 
+          L"SBC_Vendor Not enough resource \n");
+    goto errdone;
+  }
 
   CopyMem((void *)&temp[0], devid, SBC_AT_HASH_LEN);
   CopyMem((void *)&temp[SBC_AT_HASH_LEN], hash_ssbl, SBC_AT_HASH_LEN);
@@ -2598,8 +2731,37 @@ SBCStatus SBC_GenFWID(EFI_HANDLE *h_image, UINT8 *devid, UINT8 *fwid, UINTN norm
                              fwid
                           ) ;
 
-  //SBC_mem_print_bin("FW ID", fwid, 32);
+  ZeroMem(print_out_key, 32);
+  ZeroMem(mrgmsg, sizeof mrgmsg);
+  SBC_LogHexToStrChar16(fwid, 32, print_out_key, sizeof(print_out_key)/sizeof(print_out_key[0]),  FALSE, 0);
+
+  //SBC_mem_print_bin("Print out key", (UINT8 *)print_out_key, sizeof print_out_key);
+
+  UnicodeSPrint(mrgmsg,  sizeof mrgmsg, L"SBC_Dice_FWID Creation Succeess (%s) \n", print_out_key);
+
+  //SBC_LogHexKeyConvToChar16(mrgmsg, (VOID *)print_msg, fwid);
+
+
+  sbc_err_sysprn(SBC_LOG_CMN_PRIO_INFO, 2, 
+          SYS_LOG_HOST_BOOT, 
+          SYS_LOG_APP_NAME, 
+          SYS_LOG_CSC_NAME, 
+          1, 
+          L"Validation ", 
+          mrgmsg);
 errdone:
+
+    if (ret != SBCOK) {
+        sbc_err_sysprn(SBC_LOG_CMN_PRIO_ERR, 2, 
+              SYS_LOG_HOST_BOOT, 
+              SYS_LOG_APP_NAME, 
+              SYS_LOG_CSC_NAME, 
+              1, 
+              L"Validation ", 
+              L"SBC_Dice_FWID Creation Fail");
+    }
+
+
 
   if (temp != NULL) {
     FreePool(temp);
@@ -2630,7 +2792,14 @@ SBCStatus SBC_GenOSID(EFI_HANDLE *h_image, UINT8 *fwid, UINT8 *osid)
   // OS Kernel Image read 
   ret = _kernel_image_load(h_image, &lv);
   if (ret != SBCOK) {
-    //Print(L"Kernel Image load fail \n");
+    dprint("Kernel Image load fail \n");
+    sbc_err_sysprn(SBC_LOG_CMN_PRIO_ERR, 2,
+          SYS_LOG_HOST_BOOT, 
+          SYS_LOG_APP_NAME, 
+          SYS_LOG_CSC_NAME, 
+          1, 
+          L"Detection ", 
+          L"SBC_SP_FILE_RD OS File Not Found \n");
     goto errdone;
   }
 
@@ -2643,7 +2812,16 @@ SBCStatus SBC_GenOSID(EFI_HANDLE *h_image, UINT8 *fwid, UINT8 *osid)
   SBC_RET_VALIDATE_ERRCODEMSG((ret == SBCOK), ret, "SSBL hash compute failed");
 
   temp = AllocateZeroPool(SBC_AT_HASH_LEN << 1);
-  SBC_RET_VALIDATE_ERRCODEMSG((temp != NULL), SBCNULLP, "memeory creation fail");
+  if (temp == NULL) {
+    sbc_err_sysprn(SBC_LOG_CMN_PRIO_ERR, 2,
+          SYS_LOG_HOST_BOOT, 
+          SYS_LOG_APP_NAME, 
+          SYS_LOG_CSC_NAME, 
+          0, 
+          L"Detection ", 
+          L"SBC_Vendor Not enough resource \n");
+    goto errdone;
+  }
 
   CopyMem((void *)&temp[0], fwid, SBC_AT_HASH_LEN);
   CopyMem((void *)&temp[SBC_AT_HASH_LEN], os_hash,  SBC_AT_HASH_LEN);
@@ -2655,6 +2833,34 @@ SBCStatus SBC_GenOSID(EFI_HANDLE *h_image, UINT8 *fwid, UINT8 *osid)
                              osid
                           ) ;
 
+  if (ret != SBCOK) {
+        sbc_err_sysprn(SBC_LOG_CMN_PRIO_ERR, 2,
+          SYS_LOG_HOST_BOOT, 
+          SYS_LOG_APP_NAME, 
+          SYS_LOG_CSC_NAME, 
+          0, 
+          L"Detection ", 
+          L"SBC_Vendor OSID compute Fail \n");
+
+        goto errdone;
+  }
+
+  ZeroMem(print_out_key, 32);
+  ZeroMem(mrgmsg, sizeof mrgmsg);
+  SBC_LogHexToStrChar16(osid, 32, print_out_key, sizeof(print_out_key)/sizeof(print_out_key[0]),  FALSE, 0);
+
+  //SBC_mem_print_bin("Print out key", (UINT8 *)print_out_key, sizeof print_out_key);
+
+  UnicodeSPrint(mrgmsg,  sizeof mrgmsg, L"SBC_Dice_OSID Creation Succeess (%s) \n", print_out_key);
+
+
+  sbc_err_sysprn(SBC_LOG_CMN_PRIO_INFO, 2, 
+          SYS_LOG_HOST_BOOT, 
+          SYS_LOG_APP_NAME, 
+          SYS_LOG_CSC_NAME, 
+          1, 
+          L"Validation ", 
+          mrgmsg);
   //SBC_mem_print_bin("OS ID", osid, 32);
 errdone:
 

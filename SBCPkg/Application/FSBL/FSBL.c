@@ -897,23 +897,6 @@ UefiMain (
     _get_fw_bankid(pres_low, &currbank_id, &prevbank_id);
     dprint("Pres Low : 0x%04x Cur. Bank ID : %d , Prev. Bank ID : %d ", pres_low, currbank_id, prevbank_id);
 
-//  pres_low = SBC_SWAP_ENDIAN_32(pres_low);
-//  pres_hi = SBC_SWAP_ENDIAN_32(pres_hi);
-//
-//
-//  if ((CHAR8)(pres_low & 0x0000FFFF) == 'C') {
-//    currbank_id = (pres_low & 0xFFFF0000) >> 16;
-//  }
-//  else if ((CHAR8)(pres_hi & 0x0000FFFF) == 'C') {
-//    currbank_id = (pres_hi & 0xFFFF0000) >> 16;
-//  }
-//
-//  prevbank_id = FindPreviouslyBank(currbank_id);
-//  if (prevbank_id < 1) {
-//      eprint("Currently Valid FW Bank ID : %d , Previously Bank ID : %d \n", currbank_id, prevbank_id);
-//      retval = EFI_INVALID_PARAMETER;
-//      goto errdone;
-//  }
     dprint("Boot Mode : %d , Key Mode : %d, Recovery Mode : %d",
            btproc.bm, btproc.km, h_rawptrheader.rcvmode);
 

@@ -250,6 +250,61 @@ errdone:
 
 }
 #else
+
+
+SBCStatus _prev_ssbl_image_load(VOID *blkhnd, LV_t *lv,  UINTN normbank, UINTN bm)
+{
+
+    SBCStatus           ret = SBCOK;
+    UINTN               bsofs = 0; // Boot Sector Offset
+    UINTN               startlba = 0;
+    UINT32          imglen = SBC_RAWPRT_DFLT_BLK_SZ;
+    UINT8           imghdr[SBC_RAWPRT_DFLT_BLK_SZ] = {0, };
+
+    if (bm != BOOT_MODE_FACTORY) {
+      bsofs = (BOOT_SECTOR1_OFS | ((normbank - 1) << 20));
+      startlba = ((bsofs | BOOT_SSBL_OFS) >> SBC_RAWPRT_DFLT_SHIFT);
+    }
+    else {
+      bsofs = BOOT_SECTOR3_OFS;
+      startlba = ((bsofs | BOOT_SSBL_OFS) >> SBC_RAWPRT_DFLT_SHIFT);
+    }
+
+    //dprint("BSOFS:  0x%lx, StartLBA: %lu", bsofs, startlba);
+
+    ret = SBC_RawPrtReadBlock(blkhnd, (void *)imghdr, &imglen, startlba);
+    if (ret != SBCOK) {
+        eprint("SSBL Factory Block Read Fail \n");
+        goto errdone;
+    }
+
+    CopyMem((void *)&imglen, &imghdr[0], sizeof imglen);
+
+    // If imglen is zero, assumed that image not existense in Raw partition
+    if (imglen <= 0) {
+      eprint("Boot Mode (%d) Image not existense", bm);
+      ret = SBCZEROL;
+      goto errdone;
+    }
+    //dprint("SSBL image len : %ld", imglen);
+    imglen = ALIGN_VALUE(imglen, SBC_RAWPRT_DFLT_BLK_SZ);
+
+    lv->value = AllocatePool(imglen);
+    SBC_RET_VALIDATE_ERRCODEMSG((lv->value != NULL), SBCNULLP, "Allocate Memory Fail");
+
+    ret = SBC_RawPrtReadBlock(blkhnd, (void *)lv->value, &imglen, startlba);
+    SBC_RET_VALIDATE_ERRCODEMSG((ret == SBCOK), ret, "SSBL image read fail");
+
+
+    lv->length = imglen - FSBL_BNIFO_SIZE;
+    // skip the image header ( for Length )
+    lv->value += 4;
+errdone:
+
+    return ret;
+
+}
+
 SBCStatus _ssbl_image_load(EFI_HANDLE ImageHandle, LV_t *lv)
 {
     SBCStatus           ret = SBCOK;
@@ -2448,7 +2503,7 @@ errdone:
 }
 
 extern VOID *h_blkio;
-SBCStatus SBC_GenFWID(EFI_HANDLE *h_image, UINT8 *devid, UINT8 *fwid, UINTN normbank, UINTN bm)
+SBCStatus SBC_GenFWID(VOID  *priv, UINT8 *devid, UINT8 *fwid, UINTN normbank, UINTN bm)
 {
 
   SBCStatus ret       = SBCOK;
@@ -2462,7 +2517,10 @@ SBCStatus SBC_GenFWID(EFI_HANDLE *h_image, UINT8 *devid, UINT8 *fwid, UINTN norm
   lv.value = NULL;
   lv.length = 0;
 
-  ret = _ssbl_image_load(h_image, &lv);
+  //
+  // EFI_HANDLE parameter don't need 
+  // 
+  ret = _ssbl_image_load(NULL, &lv);
   SBC_RET_VALIDATE_ERRCODEMSG((ret == SBCOK), ret, "SSB Image load fail");
   SBC_RET_VALIDATE_ERRCODEMSG((lv.length > 0), SBCZEROL, "SSB Image length 0");
 

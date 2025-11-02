@@ -1,7 +1,10 @@
+
 #ifndef __SBCLOG__
 #define __SBCLOG__
 
 #include <Library/DebugLib.h>
+
+#include "SBC_Timer.h"
 
 #ifndef ARG_UNUSED
 #   define ARG_UNUSED   __attribute__ ((unused))
@@ -18,7 +21,7 @@
 #define SYS_LOG_EVT_VALDIATION                  L"Validation"
 #define SYS_LOG_EVT_DETECTION                   L"Detection"
 #define SYS_LOG_HOST_BOOT                       L"AT_BOOT"
-#define SYS_LOG_APP_NAME                        L"SSBL"
+#define SYS_LOG_APP_NAME                        L"FSBL"
 #define SYS_LOG_CSC_NAME                        L"SAT"
 
 /*!
@@ -35,11 +38,12 @@ typedef enum {
 }t_sbc_syslog_prio;
 
 #define SBC_LOG_FSBL_APPNAME                        L"FSBL"
-#define SBC_LOG_SSBL_APPNAME                        L"SSBL"
+#define SBC_LOG_SSBL_APPNAME                        SYS_LOG_APP_NAME
 
 #define SBC_LOG_HOSTNAME                            L"N/A"
 
 //#define LINE_LEN 16
+
 void SBC_mem_print_bin(
         CHAR8 *title /**< [in] display name strings */,
         UINT8* buffer /**< [in] print buffer  */,
@@ -52,22 +56,19 @@ void SBC_external_mem_print_bin(
         UINT32 length /**< [in] length of buffer */
         );
 
-VOID SBC_LogElapsedTime(const CHAR16 *Tag, UINTN Ns);
-
 VOID SBC_LogBoolean(BOOLEAN expression, CONST CHAR8 *funcname, UINTN linenumber, 
                     CONST CHAR8 *filename, CONST CHAR8 *description);
 
 
 VOID SBC_LogMsg(CHAR8* logmsg, CONST CHAR8 *funcname, UINTN linenumber, 
                 CONST CHAR8 *filename);
-
+#ifdef _DEBUG_PRINT_ON_
 #define SBCLOGBOOLEAN(expression)    \
   SBC_LogBoolean((expression), __func__, __LINE__ , __FILE__, #expression)
 
 #define SBCLOGMSG(logmsg) \
   SBC_LogMsg(#logmsg, __func__, __LINE__ , __FILE__)
 
-#if defined(_SBC_DEBUG_ON_)
 #define dprint(fmt,...) \
     DEBUG((DEBUG_INFO, "(%a:%d) : "fmt"\n",__FUNCTION__, __LINE__,##__VA_ARGS__))
 
@@ -84,13 +85,34 @@ VOID SBC_LogMsg(CHAR8* logmsg, CONST CHAR8 *funcname, UINTN linenumber,
 #define int_eprint(fmt,...) \
     Print(ANSI_COLOR_RED_BOLD L"(%a:%d) : "fmt" \n" ANSI_COLOR_RESET, __FUNCTION__, __LINE__,##__VA_ARGS__)
 #else
-#define dprint(fmt,...)
-#define eprint(fmt,...)
-#define intgreen_dprint(fmt,...)
+//#error "Use Case test"
+#define SBCLOGBOOLEAN(expression)    
+
+#define SBCLOGMSG(logmsg) 
+
+#define dprint(fmt,...) 
+
+#define eprint(fmt,...) 
+
+#define intgreen_dprint(fmt,...) 
+
 #define int_dprint(fmt,...) 
-#define int_eprint(fmt,...)
+
+#define int_eprint(fmt,...) 
 #endif
 
+#ifdef _USECASE_TEST_
+#define _ucprint(fmt,...) \
+    DEBUG((DEBUG_INFO, "(%a:%d) : "fmt"\n",__FUNCTION__, __LINE__,##__VA_ARGS__))
+
+void _uc_mem_print_bin(
+        CHAR8 *title /**< [in] display name strings */,
+        UINT8* buffer /**< [in] print buffer  */,
+        UINT32 length /**< [in] length of buffer */
+        );
+#else
+#define _ucprint(fmt,...) 
+#endif
 /*
 extern VOID  SBC_LogWrite(UINT32 prio, CHAR16 *ver, CHAR16 *host,                                                
                         CHAR16 *appname, CHAR16 *csc,                                                            
@@ -132,6 +154,64 @@ VOID  SBC_LogPrint(CONST CHAR16* func, UINT32 funcline, UINT32 prio, UINT32 ver,
                         CHAR16 *format, ...);
 
 
+/*!
+  Build a formatted message containing a HEX string of the given public key.
+
+  @param[in]  PubKey         Pointer to public key bytes.
+  @param[in]  PubKeySize     Size of PubKey in bytes (e.g., 32).
+  @param[in]  FormatString   Format string (e.g., L"SBC_Dice_OSID failed to create OSID (%s)\n").
+                             Must contain a single '%s' where the hex string will be inserted.
+  @param[out] OutMsg         Output buffer for the formatted message (CHAR16).
+  @param[in]  OutMsgBytes    Size of OutMsg in BYTES (not CHAR16 count).
+
+  @retval EFI_SUCCESS            Message built successfully.
+  @retval EFI_INVALID_PARAMETER  Null ptrs, zero sizes, or missing %s in format string.
+  @retval EFI_OUT_OF_RESOURCES   Memory allocation failed.
+ */
+EFI_STATUS 
+SBC_BuildHexFormattedMessage (
+  IN  CONST VOID  *PubKey,
+  IN  UINTN        PubKeySize,
+  IN  CONST CHAR16 *FormatString,
+  OUT CHAR16      *OutMsg,
+  IN  UINTN        OutMsgBytes
+  );
+
+
+/*!
+ * 
+ * 
+ * \author leoc (9/25/25)
+ * 
+ * \param data      Pointer to input byte array
+ * \param len       Length of Data
+ * \param out       Pointer to output byte array
+ * \param out_cap   Lengthh of output element 
+ * \param loweracse Specify the Upper and Lower case 
+ * \param sep       Specify the delimiter 
+ * 
+ * \return UINTN    Actual recorded CHAR8 length excluding NULL character, On failure, return the 0 
+ */
+UINTN SBC_LogHexToStrChar8( UINT8 *data, UINTN len, CHAR8 *out, UINTN out_cap, BOOLEAN loweracse, CHAR8 sep);
+
+/*!
+ * 
+ * 
+ * \author leoc (9/25/25)
+ * 
+ * \param data      Pointer to input byte array
+ * \param len       Length of Data
+ * \param out       Pointer to output byte array
+ * \param out_cap   Lengthh of output element 
+ * \param loweracse Specify the Upper and Lower case 
+ * \param sep       Specify the delimiter 
+ * 
+ * \return UINTN    Actual recorded CHAR16 length excluding NULL character, On failure, return the 0 
+ */
+UINTN SBC_LogHexToStrChar16( UINT8 *data, UINTN len, CHAR16 *out, UINTN out_cap, BOOLEAN loweracse, CHAR16 sep);
+
+VOID SBC_LogHexKeyConvToChar16(VOID *out, VOID *msgbuf, VOID *keymsg);
+
 #define sbc_err_sysprn(prio, ver, host, appname, csc, sfrid, evtype, fmt,...)                                  \
     SBC_LogPrint((CONST CHAR16 *)__FUNCTION__, (UINT32)__LINE__, prio, ver, host, appname, csc, sfrid, evtype, fmt, ##__VA_ARGS__)
 
@@ -164,27 +244,6 @@ typedef enum {
 } LOG_EVENT;
 
 VOID UefiLog(LOG_LEVEL Level, LOG_EVENT Event, CONST CHAR16 *Format, ...);
-
-/*!
- * Create a log format that converts strings into hexadecimal format
- * 
- * \author leoc (10/24/25)
- * 
- * \param PubKey       Hexadecimal buffer
- * \param PubKeySize   Size of buffer 
- * \param FormatString Print out format string 
- * \param OutMsg       Output buffer include "FormatString" 
- * \param OutMsgBytes  Length of Output
- * 
- * \return On Success, return the EFI_SUCCESS, otherwise, return the apporiate
-   error value.
- */
-EFI_STATUS 
-SBC_BuildHexFormattedMessage (
-  IN  CONST VOID  *PubKey,
-  IN  UINTN        PubKeySize,
-  IN  CONST CHAR16 *FormatString,
-  OUT CHAR16      *OutMsg,
-  IN  UINTN        OutMsgBytes
-  );
+VOID SBC_LogElapsedTime(const CHAR16 *Tag, UINTN Ns);
 #endif
+
