@@ -1,8 +1,23 @@
+/********************************************************************************
+ * Copyright (C) 2024 by Security Platform Inc.                                 *
+ * This file is part of the SBC Project.                                        *
+ *                                                                              *
+ * This software contains confidential and proprietary information of           *
+ * Security Platform Inc. Unauthorized reproduction, distribution, or           *
+ * disclosure of this software, in whole or in part, is strictly prohibited.    *
+ ********************************************************************************/
+
+
 #ifndef __SBCTYPEDEFS_
 #define __SBCTYPEDEFS_
 
 #include "SBC_Log.h"
 
+
+/**
+ * @typedef off_t
+ * @brief File or memory offset type (platform compatibility definition).
+ */
 #ifndef  off_t
 typedef UINTN   off_t;
 #endif

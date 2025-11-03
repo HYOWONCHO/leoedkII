@@ -1,6 +1,6 @@
 /********************************************************************************
  * Copyright (C) 2024 by Security Platform Inc.                                 *
- * This file is part of the SBC Project.                                            *
+ * This file is part of the SBC Project.                                        *
  *                                                                              *
  * This software contains confidential and proprietary information of           *
  * Security Platform Inc. Unauthorized reproduction, distribution, or           *
@@ -40,15 +40,63 @@ typedef struct _at_key_t {
     UINTN ql;  /**< Length of public key in bytes. */
 } at_key_t;
 
+
+/**
+ * @struct SBCEccCtx
+ * @brief ECC (Elliptic Curve Cryptography) operation context structure.
+ *
+ * This structure defines the context for ECC-based cryptographic operations,
+ * including public key, private key, and shared secret information.
+ *
+ * Typical operations using this context include:
+ * - Key pair generation
+ * - Shared secret derivation (ECDH)
+ * - Signature generation and verification (ECDSA)
+ *
+ */
+
+/** @var SBCEccCtx::handle
+ *  @brief Opaque handle to the ECC hardware or software context.
+ *
+ *  Used internally to maintain cryptographic state or implementation-specific
+ *  resources (e.g., hardware accelerator handles or library contexts).
+ */
+
+/** @var SBCEccCtx::pubkey
+ *  @brief Public key buffer and its length.
+ *
+ *  Contains the ECC public key generated or imported for use in encryption
+ *  or signature verification.
+ */
+
+/** @var SBCEccCtx::privkey
+ *  @brief Private key buffer and its length.
+ *
+ *  Contains the ECC private key used for key exchange or signing.
+ *  Must be handled securely and cleared after use.
+ */
+
+/** @var SBCEccCtx::sharedkey
+ *  @brief Shared key buffer derived from ECDH operation.
+ *
+ *  Stores the resulting shared secret produced by combining a private key
+ *  and a peer's public key.
+ */
+
+/** @var SBCEccCtx::curveid
+ *  @brief Identifier of the elliptic curve used.
+ *
+ *  Represents the ECC curve type (e.g., NIST P-256, secp384r1, etc.)
+ *  depending on implementation.
+ */
 typedef struct _ecc_ctx_t {
-    VOID *handle;
-    LV_t pubkey;
-    LV_t privkey;
-    LV_t sharedkey;
+    VOID *handle;       /*!< ECC context handle (implementation-specific). */
+    LV_t pubkey;        /*!< ECC public key data. */
+    LV_t privkey;       /*!< ECC private key data. */
+    LV_t sharedkey;     /*!< Shared secret derived from ECDH operation. */
+    UINTN curveid;      /*!< Elliptic curve identifier. */
+} SBCEccCtx;
 
-
-    UINTN curveid;
-}SBCEccCtx;
 #pragma pack(pop)
 
 
@@ -57,10 +105,16 @@ typedef struct _ecc_ctx_t {
  * @brief Sets and Inititliaze the ECC public key into the given
  *        context.
  *
- * @param[in,out] handle   Pointer to the ECC context structure.
+ * @param[in] handle   Pointer to the ECC context structure.
  * @param[in]     key      Pointer to the public key data (usually 64 bytes: Qx || Qy).
  * @param[in]     keylen   Length of the public key in bytes.
  * @param[in]     curveid  Identifier for the ECC curve (e.g., NIST P-256).
+ *
+ * @retval SBCOK         The signature was successfully verified and is valid.
+ * @retval SBCFAIL       The signature is invalid or verification failed.
+ * @retval SBCNULLP      One or more input pointers are NULL.
+ * @retval SBCINVPARAM   Invalid parameter, key, or data length.
+ * @retval SBCCRYPTO     Internal cryptographic error occurred.
  *
  */
 SBCStatus SBC_EcCtxSetPubKey(VOID *handle, UINT8 *key, UINTN keylen, UINT32 curveid);
@@ -69,25 +123,58 @@ SBCStatus SBC_EcCtxSetPubKey(VOID *handle, UINT8 *key, UINTN keylen, UINT32 curv
  * @fn SBC_EcCtxSetPrivKey
  * @brief Sets the ECC private key into the given context.
  *
- * @param[in,out] handle   Pointer to the ECC context structure.
+ * @param[in] handle   Pointer to the ECC context structure.
  * @param[in]     key      Pointer to the private key data (usually 32 bytes).
  * @param[in]     keylen   Length of the private key in bytes.
  * @param[in]     curveid  Identifier for the ECC curve (e.g., NIST P-256).
  *
+ * @retval SBCOK         The signature was successfully verified and is valid.
+ * @retval SBCFAIL       The signature is invalid or verification failed.
+ * @retval SBCNULLP      One or more input pointers are NULL.
+ * @retval SBCINVPARAM   Invalid parameter, key, or data length.
+ * @retval SBCCRYPTO     Internal cryptographic error occurred.
+ *
  */
 SBCStatus SBC_EcCtxSetPrivKey(VOID *handle, UINT8 *key, UINTN keylen, UINT32 curveid);
+
+
+/**
+ * @fn SBCStatus SBC_EcDsaVerify(SBCEccCtx *h, TLV_t *hash, LV_t *signature)
+ * @brief Verify an ECDSA signature using the specified ECC context.
+ *
+ * This function verifies the validity of a digital signature that was
+ * generated using the Elliptic Curve Digital Signature Algorithm (ECDSA).
+ * It compares the provided @p signature against the computed digest
+ * from the given @p hash using the public key contained in the ECC context @p h.
+ *
+ * @param[in] h          Pointer to an initialized @ref SBCEccCtx structure
+ *                       containing the ECC public key for verification.
+ * @param[in] hash       Pointer to a TLV structure that holds the message hash
+ *                       (e.g., SHA-256 digest) to be verified.
+ * @param[in] signature  Pointer to an LV structure containing the ECDSA signature
+ *                       to be verified.
+ *
+ * @retval SBCOK         The signature was successfully verified and is valid.
+ * @retval SBCFAIL       The signature is invalid or verification failed.
+ * @retval SBCNULLP      One or more input pointers are NULL.
+ * @retval SBCINVPARAM   Invalid parameter, key, or data length.
+ * @retval SBCCRYPTO     Internal cryptographic error occurred.
+ */
 SBCStatus SBC_EcDsaVerify(SBCEccCtx *h, TLV_t *hash, LV_t *signature);
 
-
 /*!
- * Generates ECC Key pair 
+ * \fn SBCStatus SBC_EccKeyGen(SBCEccCtx *h, UINTN curveid)
+ * \brief Generates ECC Key pair 
  * 
- * \author leoc (5/2/25)
  * 
  * \param[in,out] h       Pointer to ECC handle context 
- * \param curveid ECC curve realted domain parameter ID 
+ * \param[in] curveid ECC curve realted domain parameter ID 
  * 
- * \return On success, return the SBCOK, otherwise return the apporiate value
+ * \retval SBCOK         The signature was successfully verified and is valid.
+ * \retval SBCFAIL       The signature is invalid or verification failed.
+ * \retval SBCNULLP      One or more input pointers are NULL.
+ * \retval SBCINVPARAM   Invalid parameter, key, or data length.
+ * \retval SBCCRYPTO     Internal cryptographic error occurred.
  * 
  * \note
  *      publickey = privat key * generator point
@@ -95,7 +182,8 @@ SBCStatus SBC_EcDsaVerify(SBCEccCtx *h, TLV_t *hash, LV_t *signature);
 SBCStatus SBC_EccKeyGen(SBCEccCtx *h, UINTN curveid);
 
 /**
- * @fn SBC_EcDsaVerify
+ * @fn SBCStatus SBC_GenShareSeucrityKey(SBCEccCtx *h, UINT8 *privkey,
+ *     UINTN privlen, UINT8 *pubkey, UINTN publen)
  * @brief Verifies an ECDSA signature using the specified ECC context and hash.
  *
  * @param[in] h         Pointer to the ECC context containing the public key.
@@ -111,7 +199,8 @@ SBCStatus SBC_GenShareSeucrityKey(SBCEccCtx *h, UINT8 *privkey, UINTN privlen, U
 
 
 /*!
- * Create the ECDSA signature for the given input hash message
+ * \fn SBCStatus SBC_EcDsaSign(SBCEccCtx *h, TLV_t *hash, LV_t *signature)
+ * \brief Create the ECDSA signature for the given input hash message
  * 
  * \author leoc (5/8/25)
  * 
@@ -119,7 +208,11 @@ SBCStatus SBC_GenShareSeucrityKey(SBCEccCtx *h, UINT8 *privkey, UINTN privlen, U
  * \param[in] hash      Pointer to message size and message hash to be signed      
  * \param[in,out] signature     Pointer to buffer to receive the signature
  * 
- * \return On success, return the SBCOK, otherwise, will return apporiate value
+ * \retval SBCOK         The signature was successfully verified and is valid.
+ * \retval SBCFAIL       The signature is invalid or verification failed.
+ * \retval SBCNULLP      One or more input pointers are NULL.
+ * \retval SBCINVPARAM   Invalid parameter, key, or data length.
+ * \retval SBCCRYPTO     Internal cryptographic error occurred.
  * 
  * \note
  * In terms of "signature" arguments, when "IN", it is essential to define the size
@@ -128,7 +221,8 @@ SBCStatus SBC_GenShareSeucrityKey(SBCEccCtx *h, UINT8 *privkey, UINTN privlen, U
 SBCStatus SBC_EcDsaSign(SBCEccCtx *h, TLV_t *hash, LV_t *signature);
 
 /*!
- * Create the ECDSA signature for the given input hash message
+ * \fn SBCStatus SBC_EcDsaVerify(SBCEccCtx *h, TLV_t *hash, LV_t *signature)
+ * \brief Create the ECDSA signature for the given input hash message
  * 
  * \author leoc (5/8/25)
  * 
@@ -136,7 +230,11 @@ SBCStatus SBC_EcDsaSign(SBCEccCtx *h, TLV_t *hash, LV_t *signature);
  * \param[in] hash      Pointer to message size and message hash to be signed      
  * \param[in,out] signature     Pointer to buffer the signature to be verify
  * 
- * \return On success, return the SBCOK, otherwise, will return apporiate value
+ * \retval SBCOK         The signature was successfully verified and is valid.
+ * \retval SBCFAIL       The signature is invalid or verification failed.
+ * \retval SBCNULLP      One or more input pointers are NULL.
+ * \retval SBCINVPARAM   Invalid parameter, key, or data length.
+ * \retval SBCCRYPTO     Internal cryptographic error occurred.
  * 
  * \note
  * In terms of "signature" arguments, when "IN", it is essential to define the size
@@ -146,6 +244,7 @@ SBCStatus SBC_EcDsaVerify(SBCEccCtx *h, TLV_t *hash, LV_t *signature);
 
 
 /*!
+ * \fn SBCStatus  SBC_DICESeedKeyPair(UINT8 *dice_seed, at_key_t *key)
  * \brief Generate the key pair which used the DICE seed.
  * 
  * \author leoc (5/16/25)
@@ -153,14 +252,23 @@ SBCStatus SBC_EcDsaVerify(SBCEccCtx *h, TLV_t *hash, LV_t *signature);
  * \param[in] dice_seed  Pointer to the seed buffer
  * \param[out] key       Pointer to the raw key 
  * 
- * \return Returns SBCOK if succeful, otherwise returns the appropriate value for the error
+ * \retval SBCOK         The signature was successfully verified and is valid.
+ * \retval SBCFAIL       The signature is invalid or verification failed.
+ * \retval SBCNULLP      One or more input pointers are NULL.
+ * \retval SBCINVPARAM   Invalid parameter, key, or data length.
+ * \retval SBCCRYPTO     Internal cryptographic error occurred.
  */
 SBCStatus  SBC_DICESeedKeyPair(UINT8 *dice_seed, at_key_t *key);
 
 /*!
- * Convert a raw DER-encoded key to a PEM formatted key.
- * 
- * \author leoc (5/16/25)
+ * \fn SBCStatus SBC_ConvertRawKeyPem(
+ *       IN  CONST UINT8  *DerData,
+ *       IN  UINTN         DerSize,
+ *       IN  CONST CHAR8  *PemHeader,
+ *       IN  CONST CHAR8  *PemFooter,
+ *       OUT CHAR8       **PemKey,
+ *       OUT UINTN        *PemKeySize)
+ * \brief Convert a raw DER-encoded key into PEM format.
  * 
  * \param DerData    Pointer to the DER-encoded key.
  * \param DerSize    Size (in bytes) of the DER-encoded key.
@@ -169,8 +277,11 @@ SBCStatus  SBC_DICESeedKeyPair(UINT8 *dice_seed, at_key_t *key);
  * \param PemKey     Pointer to the allocated PEM string (caller must free).
  * \param PemKeySiz  Pointer to the size of the PEM string.
  * 
- * \retval  SBCOK  operation complete successfully
- * \retval  Others  An error occurred
+ * \retval SBCOK         The signature was successfully verified and is valid.
+ * \retval SBCFAIL       The signature is invalid or verification failed.
+ * \retval SBCNULLP      One or more input pointers are NULL.
+ * \retval SBCINVPARAM   Invalid parameter, key, or data length.
+ * \retval SBCCRYPTO     Internal cryptographic error occurred.
  */
 SBCStatus  SBC_ConvertRawKeyPem(
                                     IN  CONST UINT8  *DerData,

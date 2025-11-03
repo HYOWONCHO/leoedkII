@@ -1,6 +1,6 @@
 /********************************************************************************
  * Copyright (C) 2024 by Security Platform Inc.                                 *
- * This file is part of the SBC Project.                                            *
+ * This file is part of the SBC Project.                                        *
  *                                                                              *
  * This software contains confidential and proprietary information of           *
  * Security Platform Inc. Unauthorized reproduction, distribution, or           *
@@ -29,6 +29,8 @@ typedef enum _boot_st_t {
     SB_PROC_ST_UNKNOWN                          /**< Secure Boot Process Status: Unknown */
 } boot_st_t;
 
+
+#pragma pack(1)
 /**
  * @struct boot_proc_t
  * @brief Represents the context and state of the secure boot process.
@@ -37,7 +39,6 @@ typedef enum _boot_st_t {
  * used during the secure boot process, including firmware bank information,
  * boot and key modes, and recovery status.
  */
-#pragma pack(1)
 typedef struct _boot_proc_t {
     VOID   *ldhndl;       /**< Load handle (e.g., image handle or context). */
     VOID   *blkhnd;       /**< Block I/O handle for accessing storage. */

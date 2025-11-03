@@ -1,3 +1,30 @@
+/********************************************************************************
+ * Copyright (C) 2024 by Security Platform Inc.                                 *
+ * This file is part of the SBC Project.                                        *
+ *                                                                              *
+ * This software contains confidential and proprietary information of           *
+ * Security Platform Inc. Unauthorized reproduction, distribution, or           *
+ * disclosure of this software, in whole or in part, is strictly prohibited.    *
+ ********************************************************************************/
+
+/**
+ * @file SBC_SystemControl.c
+ * @brief Handling of the System state and decided the System booting
+ *        proceddure
+ *
+ * @author LEON
+ * @version 1.0
+ * @date 2025-10-31
+ *
+ * @copyright (c) 2025 Security Platform Inc. All rights
+ *            reserved.
+ *
+ * @details
+ * This file implements the System Reset, Normal/Ab-normal of System Booting
+ * procedure, Reset and Shutdown decides.
+ *
+ */
+
 #include <Uefi.h>
 #include <Library/UefiRuntimeServicesTableLib.h>
 #include <Library/BaseLib.h>
@@ -19,60 +46,7 @@
 //EFI_GUID g_sbc_guid  = {0x1F3F7E80, 0xDB6B, 0x93FA, {0x9E, 0x61, 0x4C, 0x31, 0x3D, 0x3A}};
 
 
-static 
-SBCStatus 
-__attribute__((unused))
-SBC_FindPrtoSWAndProcessing(UINT8 *deckey, 
-                            UINT8 *buf, 
-                            UINTN buflen, 
-                            UINT8 *decbuf, 
-                            UINT32 *declen)
-{
-    SBCStatus ret = SBCOK;
-    UINTN enclen = 0;
-    [[gnu::unused]] UINT8 *encbuf = NULL;
-    UINT8 *iv;
-    UINT8 *tag;
-    SBC_AESContext aesctx;
-    SBC_AESGcmCtx  ctx;
-    [[gnu::unused]]  UINT8 shared_secret[SBC_AT_HASH_LEN] = {0, };
-    [[gnu::unused]] sbc_sw_node_t node_info;
 
-    CopyMem((void *)&enclen, (void *)&buf[0], 4);
-    encbuf = &buf[4];
-    iv = &buf[4 + enclen];
-    tag = &buf[4 + enclen + SBC_AT_IV_LEN];
-
-
-    if(SBC_HashCompute(NULL, deckey, SBC_AT_HASH_LEN, shared_secret) != SBCOK) {
-        eprint("Shared secret key creation is  fail");
-        ret = SBCFAIL;
-        goto errdone;
-    }
-
-
-
-    ctx.out.value = (void *)decbuf;
-    ctx.out.length = *declen;
-    aesctx.gcm = &ctx;
-    aesctx.algoid = SBC_CIPHER_AES_GCM;
-    //decrypt sw white list 
-    SBC_AESGcmSetContext((void *)aesctx.gcm, 
-                         (void *)shared_secret, 
-                         (void *)iv, 
-                         (void *)tag);
-    if (SBC_AESGcmDecrypt(&aesctx) != SBCOK) {
-        eprint("Protected SW List decrypt fail");
-        ret = SBCFAIL;
-        goto errdone;
-    }
-errdone:
-
-    return ret;
-
-
-
-}
 
 static BOOLEAN _check_prev_fw(UINTN prev_bnk_id)
 {
@@ -679,10 +653,6 @@ void SBC_RecoveryBootProcessing(VOID *priv)
     SBCStatus ret = SBCOK;
     //sb_rcv_proc_t *p = NULL;
     boot_proc_t   *bt_proc = NULL; // BOot process
-    [[gnu::unused]] UINT8 sk[BASE_ANS_KEY_STR] = {0,}; // Secret key for Protected SW 
-    [[gnu::unused]] LV_t sysconf;
-    [[gnu::unused]] sw_whitels_t  auth_list; 
-
 
     // bug -->
     //p = (sb_rcv_proc_t *)priv;

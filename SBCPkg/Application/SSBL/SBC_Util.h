@@ -4,36 +4,64 @@
 #include "SBC_Log.h"
 
 
-#define SBC_OFFSET_OF(type, member)     ((UINTN) & (((type *)0)->member))
+/**
+ * @def SBC_OFFSET_OF
+ * @brief Compute the byte offset of a member within a structure.
+ *
+ * @param[in] type    The structure type.
+ * @param[in] member  The member name within the structure.
+ *
+ * @return Byte offset of @p member within @p type.
+ */
+#define SBC_OFFSET_OF(type, member)     ((UINTN) &(((type *)0)->member))
 
+/**
+ * @def SBC_CONTAINER_OF
+ * @brief Retrieve the pointer to the parent structure from a member pointer.
+ *
+ * @param[in] ptr     Pointer to the member.
+ * @param[in] type    Type of the container structure.
+ * @param[in] member  Name of the member within the structure.
+ *
+ * @return Pointer to the containing structure of type @p type.
+ */
 #define SBC_CONTAINER_OF(ptr, type, member)     \
-  ({      \
-      const typeof ( ((type *)0)->member) *__mptr = (ptr);      \
-      (type *)( (UINT8 *)__mptr - SBC_OFFSET_OF(type, member));      \
-  })    
+  ({                                            \
+      const typeof(((type *)0)->member) *__mptr = (ptr);      \
+      (type *)((UINT8 *)__mptr - SBC_OFFSET_OF(type, member));\
+  })
 
-
+/**
+ * @def SBC_SWAP_ENDIAN_16
+ * @brief Swap byte order of a 16-bit unsigned integer.
+ */
 #define SBC_SWAP_ENDIAN_16(val) \
-    (((UINT16)(val) & 0xFF00) >> 8) | \
-    (((UINT16)(val) & 0x00FF) << 8)
+    ((((UINT16)(val) & 0xFF00) >> 8) | \
+     (((UINT16)(val) & 0x00FF) << 8))
 
-
+/**
+ * @def SBC_SWAP_ENDIAN_32
+ * @brief Swap byte order of a 32-bit unsigned integer.
+ */
 #define SBC_SWAP_ENDIAN_32(val) \
-    (((UINT32)(val) & 0xFF000000UL) >> 24) | \
-    (((UINT32)(val) & 0x00FF0000UL) >> 8)  | \
-    (((UINT32)(val) & 0x0000FF00UL) << 8)  | \
-    (((UINT32)(val) & 0x000000FFUL) << 24)
+    ((((UINT32)(val) & 0xFF000000UL) >> 24) | \
+     (((UINT32)(val) & 0x00FF0000UL) >> 8)  | \
+     (((UINT32)(val) & 0x0000FF00UL) << 8)  | \
+     (((UINT32)(val) & 0x000000FFUL) << 24))
 
-
+/**
+ * @def SBC_SWAP_ENDIAN_64
+ * @brief Swap byte order of a 64-bit unsigned integer.
+ */
 #define SBC_SWAP_ENDIAN_64(val) \
-    (((UINTN)(val) & 0xFF00000000000000ULL) >> 56) | \
-    (((UINTN)(val) & 0x00FF000000000000ULL) >> 40) | \
-    (((UINTN)(val) & 0x0000FF0000000000ULL) >> 24) | \
-    (((UINTN)(val) & 0x000000FF00000000ULL) >> 8)  | \
-    (((UINTN)(val) & 0x00000000FF000000ULL) << 8)  | \
-    (((UINTN)(val) & 0x0000000000FF0000ULL) << 24) | \
-    (((UINTN)(val) & 0x000000000000FF00ULL) << 40) | \
-    (((UINTN)(val) & 0x00000000000000FFULL) << 56)
+    ((((UINTN)(val) & 0xFF00000000000000ULL) >> 56) | \
+     (((UINTN)(val) & 0x00FF000000000000ULL) >> 40) | \
+     (((UINTN)(val) & 0x0000FF0000000000ULL) >> 24) | \
+     (((UINTN)(val) & 0x000000FF00000000ULL) >> 8)  | \
+     (((UINTN)(val) & 0x00000000FF000000ULL) << 8)  | \
+     (((UINTN)(val) & 0x0000000000FF0000ULL) << 24) | \
+     (((UINTN)(val) & 0x000000000000FF00ULL) << 40) | \
+     (((UINTN)(val) & 0x00000000000000FFULL) << 56))
 
 
 

@@ -1,21 +1,38 @@
+/********************************************************************************
+ * Copyright (C) 2024 by Security Platform Inc.                                 *
+ * This file is part of the SBC Project.                                        *
+ *                                                                              *
+ * This software contains confidential and proprietary information of           *
+ * Security Platform Inc. Unauthorized reproduction, distribution, or           *
+ * disclosure of this software, in whole or in part, is strictly prohibited.    *
+ ********************************************************************************/
+
 #ifndef _SBC_X509_H
 #define _SBC_X509_H
 
 
-/*!
- * Retrive the EC public key from DER Encoded X509 certificate
- * 
- * \author leoc (5/19/25)
- * 
- * \param der    pointer to the der encoded x509 certificate
- * \param derl   Length of x509 certificate in bytes
- * \param ctx    Pointer to new-genenrate EC context 
- * 
- * \return SBCStatus 
+/**
+ * @fn SBCStatus SBC_EcGetPublicKeyFromPem(CONST UINT8 *der, UINTN derl, VOID **ctx)
+ * @brief Parse a DER-encoded EC public key and initialize an ECC context.
+ *
+ * @param[in]  der   Pointer to the DER-encoded public key buffer.
+ * @param[in]  derl  Length of the DER-encoded data in bytes.
+ * @param[out] ctx   Pointer to a variable that receives the created ECC
+ *                   context handle. The context must be released using
+ *                   the corresponding cleanup function when no longer needed.
+ *
+ * @retval SBCOK         The EC public key was successfully parsed and context created.
+ * @retval SBCFAIL       Parsing failed due to malformed DER data or unsupported key type.
+ * @retval SBCNULLP      One or more input pointers are NULL.
+ * @retval SBCINVPARAM   Invalid parameter values or buffer length.
+ * @retval SBCCRYPTO     ECC library or decoding failure occurred.
  */
-SBCStatus  SBC_EcGetPublicKeyFromPem(CONST UINT8 *der,
-                                      UINTN derl,
-                                      VOID **ctx);
+SBCStatus SBC_EcGetPublicKeyFromPem(
+    CONST UINT8 *der,  /**< [in] DER-encoded EC public key buffer */
+    UINTN        derl, /**< [in] Length of the DER data (bytes) */
+    VOID       **ctx   /**< [out] Pointer to ECC context handle */
+);
+
 
 
 /*!

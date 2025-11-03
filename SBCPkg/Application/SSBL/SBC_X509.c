@@ -1,3 +1,31 @@
+/********************************************************************************
+ * Copyright (C) 2024 by Security Platform Inc.                                 *
+ * This file is part of the SBC Project.                                        *
+ *                                                                              *
+ * This software contains confidential and proprietary information of           *
+ * Security Platform Inc. Unauthorized reproduction, distribution, or           *
+ * disclosure of this software, in whole or in part, is strictly prohibited.    *
+ ********************************************************************************/
+
+/**
+ * @file SBC_X509.c
+ * @brief Implementation of X.509 certificate handling and verification
+ *        routines.
+ *
+ * @author LEON
+ * @version 1.0
+ * @date 2025-10-31
+ *
+ * @copyright
+ * (c) 2025 Security Platform Inc. All rights reserved.
+ *
+ * @details
+ * This file implements functions for handling X.509 certificate processing
+ * used within the SBC secure boot and protected software validation framework.  
+ *
+ */
+
+
 #include <Library/MemoryAllocationLib.h>
 #include <Library/BaseMemoryLib.h>
 #include <Library/BaseCryptLib.h>

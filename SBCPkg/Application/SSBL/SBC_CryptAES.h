@@ -1,6 +1,6 @@
 /********************************************************************************
  * Copyright (C) 2024 by Security Platform Inc.                                 *
- * This file is part of the SBC Project.                                            *
+ * This file is part of the SBC Project.                                        *
  *                                                                              *
  * This software contains confidential and proprietary information of           *
  * Security Platform Inc. Unauthorized reproduction, distribution, or           *
@@ -58,29 +58,66 @@ typedef struct _aes_cbc_context_t {
 
 /**
  * @struct SBC_AESGcmCtx
- * @brief AES GCM behavior context handle
- * 
- * @var  SBC_AESGcmCtx:key
- * Key regarding Encryptoin and Decectypion
- * 
- * @var SBC_AESGcmCtx:tag
- * Pointer to the buffer that receives the authentication tag
- * and size in bytes
- * 
- * @var SBC_AESGcmCtx:out
- * Poiner to a buffer that receives the encryption/decryption
- * output and size of buffer in bytes
- * 
- * @author leoc (4/25/25)
+ * @brief AES-GCM operation context structure.
+ *
+ * This structure defines all necessary parameters for performing AES-GCM
+ * encryption and decryption operations, including key, IV, AAD, message,
+ * authentication tag, and output buffer.
+ *
+ * It provides a unified data container for passing cryptographic
+ * parameters to AES-GCM APIs.
+ *
+ * @author leoc
+ * @date 2025-04-25
+ */
+
+/** @var SBC_AESGcmCtx::key
+ *  @brief Key used for encryption and decryption.
+ *
+ *  Contains the symmetric AES key and its size information.
+ */
+
+/** @var SBC_AESGcmCtx::iv
+ *  @brief Initialization Vector (IV) for AES-GCM operation.
+ *
+ *  A unique nonce required for each encryption to ensure data security.
+ */
+
+/** @var SBC_AESGcmCtx::aad
+ *  @brief Additional Authenticated Data (AAD).
+ *
+ *  Data that is authenticated but not encrypted, typically used for
+ *  protocol headers or integrity metadata.
+ */
+
+/** @var SBC_AESGcmCtx::msg
+ *  @brief Message buffer used for encryption or decryption.
+ *
+ *  Contains the plaintext input (for encryption) or ciphertext input
+ *  (for decryption), along with its length.
+ */
+
+/** @var SBC_AESGcmCtx::tag
+ *  @brief Authentication tag buffer and its size.
+ *
+ *  Receives the 16-byte authentication tag (for encryption)
+ *  or provides it (for decryption) to verify message integrity.
+ */
+
+/** @var SBC_AESGcmCtx::out
+ *  @brief Output buffer for AES-GCM operation.
+ *
+ *  Holds the resulting ciphertext (for encryption) or plaintext
+ *  (for decryption) and its size in bytes.
  */
 typedef struct _aes_gcm_context_t {
-  SBC_CipherTLV key;     /*!< Key regarding Encryptoin and Decectypion*/
-  SBC_CipherTLV iv;      /*!< Initial vector */
-  SBC_CipherTLV aad;     /*!< Addtional authenticated data */
-  SBC_CipherTLV msg;     /*!< Message buffer pointer to encryption and decryption*/
-  SBC_CipherTLV tag;     
-  SBC_CipherTLV out;
-}SBC_AESGcmCtx;
+    SBC_CipherTLV key;   /*!< AES key for encryption and decryption. */
+    SBC_CipherTLV iv;    /*!< Initialization vector (IV). */
+    SBC_CipherTLV aad;   /*!< Additional authenticated data (AAD). */
+    SBC_CipherTLV msg;   /*!< Message buffer (plaintext/ciphertext). */
+    SBC_CipherTLV tag;   /*!< Authentication tag (16 bytes typical). */
+    SBC_CipherTLV out;   /*!< Output buffer for processed data. */
+} SBC_AESGcmCtx;
 
 
 /**
@@ -107,11 +144,6 @@ typedef struct _aes_context_t {
   SBC_AESCBCCtx *cbc;           /**< AES-CBC mode context. Used when algoid is SBC_CIPHER_AES_CBC. */
   SBC_AESGcmCtx *gcm;           /**< AES-GCM mode context. Used when algoid is SBC_CIPHER_AES_GCM. */
 } SBC_AESContext;
-
-#define SBC_AES_RET_VAL_IF_FAIL(expr, val)  \
-  do { if(!(expr)) {Print(L" FAILED. \r\n"); return (val);} }while (0)
-
-
 
 /**
  * @def SBC_AES_KEY_STRENGTH

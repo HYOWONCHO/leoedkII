@@ -1,6 +1,6 @@
 /********************************************************************************
  * Copyright (C) 2024 by Security Platform Inc.                                 *
- * This file is part of the SBC Project.                                            *
+ * This file is part of the SBC Project.                                        *
  *                                                                              *
  * This software contains confidential and proprietary information of           *
  * Security Platform Inc. Unauthorized reproduction, distribution, or           *

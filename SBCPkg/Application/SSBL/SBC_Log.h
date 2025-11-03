@@ -1,6 +1,6 @@
 /********************************************************************************
  * Copyright (C) 2024 by Security Platform Inc.                                 *
- * This file is part of the SBC Project.                                            *
+ * This file is part of the SBC Project.                                        *
  *                                                                              *
  * This software contains confidential and proprietary information of           *
  * Security Platform Inc. Unauthorized reproduction, distribution, or           *
@@ -74,12 +74,21 @@ typedef enum {
 
 //#define LINE_LEN 16
 
+/**
+ * @fn void SBC_mem_print_bin(CHAR8 *title, UINT8 *buffer, UINT32 length)
+ * @brief Print binary data in hexadecimal format for debugging.
+ */
 void SBC_mem_print_bin(
-        CHAR8 *title /**< [in] display name strings */,
-        UINT8* buffer /**< [in] print buffer  */,
-        UINT32 length /**< [in] length of buffer */
-        );
+    CHAR8 *title,   /**< [in] Display title string */
+    UINT8 *buffer,  /**< [in] Pointer to data buffer */
+    UINT32 length   /**< [in] Number of bytes to print */
+);
 
+/**
+ * @fn void SBC_external_mem_print_bin(CHAR8 *title,
+ *     UINT8 *buffer, UINT32 length)
+ * @brief Print binary data in hexadecimal format for debugging.
+ */
 void SBC_external_mem_print_bin(
         CHAR8 *title /**< [in] display name strings */,
         UINT8* buffer /**< [in] print buffer  */,
@@ -92,6 +101,7 @@ VOID SBC_LogBoolean(BOOLEAN expression, CONST CHAR8 *funcname, UINTN linenumber,
 
 VOID SBC_LogMsg(CHAR8* logmsg, CONST CHAR8 *funcname, UINTN linenumber, 
                 CONST CHAR8 *filename);
+
 #ifdef _DEBUG_PRINT_ON_
 #define SBCLOGBOOLEAN(expression)    \
   SBC_LogBoolean((expression), __func__, __LINE__ , __FILE__, #expression)
@@ -176,36 +186,93 @@ SBC_LogCustomPrint (
 
 extern CHAR16 mrgmsg[8192]; 
 
-CHAR16 *SBC_LogMrg(CONST CHAR16 *fmt, ...);
+//CHAR16 *SBC_LogMrg(CONST CHAR16 *fmt, ...);
 
-VOID  SBC_LogPrint(CONST CHAR16* func, UINT32 funcline, UINT32 prio, UINT32 ver, CHAR16 *host, 
-                        CHAR16 *appname, CHAR16 *csc,
-                        UINT32 sfrid, CHAR16 *evtype,
-                        CHAR16 *format, ...);
-
-
-/*!
-  Build a formatted message containing a HEX string of the given public key.
-
-  @param[in]  PubKey         Pointer to public key bytes.
-  @param[in]  PubKeySize     Size of PubKey in bytes (e.g., 32).
-  @param[in]  FormatString   Format string (e.g., L"SBC_Dice_OSID failed to create OSID (%s)\n").
-                             Must contain a single '%s' where the hex string will be inserted.
-  @param[out] OutMsg         Output buffer for the formatted message (CHAR16).
-  @param[in]  OutMsgBytes    Size of OutMsg in BYTES (not CHAR16 count).
-
-  @retval EFI_SUCCESS            Message built successfully.
-  @retval EFI_INVALID_PARAMETER  Null ptrs, zero sizes, or missing %s in format string.
-  @retval EFI_OUT_OF_RESOURCES   Memory allocation failed.
+/**
+ * @fn VOID SBC_LogPrint(
+ *       CONST CHAR16* func,
+ *       UINT32 funcline,
+ *       UINT32 prio,
+ *       UINT32 ver,
+ *       CHAR16 *host,
+ *       CHAR16 *appname,
+ *       CHAR16 *csc,
+ *       UINT32 sfrid,
+ *       CHAR16 *evtype,
+ *       CHAR16 *format,
+ *       ...)
+ * @brief Print a formatted log message with metadata and variable arguments.
+ *
+ * @param[in] func       Name of the function where the log is generated (Unicode string).
+ * @param[in] funcline   Source code line number where the log was called.
+ * @param[in] prio       Log priority or severity level (e.g., DEBUG, INFO, WARN, ERROR).
+ * @param[in] ver        Log version or protocol version identifier.
+ * @param[in] host       Host or system identifier (Unicode string).
+ * @param[in] appname    Application or module name (Unicode string).
+ * @param[in] csc        Customer or component identifier (Unicode string).
+ * @param[in] sfrid      SFR (Software Fault Record) or event identifier.
+ * @param[in] evtype     Event type (e.g., "BOOT", "SECURE", "RUNTIME").
+ * @param[in] format     Format string for variable arguments (Unicode string).
+ * @param[in] ...        Variable arguments for printf-style formatting.
+ *
+ * @retval None
  */
-EFI_STATUS 
-SBC_BuildHexFormattedMessage (
-  IN  CONST VOID  *PubKey,
-  IN  UINTN        PubKeySize,
-  IN  CONST CHAR16 *FormatString,
-  OUT CHAR16      *OutMsg,
-  IN  UINTN        OutMsgBytes
-  );
+VOID SBC_LogPrint(
+    CONST CHAR16 *func,   /**< [in] Function name string */
+    UINT32 funcline,      /**< [in] Line number of the log call */
+    UINT32 prio,          /**< [in] Log priority (DEBUG, INFO, WARN, ERROR, etc.) */
+    UINT32 ver,           /**< [in] Log version or schema ID */
+    CHAR16 *host,         /**< [in] Host or system identifier */
+    CHAR16 *appname,      /**< [in] Application or module name */
+    CHAR16 *csc,          /**< [in] Customer or component code */
+    UINT32 sfrid,         /**< [in] Software Fault Record (SFR) or event ID */
+    CHAR16 *evtype,       /**< [in] Event type string (e.g., L"BOOT") */
+    CHAR16 *format,       /**< [in] Format string for variable arguments */
+    ...
+);
+
+
+/**
+ * @fn EFI_STATUS SBC_BuildHexFormattedMessage(
+ *       IN  CONST VOID  *PubKey,
+ *       IN  UINTN        PubKeySize,
+ *       IN  CONST CHAR16 *FormatString,
+ *       OUT CHAR16      *OutMsg,
+ *       IN  UINTN        OutMsgBytes)
+ * @brief Build a formatted Unicode message containing a hexadecimal representation of binary data.
+ *
+ * Example usage:
+ * @code
+ * CHAR16 Msg[256];
+ * SBC_BuildHexFormattedMessage(KeyData, KeyLen, L"Public Key: %s", Msg, sizeof(Msg));
+ * @endcode
+ *
+ * The resulting message will contain the prefix text defined by the format string,
+ * followed by the converted hexadecimal string of @p PubKey.
+ *
+ * @param[in]  PubKey        Pointer to the binary data (e.g., public key or hash) to be converted.
+ * @param[in]  PubKeySize    Size of the binary data buffer in bytes.
+ * @param[in]  FormatString  Unicode (CHAR16) format string that defines how the final
+ *                           message should be constructed.
+ *                           Example: `L"Key Digest: %s"`.
+ * @param[out] OutMsg        Pointer to a caller-allocated buffer that receives the formatted message.
+ *                           The buffer must be large enough to store the formatted text
+ *                           and the hexadecimal string.
+ * @param[in]  OutMsgBytes   Size of the output buffer @p OutMsg, in bytes.
+ *
+ * @retval EFI_SUCCESS           The formatted message was successfully created.
+ * @retval EFI_INVALID_PARAMETER One or more parameters are NULL or invalid.
+ * @retval EFI_BUFFER_TOO_SMALL  The output buffer is too small for the generated message.
+ * @retval EFI_OUT_OF_RESOURCES  Memory allocation or internal buffer operation failed.
+ */
+EFI_STATUS SBC_BuildHexFormattedMessage(
+    IN  CONST VOID  *PubKey,
+    IN  UINTN        PubKeySize,
+    IN  CONST CHAR16 *FormatString,
+    OUT CHAR16      *OutMsg,
+    IN  UINTN        OutMsgBytes
+);
+
 
 
 /*!
