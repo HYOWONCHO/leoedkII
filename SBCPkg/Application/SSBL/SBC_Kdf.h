@@ -12,6 +12,19 @@
 
 
 /**
+ * @brief Generate a random seed value using CPU or performance timer.
+ *
+ *
+ * @return 64-bit random seed value.
+ *
+ * @retval UINT64 Random seed value derived from hardware or timing entropy.
+ *
+ * @see AsmRdRand64(), AsmReadTsc(), GetPerformanceCounter()
+ */
+UINTN GetCpuSeed(VOID);
+
+
+/**
  * @fn SBCStatus SBC_RngGeneration(UINT8 *seed, UINTN szseed, UINTN szrng, UINT8 *rngdata)
  * @brief Generate random data using hardware or software RNG.
  *
