@@ -45,12 +45,14 @@ typedef struct _boot_proc_t {
     VOID   *rawprt_hdr;   /**< Pointer to raw partition header structure. */
     VOID   *baseansr;     /**< Pointer to base answer data */
     VOID   *keyinfo;      /**< Pointer to key information (e.g., atp_ident_t structure). */
+    VOID   *diceid;       /**< Pointer to DICE ID*/
     UINTN   pvs_sw_bnk;   /**< Previously selected software bank ID. */
     UINTN   curr_sw_bnk;  /**< Currently selected software bank ID. */
     UINT16  bm;           /**< Boot mode (e.g., normal, recovery, factory). */
     UINT16  km;           /**< Key mode  */
     UINT32  bootst;       /**< Boot status (see @ref boot_st_t). */
     UINTN   rcvmode;      /**< Indicates if firmware booted from recovery mode. */
+
 } boot_proc_t;
 #pragma pack()
 

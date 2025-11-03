@@ -73,6 +73,8 @@
 extern SBCStatus SBC_GRUB_LoadAndStart(EFI_HANDLE ImageHandle);
 extern SBCStatus SBC_BootKeyModeChange(UINT32 newbm, UINT32 newkey, VOID *priv);
 
+//EFI_HANDLE h_sbchandle;
+
 UINTN   sys_start_time = 0ULL;
 UINTN   sys_end_time = 0ULL;
 UINTN   sys_ns_var = 0ULL;
@@ -418,7 +420,9 @@ UefiMain (
 
     
     [[gnu::unused]] CHAR8 bank_find;
- 
+
+    
+    btproc.ldhndl = ImageHandle;
     sbc_err_sysprn(SBC_LOG_CMN_PRIO_INFO, 2,
                  SYS_LOG_HOST_BOOT,
                  SYS_LOG_APP_NAME,
@@ -693,6 +697,8 @@ uc_errdone:
         btproc.bootst = SB_PROC_ST_ABNRAM;
         goto errdone;
     }
+
+    btproc.diceid = (VOID *)&diceid;
 
 //  sbc_err_sysprn(SBC_LOG_CMN_PRIO_INFO, 2,
 //       SYS_LOG_HOST_BOOT,

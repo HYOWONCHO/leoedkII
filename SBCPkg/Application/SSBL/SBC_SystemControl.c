@@ -170,6 +170,60 @@ errdone:
     return ret;
 }
 #ifdef _HANDLE_PROTSW_
+
+//static UINTN _get_firmware_bank_addrses(UINTN bnkid)
+//{
+//    UINTN offset = 0ULL;
+//
+//    switch(bnkid) {
+//    case 1:
+//        offset = BOOT_SECTOR1_OFS;
+//        break;
+//    case 2:
+//        offset = BOOT_SECTOR2_OFS;
+//        break;
+//    default:
+//        eprint("Unknown Firmware Bank ID");
+//        break;
+//    }
+//
+//    return offset;
+//}
+
+
+extern SBCStatus  SBC_DiceKeysGen(EFI_HANDLE ImageHandle, VOID *p,UINTN normbank, UINTN bm);
+static SBCStatus _compute_previously_osid(VOID *handle, VOID *old)
+{
+    SBCStatus ret = SBCOK;
+    //UINTN fw_ofs = 0ULL;
+
+    boot_proc_t *bp = (boot_proc_t *)handle;
+    atp_ident_t atpid;
+
+    dprint("Compute the OLD OSID !!!!---");
+    ZeroMem((void *)&atpid, sizeof atpid);
+    ret = SBC_DiceKeysGen(bp->ldhndl, &atpid, bp->pvs_sw_bnk, bp->bm);
+    if (ret != SBCOK) {
+        sbc_err_sysprn(SBC_LOG_CMN_PRIO_ERR, 2,
+             SYS_LOG_HOST_BOOT,
+             SYS_LOG_APP_NAME,
+             SYS_LOG_CSC_NAME,
+             1,
+             SYS_LOG_EVT_VALDIATION,
+             L"SBC_Dice_Key HW&SW Base Old Key Creation Fail");
+       
+        bp->bootst = SB_PROC_ST_ABNRAM;
+        goto errdone;
+    }
+
+    CopyMem((void *)old, (const void *)atpid.osid, SBC_AT_RP_KEY_LEN);
+errdone:
+
+    return ret;
+
+}
+
+
 static SBCStatus _proetcted_sw_re_enc_dec(VOID *handle)
 {
     SBCStatus ret = SBCOK;
@@ -177,18 +231,41 @@ static SBCStatus _proetcted_sw_re_enc_dec(VOID *handle)
 
     UINT8 deckey[SBC_AT_RP_KEY_LEN] = {0, };
     UINT8 enckey[SBC_AT_RP_KEY_LEN] = {0, };
+    UINT8 old_osid[SBC_AT_RP_KEY_LEN] = {0, };
+
+    VOID *decrypt_key = NULL;
+    VOID *encrypt_key = NULL;
+
+    //
+    // Added by Leon at 25-11-04
+    // Handling when KEY_BOOT_MODE
+    //
+    if(bp->km == KEY_MODE_BOOT) {
+        //system_key = ((atp_ident_t *)bp->keyinfo)->osid;
+        // compute the previously OSID 
+        ret = _compute_previously_osid((VOID *)bp, old_osid);
+        SBC_RET_VALIDATE_ERRCODEMSG((ret == SBCOK), ret, "Fail to the OLD OSID generating");
+
+        decrypt_key = (VOID *)old_osid;
+    }
+    else {
+        decrypt_key = ((atp_ident_t *)bp->keyinfo)->migid;
+        
+    }
+
+    encrypt_key = ((atp_ident_t *)bp->keyinfo)->osid;
 
 
 
     ret = SBC_HashCompute(NULL, 
-                          ((atp_ident_t *)bp->keyinfo)->migid,
+                          decrypt_key,
                           SBC_AT_RP_KEY_LEN,
                           deckey);
     SBC_RET_VALIDATE_ERRCODEMSG(!(ret != SBCOK), ret, 
                                 "Failed to Dec secret key Screation");
 
     ret = SBC_HashCompute(NULL, 
-                          ((atp_ident_t *)bp->keyinfo)->osid,
+                          encrypt_key,
                           SBC_AT_RP_KEY_LEN,
                           enckey);
     SBC_RET_VALIDATE_ERRCODEMSG(!(ret != SBCOK), ret, 
