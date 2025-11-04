@@ -1303,13 +1303,16 @@ SBCStatus  SBC_FirmwareIdKyeVerify(VOID *priv)
     SBC_mem_print_bin("Decrypt FW ID cert", (UINT8 *)decbuf, calen);
 
     if (((rawprt_hdr_t *)bp->rawprt_hdr)->rcvmode && (bp->bm == BOOT_MODE_NORMAL)) {
+        
         // Key Pair compare 
         dprint("Boot Mode is NORMAL and it's run from Recovery Mode");
 
         //TODO 
         //A. Private and Public Key extract from Buffer.
-        ret = SBC_DICESeedKeyPair(fwid, &rcv_key_pair);
+        //ret = SBC_DICESeedKeyPair(fwid, &rcv_key_pair);
         //B. Public Key compute using Private Key.
+
+        CopyMem(&rcv_key_pair, decbuf, calen);
         CopyMem(pubkey, rcv_key_pair.q.value, sizeof rcv_key_pair.q.value); 
         pubkeyl = sizeof rcv_key_pair.q.value;
     }
@@ -1540,12 +1543,24 @@ SBCStatus  SBC_OSIdKyeVerify(VOID *priv)
 
     if (((rawprt_hdr_t *)bp->rawprt_hdr)->rcvmode && (bp->bm == BOOT_MODE_NORMAL)) {
         // Key Pair compare 
+//      dprint("Boot Mode is NORMAL and it's run from Recovery Mode");
+//
+//      //TODO
+//      //A. Private and Public Key extract from Buffer.
+//      ret = SBC_DICESeedKeyPair(osid, &rcv_key_pair);
+//      //B. Public Key compute using Private Key.
+//      CopyMem(pubkey, rcv_key_pair.q.value, sizeof rcv_key_pair.q.value);
+//      pubkeyl = sizeof rcv_key_pair.q.value;
+
+        // Key Pair compare 
         dprint("Boot Mode is NORMAL and it's run from Recovery Mode");
 
         //TODO 
         //A. Private and Public Key extract from Buffer.
-        ret = SBC_DICESeedKeyPair(osid, &rcv_key_pair);
+        //ret = SBC_DICESeedKeyPair(fwid, &rcv_key_pair);
         //B. Public Key compute using Private Key.
+
+        CopyMem(&rcv_key_pair, decbuf, calen);
         CopyMem(pubkey, rcv_key_pair.q.value, sizeof rcv_key_pair.q.value); 
         pubkeyl = sizeof rcv_key_pair.q.value;
     }
