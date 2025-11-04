@@ -16,6 +16,7 @@ typedef struct _unit_proc_t {
     VOID        *rawprt_hdr; 
     VOID        *baseansr;
     VOID        *keyinfo;                   /*! It's point to atp_ident_t structure */
+    VOID        *dice;
     UINTN       pvs_sw_bnk;                 /*! Previously SW Bank ID */
     UINTN       curr_sw_bnk;                /*! Current SW Bank ID */
     UINT16      bm;                         /*! Boot Mode */

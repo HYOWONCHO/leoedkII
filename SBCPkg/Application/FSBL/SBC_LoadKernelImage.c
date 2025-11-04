@@ -14,6 +14,7 @@
 #include <Guid/FileInfo.h>
 
 #include "SBC_FileCtrl.h"
+#include "SBC_AntiTampering.h"
 
 // Define the path to grubx64.efi relative to the root of the file system
 // Adjust this path if your grubx64.efi is located elsewhere (e.g., "\EFI\ubuntu\grubx64.efi")
@@ -472,9 +473,9 @@ SBCStatus SBC_SSBL_LoadAndStart(EFI_HANDLE ImageHandle)
 
   for (UINTN i = 0; i < HandleCount; i++) {
 #ifndef _SSBL_TEST_RUN_ 
-    DevicePath = FileDevicePath(Handles[i], L"\\EFI\\boot\\SSBL.efi");
+    DevicePath = FileDevicePath(Handles[i], EFI_BOOT_SSBL_PATH);
 #else
-    DevicePath = FileDevicePath(Handles[i], L"\\EFI\\BOOT\\SSBL.efi.bin");
+    DevicePath = FileDevicePath(Handles[i], EFI_BOOT_SSBL_PATH);
 #endif
 //    DevicePath = FileDevicePath(Handles[i], L"\\EFI\\BOOT\\SSBLFactory.efi");
     PathStr = ConvertDevicePathToText(DevicePath, TRUE, TRUE);

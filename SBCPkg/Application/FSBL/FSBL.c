@@ -793,6 +793,115 @@ static void factory_md_abnormal_boot_state(VOID *priv)
 }
 
 
+#ifdef _SHELL_CMD_LINE_
+typedef struct {
+    CHAR16 *BootMode;
+    CHAR16 *KeyMode;
+    CHAR16 *LoadImg;
+} SBC_SHELL_OPTIONS;
+
+/**
+ * @code
+ * if ((val = MatchLongOption(arg, L"--bootmode"))) {
+            Opts->BootMode = val;
+        } else if ((val = MatchLongOption(arg, L"--keymode"))) {
+ *          Opts->KeyMode = val;
+ *      }
+ * 
+ * @endcode
+ * 
+ * @author leoc (11/4/25)
+ * 
+ * @param Arg    
+ * @param Name   
+ * 
+ * @return CHAR16* 
+ */
+CHAR16* MatchLongOption(IN CHAR16 *Arg, IN CONST CHAR16 *Name)
+{
+    UINTN len = StrLen(Name);
+    if (StrnCmp(Arg, Name, len) == 0 && Arg[len] == L'=') {
+        return &Arg[len + 1];
+    }
+    return NULL;
+}
+
+EFI_STATUS CopyHugeFileToRawFS(CHAR16 *Src, UINTN ofs)
+{
+    return EFI_SUCCESS;
+}
+
+EFI_STATUS ParseShellOptions(VOID *hndl)
+{
+    EFI_STATUS Status;
+    EFI_SHELL_PARAMETERS_PROTOCOL *ShellParams;
+    boot_proc_t *bp = (boot_proc_t *)hndl;
+
+    SBCStatus ret = SBCOK;
+
+    //
+    // Locate Shell Parameters Protocol
+    //
+    Status = gBS->OpenProtocol(
+        bp->imghndl,
+        &gEfiShellParametersProtocolGuid,
+        (VOID **)&ShellParams,
+        bp->imghndl,
+        NULL,
+        EFI_OPEN_PROTOCOL_GET_PROTOCOL
+    );
+
+    if (EFI_ERROR(Status)) {
+        Print(L"ShellParametersProtocol not available (%r)\n", Status);
+        return EFI_NOT_FOUND;
+    }
+
+    //
+    // Parse arguments
+    //
+    for (UINTN i = 1; i < ShellParams->Argc; i++) {
+        CHAR16 *arg = ShellParams->Argv[i];
+        
+//      CHAR16 *val = NULL;
+//
+//      if ((val = MatchLongOption(arg, -L"--loadimg"))) {
+//      }
+
+        if (!StrCmp(arg, L"--loadimg")) {
+          if (i + 2 < ShellParams->Argc) {
+              CHAR16 *LoadImgName;   
+              UINT64  LoadImgAddr;
+              UINTN   FileSize;
+              EFI_STATUS retval = EFI_SUCCESS;
+
+              LoadImgName = ShellParams->Argv[++i];
+              LoadImgAddr = StrHexToUint64(ShellParams->Argv[++i]);
+
+              ret = SBC_GetFileSize(LoadImgName, &FileSize);
+              if (ret != SBCOK) {
+                  eprint("Can't found the %s", LoadImgName);
+                  return EFI_UNSUPPORTED;
+              }
+
+              retval = SBC_CopyFileToBlockDevice(LoadImgName, 
+                                                 bp->blkhnd, 
+                                                 LoadImgAddr,
+                                                 &FileSize);
+
+
+              if (EFI_ERROR(retval)) {
+                  eprint("Copy fail from %s to 0x%lx", LoadImgName, LoadImgAddr);
+                  return retval;
+              }
+
+          }
+        }
+    }
+
+    return EFI_SUCCESS;
+}
+#endif
+
 
 
 EFI_STATUS
@@ -914,6 +1023,8 @@ UefiMain (
     btproc.baseansr = (void *)&baseansr;
     btproc.imghndl = ImageHandle;
 
+
+
     //
     // Added by Leon
     // Run from Recovry Mode 
@@ -997,6 +1108,7 @@ UefiMain (
     return EFI_SUCCESS;
 #else
 
+#ifndef _SHELL_CMD_LINE_
     ret = SBC_FSBL_Verify(h_blkio, &baseansr, currbank_id, h_rawprtheader.bootmode, STR_FSBL_F_NAME);
     if (ret != SBCOK) {
           sbc_err_sysprn(SBC_LOG_CMN_PRIO_ERR, 2,
@@ -1008,8 +1120,11 @@ UefiMain (
                  L"SBC_SP_FW FSBL tampering check fail \n");
           retval = EFI_INVALID_PARAMETER;
           btproc.bootst = SB_PROC_ST_ABNRAM;
+
           goto errdone;
+
     }
+#endif
 
     ZeroMem(mrgmsg, sizeof mrgmsg);
 //  UnicodeSPrint(mrgmsg, sizeof mrgmsg, L"SBC_SP_FW FSBL self-verify Success (%s)\n", baseansr.value);
@@ -1037,6 +1152,13 @@ UefiMain (
         btproc.bootst = SB_PROC_ST_ABNRAM;
         goto errdone;
     }
+
+    btproc.dice = (VOID *)&diceid;
+#ifdef _SHELL_CMD_LINE_
+    ParseShellOptions((VOID *)&btproc);
+    return EFI_SUCCESS;
+#endif
+
 
 #ifdef _FSBL_FACTORY_TEST_
     dprint("Boot Mode is %d", h_rawprtheader.bootmode);

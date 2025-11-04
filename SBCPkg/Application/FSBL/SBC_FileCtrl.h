@@ -444,4 +444,9 @@ BOOLEAN SBC_IsDirExist(EFI_HANDLE ImageHandle, CHAR16 *DirectoryName);
 SBCStatus  SBC_FindFileBufHndl(UINT16 *f_path, UINTN *hndlcnt, VOID **hndl);
 
 EFI_STATUS SBC_LogWriteFile(EFI_HANDLE ImageHandle, CHAR16 *FileNames, LV_t *out);
+
+EFI_STATUS SBC_CopyFileToBlockDevice(IN CHAR16 *SrcPath,
+                      IN VOID *_Blk,
+                      IN UINT64 ByteOffset,
+                      OUT UINT64 *BytesWritten OPTIONAL);
 #endif

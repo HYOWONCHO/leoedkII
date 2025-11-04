@@ -1,6 +1,9 @@
 #include <Library/BaseCryptLib.h>
+#include <Library/BaseMemoryLib.h>
+#include <Library/BaseLib.h>
+#include <Library/TimerLib.h>
 
-#include "SBC_ErrorTypes.h"
+#include "SBC_ErrorType.h"
 #include "SBC_TypeDefs.h"
 
 static UINT8  sha256salt[13] = {
@@ -11,6 +14,29 @@ static UINT8  sha256salt[13] = {
 static UINT8  sha256info[10] = {
   0xf0, 0xf1, 0xf2, 0xf3, 0xf4, 0xf5, 0xf6, 0xf7, 0xf8, 0xf9,
 };
+
+UINTN GetCpuSeed(VOID)
+{
+    UINTN RandVal = 0;
+
+    //
+    // 1. Try hardware random (RDRAND)
+    //
+    if (AsmRdRand64(&RandVal)) {
+        return RandVal;
+    }
+
+    //
+    // 2. Fallback: timing-based entropy
+    //
+    UINTN tsc  = (UINTN)AsmReadTsc();
+    UINTN perf = (UINTN)GetPerformanceCounter();
+
+    // Shift + XOR → mix bits to reduce correlation
+    RandVal = tsc ^ (perf << 17) ^ (perf >> 11);
+
+    return RandVal;
+}
 
 /**
  * @brief Generate the RNG
@@ -25,39 +51,38 @@ static UINT8  sha256info[10] = {
 SBCStatus SBC_RngGeneration(UINT8 *seed, UINTN szseed, UINTN szrng, UINT8 *rngdata) 
 {
 
-  BOOLEAN status = TRUE;
+    BOOLEAN status = TRUE;
+    UINTN cpuseed = 0ULL;
 
 
-  if(seed == NULL || rngdata == NULL) {
-    Print(L"%s args point to NULL \n", __FUNCTION__);
-    return SBCNULLP;
-  }
+//if(seed == NULL || rngdata == NULL) {
+//  Print(L"%s args point to NULL \n", __FUNCTION__);
+//  return SBCNULLP;
+//}
+//
+//if(szseed <= 0 || szrng <= 0) {
+//  Print(L"%s arg has length os zero \n");
+//  return SBCZEROL;
+//}
 
-  if(szseed <= 0 || szrng <= 0) {
-    Print(L"%s arg has length os zero \n");
-    return SBCZEROL;
-  }
+    cpuseed = GetCpuSeed();
+    status = RandomSeed((UINT8 *)&cpuseed, sizeof cpuseed);
+    if(status == FALSE) {
+        Print(L"RandomSeed fail \n");
+        return SBCFAIL;
+    }
 
+    status = RandomBytes(rngdata, szrng);
+    if(status != TRUE) {
+        Print(L"RandomBytes fail \n");
+        return SBCFAIL;
+    }
 
-
-  status = RandomSeed(seed, szseed);
-  if(status == FALSE) {
-    Print(L"RandomSeed fail \n");
-    return SBCFAIL;
-  }
-
-  status = RandomBytes(rngdata, szrng);
-  if(status != TRUE) {
-    Print(L"RandomBytes fail \n");
-    return SBCFAIL;
-  }
-
-  return SBCOK;
+    return SBCOK;
 
 
 
 }
-
 
 SBCStatus  SBC_HKdfSha256(kdf_t *k, LV_t  *out)
 {
