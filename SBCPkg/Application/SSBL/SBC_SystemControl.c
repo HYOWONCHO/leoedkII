@@ -791,12 +791,7 @@ void SBC_RecoveryBootProcessing(VOID *priv)
                 goto errdone;
             }
 
-            ret = SBC_BootKeyModeChange(BOOT_MODE_NORMAL, KEY_MODE_NORMAL, priv);
-            break;
-        case KEY_MODE_UPDATE:
-            dprint("KEY_MODE_UPDATE");
-
-            ret = _store_fw_os_keypair_store(priv, 
+            ret = _store_fw_os_keypair_store(priv,
                                ((atp_ident_t *)bt_proc->keyinfo)->fwid,
                                ((atp_ident_t *)bt_proc->keyinfo)->osid);
 
@@ -804,6 +799,21 @@ void SBC_RecoveryBootProcessing(VOID *priv)
                 eprint("_store_fw_os_keypair_store fail, that is, Abnormal");
                 bt_proc->bootst = SB_PROC_ST_ABNRAM;
             }
+
+            ret = _proetcted_sw_re_enc_dec((VOID *)bt_proc);
+            if(ret != SBCOK) {
+                //
+                // Abnromal state added at 20251021
+                //
+                bt_proc->bootst = SB_PROC_ST_ABNRAM;
+                SBC_BootKeyModeChange(BOOT_MODE_FACTORY, KEY_MODE_UPDATE, priv);
+                goto errdone;
+            }
+
+            ret = SBC_BootKeyModeChange(BOOT_MODE_NORMAL, KEY_MODE_NORMAL, priv);
+            break;
+        case KEY_MODE_UPDATE:
+            dprint("KEY_MODE_UPDATE");
 
             ret = SBC_BaseAnswerEncryptStore(
                             bt_proc->blkhnd,
@@ -820,6 +830,15 @@ void SBC_RecoveryBootProcessing(VOID *priv)
                 bt_proc->bootst = SB_PROC_ST_ABNRAM;
                 SBC_BootKeyModeChange(BOOT_MODE_FACTORY, KEY_MODE_UPDATE, priv);
                 goto errdone;
+            }
+
+            ret = _store_fw_os_keypair_store(priv,
+                               ((atp_ident_t *)bt_proc->keyinfo)->fwid,
+                               ((atp_ident_t *)bt_proc->keyinfo)->osid);
+
+            if(ret != SBCOK) {
+                eprint("_store_fw_os_keypair_store fail, that is, Abnormal");
+                bt_proc->bootst = SB_PROC_ST_ABNRAM;
             }
 
             ret = _proetcted_sw_re_enc_dec((VOID *)bt_proc);
@@ -1044,17 +1063,18 @@ SBCStatus  SBC_SecureBootCheck(VOID *priv)
 
     switch(bp->bm) {
     case BOOT_MODE_NORMAL:
+        ret = SBC_DiceIDKeyVerify((VOID *)bp);
+        SBC_RET_VALIDATE_ERRCODEMSG((ret == SBCOK), ret, "Certificate ID Verify Fail");
 
         if(!((rawprt_hdr_t *)bp->rawprt_hdr)->rcvmode) {
             //
             // Firmware is not discover from Recover Mode
             // So, it SHOULD be perform the Key Verify
             //
-            ret = SBC_DiceIDKeyVerify((VOID *)bp);
-            SBC_RET_VALIDATE_ERRCODEMSG((ret == SBCOK), ret, "Certificate ID Verify Fail");
             dec_key = ((atp_ident_t *)bp->keyinfo)->osid;
         }
         else {
+
             dec_key = ((atp_ident_t *)bp->keyinfo)->migid;
         }
 
