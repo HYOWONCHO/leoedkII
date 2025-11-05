@@ -899,6 +899,8 @@ EFI_STATUS ParseShellOptions(VOID *hndl)
                   return retval;
               }
 
+              SBC_RebootSystem();
+
           }
         }
         else if (!StrCmp(arg, L"--dumpimg")) {

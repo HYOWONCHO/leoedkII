@@ -1793,7 +1793,7 @@ EFI_STATUS SBC_CopyFileToBlockDevice(IN CHAR16 *SrcPath,
             break;
         }
         if (rd == 0) {
-            dprint("");
+            //dprint("");
             break; // EOF
         }
 
