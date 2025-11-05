@@ -1705,23 +1705,46 @@ EFI_STATUS SBC_CopyFileToBlockDevice(IN CHAR16 *SrcPath,
     UINTN InfoSz = 0;
     EFI_BLOCK_IO_PROTOCOL *Blk = (EFI_BLOCK_IO_PROTOCOL *)_Blk;
 
+    if (BytesWritten) *BytesWritten = 0;
+
+    if (!SrcPath || !_Blk) {
+         dprint("");
+        return EFI_INVALID_PARAMETER;
+    }
+
     // 1) 소스 파일 열기
     Status = gBS->LocateProtocol(&gEfiSimpleFileSystemProtocolGuid, NULL, (VOID**)&Fs);
-    if (EFI_ERROR(Status)) return Status;
+    if (EFI_ERROR(Status)) {
+        dprint("");
+        return Status;
+    }
 
     Status = Fs->OpenVolume(Fs, &Root);
-    if (EFI_ERROR(Status)) return Status;
+    if (EFI_ERROR(Status)) {
+        dprint("");
+        return Status;
+    }
+
 
     Status = Root->Open(Root, &InFile, SrcPath, EFI_FILE_MODE_READ, 0);
-    if (EFI_ERROR(Status)) { Root->Close(Root); return Status; }
+    if (EFI_ERROR(Status)) {
+        dprint("");
+         Root->Close(Root); 
+         return Status; 
+    }
 
     // 2) 파일 크기 얻기
     Status = InFile->GetInfo(InFile, &gEfiFileInfoGuid, &InfoSz, NULL);
+
     if (Status == EFI_BUFFER_TOO_SMALL) {
+        dprint("%s info size %ld ", SrcPath, InfoSz);
         Info = AllocateZeroPool(InfoSz);
+        dprint("");
         Status = InFile->GetInfo(InFile, &gEfiFileInfoGuid, &InfoSz, Info);
+        dprint("");
     }
     if (EFI_ERROR(Status)) {
+        dprint("");
         InFile->Close(InFile);
         Root->Close(Root);
         if (Info) FreePool(Info);
@@ -1729,11 +1752,13 @@ EFI_STATUS SBC_CopyFileToBlockDevice(IN CHAR16 *SrcPath,
     }
 
     UINT64 fileSize = Info->FileSize;
+    dprint("%s filee size %ld ", SrcPath, fileSize);
     FreePool(Info);
 
     // 3) 디바이스 경계 체크
     EFI_BLOCK_IO_MEDIA *m = Blk->Media;
     if (!m || !m->MediaPresent) {
+        dprint("");
         InFile->Close(InFile);
         Root->Close(Root);
         return EFI_NO_MEDIA;
@@ -1742,6 +1767,7 @@ EFI_STATUS SBC_CopyFileToBlockDevice(IN CHAR16 *SrcPath,
     UINT64 totalBytes = (m->LastBlock + 1ULL) * (UINT64)B;
 
     if (ByteOffset > totalBytes || ByteOffset + fileSize > totalBytes) {
+        dprint("");
         InFile->Close(InFile);
         Root->Close(Root);
         return EFI_VOLUME_FULL; // or EFI_INVALID_PARAMETER
@@ -1750,6 +1776,7 @@ EFI_STATUS SBC_CopyFileToBlockDevice(IN CHAR16 *SrcPath,
     // 4) 파일을 청크로 읽어서 블록디바이스에 쓰기
     UINT8 *buf = AllocatePool(FILE_CHUNK_SZ);
     if (!buf) {
+        dprint("");
         InFile->Close(InFile);
         Root->Close(Root);
         return EFI_OUT_OF_RESOURCES;
@@ -1758,12 +1785,23 @@ EFI_STATUS SBC_CopyFileToBlockDevice(IN CHAR16 *SrcPath,
     UINT64 written = 0;
     while (TRUE) {
         UINTN rd = FILE_CHUNK_SZ;
+        //dprint("");
         Status = InFile->Read(InFile, &rd, buf);
-        if (EFI_ERROR(Status)) break;
-        if (rd == 0) break; // EOF
+        //dprint("");
+        if (EFI_ERROR(Status)) {
+            dprint("");
+            break;
+        }
+        if (rd == 0) {
+            dprint("");
+            break; // EOF
+        }
 
         Status = SBC_BlkWriteArbitrary(Blk, ByteOffset + written, buf, rd);
-        if (EFI_ERROR(Status)) break;
+        if (EFI_ERROR(Status)) {
+            dprint("");
+             break;
+        }
 
         written += rd;
 

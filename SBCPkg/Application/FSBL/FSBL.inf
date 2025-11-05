@@ -118,6 +118,7 @@
   *_*_*_CC_FLAGS = -D_SHELL_CMD_LINE_
   *_*_*_CC_FLAGS = -D_SSBL_TEST_RUN_
   *_*_*_CC_FLAGS = -D_SBC_DRIVER_LOAD_
+  *_*_*_CC_FLAGS = -D_DEBUG_PRINT_ON_
   #*_*_*_CC_FLAGS = -D_SBC_DEBUG_ON_
   #*_*_*_CC_FLAGS = -D_UNIT_TEST_ON_
   #*_*_*_CC_FLAGS = -D_UNIT_TEST_SFR001_TO_003_ 

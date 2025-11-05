@@ -839,8 +839,8 @@ EFI_STATUS ParseShellOptions(VOID *hndl)
 
     SBCStatus ret = SBCOK;
 
-    //
-    // Locate Shell Parameters Protocol
+    //anj
+    dprint("Locate Shell Parameters Protocol");
     //
     Status = gBS->OpenProtocol(
         bp->imghndl,
@@ -861,6 +861,8 @@ EFI_STATUS ParseShellOptions(VOID *hndl)
     //
     for (UINTN i = 1; i < ShellParams->Argc; i++) {
         CHAR16 *arg = ShellParams->Argv[i];
+
+        dprint("arg : %s", arg);
         
 //      CHAR16 *val = NULL;
 //
@@ -870,33 +872,63 @@ EFI_STATUS ParseShellOptions(VOID *hndl)
         if (!StrCmp(arg, L"--loadimg")) {
           if (i + 2 < ShellParams->Argc) {
               CHAR16 *LoadImgName;   
-              UINT64  LoadImgAddr;
+              [[maybe_unused]] UINT64  LoadImgAddr;
               UINTN   FileSize;
               EFI_STATUS retval = EFI_SUCCESS;
 
               LoadImgName = ShellParams->Argv[++i];
               LoadImgAddr = StrHexToUint64(ShellParams->Argv[++i]);
 
+
+              
               ret = SBC_GetFileSize(LoadImgName, &FileSize);
               if (ret != SBCOK) {
                   eprint("Can't found the %s", LoadImgName);
                   return EFI_UNSUPPORTED;
               }
 
-              retval = SBC_CopyFileToBlockDevice(LoadImgName, 
-                                                 bp->blkhnd, 
+              dprint("Load Image Name: %s (size %d), Load Image : 0x%lx\n", LoadImgName, FileSize, LoadImgAddr );
+              retval = SBC_CopyFileToBlockDevice(LoadImgName,
+                                                 bp->blkhnd,
                                                  LoadImgAddr,
                                                  &FileSize);
 
 
               if (EFI_ERROR(retval)) {
-                  eprint("Copy fail from %s to 0x%lx", LoadImgName, LoadImgAddr);
+                  eprint("Copy fail from %s to 0x%lx %r", LoadImgName, LoadImgAddr, retval);
                   return retval;
               }
 
           }
         }
-    }
+        else if (!StrCmp(arg, L"--dumpimg")) {
+              if (i + 2 < ShellParams->Argc) {
+                  UINT8 *blob = NULL;
+                  UINTN LoadBlkAddr = StrHexToUint64(ShellParams->Argv[++i]);
+                  UINTN LoadBlkLen = StrHexToUint64(ShellParams->Argv[++i]);
+
+                  dprint("Load Addr : 0x%lx, Load Length : %d", LoadBlkAddr, LoadBlkLen);
+
+                  blob = AllocateZeroPool(LoadBlkLen);
+                  if (blob == NULL) {
+                    eprint("Out of Resource !!!");
+                    return EFI_UNSUPPORTED;
+                  }
+
+                  ret = SBC_RawAlignedReadBlockIO(bp->blkhnd, 
+                                                  LoadBlkAddr,
+                                                  LoadBlkLen,
+                                                  blob);
+                  if (ret != SBCOK) {
+                    return EFI_UNSUPPORTED;
+                  }
+
+                  
+                  SBC_external_mem_print_bin("Dump", blob, (UINT32)LoadBlkLen);
+
+              }
+        }
+}
 
     return EFI_SUCCESS;
 }
@@ -979,7 +1011,7 @@ UefiMain (
                  SYS_LOG_CSC_NAME,
                  0,
                  L"Detetion",
-                 L"SBC_VENDOR_SP SSBL Statring");
+                 L"SBC_VENDOR_SP Block I/O Init Fail");
       goto errdone;
     }
 #if 0
@@ -1007,7 +1039,7 @@ UefiMain (
     dprint("Pres Low : 0x%04x Cur. Bank ID : %d , Prev. Bank ID : %d ", pres_low, currbank_id, prevbank_id);
 
     dprint("Boot Mode : %d , Key Mode : %d, Recovery Mode : %d",
-           btproc.bm, btproc.km, h_rawptrheader.rcvmode);
+           btproc.bm, btproc.km, h_rawprtheader.rcvmode);
 
     dprint("Currently Valid FW Bank ID : %d , Previously Bank ID : %d \n", currbank_id, prevbank_id);
 
@@ -1155,6 +1187,7 @@ UefiMain (
 
     btproc.dice = (VOID *)&diceid;
 #ifdef _SHELL_CMD_LINE_
+    dprint("Shell Execute");
     ParseShellOptions((VOID *)&btproc);
     return EFI_SUCCESS;
 #endif
