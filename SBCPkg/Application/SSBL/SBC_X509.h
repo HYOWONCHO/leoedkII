@@ -35,17 +35,26 @@ SBCStatus SBC_EcGetPublicKeyFromPem(
 
 
 
-/*!
- * Retrive the EC private key from password-protected PEM key data
- * 
- * \author leoc (5/19/25)
- * 
- * \param der    
- * \param derl   
- * \param passwd 
- * \param ctx    
- * 
- * \return SBCStatus 
+/**
+ * @fn SBCStatus SBC_EcGetPrivateKeyFromPem(CONST UINT8 *der,
+ *                                          UINTN derl,
+ *                                          CONST CHAR8 *passwd,
+ *                                          VOID **ctx)
+ * @brief Parse and load an EC private key from a PEM or DER encoded buffer.
+ *
+ * @param[in]  der      Pointer to the PEM or DER encoded EC private key buffer.
+ * @param[in]  derl     Length in bytes of the @p der buffer.
+ * @param[in]  passwd   Optional password string for decrypting encrypted PEM files.
+ *                      Set to NULL if the key is unencrypted.
+ * @param[out] ctx      Pointer to a variable that receives the loaded EC key context.
+ *                      The caller must later free it using the corresponding release function.
+ *
+ * @retval SBCOK            Successfully parsed and loaded the EC private key.
+ * @retval SBCINVPARAM      Invalid input parameter (NULL pointer or zero length).
+ * @retval SBCFORMAT        Invalid key format or parse failure.
+ * @retval SBCCRYPTOERR     Decryption or key material extraction failure.
+ * @retval SBCMEM           Memory allocation failure.
+ * @retval SBCFAIL          Unknown or internal error.
  */
 SBCStatus  SBC_EcGetPrivateKeyFromPem(CONST UINT8 *der,
                                       UINTN derl,
@@ -53,17 +62,31 @@ SBCStatus  SBC_EcGetPrivateKeyFromPem(CONST UINT8 *der,
                                       VOID **ctx);
 
 
-/*!
- * Verify X509 certificate was issued by the trusted CA
- * 
- * \author leoc (5/19/25)
- * 
- * \param cert    
- * \param certl   
- * \param cacert  
- * \param cacertl 
- * 
- * \return SBCStatus 
+
+/**
+ * @fn SBCStatus  SBC_X509VerifyCert(CONST UINT8 *cert,
+                              UINTN certl,
+                              CONST UINT8 *cacert,
+                              UINTN cacertl)
+ * @brief Verify an X.509 certificate against a given CA certificate.
+ *
+ * @param[in] cert      Pointer to the certificate buffer (PEM or DER format).
+ * @param[in] certl     Length in bytes of the @p cert buffer.
+ * @param[in] cacert    Pointer to the CA (root or intermediate) certificate buffer (PEM or DER format).
+ * @param[in] cacertl   Length in bytes of the @p cacert buffer.
+ *
+ * @retval SBCOK            Verification succeeded — the certificate is trusted and valid.
+ * @retval SBCINVPARAM      Invalid input parameter (NULL pointer or zero length).
+ * @retval SBCFORMAT        Certificate format or parsing error.
+ * @retval SBCCRYPTOERR     Signature verification or chain validation failure.
+ * @retval SBCEXPIRED       Certificate has expired or is not yet valid.
+ * @retval SBCMEM           Memory allocation failure.
+ * @retval SBCFAIL          Unknown or internal failure.
+ *
  */
-SBCStatus  SBC_X509VerifyCert(CONST UINT8 *cert, UINTN certl, CONST UINT8 *cacert, UINTN cacertl);
+SBCStatus  SBC_X509VerifyCert(CONST UINT8 *cert,
+                              UINTN certl,
+                              CONST UINT8 *cacert,
+                              UINTN cacertl);
+
 #endif
