@@ -745,6 +745,15 @@ void SBC_RecoveryBootProcessing(VOID *priv)
     // Than, Key mode is Boot
     if(bt_proc->bootst == SB_PROC_ST_ABNRAM) {
         SBC_BootKeyModeChange(BOOT_MODE_FACTORY, bt_proc->km, priv);
+        if(bt_proc->bootst == SB_PROC_ST_ABNRAM) {
+            sbc_err_sysprn(SBC_LOG_CMN_PRIO_INFO, 2,
+                 SYS_LOG_HOST_BOOT,
+                 SYS_LOG_APP_NAME,
+                 SYS_LOG_CSC_NAME,
+                 1,
+                 L"Detectoin",
+                 L"SBC_VENDOR_SP System Reset - Boot State Ab-normal");
+        }
         SBC_RebootSystem();
         return;
     }
@@ -886,6 +895,16 @@ void SBC_RecoveryBootProcessing(VOID *priv)
 
 errdone:
 
+    if(bt_proc->bootst == SB_PROC_ST_ABNRAM) {
+        sbc_err_sysprn(SBC_LOG_CMN_PRIO_INFO, 2,
+         SYS_LOG_HOST_BOOT,
+         SYS_LOG_APP_NAME,
+         SYS_LOG_CSC_NAME,
+         1,
+         L"Detectoin",
+         L"SBC_VENDOR_SP System Reset - Boot State Ab-normal");
+    }
+
     SBC_RebootSystem();
     return;
 }
@@ -951,6 +970,16 @@ static void _update_reset_check_and_behavior(VOID *priv)
             break;
         }
 
+        if(bp->bootst == SB_PROC_ST_ABNRAM) {
+            sbc_err_sysprn(SBC_LOG_CMN_PRIO_INFO, 2,
+                 SYS_LOG_HOST_BOOT,
+                 SYS_LOG_APP_NAME,
+                 SYS_LOG_CSC_NAME,
+                 1,
+                 L"Detectoin",
+                 L"SBC_VENDOR_SP System Reset - Boot State Ab-normal");
+        }
+
         SBC_RebootSystem();
         
         break;
@@ -983,6 +1012,15 @@ static VOID _handling_sb_process_for_bm_normal(VOID *priv)
         //
         // System Reboot 
         //
+        if(p->bootst == SB_PROC_ST_ABNRAM) {
+            sbc_err_sysprn(SBC_LOG_CMN_PRIO_INFO, 2,
+                 SYS_LOG_HOST_BOOT,
+                 SYS_LOG_APP_NAME,
+                 SYS_LOG_CSC_NAME,
+                 1,
+                 L"Detectoin",
+                 L"SBC_VENDOR_SP System Reset - Boot State Ab-normal");
+        }
         SBC_RebootSystem();
 
         break;
@@ -1168,7 +1206,7 @@ errdone:
 
 VOID SBC_RebootSystem(VOID)
 {
-    Print(L"System Reset ... \n");
+    //Print(L"System Reset ... \n");
     gRT->ResetSystem(EfiResetCold, EFI_SUCCESS, 0, NULL);
     while(TRUE) { };
 
@@ -1177,7 +1215,14 @@ VOID SBC_RebootSystem(VOID)
 
 VOID SBC_ShutdownSystem(VOID)
 {
-    Print(L"System Shutdown ... \n");
+    sbc_err_sysprn(SBC_LOG_CMN_PRIO_INFO, 2,
+         SYS_LOG_HOST_BOOT,
+         SYS_LOG_APP_NAME,
+         SYS_LOG_CSC_NAME,
+         1,
+         L"Detectoin",
+         L"SBC_VENDOR_SP System Shutdown - Boot State Ab-normal");
+
     gRT->ResetSystem(EfiResetShutdown, EFI_SUCCESS, 0, NULL);
     while(TRUE) { };
 }

@@ -2820,7 +2820,7 @@ SBCStatus SBC_GenMigrationKey(void *priv, void *outmsg)
     dprint("Previously Bank ID : %d", p->pvs_sw_bnk - 1);
     //Step 2. Read Current Image and Hash compute
     //pvs_sw_bank means that "Previously Firware location"
-    
+
     startaddr = (BOOT_SECTOR1_OFS | (BOOT_FW_IMGMAX *  (p->pvs_sw_bnk - 1)));
     startlba = (startaddr >> SBC_RAWPRT_DFLT_SHIFT);
     imglen = ALIGN_VALUE(sizeof *fwinf, SBC_RAWPRT_DFLT_BLK_SZ);
@@ -2909,7 +2909,7 @@ SBCStatus SBC_GenMigrationKey(void *priv, void *outmsg)
         FreePool(fbuf);
         dprint();
     }
-    dprint();
+    //dprint();
 
 
     //
