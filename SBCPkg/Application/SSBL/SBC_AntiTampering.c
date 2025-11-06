@@ -1341,7 +1341,7 @@ SBCStatus  SBC_FirmwareIdKyeVerify(VOID *priv)
     if(CompareMem(key_pair.q.value,  pubkey, pubkeyl) != 0) {
         SBC_BuildHexFormattedMessage(
             (CONST VOID *)pubkey, (UINTN)pubkeyl,
-            L"SBC_Dice_OSID failed to create OSID (%s)\n",
+            L"SBC_Dice_Verify Failed to Firmware ID Public Key (%s)\n",
             mrgmsg, sizeof mrgmsg);
 
         sbc_err_sysprn(SBC_LOG_CMN_PRIO_ERR, 2,
@@ -1589,7 +1589,7 @@ SBCStatus  SBC_OSIdKyeVerify(VOID *priv)
         
         SBC_BuildHexFormattedMessage(
             (CONST VOID *)pubkey, (UINTN)pubkeyl,
-            L"SBC_Dice_OSID failed to create OSID (%s)\n",
+            L"SBC_Dice_Verify Failed to OSID Public Key (%s)\n",
             mrgmsg, sizeof mrgmsg);
 
         sbc_err_sysprn(SBC_LOG_CMN_PRIO_ERR, 2,

@@ -51,6 +51,12 @@
 #define SBC_AT_TAG_LEN              16
 
 /**
+ * @brief SBC_AT_SYSCONF_CRT_MAX
+ * @brief Length of the CA and CRT buffer size of System Setting Repository 
+ */
+#define SBC_AT_SYSCONF_CRT_MAX      2048
+
+/**
  * @def SBC_BLKDEV_BLKSZ
  * @brief Default block size for block device operations (in bytes).
  *
@@ -76,6 +82,7 @@
  * Typically corresponds to a 256-bit AES key (32 bytes).
  */
 #define SBC_OSID_KEY_LEN            32
+
 
 /*!
     \defgroup DigestSystem

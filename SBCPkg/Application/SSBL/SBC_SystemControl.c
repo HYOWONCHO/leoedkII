@@ -499,7 +499,7 @@ static SBCStatus _store_fw_os_keypair_store(VOID *priv, VOID *fwid, VOID *osid)
     UINT8 auth_iv[SBC_AT_IV_LEN] = {0, };
     UINT8 auth_tag[SBC_AT_TAG_LEN] = {0, };
 
-    UINT8 encbuf[SBC_AT_TAG_LEN] = {0, };
+    UINT8 encbuf[SBC_AT_SYSCONF_CRT_MAX] = {0, };
 
     at_key_t fw_key;
     at_key_t os_key;
@@ -570,8 +570,8 @@ static SBCStatus _store_fw_os_keypair_store(VOID *priv, VOID *fwid, VOID *osid)
 
 
     // Encrypt
-    ctx.out.value = encbuf;
-    ctx.out.length = sizeof encbuf;
+//  ctx.out.value = encbuf;
+//  ctx.out.length = sizeof encbuf;
     aesctx.gcm = &ctx;
     aesctx.algoid = SBC_CIPHER_AES_GCM;
 
@@ -589,6 +589,8 @@ static SBCStatus _store_fw_os_keypair_store(VOID *priv, VOID *fwid, VOID *osid)
     ctx.msg.length = sizeof fw_key;
     ctx.out.value = encbuf;
     ctx.out.length = ctx.msg.length;
+
+    dprint("Firmware Key Buffer Size : %d", ctx.out.length);
     ret = SBC_AESGcmEncrypt(&aesctx);
     SBC_RET_VALIDATE_ERRCODEMSG((ret == SBCOK),
                                 ret,
@@ -602,7 +604,7 @@ static SBCStatus _store_fw_os_keypair_store(VOID *priv, VOID *fwid, VOID *osid)
     //
 
     // Copy the Length for Ecnrypt Data
-    cpy_offset = SYS_CONF_OSID_CRT_OFS;
+    cpy_offset = SYS_CONF_FWID_CRT_OFS;
     id_len = ctx.out.length;
     // Copy Lengh
     CopyMem(&buf[cpy_offset], &id_len, sizeof id_len);
@@ -634,6 +636,7 @@ static SBCStatus _store_fw_os_keypair_store(VOID *priv, VOID *fwid, VOID *osid)
     ctx.out.value = encbuf;
     ctx.out.length = ctx.msg.length;
     ret = SBC_AESGcmEncrypt(&aesctx);
+    dprint("OSID Key Buffer Size : %d", ctx.out.length);
     SBC_RET_VALIDATE_ERRCODEMSG((ret == SBCOK),
                                 ret,
                                 "OSID ID Encrypt fail");
