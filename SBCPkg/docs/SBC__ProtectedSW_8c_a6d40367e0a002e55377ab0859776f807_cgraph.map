@@ -1,0 +1,9 @@
+<map id="SBC_ProtSWDecrypt" name="SBC_ProtSWDecrypt">
+<area shape="rect" id="Node000001" title=" " alt="" coords="5,55,164,80"/>
+<area shape="rect" id="Node000002" href="$SBC__ProtectedSW_8c.html#ae9d0525852cfae1df12cda21bccbce6d" title="Retrieve the number of protected software entries." alt="" coords="256,5,407,31"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="148,52,253,31,254,36,149,57"/>
+<area shape="rect" id="Node000003" href="$SBC__ProtectedSW_8c.html#a197c1a9743d7bd540aadbb4d88ebb487" title="Retrieve the storage offset of a specific protected software slot (SW0/SW1)." alt="" coords="212,55,451,80"/>
+<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="164,65,198,65,198,70,164,70"/>
+<area shape="rect" id="Node000004" href="$SBC__ProtectedSW_8c.html#a17776e78948216d2a4a9a475f66d8637" title="Re&#45;encrypt (re&#45;crypto) a protected software image using a new key set." alt="" coords="231,104,432,129"/>
+<area shape="poly" id="edge3_Node000001_Node000004" title=" " alt="" coords="149,77,254,99,253,104,148,83"/>
+</map>

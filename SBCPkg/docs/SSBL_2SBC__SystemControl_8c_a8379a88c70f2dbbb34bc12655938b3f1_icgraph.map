@@ -1,0 +1,6 @@
+<map id="SBC_ShutdownSystem" name="SBC_ShutdownSystem">
+<area shape="rect" id="Node000001" title="Perform a controlled system shutdown." alt="" coords="227,29,399,55"/>
+<area shape="poly" id="edge2_Node000001_Node000001" title=" " alt="" coords="352,20,341,11,313,8,289,10,277,15,274,20,281,28,277,31,269,21,273,11,288,5,313,3,343,6,355,15"/>
+<area shape="rect" id="Node000002" href="$SSBL_2SBC__SystemControl_8c.html#a7fb21fbb14d2c0fd55b69537f919b9e6" title="Perform secure boot integrity and authenticity verification." alt="" coords="5,29,179,55"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="213,45,179,45,179,39,213,39"/>
+</map>

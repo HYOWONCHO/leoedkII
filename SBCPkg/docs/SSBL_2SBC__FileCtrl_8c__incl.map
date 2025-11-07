@@ -1,0 +1,63 @@
+<map id="Application/SSBL/SBC_FileCtrl.c" name="Application/SSBL/SBC_FileCtrl.c">
+<area shape="rect" id="Node000001" title="Data is write and read from/to the specified File or in SBC Raw&#45;partition." alt="" coords="1559,5,1727,45"/>
+<area shape="rect" id="Node000002" title=" " alt="" coords="5,101,68,126"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="1559,29,1249,30,820,37,599,45,391,58,214,74,80,96,72,98,71,93,79,91,213,69,391,52,598,40,820,32,1249,24,1559,24"/>
+<area shape="rect" id="Node000003" title=" " alt="" coords="92,93,280,133"/>
+<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="1559,30,1341,34,1030,44,667,63,479,78,294,96,293,91,479,73,667,58,1030,38,1341,28,1559,25"/>
+<area shape="rect" id="Node000004" title=" " alt="" coords="305,93,518,133"/>
+<area shape="poly" id="edge3_Node000001_Node000004" title=" " alt="" coords="1559,32,1121,51,831,70,537,96,532,97,531,91,536,91,831,65,1121,46,1559,27"/>
+<area shape="rect" id="Node000005" title=" " alt="" coords="613,255,746,280"/>
+<area shape="poly" id="edge4_Node000001_Node000005" title=" " alt="" coords="1559,32,1307,39,990,53,713,72,623,83,595,89,582,95,572,113,570,132,575,152,586,173,619,213,655,244,651,248,616,216,582,176,570,154,565,133,567,111,579,91,594,84,622,78,713,67,990,48,1307,34,1559,26"/>
+<area shape="rect" id="Node000006" title=" " alt="" coords="1239,101,1431,126"/>
+<area shape="poly" id="edge5_Node000001_Node000006" title=" " alt="" coords="1576,48,1390,100,1389,94,1575,43"/>
+<area shape="rect" id="Node000007" title=" " alt="" coords="1456,93,1649,133"/>
+<area shape="poly" id="edge6_Node000001_Node000007" title=" " alt="" coords="1625,48,1584,86,1581,82,1621,44"/>
+<area shape="rect" id="Node000008" title=" " alt="" coords="1674,101,1797,126"/>
+<area shape="poly" id="edge7_Node000001_Node000008" title=" " alt="" coords="1666,44,1714,89,1711,93,1662,48"/>
+<area shape="rect" id="Node000009" title=" " alt="" coords="1821,101,1967,126"/>
+<area shape="poly" id="edge8_Node000001_Node000009" title=" " alt="" coords="1699,43,1849,94,1847,99,1697,48"/>
+<area shape="rect" id="Node000010" title=" " alt="" coords="1991,101,2203,126"/>
+<area shape="poly" id="edge9_Node000001_Node000010" title=" " alt="" coords="1728,40,2023,95,2022,101,1727,45"/>
+<area shape="rect" id="Node000011" title=" " alt="" coords="2227,101,2428,126"/>
+<area shape="poly" id="edge10_Node000001_Node000011" title=" " alt="" coords="1728,33,1949,57,2216,91,2249,96,2248,101,2215,96,1948,62,1727,38"/>
+<area shape="rect" id="Node000012" title=" " alt="" coords="2453,101,2591,126"/>
+<area shape="poly" id="edge11_Node000001_Node000012" title=" " alt="" coords="1728,27,2042,46,2241,65,2441,91,2465,95,2464,100,2440,96,2241,70,2042,51,1727,32"/>
+<area shape="rect" id="Node000013" title=" " alt="" coords="1151,181,1224,207"/>
+<area shape="poly" id="edge12_Node000001_Node000013" title=" " alt="" coords="1560,33,1470,40,1373,52,1286,70,1253,82,1229,95,1215,111,1204,130,1193,169,1188,167,1199,128,1210,108,1226,91,1250,77,1285,65,1372,47,1469,35,1559,28"/>
+<area shape="rect" id="Node000014" title=" " alt="" coords="2616,101,2796,126"/>
+<area shape="poly" id="edge13_Node000001_Node000014" title=" " alt="" coords="1728,27,2108,46,2354,65,2604,91,2637,96,2636,101,2603,96,2354,70,2107,51,1728,32"/>
+<area shape="rect" id="Node000015" title=" " alt="" coords="2820,101,2995,126"/>
+<area shape="poly" id="edge14_Node000001_Node000015" title=" " alt="" coords="1727,25,1921,30,2189,41,2497,60,2809,91,2841,96,2840,101,2808,96,2497,65,2189,46,1921,35,1727,30"/>
+<area shape="rect" id="Node000016" href="$SSBL_2SBC__Util_8h_source.html" title=" " alt="" coords="1071,101,1165,126"/>
+<area shape="poly" id="edge15_Node000001_Node000016" title=" " alt="" coords="1560,38,1386,60,1184,96,1168,100,1167,95,1183,91,1385,55,1559,33"/>
+<area shape="rect" id="Node000020" href="$SSBL_2SBC__FileCtrl_8h_source.html" title=" " alt="" coords="593,101,712,126"/>
+<area shape="poly" id="edge20_Node000001_Node000020" title=" " alt="" coords="1559,30,1403,35,1195,45,960,65,724,96,704,100,703,95,723,91,959,59,1194,40,1403,29,1559,25"/>
+<area shape="rect" id="Node000023" href="$SBC__BootProc_8h_source.html" title=" " alt="" coords="3019,101,3148,126"/>
+<area shape="poly" id="edge25_Node000001_Node000023" title=" " alt="" coords="1728,26,2371,47,2739,66,2892,78,3008,91,3031,95,3030,100,3007,96,2891,83,2738,71,2370,52,1727,31"/>
+<area shape="rect" id="Node000024" href="$SBC__ProtectedSW_8h_source.html" title=" " alt="" coords="893,101,1047,126"/>
+<area shape="poly" id="edge26_Node000001_Node000024" title=" " alt="" coords="1559,36,1333,59,1060,96,1034,101,1033,95,1059,91,1332,54,1559,31"/>
+<area shape="rect" id="Node000025" href="$SSBL_2SBC__CryptAES_8h_source.html" title=" " alt="" coords="736,101,868,126"/>
+<area shape="poly" id="edge29_Node000001_Node000025" title=" " alt="" coords="1559,33,1259,52,1070,70,881,96,859,100,858,95,880,91,1070,65,1259,47,1559,27"/>
+<area shape="rect" id="Node000026" href="$SSBL_2SBC__Kdf_8h_source.html" title=" " alt="" coords="3173,101,3263,126"/>
+<area shape="poly" id="edge31_Node000001_Node000026" title=" " alt="" coords="1728,25,2029,29,2444,40,2858,59,3031,73,3161,91,3176,94,3174,99,3160,96,3030,79,2858,65,2443,45,2029,34,1728,30"/>
+<area shape="rect" id="Node000027" href="$SSBL_2SBC__AntiTampering_8h_source.html" title=" " alt="" coords="3288,101,3455,126"/>
+<area shape="poly" id="edge32_Node000001_Node000027" title=" " alt="" coords="1728,26,2496,47,2946,66,3134,78,3276,91,3307,95,3307,101,3275,96,3133,83,2946,72,2496,53,1728,31"/>
+<area shape="rect" id="Node000028" href="$SSBL_2SBC__Config_8h_source.html" title=" " alt="" coords="3479,101,3591,126"/>
+<area shape="poly" id="edge33_Node000001_Node000028" title=" " alt="" coords="1728,24,2083,28,2586,39,3095,59,3307,73,3468,91,3487,95,3486,100,3467,96,3307,78,3095,64,2586,44,2083,34,1728,30"/>
+<area shape="poly" id="edge16_Node000016_Node000013" title=" " alt="" coords="1130,124,1170,169,1166,173,1126,128"/>
+<area shape="rect" id="Node000017" href="$SSBL_2SBC__Log_8h_source.html" title=" " alt="" coords="974,328,1067,353"/>
+<area shape="poly" id="edge17_Node000016_Node000017" title=" " alt="" coords="1116,127,1050,281,1034,317,1029,315,1045,279,1111,125"/>
+<area shape="rect" id="Node000018" title=" " alt="" coords="871,401,1019,427"/>
+<area shape="poly" id="edge18_Node000017_Node000018" title=" " alt="" coords="1010,355,969,394,965,390,1007,351"/>
+<area shape="rect" id="Node000019" href="$SSBL_2SBC__Timer_8h_source.html" title=" " alt="" coords="1043,401,1150,427"/>
+<area shape="poly" id="edge19_Node000017_Node000019" title=" " alt="" coords="1035,351,1076,390,1072,394,1031,355"/>
+<area shape="rect" id="Node000021" href="$SSBL_2SBC__ErrorType_8h_source.html" title=" " alt="" coords="735,181,869,207"/>
+<area shape="poly" id="edge21_Node000020_Node000021" title=" " alt="" coords="676,124,769,173,767,177,673,129"/>
+<area shape="poly" id="edge22_Node000021_Node000005" title=" " alt="" coords="784,209,712,250,710,245,781,204"/>
+<area shape="rect" id="Node000022" href="$SSBL_2SBC__TypeDefs_8h_source.html" title=" " alt="" coords="905,255,1035,280"/>
+<area shape="poly" id="edge23_Node000021_Node000022" title=" " alt="" coords="830,204,931,247,929,252,828,209"/>
+<area shape="poly" id="edge24_Node000022_Node000017" title=" " alt="" coords="981,279,1007,315,1002,318,976,282"/>
+<area shape="poly" id="edge27_Node000024_Node000021" title=" " alt="" coords="947,128,840,178,837,173,944,124"/>
+<area shape="poly" id="edge28_Node000024_Node000022" title=" " alt="" coords="973,126,973,241,967,241,967,126"/>
+<area shape="poly" id="edge30_Node000025_Node000021" title=" " alt="" coords="805,126,805,167,799,167,799,126"/>
+</map>
