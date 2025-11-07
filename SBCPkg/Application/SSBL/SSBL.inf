@@ -130,6 +130,7 @@
     *_*_*_CC_FLAGS = -D_FW_VERIFY_UPTO_CRT_
     *_*_*_CC_FLAGS = -D_USECASE_TEST_
     *_*_*_CC_FLAGS = -D_HANDLE_PROTSW_
+    *_*_*_CC_FLAGS = -D_TEST_ERROR_SET_
 
 
     #Test Mode 

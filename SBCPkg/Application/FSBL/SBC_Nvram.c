@@ -122,7 +122,7 @@ EFI_STATUS SBC_NvramGetVar(VOID *varname, VOID *payload, VOID *sz_pl)
 
     [[maybe_unused]] UINTN var_len = *(UINTN *)sz_pl;
 
-    //Print(L"GetVar Name : %s, Var Size : %d \n", (CHAR16 *)varname, var_len);
+    Print(L"GetVar Name : %s, Var Size : %d \n", (CHAR16 *)varname, var_len);
     Status = gRT->GetVariable((CHAR16 *)varname, &gSpImVendorGuid,
                               &Attributes, &DataSize, NULL);
     if (Status != EFI_BUFFER_TOO_SMALL) {

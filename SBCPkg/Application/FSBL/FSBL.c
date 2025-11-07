@@ -870,91 +870,122 @@ EFI_STATUS ParseShellOptions(VOID *hndl)
 //      }
 
         if (!StrCmp(arg, L"--loadimg")) {
-          if (i + 2 < ShellParams->Argc) {
-              CHAR16 *LoadImgName;   
-              [[maybe_unused]] UINT64  LoadImgAddr;
-              UINTN   FileSize;
-              EFI_STATUS retval = EFI_SUCCESS;
-
-              LoadImgName = ShellParams->Argv[++i];
-              LoadImgAddr = StrHexToUint64(ShellParams->Argv[++i]);
-
-
-              
-              ret = SBC_GetFileSize(LoadImgName, &FileSize);
-              if (ret != SBCOK) {
-                  eprint("Can't found the %s", LoadImgName);
-                  return EFI_UNSUPPORTED;
-              }
-
-              dprint("Load Image Name: %s (size %d), Load Image : 0x%lx\n", LoadImgName, FileSize, LoadImgAddr );
-              retval = SBC_CopyFileToBlockDevice(LoadImgName,
-                                                 bp->blkhnd,
-                                                 LoadImgAddr,
-                                                 &FileSize);
-
-
-              if (EFI_ERROR(retval)) {
-                  eprint("Copy fail from %s to 0x%lx %r", LoadImgName, LoadImgAddr, retval);
-                  return retval;
-              }
-
-              SBC_RebootSystem();
-
-          }
-        }
-        else if (!StrCmp(arg, L"--dumpimg")) {
             if (i + 2 < ShellParams->Argc) {
-                UINT8 *blob = NULL;
-                UINTN LoadBlkAddr = StrHexToUint64(ShellParams->Argv[++i]);
-                UINTN LoadBlkLen = StrDecimalToUintn(ShellParams->Argv[++i]);
+                CHAR16 *LoadImgName;   
+                [[maybe_unused]] UINT64  LoadImgAddr;
+                UINTN   FileSize;
+                EFI_STATUS retval = EFI_SUCCESS;
 
-                dprint("Load Addr : 0x%lx, Load Length : %d", LoadBlkAddr, LoadBlkLen);
+                LoadImgName = ShellParams->Argv[++i];
+                LoadImgAddr = StrHexToUint64(ShellParams->Argv[++i]);
 
-                blob = AllocateZeroPool(LoadBlkLen);
-                if (blob == NULL) {
-                  eprint("Out of Resource !!!");
-                  return EFI_UNSUPPORTED;
+
+                
+                ret = SBC_GetFileSize(LoadImgName, &FileSize);
+                if (ret != SBCOK) {
+                    eprint("Can't found the %s", LoadImgName);
+                    return EFI_UNSUPPORTED;
+                }
+
+                dprint("Load Image Name: %s (size %d), Load Image : 0x%lx\n", LoadImgName, FileSize, LoadImgAddr );
+                retval = SBC_CopyFileToBlockDevice(LoadImgName,
+                                                   bp->blkhnd,
+                                                   LoadImgAddr,
+                                                   &FileSize);
+
+
+                if (EFI_ERROR(retval)) {
+                    eprint("Copy fail from %s to 0x%lx %r", LoadImgName, LoadImgAddr, retval);
+                    return retval;
+                }
+
+                SBC_RebootSystem();
+
+            }
+          }
+          else if (!StrCmp(arg, L"--dumpimg")) {
+              if (i + 2 < ShellParams->Argc) {
+                  UINT8 *blob = NULL;
+                  UINTN LoadBlkAddr = StrHexToUint64(ShellParams->Argv[++i]);
+                  UINTN LoadBlkLen = StrDecimalToUintn(ShellParams->Argv[++i]);
+
+                  dprint("Load Addr : 0x%lx, Load Length : %d", LoadBlkAddr, LoadBlkLen);
+
+                  blob = AllocateZeroPool(LoadBlkLen);
+                  if (blob == NULL) {
+                    eprint("Out of Resource !!!");
+                    return EFI_UNSUPPORTED;
+                  }
+
+                  ret = SBC_RawAlignedReadBlockIO(bp->blkhnd, 
+                                                  LoadBlkAddr,
+                                                  LoadBlkLen,
+                                                  blob);
+                  if (ret != SBCOK) {
+                    return EFI_UNSUPPORTED;
+                  }
+
+                  
+                  SBC_external_mem_print_bin("Dump", blob, (UINT32)LoadBlkLen);
+
+              }
+          }
+          else if (!StrCmp(arg, L"--bootmode")) {
+            if (i + 2 < ShellParams->Argc) {
+                UINT8 bkm_buf[16] = {0, };
+                UINTN bm = StrDecimalToUintn(ShellParams->Argv[++i]);
+                UINTN km = StrDecimalToUintn(ShellParams->Argv[++i]);
+
+                ret = SBC_BootKeyModeChange(bm, km, (VOID *)bp);
+                if (ret != SBCOK) {
+                    eprint("Failed to Boot and Key Mode change bm:%d , km:%d", bm, km);
+                    return EFI_UNSUPPORTED;
                 }
 
                 ret = SBC_RawAlignedReadBlockIO(bp->blkhnd, 
-                                                LoadBlkAddr,
-                                                LoadBlkLen,
-                                                blob);
+                                                0x70,
+                                                16,
+                                                bkm_buf);
                 if (ret != SBCOK) {
-                  return EFI_UNSUPPORTED;
+                    eprint("Failed to Read (0x%lx)", 0x70);
+                    return EFI_UNSUPPORTED;
                 }
 
                 
-                SBC_external_mem_print_bin("Dump", blob, (UINT32)LoadBlkLen);
+                SBC_external_mem_print_bin("Dump", bkm_buf, 16);
 
             }
-        }
-        else if (!StrCmp(arg, L"--bootmode")) {
-          if (i + 2 < ShellParams->Argc) {
-              UINT8 bkm_buf[16] = {0, };
-              UINTN bm = StrDecimalToUintn(ShellParams->Argv[++i]);
-              UINTN km = StrDecimalToUintn(ShellParams->Argv[++i]);
+            else if (!StrCmp(arg, L"--nvramwrite")) {
+                if (i + 2 > ShellParams->Argc ) {
+                    EFI_STATUS retval = EFI_SUCCESS;
+                    CHAR16 *varname = ShellParams->Argv[++i];
+                    UINTN nv_varbuf = StrHexToUint64(ShellParams->Argv[++i]);
+                    UINTN nv_varsz = sizeof nv_varbuf;
 
-              ret = SBC_BootKeyModeChange(bm, km, (VOID *)bp);
-              if (ret != SBCOK) {
-                  eprint("Failed to Boot and Key Mode change bm:%d , km:%d", bm, km);
-                  return EFI_UNSUPPORTED;
-              }
+                    retval = SBC_NvramSetVar((VOID *)varname, (VOID *)&nv_varbuf, (VOID*)&nv_varsz);
+                    if (EFI_ERROR(retval)) {
+                        Print(L"Faile to NVRAM Set Variable \n");
+                        return EFI_UNSUPPORTED;
+                    }
+                }
+            }
+            else if (!StrCmp(arg, L"--nvramread")) {
+                if (i + 1 > ShellParams->Argc) {
+                    EFI_STATUS retval = EFI_SUCCESS;
+                    CHAR16 *varname = ShellParams->Argv[++i];
+                    UINTN nv_varbuf = 0ULL;
+                    UINTN nv_varsz = 0ULL;
 
-              ret = SBC_RawAlignedReadBlockIO(bp->blkhnd, 
-                                              0x70,
-                                              16,
-                                              bkm_buf);
-              if (ret != SBCOK) {
-                  eprint("Failed to Read (0x%lx)", 0x70);
-                  return EFI_UNSUPPORTED;
-              }
+                    retval = SBC_NvramGetVar((VOID *)varname, (VOID *)&nv_varbuf, (VOID*)&nv_varsz);
+                    if (EFI_ERROR(retval)) {
+                        Print(L"Faile to NVRAM Get Variable \n");
+                        return EFI_UNSUPPORTED;
+                    }
 
-              
-              SBC_external_mem_print_bin("Dump", bkm_buf, 16);
-
-          }
+                    Print(L"NVRAM Variable Name : %s \n", varname);
+                    Print(L"NVRAM Variable Value : 0x%x \n", nv_varbuf);
+                }
+            }
 
         }
 

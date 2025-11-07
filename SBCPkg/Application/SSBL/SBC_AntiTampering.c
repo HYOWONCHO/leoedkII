@@ -59,6 +59,8 @@
 #include "SBC_X509.h"
 #include "SBC_Kdf.h" 
 #include "SBC_Log.h"
+
+#include "SBC_Nvram.h"
   
 extern CHAR16 mrgmsg[8192];
 CHAR16 print_out_key[128];
@@ -926,6 +928,18 @@ SBCStatus  _baseanswer_store(VOID *blkio, VOID *p)
     UINT32 ldlen = BASE_ANS_BLK_LEN;
     UINTN baseansr_lba = 0;
 
+#ifdef _TEST_ERROR_SET_    
+    if (NvramErr_IsTrue(ERR_BASEANSWR_WRITE)) {
+        sbc_err_sysprn(SBC_LOG_CMN_PRIO_INFO, 2,
+                 SYS_LOG_HOST_BOOT,
+                 SYS_LOG_APP_NAME,
+                 SYS_LOG_CSC_NAME,
+                 0,
+                 L"Detetion",
+                 L"SBC_VENDOR_SP Fail to the Base answer storing");
+        goto errdone;
+    }
+#endif
 
     h = (base_ansid_t *)p;
     
@@ -998,6 +1012,18 @@ static SBCStatus _baseanswer_extract_from_disk(VOID *blkio, base_ansid_t *p)
   UINTN baseansr_lba = 0;
   UINTN offset = 0;
 
+#ifdef _TEST_ERROR_SET_    
+    if (NvramErr_IsTrue(ERR_BASEANSWR_READ)) {
+        sbc_err_sysprn(SBC_LOG_CMN_PRIO_INFO, 2,
+                 SYS_LOG_HOST_BOOT,
+                 SYS_LOG_APP_NAME,
+                 SYS_LOG_CSC_NAME,
+                 0,
+                 L"Detetion",
+                 L"SBC_VENDOR_SP Fail to the Base answer read");
+        goto errdone;
+    }
+#endif
 
   SBC_RET_VALIDATE_ERRCODEMSG((p != NULL), SBCNULLP, "Invalid parameter");
 
@@ -1066,6 +1092,20 @@ SBCStatus SBC_DeviceSecuirtyKeyCreate(VOID *key)
     UINT8 *computebuf = NULL;
     UINTN cnt = 0;
     UINTN   allocate_len = 0;
+
+#ifdef _TEST_ERROR_SET_    
+    if (NvramErr_IsTrue(ERR_SECKEY_CREATE)) {
+        sbc_err_sysprn(SBC_LOG_CMN_PRIO_INFO, 2,
+                     SYS_LOG_HOST_BOOT,
+                     SYS_LOG_APP_NAME,
+                     SYS_LOG_CSC_NAME,
+                     0,
+                     L"Detetion",
+                     L"SBC_VENDOR_SP Fail to Genearte the Device Security Key ");
+
+        goto errdone;
+    }
+#endif
 
     SBC_RET_VALIDATE_ERRCODEMSG((key != NULL), SBCNULLP, "Output Nill");
 
@@ -1917,7 +1957,30 @@ SBCStatus  SBC_BaseAnswerValidate(VOID *blkhnd, UINT8 *answer, UINTN answerl, UI
     dprint("Base Answer verifing starting !!!");
 
     SBC_RET_VALIDATE_ERRCODEMSG((answer != NULL), SBCNULLP, "Answer is Nill");
+#ifdef _TEST_ERROR_SET_    
+    if (NvramErr_IsTrue(ERR_BASEANSWR_DEC)) {
+        sbc_err_sysprn(SBC_LOG_CMN_PRIO_INFO, 2,
+                 SYS_LOG_HOST_BOOT,
+                 SYS_LOG_APP_NAME,
+                 SYS_LOG_CSC_NAME,
+                 0,
+                 L"Detetion",
+                 L"SBC_VENDOR_SP Fail to Base Answer Decrypt");
+        goto errdone;
+    }
 
+    if (NvramErr_IsTrue(ERR_BASEANSWR_ENC)) {
+        sbc_err_sysprn(SBC_LOG_CMN_PRIO_INFO, 2,
+                 SYS_LOG_HOST_BOOT,
+                 SYS_LOG_APP_NAME,
+                 SYS_LOG_CSC_NAME,
+                 0,
+                 L"Detetion",
+                 L"SBC_VENDOR_SP Fail to Base Answer Encrypt");
+        goto errdone;
+    }
+
+#endif
 
     // Read the Base Answer from Disk 
 
@@ -2650,7 +2713,18 @@ SBCStatus SBC_GenOSID(EFI_HANDLE *h_image, UINT8 *fwid, UINT8 *osid)
 
   UINT8 os_hash[SBC_AT_HASH_LEN] = {0, };
 
-
+#ifdef _TEST_ERROR_SET_    
+    if (NvramErr_IsTrue(ERR_OSID_KEY)) {
+        sbc_err_sysprn(SBC_LOG_CMN_PRIO_INFO, 2,
+                 SYS_LOG_HOST_BOOT,
+                 SYS_LOG_APP_NAME,
+                 SYS_LOG_CSC_NAME,
+                 0,
+                 L"Detetion",
+                 L"SBC_VENDOR_SP Fail to create the OSID");
+        goto errdone;
+    }
+#endif
   lv.value = NULL;
   lv.length = 0;
 
@@ -2780,7 +2854,21 @@ SBCStatus SBC_GenMigrationKey(void *priv, void *outmsg)
 
     EFI_HANDLE *f_hndl;
     UINT8 temp_hash[ATP_IDENT_KEY_STG] = {0, };
-    
+
+#ifdef _TEST_ERROR_SET_    
+    if (NvramErr_IsTrue(ERR_MIGRATION_KEY)) {
+
+        sbc_err_sysprn(SBC_LOG_CMN_PRIO_ERR, 
+             2, 
+             SYS_LOG_HOST_BOOT, 
+             SYS_LOG_APP_NAME,SYS_LOG_CSC_NAME, 
+             4, 
+             SYS_LOG_EVT_DETECTION, 
+             L"SBC_BootFW_Update Fail to MigrationKey Creation \n");
+
+        goto errdone;
+    }
+#endif
 
     SBC_RET_VALIDATE_ERRCODEMSG((p != NULL),
                                SBCNULLP,

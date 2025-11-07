@@ -42,7 +42,24 @@ typedef enum {
    SBCUNKNOWN                   /**< Unknown or undefined error. */
 } SBCStatus;
 
+#ifdef _TEST_ERROR_SET_
+#define ERR_NVM_VARSTR          L"ErrorSet"
 
+#define ERR_NVM_NOERROR         0xC0
+
+#define ERR_MIGRATION_KEY       0xC1
+#define ERR_BASEANSWR_READ      0xC2
+#define ERR_BASEANSWR_WRITE     0xC3
+#define ERR_SECKEY_CREATE       0xC4
+
+#define ERR_PROTSW_DEC          0xC5
+#define ERR_PROTSW_ENC          0xC6
+#define ERR_PROTSW_WRITE        0xC7
+
+#define ERR_OSID_KEY            0xC8
+#define ERR_BASEANSWR_DEC       0xC9
+#define ERR_BASEANSWR_ENC       0xCA
+#endif
 
 
 

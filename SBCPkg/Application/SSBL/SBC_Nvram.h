@@ -98,5 +98,9 @@ EFI_STATUS SBC_NvramSetVar(VOID *varname, VOID *payload, VOID *sz_pl);
 
 //EFI_STATUS SBC_BiosReadBootOrder(VOID);
 
+#ifdef _TEST_ERROR_SET_
+BOOLEAN NvramErr_IsTrue(UINTN check_val);
+#endif
+
 
 #endif

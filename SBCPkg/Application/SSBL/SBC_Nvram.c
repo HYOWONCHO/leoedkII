@@ -31,6 +31,8 @@
 #include <Library/BaseMemoryLib.h>
 #include <Guid/GlobalVariable.h>   // gEfiGlobalVariableGuid
 
+#include "SBC_ErrorType.h"
+
 
 STATIC EFI_GUID gSpImVendorGuid =
       { 0xd4fe1500, 0x6c3c, 0x4ad5,
@@ -175,4 +177,25 @@ EFI_STATUS SBC_NvramGetVar(VOID *varname, VOID *payload, VOID *sz_pl)
     return Status;
 
 }
+
+#ifdef _TEST_ERROR_SET_
+BOOLEAN NvramErr_IsTrue(UINTN check_val)
+{
+    EFI_STATUS retval = EFI_SUCCESS;
+    CHAR16 *varname = ERR_NVM_VARSTR;
+    UINTN check_var = 0ULL;
+    UINTN sz_var = 0ULL;
+
+    retval = SBC_NvramGetVar((VOID *)varname, (VOID *)check_var, (VOID *)&sz_var);
+    if (EFI_ERROR(retval)) {
+        Print(L"Can't found the NVRAM regionf for %s \n", ERR_NVM_VARSTR);
+        return FALSE;
+    }
+
+    if (check_val != check_var) {
+        return FALSE;
+    }
+    return TRUE;
+}
+#endif
 

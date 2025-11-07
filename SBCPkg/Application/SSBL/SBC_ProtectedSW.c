@@ -40,6 +40,8 @@
 
 #include "SBC_Config.h"
 
+#include "SBC_Nvram.h"
+
 extern CHAR16 mrgmsg[8192];
 
 #define SBC_PROT_SYS_DATA_LEN           4
@@ -557,7 +559,23 @@ SBCStatus SBC_RecryptoProtectedSW(VOID *handle, UINTN ofs,  UINT8* sw_secret_key
 //                           (UINT8 *)aesctx.gcm->key.value,
 //                           aesctx.gcm->key.length);
 
+#ifdef _TEST_ERROR_SET_    
+    if (NvramErr_IsTrue(ERR_PROTSW_DEC)) {
+        SBC_BuildHexFormattedMessage(
+                (CONST VOID *)sw_mig_key, 32,
+                L"SBC_SP_GcmDecrypt Failed the Encrypt (%s)\n",
+                mrgmsg, sizeof mrgmsg);
 
+        sbc_err_sysprn(SBC_LOG_CMN_PRIO_ERR, 2,
+                 SYS_LOG_HOST_BOOT,
+                 SYS_LOG_APP_NAME,
+                 SYS_LOG_CSC_NAME,
+                 1,
+                 L"Detectoin",
+                 mrgmsg);
+        goto errdone;
+    }
+#endif
 
     ret = SBC_AESGcmDecrypt(&aesctx);
     SBC_RET_VALIDATE_ERRCODEMSG(!(ret != SBCOK), ret,   "Failed to decrypt"
@@ -587,6 +605,23 @@ SBCStatus SBC_RecryptoProtectedSW(VOID *handle, UINTN ofs,  UINT8* sw_secret_key
     SBC_RET_VALIDATE_ERRCODEMSG(!(ret != SBCOK), ret, "Failed to encrypt"
                                 "the Prot SW using Security Key");
 
+#ifdef _TEST_ERROR_SET_    
+    if (NvramErr_IsTrue(ERR_PROTSW_ENC)) {
+        SBC_BuildHexFormattedMessage(
+                (CONST VOID *)sw_secret_key, 32,
+                L"SBC_SP_GcmEncrypt Failed the Encrypt (%s)\n",
+                mrgmsg, sizeof mrgmsg);
+
+        sbc_err_sysprn(SBC_LOG_CMN_PRIO_ERR, 2,
+                 SYS_LOG_HOST_BOOT,
+                 SYS_LOG_APP_NAME,
+                 SYS_LOG_CSC_NAME,
+                 1,
+                 L"Detectoin",
+                 mrgmsg);
+        goto errdone;
+    }
+#endif 
     //
     // Re-write the protected SW
     //
@@ -596,7 +631,18 @@ SBCStatus SBC_RecryptoProtectedSW(VOID *handle, UINTN ofs,  UINT8* sw_secret_key
                            SBC_AT_HASH_LEN);
 
     // Write the Encrypt Data 
-    
+#ifdef _TEST_ERROR_SET_    
+    if (NvramErr_IsTrue(ERR_PROTSW_WRITE)) {
+        sbc_err_sysprn(SBC_LOG_CMN_PRIO_ERR, 2,
+                 SYS_LOG_HOST_BOOT,
+                 SYS_LOG_APP_NAME,
+                 SYS_LOG_CSC_NAME,
+                 1,
+                 L"Detectoin",
+                 L"SBC_SP_ProtSW Store Fail \n");
+        goto errdone;
+    }
+#endif    
     ret = SBC_RawAlignedWriteBlockIO(p->blkhnd, 
                                      ofs + SBC_RAW_PRTHDR_LEN_OFS,
                                      encctx.out.length,
