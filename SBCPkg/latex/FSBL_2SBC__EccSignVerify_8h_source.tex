@@ -1,0 +1,62 @@
+\doxysection{SBC\+\_\+\+Ecc\+Sign\+Verify.\+h}
+\hypertarget{FSBL_2SBC__EccSignVerify_8h_source}{}\label{FSBL_2SBC__EccSignVerify_8h_source}\index{Application/FSBL/SBC\_EccSignVerify.h@{Application/FSBL/SBC\_EccSignVerify.h}}
+
+\begin{DoxyCode}{0}
+\DoxyCodeLine{00001\ \textcolor{preprocessor}{\#ifndef\ \_\_SBC\_ECCSIGNVERIFY\_\_}}
+\DoxyCodeLine{00002\ \textcolor{preprocessor}{\#define\ \_\_SBC\_ECCSIGNVERIFY\_\_}}
+\DoxyCodeLine{00003\ }
+\DoxyCodeLine{00004\ \textcolor{preprocessor}{\#include\ "{}SBC\_ErrorType.h"{}}}
+\DoxyCodeLine{00005\ }
+\DoxyCodeLine{00007\ \textcolor{keyword}{typedef}\ \textcolor{keyword}{struct\ }\mbox{\hyperlink{struct__at__key__t}{\_at\_key\_t}}\ \{}
+\DoxyCodeLine{00008\ }
+\DoxyCodeLine{00009\ \ \ \ \ \mbox{\hyperlink{struct__at__key__t_a7f8da6cb7a8faf1687e37ec8872c553d}{UINT8}}\ \ \ \mbox{\hyperlink{struct__at__key__t_ad7833d10359b0c76723045ea122b70b3}{d}}[32];\ }
+\DoxyCodeLine{00010\ \ \ \ \ \textcolor{keyword}{union\ }\{}
+\DoxyCodeLine{00011\ \ \ \ \ \ \ \ \ \textcolor{keyword}{struct\ }\{}
+\DoxyCodeLine{00012\ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{struct__at__key__t_a7f8da6cb7a8faf1687e37ec8872c553d}{UINT8}}\ \mbox{\hyperlink{struct__at__key__t_a998467d939c3c26c6a3c4cc0991f1ce4}{qx}}[32];}
+\DoxyCodeLine{00013\ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{struct__at__key__t_a7f8da6cb7a8faf1687e37ec8872c553d}{UINT8}}\ \mbox{\hyperlink{struct__at__key__t_a4bac7a15bc9f8ee2ac4a3a2c48686286}{qy}}[32];}
+\DoxyCodeLine{00014\ \ \ \ \ \ \ \ \ \}qxy;}
+\DoxyCodeLine{00015\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{struct__at__key__t_a7f8da6cb7a8faf1687e37ec8872c553d}{UINT8}}\ \mbox{\hyperlink{struct__at__key__t_a7f8da6cb7a8faf1687e37ec8872c553d}{value}}[64];}
+\DoxyCodeLine{00016\ \ \ \ \ \}q;}
+\DoxyCodeLine{00017\ }
+\DoxyCodeLine{00018\ \ \ \ \ \mbox{\hyperlink{struct__at__key__t_a7f8da6cb7a8faf1687e37ec8872c553d}{UINTN}}\ \ \ \mbox{\hyperlink{struct__at__key__t_afae78ea0427d2413015f2fa9667df621}{dl}};\ \ \ \ \ }
+\DoxyCodeLine{00019\ \ \ \ \ \mbox{\hyperlink{struct__at__key__t_a7f8da6cb7a8faf1687e37ec8872c553d}{UINTN}}\ \ \ \mbox{\hyperlink{struct__at__key__t_ae8b206276045d8f24c181b61d6529ea6}{ql}};\ \ \ \ \ }
+\DoxyCodeLine{00020\ \}\mbox{\hyperlink{structat__key__t}{at\_key\_t}};}
+\DoxyCodeLine{00021\ }
+\DoxyCodeLine{00022\ }
+\DoxyCodeLine{00023\ \textcolor{keyword}{typedef}\ \textcolor{keyword}{struct\ }\mbox{\hyperlink{struct__ecc__ctx__t}{\_ecc\_ctx\_t}}\ \{}
+\DoxyCodeLine{00024\ \ \ \ \ VOID\ *\mbox{\hyperlink{struct__ecc__ctx__t_a84717e69f139aaf5d0d2dcfc8dfcff7c}{handle}};}
+\DoxyCodeLine{00025\ \ \ \ \ \mbox{\hyperlink{struct__lv__t}{LV\_t}}\ \mbox{\hyperlink{struct__ecc__ctx__t_af20b7fd2469ec8fb9513c15f67a1f048}{pubkey}};}
+\DoxyCodeLine{00026\ \ \ \ \ \mbox{\hyperlink{struct__lv__t}{LV\_t}}\ \mbox{\hyperlink{struct__ecc__ctx__t_ad4a6535e1a178b644cde5792ce977b4a}{privkey}};}
+\DoxyCodeLine{00027\ \ \ \ \ \mbox{\hyperlink{struct__lv__t}{LV\_t}}\ \mbox{\hyperlink{struct__ecc__ctx__t_a6ddff7995bbc5a14455bf412bafdc45c}{sharedkey}};}
+\DoxyCodeLine{00028\ }
+\DoxyCodeLine{00029\ }
+\DoxyCodeLine{00030\ \ \ \ \ UINTN\ \mbox{\hyperlink{struct__ecc__ctx__t_a3e30d1e5b1564e95820e6b0962b1739c}{curveid}};}
+\DoxyCodeLine{00031\ \}\mbox{\hyperlink{structSBCEccCtx}{SBCEccCtx}};}
+\DoxyCodeLine{00032\ }
+\DoxyCodeLine{00033\ }
+\DoxyCodeLine{00034\ SBCStatus\ SBC\_EcCtxSetPubKey(VOID\ *handle,\ UINT8\ *key,\ UINTN\ keylen,\ UINT32\ curveid);}
+\DoxyCodeLine{00035\ SBCStatus\ SBC\_EcCtxSetPrivKey(VOID\ *handle,\ UINT8\ *key,\ UINTN\ keylen,\ UINT32\ curveid);}
+\DoxyCodeLine{00036\ SBCStatus\ SBC\_EcDsaVerify(\mbox{\hyperlink{structSBCEccCtx}{SBCEccCtx}}\ *h,\ \mbox{\hyperlink{struct__tlv__t}{TLV\_t}}\ *hash,\ \mbox{\hyperlink{struct__lv__t}{LV\_t}}\ *signature);}
+\DoxyCodeLine{00037\ }
+\DoxyCodeLine{00038\ }
+\DoxyCodeLine{00052\ SBCStatus\ SBC\_EccKeyGen(\mbox{\hyperlink{structSBCEccCtx}{SBCEccCtx}}\ *h,\ UINTN\ curveid);}
+\DoxyCodeLine{00053\ SBCStatus\ SBC\_GenShareSeucrityKey(\mbox{\hyperlink{structSBCEccCtx}{SBCEccCtx}}\ *h,\ UINT8\ *privkey,\ UINTN\ privlen,\ UINT8\ *pubkey,\ UINTN\ publen);}
+\DoxyCodeLine{00054\ }
+\DoxyCodeLine{00055\ }
+\DoxyCodeLine{00071\ SBCStatus\ SBC\_EcDsaSign(\mbox{\hyperlink{structSBCEccCtx}{SBCEccCtx}}\ *h,\ \mbox{\hyperlink{struct__tlv__t}{TLV\_t}}\ *hash,\ \mbox{\hyperlink{struct__lv__t}{LV\_t}}\ *signature);}
+\DoxyCodeLine{00072\ }
+\DoxyCodeLine{00088\ SBCStatus\ SBC\_EcDsaVerify(\mbox{\hyperlink{structSBCEccCtx}{SBCEccCtx}}\ *h,\ \mbox{\hyperlink{struct__tlv__t}{TLV\_t}}\ *hash,\ \mbox{\hyperlink{struct__lv__t}{LV\_t}}\ *signature);}
+\DoxyCodeLine{00089\ }
+\DoxyCodeLine{00090\ }
+\DoxyCodeLine{00101\ SBCStatus\ \ SBC\_DICESeedKeyPair(UINT8\ *dice\_seed,\ \mbox{\hyperlink{structat__key__t}{at\_key\_t}}\ *key);}
+\DoxyCodeLine{00102\ }
+\DoxyCodeLine{00118\ SBCStatus\ \ SBC\_ConvertRawKeyPem(}
+\DoxyCodeLine{00119\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ IN\ \ CONST\ UINT8\ \ *DerData,}
+\DoxyCodeLine{00120\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ IN\ \ UINTN\ \ \ \ \ \ \ \ \ DerSize,}
+\DoxyCodeLine{00121\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ IN\ \ CONST\ CHAR8\ \ *PemHeader,}
+\DoxyCodeLine{00122\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ IN\ \ CONST\ CHAR8\ \ *PemFooter,}
+\DoxyCodeLine{00123\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ OUT\ CHAR8\ \ \ \ \ \ \ **PemKey,}
+\DoxyCodeLine{00124\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ OUT\ UINTN\ \ \ \ \ \ \ \ *PemKeySize);}
+\DoxyCodeLine{00125\ \textcolor{preprocessor}{\#endif}}
+
+\end{DoxyCode}

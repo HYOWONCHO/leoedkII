@@ -1,0 +1,23 @@
+\doxysection{SBC\+\_\+\+X509.\+h}
+\hypertarget{FSBL_2SBC__X509_8h_source}{}\label{FSBL_2SBC__X509_8h_source}\index{Application/FSBL/SBC\_X509.h@{Application/FSBL/SBC\_X509.h}}
+
+\begin{DoxyCode}{0}
+\DoxyCodeLine{00001\ \textcolor{preprocessor}{\#ifndef\ \_SBC\_X509\_H}}
+\DoxyCodeLine{00002\ \textcolor{preprocessor}{\#define\ \_SBC\_X509\_H}}
+\DoxyCodeLine{00003\ }
+\DoxyCodeLine{00004\ }
+\DoxyCodeLine{00016\ SBCStatus\ \ SBC\_EcGetPublicKeyFromPem(CONST\ UINT8\ *der,}
+\DoxyCodeLine{00017\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ UINTN\ derl,}
+\DoxyCodeLine{00018\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ VOID\ **ctx);}
+\DoxyCodeLine{00019\ }
+\DoxyCodeLine{00020\ }
+\DoxyCodeLine{00033\ SBCStatus\ \ SBC\_EcGetPrivateKeyFromPem(CONST\ UINT8\ *der,}
+\DoxyCodeLine{00034\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ UINTN\ derl,}
+\DoxyCodeLine{00035\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ CONST\ CHAR8\ *passwd,}
+\DoxyCodeLine{00036\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ VOID\ **ctx);}
+\DoxyCodeLine{00037\ }
+\DoxyCodeLine{00038\ }
+\DoxyCodeLine{00051\ SBCStatus\ \ SBC\_X509VerifyCert(CONST\ UINT8\ *cert,\ UINTN\ certl,\ CONST\ UINT8\ *cacert,\ UINTN\ cacertl);}
+\DoxyCodeLine{00052\ \textcolor{preprocessor}{\#endif}}
+
+\end{DoxyCode}

@@ -1,0 +1,45 @@
+\doxysubsection{Dynamic Memory Allocation}
+\hypertarget{group__cmocka__alloc}{}\label{group__cmocka__alloc}\index{Dynamic Memory Allocation@{Dynamic Memory Allocation}}
+Collaboration diagram for Dynamic Memory Allocation\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=350pt]{group__cmocka__alloc}
+\end{center}
+\end{figure}
+\doxysubsubsubsection*{Macros}
+\begin{DoxyCompactItemize}
+\item 
+\Hypertarget{group__cmocka__alloc_ga02b206ae46eca6b6edd38fbc7de50cba}\label{group__cmocka__alloc_ga02b206ae46eca6b6edd38fbc7de50cba} 
+\#define {\bfseries test\+\_\+calloc}(num,  size)~\+\_\+test\+\_\+calloc(num, size, \+\_\+\+\_\+\+FILE\+\_\+\+\_\+, \+\_\+\+\_\+\+LINE\+\_\+\+\_\+)
+\item 
+\Hypertarget{group__cmocka__alloc_ga02b206ae46eca6b6edd38fbc7de50cba}\label{group__cmocka__alloc_ga02b206ae46eca6b6edd38fbc7de50cba} 
+\#define {\bfseries test\+\_\+calloc}(num,  size)~\+\_\+test\+\_\+calloc(num, size, \+\_\+\+\_\+\+FILE\+\_\+\+\_\+, \+\_\+\+\_\+\+LINE\+\_\+\+\_\+)
+\item 
+\Hypertarget{group__cmocka__alloc_gaf73e539580781a60f70bff5cc58c023f}\label{group__cmocka__alloc_gaf73e539580781a60f70bff5cc58c023f} 
+\#define {\bfseries test\+\_\+free}(ptr)~\+\_\+test\+\_\+free(ptr, \+\_\+\+\_\+\+FILE\+\_\+\+\_\+, \+\_\+\+\_\+\+LINE\+\_\+\+\_\+)
+\item 
+\Hypertarget{group__cmocka__alloc_gaf73e539580781a60f70bff5cc58c023f}\label{group__cmocka__alloc_gaf73e539580781a60f70bff5cc58c023f} 
+\#define {\bfseries test\+\_\+free}(ptr)~\+\_\+test\+\_\+free(ptr, \+\_\+\+\_\+\+FILE\+\_\+\+\_\+, \+\_\+\+\_\+\+LINE\+\_\+\+\_\+)
+\item 
+\Hypertarget{group__cmocka__alloc_gabc8968063b748336a76111930e0bf31d}\label{group__cmocka__alloc_gabc8968063b748336a76111930e0bf31d} 
+\#define {\bfseries test\+\_\+malloc}(size)~\+\_\+test\+\_\+malloc(size, \+\_\+\+\_\+\+FILE\+\_\+\+\_\+, \+\_\+\+\_\+\+LINE\+\_\+\+\_\+)
+\item 
+\Hypertarget{group__cmocka__alloc_gabc8968063b748336a76111930e0bf31d}\label{group__cmocka__alloc_gabc8968063b748336a76111930e0bf31d} 
+\#define {\bfseries test\+\_\+malloc}(size)~\+\_\+test\+\_\+malloc(size, \+\_\+\+\_\+\+FILE\+\_\+\+\_\+, \+\_\+\+\_\+\+LINE\+\_\+\+\_\+)
+\item 
+\Hypertarget{group__cmocka__alloc_gadf150db9dfdc0479bc8792020472c1f1}\label{group__cmocka__alloc_gadf150db9dfdc0479bc8792020472c1f1} 
+\#define {\bfseries test\+\_\+realloc}(ptr,  size)~\+\_\+test\+\_\+realloc(ptr, size, \+\_\+\+\_\+\+FILE\+\_\+\+\_\+, \+\_\+\+\_\+\+LINE\+\_\+\+\_\+)
+\item 
+\Hypertarget{group__cmocka__alloc_gadf150db9dfdc0479bc8792020472c1f1}\label{group__cmocka__alloc_gadf150db9dfdc0479bc8792020472c1f1} 
+\#define {\bfseries test\+\_\+realloc}(ptr,  size)~\+\_\+test\+\_\+realloc(ptr, size, \+\_\+\+\_\+\+FILE\+\_\+\+\_\+, \+\_\+\+\_\+\+LINE\+\_\+\+\_\+)
+\end{DoxyCompactItemize}
+
+
+\doxysubsubsection{Detailed Description}
+Memory leaks, buffer overflows and underflows can be checked using cmocka.
+
+To test for memory leaks, buffer overflows and underflows a module being tested by cmocka should replace calls to malloc(), calloc() and free() to test\+\_\+malloc(), test\+\_\+calloc() and test\+\_\+free() respectively. Each time a block is deallocated using test\+\_\+free() it is checked for corruption, if a corrupt block is found a test failure is signalled. All blocks allocated using the test\+\_\+\texorpdfstring{$\ast$}{*}() allocation functions are tracked by the cmocka library. When a test completes if any allocated blocks (memory leaks) remain they are reported and a test failure is signalled.
+
+For simplicity cmocka currently executes all tests in one process. Therefore all test cases in a test application share a single address space which means memory corruption from a single test case could potentially cause the test application to exit prematurely. 

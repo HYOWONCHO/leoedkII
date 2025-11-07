@@ -1,0 +1,104 @@
+\doxysection{Application/\+SSBL/\+SBC\+\_\+\+Crypt\+AES.c File Reference}
+\hypertarget{SSBL_2SBC__CryptAES_8c}{}\label{SSBL_2SBC__CryptAES_8c}\index{Application/SSBL/SBC\_CryptAES.c@{Application/SSBL/SBC\_CryptAES.c}}
+
+
+Message are encrypt and decrypt using AES confidentiality algorithms.  
+
+
+{\ttfamily \#include $<$Library/\+Base\+Crypt\+Lib.\+h$>$}\newline
+{\ttfamily \#include $<$Library/\+Base\+Memory\+Lib.\+h$>$}\newline
+{\ttfamily \#include $<$Library/\+Memory\+Allocation\+Lib.\+h$>$}\newline
+{\ttfamily \#include "{}SBC\+\_\+\+Crypt\+AES.\+h"{}}\newline
+{\ttfamily \#include "{}SBC\+\_\+\+Log.\+h"{}}\newline
+{\ttfamily \#include "{}SBC\+\_\+\+Util.\+h"{}}\newline
+{\ttfamily \#include "{}SBC\+\_\+\+Config.\+h"{}}\newline
+Include dependency graph for SBC\+\_\+\+Crypt\+AES.\+c\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=350pt]{SSBL_2SBC__CryptAES_8c__incl}
+\end{center}
+\end{figure}
+\doxysubsubsection*{Functions}
+\begin{DoxyCompactItemize}
+\item 
+\Hypertarget{SSBL_2SBC__CryptAES_8c_a55f34255916dedc8fe9b6acbd9821211}\label{SSBL_2SBC__CryptAES_8c_a55f34255916dedc8fe9b6acbd9821211} 
+static SBCStatus {\bfseries SBC\+\_\+\+AES\+\_\+\+CBCDecrypt} (\mbox{\hyperlink{structSBC__AESContext}{SBC\+\_\+\+AESContext}} \texorpdfstring{$\ast$}{*}ctx)
+\item 
+\Hypertarget{SSBL_2SBC__CryptAES_8c_a4835f5af627f6b1ab6dd141c19478760}\label{SSBL_2SBC__CryptAES_8c_a4835f5af627f6b1ab6dd141c19478760} 
+static SBCStatus {\bfseries SBC\+\_\+\+AES\+\_\+\+CBCEncrypt} (\mbox{\hyperlink{structSBC__AESCBCCtx}{SBC\+\_\+\+AESCBCCtx}} \texorpdfstring{$\ast$}{*}ctx)
+\item 
+\Hypertarget{SSBL_2SBC__CryptAES_8c_a8d78dd6e7009d79d4b834b25eaa7275b}\label{SSBL_2SBC__CryptAES_8c_a8d78dd6e7009d79d4b834b25eaa7275b} 
+SBCStatus {\bfseries SBC\+\_\+\+AESDecrypt} (\mbox{\hyperlink{structSBC__AESContext}{SBC\+\_\+\+AESContext}} \texorpdfstring{$\ast$}{*}ctx)
+\item 
+VOID \mbox{\hyperlink{SSBL_2SBC__CryptAES_8c_a2132936a18724b0f6630167eeb571d4a}{SBC\+\_\+\+AESDe\+Init}} (\mbox{\hyperlink{structSBC__AESContext}{SBC\+\_\+\+AESContext}} \texorpdfstring{$\ast$}{*}ctx)
+\item 
+\Hypertarget{SSBL_2SBC__CryptAES_8c_ad79568404c7771693ed5dae1c81fa45c}\label{SSBL_2SBC__CryptAES_8c_ad79568404c7771693ed5dae1c81fa45c} 
+SBCStatus {\bfseries SBC\+\_\+\+AESEncrypt} (\mbox{\hyperlink{structSBC__AESContext}{SBC\+\_\+\+AESContext}} \texorpdfstring{$\ast$}{*}ctx)
+\item 
+\Hypertarget{SSBL_2SBC__CryptAES_8c_a7401a433397746317e4e8fdae4bf49ab}\label{SSBL_2SBC__CryptAES_8c_a7401a433397746317e4e8fdae4bf49ab} 
+SBCStatus {\bfseries SBC\+\_\+\+AESGcm\+Decrypt} (\mbox{\hyperlink{structSBC__AESContext}{SBC\+\_\+\+AESContext}} \texorpdfstring{$\ast$}{*}ctx)
+\item 
+\Hypertarget{SSBL_2SBC__CryptAES_8c_a58ea450eebb3864756557dc20dd78d06}\label{SSBL_2SBC__CryptAES_8c_a58ea450eebb3864756557dc20dd78d06} 
+SBCStatus {\bfseries SBC\+\_\+\+AESGcm\+Encrypt} (\mbox{\hyperlink{structSBC__AESContext}{SBC\+\_\+\+AESContext}} \texorpdfstring{$\ast$}{*}ctx)
+\item 
+\Hypertarget{SSBL_2SBC__CryptAES_8c_a8a70127310a2f3ce8712b4c492cb55a6}\label{SSBL_2SBC__CryptAES_8c_a8a70127310a2f3ce8712b4c492cb55a6} 
+void {\bfseries SBC\+\_\+\+AESGcm\+Set\+Context} (void \texorpdfstring{$\ast$}{*}ctx, void \texorpdfstring{$\ast$}{*}key, void \texorpdfstring{$\ast$}{*}iv, void \texorpdfstring{$\ast$}{*}tag)
+\item 
+SBCStatus \mbox{\hyperlink{SSBL_2SBC__CryptAES_8c_aa2bbab6c5c090f248923a234a882d0fe}{SBC\+\_\+\+AESInit}} (\mbox{\hyperlink{structSBC__AESContext}{SBC\+\_\+\+AESContext}} \texorpdfstring{$\ast$}{*}ctx)
+\end{DoxyCompactItemize}
+
+
+\doxysubsection{Detailed Description}
+Message are encrypt and decrypt using AES confidentiality algorithms. 
+
+Copyright (C) 2024 by Security Platform Inc. \texorpdfstring{$\ast$}{*} This file is part of the SBC Project. \texorpdfstring{$\ast$}{*}
+\begin{DoxyItemize}
+\item This software contains confidential and proprietary information of \texorpdfstring{$\ast$}{*} Security Platform Inc. Unauthorized reproduction, distribution, or \texorpdfstring{$\ast$}{*} disclosure of this software, in whole or in part, is strictly prohibited. \texorpdfstring{$\ast$}{*}
+\end{DoxyItemize}
+
+\begin{DoxyAuthor}{Author}
+LEON 
+\end{DoxyAuthor}
+\begin{DoxyVersion}{Version}
+1.\+0 
+\end{DoxyVersion}
+\begin{DoxyDate}{Date}
+2025-\/10-\/31
+\end{DoxyDate}
+\begin{DoxyCopyright}{Copyright}
+(c) 2025 Security Platform Inc. All rights reserved. 
+\end{DoxyCopyright}
+
+
+\doxysubsection{Function Documentation}
+\Hypertarget{SSBL_2SBC__CryptAES_8c_a2132936a18724b0f6630167eeb571d4a}\label{SSBL_2SBC__CryptAES_8c_a2132936a18724b0f6630167eeb571d4a} 
+\index{SBC\_CryptAES.c@{SBC\_CryptAES.c}!SBC\_AESDeInit@{SBC\_AESDeInit}}
+\index{SBC\_AESDeInit@{SBC\_AESDeInit}!SBC\_CryptAES.c@{SBC\_CryptAES.c}}
+\doxysubsubsection{\texorpdfstring{SBC\_AESDeInit()}{SBC\_AESDeInit()}}
+{\footnotesize\ttfamily VOID SBC\+\_\+\+AESDe\+Init (\begin{DoxyParamCaption}\item[{\mbox{\hyperlink{structSBC__AESContext}{SBC\+\_\+\+AESContext}} \texorpdfstring{$\ast$}{*}}]{ctx }\end{DoxyParamCaption})}
+
+AES context handle is de-\/inialized
+
+
+\begin{DoxyParams}[1]{Parameters}
+\mbox{\texttt{ in,out}}  & {\em ctx} & ponter to AES context being initialize \\
+\hline
+\end{DoxyParams}
+\Hypertarget{SSBL_2SBC__CryptAES_8c_aa2bbab6c5c090f248923a234a882d0fe}\label{SSBL_2SBC__CryptAES_8c_aa2bbab6c5c090f248923a234a882d0fe} 
+\index{SBC\_CryptAES.c@{SBC\_CryptAES.c}!SBC\_AESInit@{SBC\_AESInit}}
+\index{SBC\_AESInit@{SBC\_AESInit}!SBC\_CryptAES.c@{SBC\_CryptAES.c}}
+\doxysubsubsection{\texorpdfstring{SBC\_AESInit()}{SBC\_AESInit()}}
+{\footnotesize\ttfamily SBCStatus SBC\+\_\+\+AESInit (\begin{DoxyParamCaption}\item[{\mbox{\hyperlink{structSBC__AESContext}{SBC\+\_\+\+AESContext}} \texorpdfstring{$\ast$}{*}}]{ctx }\end{DoxyParamCaption})}
+
+Initialize the AES context for use
+
+
+\begin{DoxyParams}[1]{Parameters}
+\mbox{\texttt{ in,out}}  & {\em ctx} & ponter to AES context being initialize\\
+\hline
+\end{DoxyParams}
+\begin{DoxyReturn}{Returns}
+On success, return the SBCOK, otherwise apporiate value 
+\end{DoxyReturn}

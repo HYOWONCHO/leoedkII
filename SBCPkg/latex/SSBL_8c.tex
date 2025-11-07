@@ -1,0 +1,111 @@
+\doxysection{Application/\+SSBL/\+SSBL.c File Reference}
+\hypertarget{SSBL_8c}{}\label{SSBL_8c}\index{Application/SSBL/SSBL.c@{Application/SSBL/SSBL.c}}
+{\ttfamily \#include $<$Uefi.\+h$>$}\newline
+{\ttfamily \#include $<$Library/\+Pcd\+Lib.\+h$>$}\newline
+{\ttfamily \#include $<$Library/\+Uefi\+Lib.\+h$>$}\newline
+{\ttfamily \#include $<$Library/\+Uefi\+Application\+Entry\+Point.\+h$>$}\newline
+{\ttfamily \#include $<$Library/\+Base\+Lib.\+h$>$}\newline
+{\ttfamily \#include $<$Library/\+Base\+Crypt\+Lib.\+h$>$}\newline
+{\ttfamily \#include $<$Library/\+Base\+Memory\+Lib.\+h$>$}\newline
+{\ttfamily \#include $<$malloc.\+h$>$}\newline
+{\ttfamily \#include $<$Register/\+Intel/\+Cpuid.\+h$>$}\newline
+{\ttfamily \#include $<$Library/\+Shell\+Lib.\+h$>$}\newline
+{\ttfamily \#include $<$Library/\+Memory\+Allocation\+Lib.\+h$>$}\newline
+{\ttfamily \#include $<$Protocol/\+Smbios.\+h$>$}\newline
+{\ttfamily \#include $<$Library/\+Device\+Path\+Lib.\+h$>$}\newline
+{\ttfamily \#include $<$string.\+h$>$}\newline
+{\ttfamily \#include $<$stdio.\+h$>$}\newline
+{\ttfamily \#include $<$stdlib.\+h$>$}\newline
+{\ttfamily \#include $<$Protocol/\+Block\+Io.\+h$>$}\newline
+{\ttfamily \#include $<$Protocol/\+Disk\+Info.\+h$>$}\newline
+{\ttfamily \#include $<$Protocol/\+Serial\+Io.\+h$>$}\newline
+{\ttfamily \#include $<$Library/\+Serial\+Port\+Lib.\+h$>$}\newline
+{\ttfamily \#include "{}leo\+\_\+test.\+h"{}}\newline
+{\ttfamily \#include $<$Library/\+Uefi\+Boot\+Services\+Table\+Lib.\+h$>$}\newline
+{\ttfamily \#include $<$Library/\+File\+Handle\+Lib.\+h$>$}\newline
+{\ttfamily \#include $<$Library/\+Unit\+Test\+Lib.\+h$>$}\newline
+{\ttfamily \#include $<$Library/\+Uefi\+Boot\+Manager\+Lib.\+h$>$}\newline
+{\ttfamily \#include $<$openssl/objects.\+h$>$}\newline
+{\ttfamily \#include $<$openssl/bn.\+h$>$}\newline
+{\ttfamily \#include $<$openssl/ec.\+h$>$}\newline
+{\ttfamily \#include $<$stdarg.\+h$>$}\newline
+{\ttfamily \#include "{}SBC\+\_\+\+Log.\+h"{}}\newline
+{\ttfamily \#include "{}SBC\+\_\+\+Error\+Type.\+h"{}}\newline
+{\ttfamily \#include "{}SBC\+\_\+\+Crypt\+AES.\+h"{}}\newline
+{\ttfamily \#include "{}SBC\+\_\+\+File\+Ctrl.\+h"{}}\newline
+{\ttfamily \#include "{}SBC\+\_\+\+Type\+Defs.\+h"{}}\newline
+{\ttfamily \#include "{}SBC\+\_\+\+Ecc\+Sign\+Verify.\+h"{}}\newline
+{\ttfamily \#include "{}SBC\+\_\+\+Config.\+h"{}}\newline
+{\ttfamily \#include "{}SBC\+\_\+\+Anti\+Tampering.\+h"{}}\newline
+{\ttfamily \#include "{}SBC\+\_\+\+Util.\+h"{}}\newline
+{\ttfamily \#include "{}SBC\+\_\+\+Boot\+Proc.\+h"{}}\newline
+{\ttfamily \#include "{}SBC\+\_\+\+System\+Control.\+h"{}}\newline
+{\ttfamily \#include "{}SBC\+\_\+\+Protected\+SW.\+h"{}}\newline
+{\ttfamily \#include "{}SBC\+\_\+\+Hashing.\+h"{}}\newline
+{\ttfamily \#include "{}SBC\+\_\+\+Nvram.\+h"{}}\newline
+Include dependency graph for SSBL.\+c\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=350pt]{SSBL_8c__incl}
+\end{center}
+\end{figure}
+\doxysubsubsection*{Functions}
+\begin{DoxyCompactItemize}
+\item 
+\Hypertarget{SSBL_8c_aa03d56120094fd73a185360c0c56d059}\label{SSBL_8c_aa03d56120094fd73a185360c0c56d059} 
+static VOID {\bfseries \+\_\+get\+\_\+fw\+\_\+bankid} (UINT32 val, UINT32 \texorpdfstring{$\ast$}{*}cur, UINT32 \texorpdfstring{$\ast$}{*}prev)
+\item 
+\Hypertarget{SSBL_8c_a4bb48a7b6c705c7c277bf419f4a9d082}\label{SSBL_8c_a4bb48a7b6c705c7c277bf419f4a9d082} 
+UINT32 {\bfseries Find\+Previously\+Bank} (UINT32 bankid)
+\item 
+\Hypertarget{SSBL_8c_af58bbf10b2191e86dd4c7cb1fe0af0d1}\label{SSBL_8c_af58bbf10b2191e86dd4c7cb1fe0af0d1} 
+SBCStatus {\bfseries SBC\+\_\+\+Boot\+Key\+Mode\+Change} (UINT32 newbm, UINT32 newkey, VOID \texorpdfstring{$\ast$}{*}priv)
+\item 
+\Hypertarget{SSBL_8c_ae96359aba50c0cb922e3d1b4c997f6e6}\label{SSBL_8c_ae96359aba50c0cb922e3d1b4c997f6e6} 
+SBCStatus {\bfseries SBC\+\_\+\+Boot\+Mode\+Factory} (VOID \texorpdfstring{$\ast$}{*}blkhnd, VOID \texorpdfstring{$\ast$}{*}Image\+Handle)
+\item 
+\Hypertarget{SSBL_8c_a0372a0e7f670f0531b71a04a36c9b81a}\label{SSBL_8c_a0372a0e7f670f0531b71a04a36c9b81a} 
+SBCStatus {\bfseries SBC\+\_\+\+Boot\+Mode\+Normal} (UINT16 km, VOID \texorpdfstring{$\ast$}{*}priv)
+\item 
+\Hypertarget{SSBL_8c_a9dea78d306b2c4a662b5b8772908cf39}\label{SSBL_8c_a9dea78d306b2c4a662b5b8772908cf39} 
+SBCStatus {\bfseries SBC\+\_\+\+Boot\+Mode\+Normal\+Andp\+Udate} (VOID \texorpdfstring{$\ast$}{*}blkhnd, VOID \texorpdfstring{$\ast$}{*}Image\+Handle, VOID \texorpdfstring{$\ast$}{*}priv)
+\item 
+\Hypertarget{SSBL_8c_a9ccc16e77b84f5968ef05451b1249356}\label{SSBL_8c_a9ccc16e77b84f5968ef05451b1249356} 
+SBCStatus {\bfseries SBC\+\_\+\+Dice\+Keys\+Gen} (EFI\+\_\+\+HANDLE Image\+Handle, VOID \texorpdfstring{$\ast$}{*}p, UINTN normbank, UINTN bm)
+\item 
+\Hypertarget{SSBL_8c_a0babd4ee5e13e681a5a365bbe8d9425d}\label{SSBL_8c_a0babd4ee5e13e681a5a365bbe8d9425d} 
+SBCStatus {\bfseries SBC\+\_\+\+GRUB\+\_\+\+Load\+And\+Start} (EFI\+\_\+\+HANDLE Image\+Handle)
+\item 
+\Hypertarget{SSBL_8c_aa182ee1f19a67179b6a02491033881f7}\label{SSBL_8c_aa182ee1f19a67179b6a02491033881f7} 
+SBCStatus {\bfseries SBC\+\_\+\+SSBL\+\_\+\+Load\+And\+Start} (EFI\+\_\+\+HANDLE Image\+Handle)
+\item 
+\Hypertarget{SSBL_8c_a4543a5a55cc1edd61839589f5a06ccb6}\label{SSBL_8c_a4543a5a55cc1edd61839589f5a06ccb6} 
+EFI\+\_\+\+STATUS EFIAPI {\bfseries Uefi\+Main} (IN EFI\+\_\+\+HANDLE Image\+Handle, IN EFI\+\_\+\+SYSTEM\+\_\+\+TABLE \texorpdfstring{$\ast$}{*}System\+Table)
+\end{DoxyCompactItemize}
+\doxysubsubsection*{Variables}
+\begin{DoxyCompactItemize}
+\item 
+\Hypertarget{SSBL_8c_af969f250ef558366cb4992dbe395ea5a}\label{SSBL_8c_af969f250ef558366cb4992dbe395ea5a} 
+static \mbox{\hyperlink{structboot__proc__t}{boot\+\_\+proc\+\_\+t}} {\bfseries btproc}
+\item 
+\Hypertarget{SSBL_8c_a6f5f70c2db15c2b1724ee2536dc833f1}\label{SSBL_8c_a6f5f70c2db15c2b1724ee2536dc833f1} 
+VOID \texorpdfstring{$\ast$}{*} {\bfseries h\+\_\+blkio}
+\item 
+\Hypertarget{SSBL_8c_a1b983779b7d8351fa5a7e83a368cd03e}\label{SSBL_8c_a1b983779b7d8351fa5a7e83a368cd03e} 
+CHAR16 {\bfseries mrgmsg} \mbox{[}8192\mbox{]}
+\item 
+\Hypertarget{SSBL_8c_a308a696c087fd090a864259ac5b922bd}\label{SSBL_8c_a308a696c087fd090a864259ac5b922bd} 
+UINTN {\bfseries sys\+\_\+end\+\_\+time} = 0\+ULL
+\item 
+\Hypertarget{SSBL_8c_adf8bd0e5cba3760b6e1372d7a7dfe853}\label{SSBL_8c_adf8bd0e5cba3760b6e1372d7a7dfe853} 
+UINTN {\bfseries sys\+\_\+ns\+\_\+var} = 0\+ULL
+\item 
+\Hypertarget{SSBL_8c_afd46a029b850cf05bf719d97499f1e9b}\label{SSBL_8c_afd46a029b850cf05bf719d97499f1e9b} 
+UINTN {\bfseries sys\+\_\+start\+\_\+time} = 0\+ULL
+\end{DoxyCompactItemize}
+
+
+\doxysubsection{Detailed Description}
+Brief Description of UEFI My\+Hello\+World Detailed Description of UEFI My\+Hello\+World Copyright for UEFI My\+Hello\+World License for UEFI My\+Hello\+World 

@@ -1,0 +1,5 @@
+<map id="SBC_RngGeneration" name="SBC_RngGeneration">
+<area shape="rect" id="Node000001" title="Generate the RNG." alt="" coords="5,5,160,31"/>
+<area shape="rect" id="Node000002" href="$SSBL_2SBC__Kdf_8c.html#a928e42caeefd1ebedbb0930486dcd8dc" title="Generate a random seed value using CPU or performance timer." alt="" coords="208,5,311,31"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="160,15,194,15,194,21,160,21"/>
+</map>

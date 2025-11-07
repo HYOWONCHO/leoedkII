@@ -1,0 +1,80 @@
+\doxysection{SBC\+\_\+\+Type\+Defs.\+h}
+\hypertarget{FSBL_2SBC__TypeDefs_8h_source}{}\label{FSBL_2SBC__TypeDefs_8h_source}\index{Application/FSBL/SBC\_TypeDefs.h@{Application/FSBL/SBC\_TypeDefs.h}}
+
+\begin{DoxyCode}{0}
+\DoxyCodeLine{00001\ \textcolor{preprocessor}{\#ifndef\ \_\_SBCTYPEDEFS\_}}
+\DoxyCodeLine{00002\ \textcolor{preprocessor}{\#define\ \_\_SBCTYPEDEFS\_}}
+\DoxyCodeLine{00003\ }
+\DoxyCodeLine{00004\ \textcolor{preprocessor}{\#include\ "{}SBC\_Log.h"{}}}
+\DoxyCodeLine{00005\ }
+\DoxyCodeLine{00006\ \textcolor{preprocessor}{\#define\ SBC\_BOOT\_DISCOVER\_FROM\_REOCVERY\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ 0x0001}}
+\DoxyCodeLine{00007\ }
+\DoxyCodeLine{00008\ }
+\DoxyCodeLine{00010\ \textcolor{preprocessor}{\#define\ SBC\_RET\_VALIDATE\_ERRCODE(\ expr\ ,\ errorcode\ )\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \(\backslash\)}}
+\DoxyCodeLine{00011\ \textcolor{preprocessor}{\ \ \ \ (\{\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \(\backslash\)}}
+\DoxyCodeLine{00012\ \textcolor{preprocessor}{\ \ \ \ \ \ \ \ int\ \_expr\_val=!!(expr);\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \(\backslash\)}}
+\DoxyCodeLine{00013\ \textcolor{preprocessor}{\ \ \ \ \ \ \ \ if(\ !(\_expr\_val)\ )\ \ \{\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \(\backslash\)}}
+\DoxyCodeLine{00014\ \textcolor{preprocessor}{\ \ \ \ \ \ \ \ \ \ \ \ ret\ =\ errorcode;\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \(\backslash\)}}
+\DoxyCodeLine{00015\ \textcolor{preprocessor}{\ \ \ \ \ \ \ \ \ \ \ \ dprint("{}'\%a'\ FAILED."{},\ \#expr);\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \(\backslash\)}}
+\DoxyCodeLine{00016\ \textcolor{preprocessor}{\ \ \ \ \ \ \ \ \ \ \ \ goto\ errdone;\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \(\backslash\)}}
+\DoxyCodeLine{00017\ \textcolor{preprocessor}{\ \ \ \ \ \ \ \ \}\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \(\backslash\)}}
+\DoxyCodeLine{00018\ \textcolor{preprocessor}{\ \ \ \ \})}}
+\DoxyCodeLine{00019\ }
+\DoxyCodeLine{00021\ \textcolor{preprocessor}{\#define\ SBC\_RET\_VALIDATE\_ERRCODEMSG(\ expr\ ,\ errorcode,\ msg\ )\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \(\backslash\)}}
+\DoxyCodeLine{00022\ \textcolor{preprocessor}{\ \ \ \ (\{\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \(\backslash\)}}
+\DoxyCodeLine{00023\ \textcolor{preprocessor}{\ \ \ \ \ \ \ \ int\ \_expr\_val=!!(expr);\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \(\backslash\)}}
+\DoxyCodeLine{00024\ \textcolor{preprocessor}{\ \ \ \ \ \ \ \ if(\ !(\_expr\_val)\ )\ \ \{\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \(\backslash\)}}
+\DoxyCodeLine{00025\ \textcolor{preprocessor}{\ \ \ \ \ \ \ \ \ \ \ \ ret\ =\ errorcode;\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \(\backslash\)}}
+\DoxyCodeLine{00026\ \textcolor{preprocessor}{\ \ \ \ \ \ \ \ \ \ \ \ dprint("{}'\%a'\ FAILED.\ :\ \%a"{},\ \#expr,\ \#msg);\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \(\backslash\)}}
+\DoxyCodeLine{00027\ \textcolor{preprocessor}{\ \ \ \ \ \ \ \ \ \ \ \ goto\ errdone;\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \(\backslash\)}}
+\DoxyCodeLine{00028\ \textcolor{preprocessor}{\ \ \ \ \ \ \ \ \}\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \(\backslash\)}}
+\DoxyCodeLine{00029\ \textcolor{preprocessor}{\ \ \ \ \})}}
+\DoxyCodeLine{00030\ }
+\DoxyCodeLine{00031\ \textcolor{keyword}{struct\ }\mbox{\hyperlink{struct__tlv__t}{\_tlv\_t}}\ \{}
+\DoxyCodeLine{00032\ \ \ \ \ UINT16\ \ \ \ \ \ tag;}
+\DoxyCodeLine{00033\ \ \ \ \ UINT32\ \ \ \ \ \ length;}
+\DoxyCodeLine{00034\ \ \ \ \ VOID\ \ \ \ \ \ \ \ *value;}
+\DoxyCodeLine{00035\ \};}
+\DoxyCodeLine{00036\ }
+\DoxyCodeLine{00037\ \textcolor{keyword}{typedef}\ \textcolor{keyword}{struct\ }\mbox{\hyperlink{struct__tlv__t}{\_tlv\_t}}\ \mbox{\hyperlink{struct__tlv__t}{TLV\_t}};}
+\DoxyCodeLine{00038\ \textcolor{keyword}{typedef}\ \textcolor{keyword}{struct\ }\mbox{\hyperlink{struct__tlv__t}{\_tlv\_t}}\ *\mbox{\hyperlink{struct__tlv__t}{TLV\_p}};}
+\DoxyCodeLine{00039\ }
+\DoxyCodeLine{00040\ }
+\DoxyCodeLine{00041\ }
+\DoxyCodeLine{00042\ \textcolor{keyword}{struct\ }\mbox{\hyperlink{struct__lv__t}{\_lv\_t}}\ \{}
+\DoxyCodeLine{00043\ \ \ \ \ UINT32\ \ \ \ \ \ length;}
+\DoxyCodeLine{00044\ \ \ \ \ VOID\ \ \ \ \ \ \ \ *value;}
+\DoxyCodeLine{00045\ \};}
+\DoxyCodeLine{00046\ }
+\DoxyCodeLine{00047\ \textcolor{keyword}{typedef}\ \textcolor{keyword}{struct\ }\mbox{\hyperlink{struct__lv__t}{\_lv\_t}}\ \mbox{\hyperlink{struct__lv__t}{LV\_t}};}
+\DoxyCodeLine{00048\ \textcolor{keyword}{typedef}\ \textcolor{keyword}{struct\ }\mbox{\hyperlink{struct__lv__t}{\_lv\_t}}\ *\mbox{\hyperlink{struct__lv__t}{LV\_p}};}
+\DoxyCodeLine{00049\ }
+\DoxyCodeLine{00050\ }
+\DoxyCodeLine{00051\ \textcolor{preprocessor}{\#define\ KDF\_KEY\_MAXL\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ (32)}}
+\DoxyCodeLine{00052\ \textcolor{keyword}{typedef}\ \textcolor{keyword}{struct\ }\mbox{\hyperlink{struct__kdf__t}{\_kdf\_t}}\ \{}
+\DoxyCodeLine{00053\ \ \ \ \ UINT8\ \ \ ikm[KDF\_KEY\_MAXL];}
+\DoxyCodeLine{00054\ \ \ \ \ UINTN\ \ \ ikml;}
+\DoxyCodeLine{00055\ \ \ \ \ UINT8\ \ \ salt[KDF\_KEY\_MAXL];}
+\DoxyCodeLine{00056\ \ \ \ \ UINTN\ \ \ saltl;}
+\DoxyCodeLine{00057\ \ \ \ \ UINT8\ \ \ info[KDF\_KEY\_MAXL];\ \ \ }
+\DoxyCodeLine{00058\ \ \ \ \ UINTN\ \ \ infol;\ \ \ \ }
+\DoxyCodeLine{00059\ \}\mbox{\hyperlink{structkdf__t}{kdf\_t}};}
+\DoxyCodeLine{00060\ }
+\DoxyCodeLine{00061\ }
+\DoxyCodeLine{00062\ \textcolor{preprocessor}{\#define\ SBCUNUSED\ \ \ \ \ \ \ \ \ \ \ [[maybe\_unused]]}}
+\DoxyCodeLine{00063\ \textcolor{comment}{//\#define\ SBCUNUSED\_VAR(x)\ \ \ \ UNUSED\_VAR(x)}}
+\DoxyCodeLine{00064\ \textcolor{comment}{//\#define\ SBCUNUSED\ \ \ \ \ \ \ [[gnu::unused]]}}
+\DoxyCodeLine{00065\ \textcolor{comment}{//\#define\ SBCUNUSED\ \ \ \ \ \ \ \_\_attribute\_\_((unused))}}
+\DoxyCodeLine{00066\ }
+\DoxyCodeLine{00067\ \textcolor{keyword}{static}\ \textcolor{keyword}{inline}\ \textcolor{keywordtype}{void}\ \_lv\_set\_data(\mbox{\hyperlink{struct__lv__t}{LV\_t}}\ *lv,\ \textcolor{keywordtype}{void}\ *buf,\ \textcolor{keywordtype}{int}\ bufl)}
+\DoxyCodeLine{00068\ \{}
+\DoxyCodeLine{00069\ \ \ lv-\/>value\ =\ buf;}
+\DoxyCodeLine{00070\ \ \ lv-\/>length\ =\ bufl;}
+\DoxyCodeLine{00071\ \}}
+\DoxyCodeLine{00072\ }
+\DoxyCodeLine{00073\ }
+\DoxyCodeLine{00074\ \textcolor{preprocessor}{\#endif}}
+\DoxyCodeLine{00075\ }
+\DoxyCodeLine{00076\ }
+
+\end{DoxyCode}

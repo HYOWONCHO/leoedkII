@@ -1,0 +1,49 @@
+\doxysection{SBC\+\_\+\+Nvram.\+h}
+\hypertarget{FSBL_2SBC__Nvram_8h_source}{}\label{FSBL_2SBC__Nvram_8h_source}\index{Application/FSBL/SBC\_Nvram.h@{Application/FSBL/SBC\_Nvram.h}}
+
+\begin{DoxyCode}{0}
+\DoxyCodeLine{00001\ \textcolor{preprocessor}{\#ifndef\ \_SBC\_NVRAM\_H\_}}
+\DoxyCodeLine{00002\ \textcolor{preprocessor}{\#define\ \_SBC\_NVRAM\_H\_}}
+\DoxyCodeLine{00003\ }
+\DoxyCodeLine{00004\ \textcolor{preprocessor}{\#define\ SBC\_NVRAM\_MAGIC\_ID\ \ \ \ \ \ 0x53424300}}
+\DoxyCodeLine{00005\ }
+\DoxyCodeLine{00006\ \textcolor{keyword}{typedef}\ \textcolor{keyword}{enum}\ \{}
+\DoxyCodeLine{00007\ \ \ \ \ \textcolor{comment}{//}}
+\DoxyCodeLine{00008\ \ \ \ \ \textcolor{comment}{//\ Reset\ Request}}
+\DoxyCodeLine{00009\ \ \ \ \ \textcolor{comment}{//}}
+\DoxyCodeLine{00010\ \ \ \ \ SBC\_BOOT\_RESET\_REQ\_FSBL\ \ \ \ \ \ \ \ \ \ \ \ \ =\ SBC\_NVRAM\_MAGIC\_ID\ |\ 0x1,}
+\DoxyCodeLine{00011\ \ \ \ \ SBC\_BOOT\_RESET\_REQ\_SSBL,}
+\DoxyCodeLine{00012\ \ \ \ \ SBC\_BOOT\_RESET\_REQ\_FACTORY,}
+\DoxyCodeLine{00013\ \ \ \ \ SBC\_BOOT\_RESET\_REQ\_NORMAL,}
+\DoxyCodeLine{00014\ \ \ \ \ SBC\_BOOT\_RESET\_REQ\_UPDATE,}
+\DoxyCodeLine{00015\ \ \ \ \ \textcolor{comment}{//}}
+\DoxyCodeLine{00016\ \ \ \ \ \textcolor{comment}{//\ Shutdown\ Request}}
+\DoxyCodeLine{00017\ \ \ \ \ \textcolor{comment}{//}}
+\DoxyCodeLine{00018\ \ \ \ \ SBC\_BOOT\_SHDN\_REQ\_FSBL,}
+\DoxyCodeLine{00019\ \ \ \ \ SBC\_BOOT\_SHDN\_REQ\_SSBL,}
+\DoxyCodeLine{00020\ \ \ \ \ SBC\_BOOT\_SHDN\_REQ\_FACTORY,}
+\DoxyCodeLine{00021\ \ \ \ \ SBC\_BOOT\_SHDN\_REQ\_NORMAL,}
+\DoxyCodeLine{00022\ \ \ \ \ SBC\_BOOT\_SHDN\_REQ\_UPDATE,}
+\DoxyCodeLine{00023\ \textcolor{preprocessor}{\#ifdef\ \_UNIT\_TEST\_ON\_}}
+\DoxyCodeLine{00024\ \ \ \ \ \textcolor{comment}{//}}
+\DoxyCodeLine{00025\ \ \ \ \ \textcolor{comment}{//\ Unit\ Test\ Boot\ Condition}}
+\DoxyCodeLine{00026\ \ \ \ \ \textcolor{comment}{//}}
+\DoxyCodeLine{00027\ \ \ \ \ SBC\_BOOT\_UNIT\_SHDN\_REQ\_FSBL,}
+\DoxyCodeLine{00028\ \ \ \ \ SBC\_BOOT\_UNIT\_SHDN\_REQ\_SSBL,}
+\DoxyCodeLine{00029\ \ \ \ \ SBC\_BOOT\_SHDN\_SFR\_006,}
+\DoxyCodeLine{00030\ \ \ \ \ SBC\_BOOT\_SHDN\_SFR\_006\_TAMPER,}
+\DoxyCodeLine{00031\ \ \ \ \ SBC\_BOOT\_SHDN\_SFR\_003,}
+\DoxyCodeLine{00032\ \textcolor{preprocessor}{\#endif}}
+\DoxyCodeLine{00033\ \ \ \ \ SBC\_BOOT\_ORDER\_UNKNOWN\ \ \ \ \ \ \ \ \ \ \ \ \ }
+\DoxyCodeLine{00034\ \}sbc\_boot\_varible\_t;}
+\DoxyCodeLine{00035\ }
+\DoxyCodeLine{00036\ VOID\ SBC\_NvramInit(VOID\ *priv);}
+\DoxyCodeLine{00037\ VOID\ SBC\_NvramDeInit(VOID\ *priv);}
+\DoxyCodeLine{00038\ EFI\_STATUS\ SBC\_NvramListAllVariables(VOID);}
+\DoxyCodeLine{00039\ EFI\_STATUS\ SBC\_NvramGetVar(VOID\ *varname,\ VOID\ *payload,\ VOID\ *sz\_pl);}
+\DoxyCodeLine{00040\ EFI\_STATUS\ SBC\_NvramSetVar(VOID\ *varname,\ VOID\ *payload,\ VOID\ *sz\_pl);}
+\DoxyCodeLine{00041\ EFI\_STATUS\ SBC\_BiosReadBootOrder(VOID);}
+\DoxyCodeLine{00042\ }
+\DoxyCodeLine{00043\ \textcolor{preprocessor}{\#endif}}
+
+\end{DoxyCode}

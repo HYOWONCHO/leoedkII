@@ -1,0 +1,50 @@
+\doxysection{SBC\+\_\+\+Unit\+Test.\+h}
+\hypertarget{SBC__UnitTest_8h_source}{}\label{SBC__UnitTest_8h_source}\index{Application/FSBL/SBC\_UnitTest.h@{Application/FSBL/SBC\_UnitTest.h}}
+
+\begin{DoxyCode}{0}
+\DoxyCodeLine{00001\ \textcolor{preprocessor}{\#ifndef\ \_UNIT\_TEST\_H\_}}
+\DoxyCodeLine{00002\ \textcolor{preprocessor}{\#define\ \_UNTI\_TEST\_H\_}}
+\DoxyCodeLine{00003\ }
+\DoxyCodeLine{00004\ \textcolor{preprocessor}{\#define\ SB\_PROC\_ST\_MAGICID\ \ \ \ \ \ \ \ \ \ \ \ \ \ 0xABCD0000}}
+\DoxyCodeLine{00005\ }
+\DoxyCodeLine{00006\ \textcolor{keyword}{typedef}\ \textcolor{keyword}{enum}\ \_boot\_st\_t\ \{}
+\DoxyCodeLine{00007\ \ \ \ \ SB\_PROC\_ST\_NRMA\ \ \ \ \ \ \ \ \ \ =\ SB\_PROC\_ST\_MAGICID\ |\ 0,\ \ \ \ \ \ \ \ }
+\DoxyCodeLine{00008\ \ \ \ \ SB\_PROC\_ST\_ABNRAM,}
+\DoxyCodeLine{00009\ \ \ \ \ SB\_PROC\_ST\_UNKNOWN}
+\DoxyCodeLine{00010\ \}boot\_st\_t;}
+\DoxyCodeLine{00011\ }
+\DoxyCodeLine{00012\ \textcolor{preprocessor}{\#pragma\ pack(1)}}
+\DoxyCodeLine{00013\ \textcolor{keyword}{typedef}\ \textcolor{keyword}{struct\ }\mbox{\hyperlink{struct__unit__proc__t}{\_unit\_proc\_t}}\ \{}
+\DoxyCodeLine{00014\ \ \ \ \ VOID\ \ \ \ \ \ \ \ *ldhndl;}
+\DoxyCodeLine{00015\ \ \ \ \ VOID\ \ \ \ \ \ \ \ *blkhnd;}
+\DoxyCodeLine{00016\ \ \ \ \ VOID\ \ \ \ \ \ \ \ *rawprt\_hdr;\ }
+\DoxyCodeLine{00017\ \ \ \ \ VOID\ \ \ \ \ \ \ \ *baseansr;}
+\DoxyCodeLine{00018\ \ \ \ \ VOID\ \ \ \ \ \ \ \ *keyinfo;\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ }
+\DoxyCodeLine{00019\ \ \ \ \ UINTN\ \ \ \ \ \ \ \mbox{\hyperlink{struct__unit__proc__t_a9734c170992ca0a6676954661d146fa7}{pvs\_sw\_bnk}};\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ }
+\DoxyCodeLine{00020\ \ \ \ \ UINTN\ \ \ \ \ \ \ \mbox{\hyperlink{struct__unit__proc__t_a98e8d2523518b055f6d8d0757aee2b40}{curr\_sw\_bnk}};\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ }
+\DoxyCodeLine{00021\ \ \ \ \ UINT16\ \ \ \ \ \ \mbox{\hyperlink{struct__unit__proc__t_a7f8a8fd708f78a8f0464e85317248aca}{bm}};\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ }
+\DoxyCodeLine{00022\ \ \ \ \ UINT16\ \ \ \ \ \ \mbox{\hyperlink{struct__unit__proc__t_a721b82088f712715c62a10dee93fdf92}{km}};\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ }
+\DoxyCodeLine{00023\ \ \ \ \ UINT32\ \ \ \ \ \ \mbox{\hyperlink{struct__unit__proc__t_ad3c60b007721c97ea659f7dc67bdfbe7}{bootst}};\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ }
+\DoxyCodeLine{00024\ \ \ \ \ UINT16\ \ \ \ \ \ \mbox{\hyperlink{struct__unit__proc__t_ab196da18530a894f6272b32ecc4599f8}{rcvmode}};}
+\DoxyCodeLine{00025\ \ \ \ \ VOID\ \ \ \ \ \ \ \ *imghndl;}
+\DoxyCodeLine{00026\ \}\mbox{\hyperlink{struct__unit__proc__t}{unit\_proc\_t}};}
+\DoxyCodeLine{00027\ }
+\DoxyCodeLine{00028\ \textcolor{keyword}{typedef}\ \mbox{\hyperlink{struct__unit__proc__t}{unit\_proc\_t}}\ \mbox{\hyperlink{structboot__proc__t}{boot\_proc\_t}};}
+\DoxyCodeLine{00029\ \textcolor{preprocessor}{\#pragma\ pack()}}
+\DoxyCodeLine{00030\ }
+\DoxyCodeLine{00031\ }
+\DoxyCodeLine{00032\ \textcolor{preprocessor}{\#ifdef\ \_UNIT\_TEST\_ON\_}}
+\DoxyCodeLine{00033\ \textcolor{keywordtype}{void}\ D\_SAT\_PWT\_SFR\_001(\textcolor{keywordtype}{void}\ *priv);}
+\DoxyCodeLine{00034\ \textcolor{keywordtype}{void}\ D\_SAT\_PWT\_SFR\_002(\textcolor{keywordtype}{void}\ *priv);}
+\DoxyCodeLine{00035\ \textcolor{keywordtype}{void}\ D\_SAT\_PWT\_SFR\_003(\textcolor{keywordtype}{void}\ *priv);}
+\DoxyCodeLine{00036\ \textcolor{keywordtype}{void}\ D\_SAT\_PWT\_SFR\_003\_Tampre(\textcolor{keywordtype}{void}\ *priv);}
+\DoxyCodeLine{00037\ \textcolor{keywordtype}{void}\ D\_SAT\_PWT\_SFR\_006\_FSBL(\textcolor{keywordtype}{void}\ *priv);}
+\DoxyCodeLine{00038\ }
+\DoxyCodeLine{00039\ \textcolor{keywordtype}{void}\ SBC\_UnitTestSFR001\_TO\_003(\textcolor{keywordtype}{void}\ *priv);}
+\DoxyCodeLine{00040\ \textcolor{keywordtype}{void}\ SBC\_UnitFsblNormalTamperTest(\textcolor{keywordtype}{void}\ *priv);}
+\DoxyCodeLine{00041\ \textcolor{preprocessor}{\#endif}}
+\DoxyCodeLine{00042\ }
+\DoxyCodeLine{00043\ }
+\DoxyCodeLine{00044\ \textcolor{preprocessor}{\#endif}}
+
+\end{DoxyCode}

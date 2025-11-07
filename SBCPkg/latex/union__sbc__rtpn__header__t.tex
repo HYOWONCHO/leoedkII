@@ -1,0 +1,63 @@
+\doxysection{\+\_\+sbc\+\_\+rtpn\+\_\+header\+\_\+t Union Reference}
+\hypertarget{union__sbc__rtpn__header__t}{}\label{union__sbc__rtpn__header__t}\index{\_sbc\_rtpn\_header\_t@{\_sbc\_rtpn\_header\_t}}
+\doxysubsubsection*{Data Fields}
+\begin{DoxyCompactItemize}
+\item 
+\Hypertarget{union__sbc__rtpn__header__t_ad41814edebee661c680a0640556a1923}\label{union__sbc__rtpn__header__t_ad41814edebee661c680a0640556a1923} 
+\begin{tabbing}
+xx\=xx\=xx\=xx\=xx\=xx\=xx\=xx\=xx\=\kill
+struct \{\\
+\>\mbox{\hyperlink{union__sbc__rtpn__header__t_ae811bd84e9ae21139f11b0b26a8cd38b}{UINT8}} \mbox{\hyperlink{union__sbc__rtpn__header__t_a1bf57b9b099c5ad25a7eb16373218849}{info}} \mbox{[}SBC\_RPTN\_INFO\_LEN\mbox{]}\\
+\>\mbox{\hyperlink{union__sbc__rtpn__header__t_ae811bd84e9ae21139f11b0b26a8cd38b}{UINT8}} \mbox{\hyperlink{union__sbc__rtpn__header__t_a8c74cecdfdd032fe3723b5e6f4e88d80}{skip}} \mbox{[}SBC\_RPTN\_INFO\_LEN\mbox{]}\\
+\} {\bfseries m}\\
+
+\end{tabbing}\item 
+\begin{tabbing}
+xx\=xx\=xx\=xx\=xx\=xx\=xx\=xx\=xx\=\kill
+struct \{\\
+\>\mbox{\hyperlink{union__sbc__rtpn__header__t_ae811bd84e9ae21139f11b0b26a8cd38b}{UINT8}} \mbox{\hyperlink{union__sbc__rtpn__header__t_a1bf57b9b099c5ad25a7eb16373218849}{info}} \mbox{[}SBC\_RPTN\_INFO\_LEN\mbox{]}\\
+\>\mbox{\hyperlink{union__sbc__rtpn__header__t_ae811bd84e9ae21139f11b0b26a8cd38b}{UINT8}} \mbox{\hyperlink{union__sbc__rtpn__header__t_a8c74cecdfdd032fe3723b5e6f4e88d80}{skip}} \mbox{[}SBC\_RPTN\_INFO\_LEN\mbox{]}\\
+\} \mbox{\hyperlink{union__sbc__rtpn__header__t_a1ad930d797a8d9504b49508f620c364a}{m}}\\
+
+\end{tabbing}\item 
+UINT8 \mbox{\hyperlink{union__sbc__rtpn__header__t_ae811bd84e9ae21139f11b0b26a8cd38b}{value}} \mbox{[}SBC\+\_\+\+RPTN\+\_\+\+INFO\+\_\+\+LEN$<$$<$ 1\mbox{]}
+\end{DoxyCompactItemize}
+
+
+\doxysubsection{Field Documentation}
+\Hypertarget{union__sbc__rtpn__header__t_a1bf57b9b099c5ad25a7eb16373218849}\label{union__sbc__rtpn__header__t_a1bf57b9b099c5ad25a7eb16373218849} 
+\index{\_sbc\_rtpn\_header\_t@{\_sbc\_rtpn\_header\_t}!info@{info}}
+\index{info@{info}!\_sbc\_rtpn\_header\_t@{\_sbc\_rtpn\_header\_t}}
+\doxysubsubsection{\texorpdfstring{info}{info}}
+{\footnotesize\ttfamily \mbox{\hyperlink{union__sbc__rtpn__header__t_ae811bd84e9ae21139f11b0b26a8cd38b}{UINT8}} \+\_\+sbc\+\_\+rtpn\+\_\+header\+\_\+t\+::info\mbox{[}SBC\+\_\+\+RPTN\+\_\+\+INFO\+\_\+\+LEN\mbox{]}}
+
+partition information
+
+Partition information region. \Hypertarget{union__sbc__rtpn__header__t_a1ad930d797a8d9504b49508f620c364a}\label{union__sbc__rtpn__header__t_a1ad930d797a8d9504b49508f620c364a} 
+\index{\_sbc\_rtpn\_header\_t@{\_sbc\_rtpn\_header\_t}!m@{m}}
+\index{m@{m}!\_sbc\_rtpn\_header\_t@{\_sbc\_rtpn\_header\_t}}
+\doxysubsubsection{\texorpdfstring{[struct]}{[struct]}}
+{\footnotesize\ttfamily struct  \{ ... \}  \+\_\+sbc\+\_\+rtpn\+\_\+header\+\_\+t\+::m}
+
+Structured header representation. \Hypertarget{union__sbc__rtpn__header__t_a8c74cecdfdd032fe3723b5e6f4e88d80}\label{union__sbc__rtpn__header__t_a8c74cecdfdd032fe3723b5e6f4e88d80} 
+\index{\_sbc\_rtpn\_header\_t@{\_sbc\_rtpn\_header\_t}!skip@{skip}}
+\index{skip@{skip}!\_sbc\_rtpn\_header\_t@{\_sbc\_rtpn\_header\_t}}
+\doxysubsubsection{\texorpdfstring{skip}{skip}}
+{\footnotesize\ttfamily \mbox{\hyperlink{union__sbc__rtpn__header__t_ae811bd84e9ae21139f11b0b26a8cd38b}{UINT8}} \+\_\+sbc\+\_\+rtpn\+\_\+header\+\_\+t\+::skip\mbox{[}SBC\+\_\+\+RPTN\+\_\+\+INFO\+\_\+\+LEN\mbox{]}}
+
+SKIP Buffer, but it has a Magic ID to find the device in UEFI
+
+Skip buffer, contains magic ID. \Hypertarget{union__sbc__rtpn__header__t_ae811bd84e9ae21139f11b0b26a8cd38b}\label{union__sbc__rtpn__header__t_ae811bd84e9ae21139f11b0b26a8cd38b} 
+\index{\_sbc\_rtpn\_header\_t@{\_sbc\_rtpn\_header\_t}!value@{value}}
+\index{value@{value}!\_sbc\_rtpn\_header\_t@{\_sbc\_rtpn\_header\_t}}
+\doxysubsubsection{\texorpdfstring{value}{value}}
+{\footnotesize\ttfamily UINT8 \+\_\+sbc\+\_\+rtpn\+\_\+header\+\_\+t\+::value}
+
+Header data buffer Header data buffer
+
+Raw byte array view of the header. 
+
+The documentation for this union was generated from the following files\+:\begin{DoxyCompactItemize}
+\item 
+Application/\+FSBL/SBC\+\_\+\+File\+Ctrl.\+h\item 
+Application/\+SSBL/SBC\+\_\+\+File\+Ctrl.\+h\end{DoxyCompactItemize}

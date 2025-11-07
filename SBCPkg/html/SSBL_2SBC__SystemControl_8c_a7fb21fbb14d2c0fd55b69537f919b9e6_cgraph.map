@@ -1,0 +1,12 @@
+<map id="SBC_SecureBootCheck" name="SBC_SecureBootCheck">
+<area shape="rect" id="Node000001" title="Perform secure boot integrity and authenticity verification." alt="" coords="5,80,179,105"/>
+<area shape="rect" id="Node000002" href="$group__BaseAnswer.html#ga57fdd7473af18155214cbb37f170ecb6" title=" " alt="" coords="227,5,417,31"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="123,77,226,39,253,32,254,37,228,45,125,83"/>
+<area shape="rect" id="Node000003" href="$group__BaseAnswer.html#gafc1ce4080717748806d1bc8f57ecad3c" title="FWID and OSID certificate verification." alt="" coords="239,55,405,80"/>
+<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="179,80,224,75,225,81,180,86"/>
+<area shape="rect" id="Node000004" href="$SSBL_2SBC__FileCtrl_8c.html#a97a56b26ac9301048e3c4180424b71b7" title="Loads system configuration data from a block I/O device into a memory blob." alt="" coords="229,104,415,129"/>
+<area shape="poly" id="edge3_Node000001_Node000004" title=" " alt="" coords="180,99,216,103,216,108,179,104"/>
+<area shape="rect" id="Node000005" href="$SSBL_2SBC__SystemControl_8c.html#a8379a88c70f2dbbb34bc12655938b3f1" title="Perform a controlled system shutdown." alt="" coords="236,177,408,203"/>
+<area shape="poly" id="edge4_Node000001_Node000005" title=" " alt="" coords="124,103,279,169,277,174,122,108"/>
+<area shape="poly" id="edge5_Node000005_Node000005" title=" " alt="" coords="285,179,277,169,281,159,296,153,322,151,354,155,367,164,363,168,352,159,322,156,297,158,284,163,282,168,289,175"/>
+</map>

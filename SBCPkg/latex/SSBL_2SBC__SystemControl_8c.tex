@@ -1,0 +1,186 @@
+\doxysection{Application/\+SSBL/\+SBC\+\_\+\+System\+Control.c File Reference}
+\hypertarget{SSBL_2SBC__SystemControl_8c}{}\label{SSBL_2SBC__SystemControl_8c}\index{Application/SSBL/SBC\_SystemControl.c@{Application/SSBL/SBC\_SystemControl.c}}
+
+
+Handling of the System state and decided the System booting proceddure.  
+
+
+{\ttfamily \#include $<$Uefi.\+h$>$}\newline
+{\ttfamily \#include $<$Library/\+Uefi\+Runtime\+Services\+Table\+Lib.\+h$>$}\newline
+{\ttfamily \#include $<$Library/\+Base\+Lib.\+h$>$}\newline
+{\ttfamily \#include $<$Library/\+Reset\+System\+Lib.\+h$>$}\newline
+{\ttfamily \#include $<$Library/\+Base\+Memory\+Lib.\+h$>$}\newline
+{\ttfamily \#include $<$Library/\+Memory\+Allocation\+Lib.\+h$>$}\newline
+{\ttfamily \#include "{}SBC\+\_\+\+System\+Control.\+h"{}}\newline
+{\ttfamily \#include "{}SBC\+\_\+\+Anti\+Tampering.\+h"{}}\newline
+{\ttfamily \#include "{}SBC\+\_\+\+Hashing.\+h"{}}\newline
+{\ttfamily \#include "{}SBC\+\_\+\+Crypt\+AES.\+h"{}}\newline
+{\ttfamily \#include "{}SBC\+\_\+\+Ecc\+Sign\+Verify.\+h"{}}\newline
+{\ttfamily \#include "{}SBC\+\_\+\+Boot\+Proc.\+h"{}}\newline
+{\ttfamily \#include "{}SBC\+\_\+\+File\+Ctrl.\+h"{}}\newline
+{\ttfamily \#include "{}SBC\+\_\+\+Kdf.\+h"{}}\newline
+{\ttfamily \#include "{}SBC\+\_\+\+Protected\+SW.\+h"{}}\newline
+Include dependency graph for SBC\+\_\+\+System\+Control.\+c\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=350pt]{SSBL_2SBC__SystemControl_8c__incl}
+\end{center}
+\end{figure}
+\doxysubsubsection*{Functions}
+\begin{DoxyCompactItemize}
+\item 
+\Hypertarget{SSBL_2SBC__SystemControl_8c_ad4debb38099e485e07a16791701cfd57}\label{SSBL_2SBC__SystemControl_8c_ad4debb38099e485e07a16791701cfd57} 
+static SBCStatus {\bfseries \+\_\+\+\_\+attribute\+\_\+\+\_\+} ((unused))
+\item 
+\Hypertarget{SSBL_2SBC__SystemControl_8c_a29e78f3b7bf365dd482d731ae782b14a}\label{SSBL_2SBC__SystemControl_8c_a29e78f3b7bf365dd482d731ae782b14a} 
+static SBCStatus {\bfseries \+\_\+base\+\_\+answer\+\_\+decrypt\+\_\+encrypt} (void \texorpdfstring{$\ast$}{*}priv)
+\item 
+\Hypertarget{SSBL_2SBC__SystemControl_8c_a1c6dacf56b0c01a2327bc3e1178439d9}\label{SSBL_2SBC__SystemControl_8c_a1c6dacf56b0c01a2327bc3e1178439d9} 
+static BOOLEAN {\bfseries \+\_\+check\+\_\+prev\+\_\+fw} (UINTN prev\+\_\+bnk\+\_\+id)
+\item 
+\Hypertarget{SSBL_2SBC__SystemControl_8c_ac9404c5135a0a44691f6797d2faab6da}\label{SSBL_2SBC__SystemControl_8c_ac9404c5135a0a44691f6797d2faab6da} 
+static VOID {\bfseries \+\_\+handling\+\_\+sb\+\_\+process\+\_\+for\+\_\+bm\+\_\+normal} (VOID \texorpdfstring{$\ast$}{*}priv)
+\item 
+\Hypertarget{SSBL_2SBC__SystemControl_8c_a6be15abf3df49b0c264201bc9af46579}\label{SSBL_2SBC__SystemControl_8c_a6be15abf3df49b0c264201bc9af46579} 
+VOID {\bfseries \+\_\+sbc\+\_\+abnormal\+\_\+processing} (VOID \texorpdfstring{$\ast$}{*}priv)
+\item 
+\Hypertarget{SSBL_2SBC__SystemControl_8c_a3e5ed663fcff8d96b0cbbab62c7163d1}\label{SSBL_2SBC__SystemControl_8c_a3e5ed663fcff8d96b0cbbab62c7163d1} 
+static SBCStatus {\bfseries \+\_\+store\+\_\+fw\+\_\+os\+\_\+keypair\+\_\+store} (VOID \texorpdfstring{$\ast$}{*}priv, VOID \texorpdfstring{$\ast$}{*}fwid, VOID \texorpdfstring{$\ast$}{*}osid)
+\item 
+\Hypertarget{SSBL_2SBC__SystemControl_8c_ab225cd5c98508452500b29f882e65fb4}\label{SSBL_2SBC__SystemControl_8c_ab225cd5c98508452500b29f882e65fb4} 
+static SBCStatus {\bfseries \+\_\+update\+\_\+behavior\+\_\+for\+\_\+km} (void \texorpdfstring{$\ast$}{*}priv)
+\item 
+\Hypertarget{SSBL_2SBC__SystemControl_8c_ac7a7c38d02de86d50467434958c56225}\label{SSBL_2SBC__SystemControl_8c_ac7a7c38d02de86d50467434958c56225} 
+SBCStatus {\bfseries \+\_\+update\+\_\+protected\+\_\+software} (VOID \texorpdfstring{$\ast$}{*}priv)
+\item 
+\Hypertarget{SSBL_2SBC__SystemControl_8c_a5aa9a57501f5539508087df350ccfd65}\label{SSBL_2SBC__SystemControl_8c_a5aa9a57501f5539508087df350ccfd65} 
+static void {\bfseries \+\_\+update\+\_\+reset\+\_\+check\+\_\+and\+\_\+behavior} (VOID \texorpdfstring{$\ast$}{*}priv)
+\item 
+\Hypertarget{SSBL_2SBC__SystemControl_8c_af58bbf10b2191e86dd4c7cb1fe0af0d1}\label{SSBL_2SBC__SystemControl_8c_af58bbf10b2191e86dd4c7cb1fe0af0d1} 
+SBCStatus {\bfseries SBC\+\_\+\+Boot\+Key\+Mode\+Change} (UINT32 newbm, UINT32 newkey, VOID \texorpdfstring{$\ast$}{*}priv)
+\item 
+VOID \mbox{\hyperlink{SSBL_2SBC__SystemControl_8c_a6a25f1faabba6a7b00d215d971016253}{SBC\+\_\+\+Reboot\+System}} (VOID)
+\begin{DoxyCompactList}\small\item\em Perform a controlled system reboot. \end{DoxyCompactList}\item 
+\Hypertarget{SSBL_2SBC__SystemControl_8c_a951796e0aba885dcfb2db70114528e91}\label{SSBL_2SBC__SystemControl_8c_a951796e0aba885dcfb2db70114528e91} 
+void {\bfseries SBC\+\_\+\+Recovery\+Boot\+Processing} (VOID \texorpdfstring{$\ast$}{*}priv)
+\item 
+\Hypertarget{SSBL_2SBC__SystemControl_8c_a3ecba82819316a338e83ee16c713def3}\label{SSBL_2SBC__SystemControl_8c_a3ecba82819316a338e83ee16c713def3} 
+VOID {\bfseries SBC\+\_\+\+Reset\+Scenario} (VOID \texorpdfstring{$\ast$}{*}priv)
+\item 
+SBCStatus \mbox{\hyperlink{SSBL_2SBC__SystemControl_8c_a7fb21fbb14d2c0fd55b69537f919b9e6}{SBC\+\_\+\+Secure\+Boot\+Check}} (VOID \texorpdfstring{$\ast$}{*}priv)
+\begin{DoxyCompactList}\small\item\em Perform secure boot integrity and authenticity verification. \end{DoxyCompactList}\item 
+VOID \mbox{\hyperlink{SSBL_2SBC__SystemControl_8c_a8379a88c70f2dbbb34bc12655938b3f1}{SBC\+\_\+\+Shutdown\+System}} (VOID)
+\begin{DoxyCompactList}\small\item\em Perform a controlled system shutdown. \end{DoxyCompactList}\item 
+\Hypertarget{SSBL_2SBC__SystemControl_8c_a1bc4f710a212dcc1c5103a98d5218457}\label{SSBL_2SBC__SystemControl_8c_a1bc4f710a212dcc1c5103a98d5218457} 
+static SBCStatus {\bfseries SBC\+\_\+\+Update\+Boot\+Porcsesing} (void \texorpdfstring{$\ast$}{*}priv)
+\end{DoxyCompactItemize}
+
+
+\doxysubsection{Detailed Description}
+Handling of the System state and decided the System booting proceddure. 
+
+Copyright (C) 2024 by Security Platform Inc. \texorpdfstring{$\ast$}{*} This file is part of the SBC Project. \texorpdfstring{$\ast$}{*}
+\begin{DoxyItemize}
+\item This software contains confidential and proprietary information of \texorpdfstring{$\ast$}{*} Security Platform Inc. Unauthorized reproduction, distribution, or \texorpdfstring{$\ast$}{*} disclosure of this software, in whole or in part, is strictly prohibited. \texorpdfstring{$\ast$}{*}
+\end{DoxyItemize}
+
+\begin{DoxyAuthor}{Author}
+LEON 
+\end{DoxyAuthor}
+\begin{DoxyVersion}{Version}
+1.\+0 
+\end{DoxyVersion}
+\begin{DoxyDate}{Date}
+2025-\/10-\/31
+\end{DoxyDate}
+\begin{DoxyCopyright}{Copyright}
+(c) 2025 Security Platform Inc. All rights reserved.
+\end{DoxyCopyright}
+This file implements the System Reset, Normal/\+Ab-\/normal of System Booting procedure, Reset and Shutdown decides. 
+
+\doxysubsection{Function Documentation}
+\Hypertarget{SSBL_2SBC__SystemControl_8c_a6a25f1faabba6a7b00d215d971016253}\label{SSBL_2SBC__SystemControl_8c_a6a25f1faabba6a7b00d215d971016253} 
+\index{SBC\_SystemControl.c@{SBC\_SystemControl.c}!SBC\_RebootSystem@{SBC\_RebootSystem}}
+\index{SBC\_RebootSystem@{SBC\_RebootSystem}!SBC\_SystemControl.c@{SBC\_SystemControl.c}}
+\doxysubsubsection{\texorpdfstring{SBC\_RebootSystem()}{SBC\_RebootSystem()}}
+{\footnotesize\ttfamily VOID SBC\+\_\+\+Reboot\+System (\begin{DoxyParamCaption}\item[{VOID}]{ }\end{DoxyParamCaption})}
+
+
+
+Perform a controlled system reboot. 
+
+
+\begin{DoxyRetVals}{Return values}
+{\em None} & \\
+\hline
+\end{DoxyRetVals}
+\Hypertarget{SSBL_2SBC__SystemControl_8c_a7fb21fbb14d2c0fd55b69537f919b9e6}\label{SSBL_2SBC__SystemControl_8c_a7fb21fbb14d2c0fd55b69537f919b9e6} 
+\index{SBC\_SystemControl.c@{SBC\_SystemControl.c}!SBC\_SecureBootCheck@{SBC\_SecureBootCheck}}
+\index{SBC\_SecureBootCheck@{SBC\_SecureBootCheck}!SBC\_SystemControl.c@{SBC\_SystemControl.c}}
+\doxysubsubsection{\texorpdfstring{SBC\_SecureBootCheck()}{SBC\_SecureBootCheck()}}
+{\footnotesize\ttfamily SBCStatus SBC\+\_\+\+Secure\+Boot\+Check (\begin{DoxyParamCaption}\item[{VOID \texorpdfstring{$\ast$}{*}}]{priv }\end{DoxyParamCaption})}
+
+
+
+Perform secure boot integrity and authenticity verification. 
+
+
+\begin{DoxyParams}[1]{Parameters}
+\mbox{\texttt{ in}}  & {\em priv} & Pointer to a private context or configuration structure used during the secure boot process. ~\newline
+ This may reference internal platform or cryptographic data.\\
+\hline
+\end{DoxyParams}
+
+\begin{DoxyRetVals}{Return values}
+{\em SBCOK} & Secure boot verification completed successfully. \\
+\hline
+{\em SBCFAIL} & Secure boot integrity check failed. \\
+\hline
+{\em SBCNULLP} & Input pointer is NULL or context invalid. \\
+\hline
+{\em SBCINVPARAM} & Invalid secure boot configuration or key reference. \\
+\hline
+{\em SBCCRYPTO} & Cryptographic or signature verification failure. \\
+\hline
+\end{DoxyRetVals}
+Here is the call graph for this function\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=350pt]{SSBL_2SBC__SystemControl_8c_a7fb21fbb14d2c0fd55b69537f919b9e6_cgraph}
+\end{center}
+\end{figure}
+\Hypertarget{SSBL_2SBC__SystemControl_8c_a8379a88c70f2dbbb34bc12655938b3f1}\label{SSBL_2SBC__SystemControl_8c_a8379a88c70f2dbbb34bc12655938b3f1} 
+\index{SBC\_SystemControl.c@{SBC\_SystemControl.c}!SBC\_ShutdownSystem@{SBC\_ShutdownSystem}}
+\index{SBC\_ShutdownSystem@{SBC\_ShutdownSystem}!SBC\_SystemControl.c@{SBC\_SystemControl.c}}
+\doxysubsubsection{\texorpdfstring{SBC\_ShutdownSystem()}{SBC\_ShutdownSystem()}}
+{\footnotesize\ttfamily VOID SBC\+\_\+\+Shutdown\+System (\begin{DoxyParamCaption}\item[{VOID}]{ }\end{DoxyParamCaption})}
+
+
+
+Perform a controlled system shutdown. 
+
+
+\begin{DoxyRetVals}{Return values}
+{\em None} & \\
+\hline
+\end{DoxyRetVals}
+Here is the call graph for this function\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=209pt]{SSBL_2SBC__SystemControl_8c_a8379a88c70f2dbbb34bc12655938b3f1_cgraph}
+\end{center}
+\end{figure}
+Here is the caller graph for this function\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=350pt]{SSBL_2SBC__SystemControl_8c_a8379a88c70f2dbbb34bc12655938b3f1_icgraph}
+\end{center}
+\end{figure}

@@ -1,0 +1,5 @@
+<map id="SBC_DeviceIdKyeVerify" name="SBC_DeviceIdKyeVerify">
+<area shape="rect" id="Node000001" title="Verify certificate was issued by RootCA." alt="" coords="5,5,185,31"/>
+<area shape="rect" id="Node000002" href="$group__BaseAnswer.html#gabc62c881d2dc4feb5a902de829dd27b4" title="Create a new device security key." alt="" coords="233,5,460,31"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="185,15,220,15,220,21,185,21"/>
+</map>
