@@ -563,7 +563,7 @@ SBCStatus SBC_RecryptoProtectedSW(VOID *handle, UINTN ofs,  UINT8* sw_secret_key
     if (NvramErr_IsTrue(ERR_PROTSW_DEC)) {
         SBC_BuildHexFormattedMessage(
                 (CONST VOID *)sw_mig_key, 32,
-                L"SBC_SP_GcmDecrypt Failed the Encrypt (%s)\n",
+                L"SBC_SP_GcmDecrypt Failed the Decrypt (%s)\n",
                 mrgmsg, sizeof mrgmsg);
 
         sbc_err_sysprn(SBC_LOG_CMN_PRIO_ERR, 2,
@@ -573,6 +573,8 @@ SBCStatus SBC_RecryptoProtectedSW(VOID *handle, UINTN ofs,  UINT8* sw_secret_key
                  1,
                  L"Detectoin",
                  mrgmsg);
+
+        ret = SBCFAIL;
         goto errdone;
     }
 #endif
@@ -619,6 +621,8 @@ SBCStatus SBC_RecryptoProtectedSW(VOID *handle, UINTN ofs,  UINT8* sw_secret_key
                  1,
                  L"Detectoin",
                  mrgmsg);
+
+        ret = SBCFAIL;
         goto errdone;
     }
 #endif 
@@ -640,6 +644,7 @@ SBCStatus SBC_RecryptoProtectedSW(VOID *handle, UINTN ofs,  UINT8* sw_secret_key
                  1,
                  L"Detectoin",
                  L"SBC_SP_ProtSW Store Fail \n");
+        ret = SBCFAIL;
         goto errdone;
     }
 #endif    

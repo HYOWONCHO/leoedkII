@@ -122,7 +122,7 @@ void SBC_external_mem_print_bin(
         UINT32 length /**< [in] length of buffer */
         )
 {
-#ifdef _DEBUG_PRINT_ON_
+#if defined(_DEBUG_PRINT_ON_) || defined(_SHELL_CMD_LINE_)
     UINT32 i, sz;
     UINT32 offset = 0;
 

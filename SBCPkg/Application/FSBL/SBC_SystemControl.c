@@ -28,17 +28,20 @@ SBCStatus SBC_BootKeyModeChange(UINT32 newbm, UINT32 newkey, VOID *priv)
 
     hdr->bootmode = newbm;
     hdr->keymode = newkey;
+    hdr->rcvmode = 0;
 
     if(bp->bm == BOOT_MODE_RECOVERY) {
         hdr->rcvmode = SBC_BOOT_DISCOVER_FROM_REOCVERY;
     }
+
+    //SBC_external_mem_print_bin("Boot Mode Change", (UINT8 *)hdr, 128);
 
     //dprint();
     SBC_RET_VALIDATE_ERRCODEMSG((bp->blkhnd != NULL), SBCNULLP, "Raw Partition Block IO Handle Nill");
 
     //dprint();
     CopyMem(wrbuf, (void *)hdr, sizeof *hdr);
-    SBC_mem_print_bin("Mode Change", wrbuf, 128);
+    SBC_external_mem_print_bin("Mode Change", wrbuf, 128);
     // Boot Mode write
     ret = SBC_RawPrtBlockWrite(bp->blkhnd,(UINT8 *)wrbuf, 512,0);
     SBC_RET_VALIDATE_ERRCODEMSG((ret == SBCOK), ret, "Boot and Key mode write fail");

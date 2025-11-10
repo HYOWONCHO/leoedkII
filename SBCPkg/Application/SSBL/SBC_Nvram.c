@@ -149,7 +149,7 @@ EFI_STATUS SBC_NvramGetVar(VOID *varname, VOID *payload, VOID *sz_pl)
 
     [[maybe_unused]] UINTN var_len = *(UINTN *)sz_pl;
 
-    //Print(L"GetVar Name : %s, Var Size : %d \n", (CHAR16 *)varname, var_len);
+    Print(L"GetVar Name : %s, Var Size : %d \n", (CHAR16 *)varname, var_len);
     Status = gRT->GetVariable((CHAR16 *)varname, &gSpImVendorGuid,
                               &Attributes, &DataSize, NULL);
     if (Status != EFI_BUFFER_TOO_SMALL) {
@@ -186,12 +186,13 @@ BOOLEAN NvramErr_IsTrue(UINTN check_val)
     UINTN check_var = 0ULL;
     UINTN sz_var = 0ULL;
 
-    retval = SBC_NvramGetVar((VOID *)varname, (VOID *)check_var, (VOID *)&sz_var);
+    retval = SBC_NvramGetVar((VOID *)varname, (VOID *)&check_var, (VOID *)&sz_var);
     if (EFI_ERROR(retval)) {
         Print(L"Can't found the NVRAM regionf for %s \n", ERR_NVM_VARSTR);
         return FALSE;
     }
 
+    Print(L"Check Val : 0x%lx, Check Var : 0x%lx \n", check_val, check_var);
     if (check_val != check_var) {
         return FALSE;
     }

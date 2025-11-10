@@ -101,6 +101,15 @@ VOID SBC_LogMsg(CHAR8* logmsg, CONST CHAR8 *funcname, UINTN linenumber,
 #define int_eprint(fmt,...) 
 #endif
 
+
+#ifdef _SHELL_CMD_LINE_
+#define cmd_dprint(fmt,...) \
+    DEBUG((DEBUG_INFO, "(%a:%d) : "fmt"\n",__FUNCTION__, __LINE__,##__VA_ARGS__))
+
+#define cmd_eprint(fmt,...) \
+    DEBUG((DEBUG_ERROR, "(ERROR %a:%a:%d) : "fmt"\n",__FILE__,__FUNCTION__, __LINE__,##__VA_ARGS__))
+#endif
+
 #ifdef _USECASE_TEST_
 #define _ucprint(fmt,...) \
     DEBUG((DEBUG_INFO, "(%a:%d) : "fmt"\n",__FUNCTION__, __LINE__,##__VA_ARGS__))

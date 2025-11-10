@@ -840,7 +840,7 @@ EFI_STATUS ParseShellOptions(VOID *hndl)
     SBCStatus ret = SBCOK;
 
     //anj
-    dprint("Locate Shell Parameters Protocol");
+    cmd_dprint("Locate Shell Parameters Protocol");
     //
     Status = gBS->OpenProtocol(
         bp->imghndl,
@@ -862,7 +862,7 @@ EFI_STATUS ParseShellOptions(VOID *hndl)
     for (UINTN i = 1; i < ShellParams->Argc; i++) {
         CHAR16 *arg = ShellParams->Argv[i];
 
-        dprint("arg : %s", arg);
+        cmd_dprint("arg : %s", arg);
         
 //      CHAR16 *val = NULL;
 //
@@ -883,11 +883,11 @@ EFI_STATUS ParseShellOptions(VOID *hndl)
                 
                 ret = SBC_GetFileSize(LoadImgName, &FileSize);
                 if (ret != SBCOK) {
-                    eprint("Can't found the %s", LoadImgName);
+                    cmd_eprint("Can't found the %s", LoadImgName);
                     return EFI_UNSUPPORTED;
                 }
 
-                dprint("Load Image Name: %s (size %d), Load Image : 0x%lx\n", LoadImgName, FileSize, LoadImgAddr );
+                cmd_dprint("Load Image Name: %s (size %d), Load Image : 0x%lx\n", LoadImgName, FileSize, LoadImgAddr );
                 retval = SBC_CopyFileToBlockDevice(LoadImgName,
                                                    bp->blkhnd,
                                                    LoadImgAddr,
@@ -895,7 +895,7 @@ EFI_STATUS ParseShellOptions(VOID *hndl)
 
 
                 if (EFI_ERROR(retval)) {
-                    eprint("Copy fail from %s to 0x%lx %r", LoadImgName, LoadImgAddr, retval);
+                    cmd_eprint("Copy fail from %s to 0x%lx %r", LoadImgName, LoadImgAddr, retval);
                     return retval;
                 }
 
@@ -909,11 +909,11 @@ EFI_STATUS ParseShellOptions(VOID *hndl)
                   UINTN LoadBlkAddr = StrHexToUint64(ShellParams->Argv[++i]);
                   UINTN LoadBlkLen = StrDecimalToUintn(ShellParams->Argv[++i]);
 
-                  dprint("Load Addr : 0x%lx, Load Length : %d", LoadBlkAddr, LoadBlkLen);
+                  cmd_dprint("Load Addr : 0x%lx, Load Length : %d", LoadBlkAddr, LoadBlkLen);
 
                   blob = AllocateZeroPool(LoadBlkLen);
                   if (blob == NULL) {
-                    eprint("Out of Resource !!!");
+                    cmd_eprint("Out of Resource !!!");
                     return EFI_UNSUPPORTED;
                   }
 
@@ -935,10 +935,13 @@ EFI_STATUS ParseShellOptions(VOID *hndl)
                 UINT8 bkm_buf[16] = {0, };
                 UINTN bm = StrDecimalToUintn(ShellParams->Argv[++i]);
                 UINTN km = StrDecimalToUintn(ShellParams->Argv[++i]);
+                //UINTN rcvm = StrDecimalToUintn(ShellParams->Argv[++i]);
+
+                //bp->rcvmode = rcvm;
 
                 ret = SBC_BootKeyModeChange(bm, km, (VOID *)bp);
                 if (ret != SBCOK) {
-                    eprint("Failed to Boot and Key Mode change bm:%d , km:%d", bm, km);
+                    cmd_eprint("Failed to Boot and Key Mode change bm:%d , km:%d", bm, km);
                     return EFI_UNSUPPORTED;
                 }
 
@@ -947,7 +950,7 @@ EFI_STATUS ParseShellOptions(VOID *hndl)
                                                 16,
                                                 bkm_buf);
                 if (ret != SBCOK) {
-                    eprint("Failed to Read (0x%lx)", 0x70);
+                    cmd_eprint("Failed to Read (0x%lx)", 0x70);
                     return EFI_UNSUPPORTED;
                 }
 
@@ -957,14 +960,14 @@ EFI_STATUS ParseShellOptions(VOID *hndl)
             }
           }
           else if (!StrCmp(arg, L"--nvramwrite")) {
-                dprint("NVMwrite Argc : %d , i+2 : %d", ShellParams->Argc, i + 2);
+                cmd_dprint("NVMwrite Argc : %d , i+2 : %d", ShellParams->Argc, i + 2);
                 if (i + 2 < ShellParams->Argc ) {
                     EFI_STATUS retval = EFI_SUCCESS;
                     CHAR16 *varname = ShellParams->Argv[++i];
                     UINTN nv_varbuf = StrHexToUint64(ShellParams->Argv[++i]);
                     UINTN nv_varsz = sizeof nv_varbuf;
 
-                    dprint("NVRAM write command ~~ running");
+                    cmd_dprint("NVRAM write command ~~ running");
 
                     retval = SBC_NvramSetVar((VOID *)varname, (VOID *)&nv_varbuf, (VOID*)&nv_varsz);
                     if (EFI_ERROR(retval)) {
@@ -974,14 +977,14 @@ EFI_STATUS ParseShellOptions(VOID *hndl)
                 }
           }
           else if (!StrCmp(arg, L"--nvramread")) {
-                dprint("Nvmread Argc : %d , i+2 : %d", ShellParams->Argc, i + 1);
+                cmd_dprint("Nvmread Argc : %d , i+2 : %d", ShellParams->Argc, i + 1);
                 if (i + 1 < ShellParams->Argc) {
                     EFI_STATUS retval = EFI_SUCCESS;
                     CHAR16 *varname = ShellParams->Argv[++i];
                     UINTN nv_varbuf = 0ULL;
                     UINTN nv_varsz = 0ULL;
 
-                    dprint("NVRAM read command ~~ running");
+                    cmd_dprint("NVRAM read command ~~ running");
 
                     retval = SBC_NvramGetVar((VOID *)varname, (VOID *)&nv_varbuf, (VOID*)&nv_varsz);
                     if (EFI_ERROR(retval)) {
@@ -996,7 +999,7 @@ EFI_STATUS ParseShellOptions(VOID *hndl)
 
         
 
-}
+    }
 
     return EFI_SUCCESS;
 }

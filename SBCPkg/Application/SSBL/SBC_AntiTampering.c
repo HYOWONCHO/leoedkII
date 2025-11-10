@@ -937,6 +937,7 @@ SBCStatus  _baseanswer_store(VOID *blkio, VOID *p)
                  0,
                  L"Detetion",
                  L"SBC_VENDOR_SP Fail to the Base answer storing");
+        ret = SBCFAIL;
         goto errdone;
     }
 #endif
@@ -1021,6 +1022,7 @@ static SBCStatus _baseanswer_extract_from_disk(VOID *blkio, base_ansid_t *p)
                  0,
                  L"Detetion",
                  L"SBC_VENDOR_SP Fail to the Base answer read");
+        ret = SBCFAIL;
         goto errdone;
     }
 #endif
@@ -1102,6 +1104,7 @@ SBCStatus SBC_DeviceSecuirtyKeyCreate(VOID *key)
                      0,
                      L"Detetion",
                      L"SBC_VENDOR_SP Fail to Genearte the Device Security Key ");
+        ret = SBCFAIL;
 
         goto errdone;
     }
@@ -1966,6 +1969,7 @@ SBCStatus  SBC_BaseAnswerValidate(VOID *blkhnd, UINT8 *answer, UINTN answerl, UI
                  0,
                  L"Detetion",
                  L"SBC_VENDOR_SP Fail to Base Answer Decrypt");
+        ret = SBCFAIL;
         goto errdone;
     }
 
@@ -1977,6 +1981,7 @@ SBCStatus  SBC_BaseAnswerValidate(VOID *blkhnd, UINT8 *answer, UINTN answerl, UI
                  0,
                  L"Detetion",
                  L"SBC_VENDOR_SP Fail to Base Answer Encrypt");
+        ret = SBCFAIL;
         goto errdone;
     }
 
@@ -2722,6 +2727,7 @@ SBCStatus SBC_GenOSID(EFI_HANDLE *h_image, UINT8 *fwid, UINT8 *osid)
                  0,
                  L"Detetion",
                  L"SBC_VENDOR_SP Fail to create the OSID");
+        ret = SBCFAIL;
         goto errdone;
     }
 #endif
@@ -2866,6 +2872,7 @@ SBCStatus SBC_GenMigrationKey(void *priv, void *outmsg)
              SYS_LOG_EVT_DETECTION, 
              L"SBC_BootFW_Update Fail to MigrationKey Creation \n");
 
+        ret = SBCFAIL;
         goto errdone;
     }
 #endif
