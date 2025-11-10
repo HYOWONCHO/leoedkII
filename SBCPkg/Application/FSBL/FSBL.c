@@ -955,12 +955,16 @@ EFI_STATUS ParseShellOptions(VOID *hndl)
                 SBC_external_mem_print_bin("Dump", bkm_buf, 16);
 
             }
-            else if (!StrCmp(arg, L"--nvramwrite")) {
-                if (i + 2 > ShellParams->Argc ) {
+          }
+          else if (!StrCmp(arg, L"--nvramwrite")) {
+                dprint("NVMwrite Argc : %d , i+2 : %d", ShellParams->Argc, i + 2);
+                if (i + 2 < ShellParams->Argc ) {
                     EFI_STATUS retval = EFI_SUCCESS;
                     CHAR16 *varname = ShellParams->Argv[++i];
                     UINTN nv_varbuf = StrHexToUint64(ShellParams->Argv[++i]);
                     UINTN nv_varsz = sizeof nv_varbuf;
+
+                    dprint("NVRAM write command ~~ running");
 
                     retval = SBC_NvramSetVar((VOID *)varname, (VOID *)&nv_varbuf, (VOID*)&nv_varsz);
                     if (EFI_ERROR(retval)) {
@@ -968,13 +972,16 @@ EFI_STATUS ParseShellOptions(VOID *hndl)
                         return EFI_UNSUPPORTED;
                     }
                 }
-            }
-            else if (!StrCmp(arg, L"--nvramread")) {
-                if (i + 1 > ShellParams->Argc) {
+          }
+          else if (!StrCmp(arg, L"--nvramread")) {
+                dprint("Nvmread Argc : %d , i+2 : %d", ShellParams->Argc, i + 1);
+                if (i + 1 < ShellParams->Argc) {
                     EFI_STATUS retval = EFI_SUCCESS;
                     CHAR16 *varname = ShellParams->Argv[++i];
                     UINTN nv_varbuf = 0ULL;
                     UINTN nv_varsz = 0ULL;
+
+                    dprint("NVRAM read command ~~ running");
 
                     retval = SBC_NvramGetVar((VOID *)varname, (VOID *)&nv_varbuf, (VOID*)&nv_varsz);
                     if (EFI_ERROR(retval)) {
@@ -985,9 +992,9 @@ EFI_STATUS ParseShellOptions(VOID *hndl)
                     Print(L"NVRAM Variable Name : %s \n", varname);
                     Print(L"NVRAM Variable Value : 0x%x \n", nv_varbuf);
                 }
-            }
+          }
 
-        }
+        
 
 }
 
