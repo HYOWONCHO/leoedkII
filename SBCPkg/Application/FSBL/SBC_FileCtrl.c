@@ -65,26 +65,23 @@ SBCStatus  SBC_FindFileBufHndl(UINT16 *f_path, UINTN *hndlcnt, VOID **hndl)
 {
     EFI_STATUS  retval = EFI_SUCCESS;
     SBCStatus   ret = SBCOK;
-    UINTN       idx = 0;
+    //UINTN       idx = 0;
 
     SBC_RET_VALIDATE_ERRCODEMSG((f_path != NULL), SBCNULLP, "File Path obj Nill");
     SBC_RET_VALIDATE_ERRCODEMSG((*hndl != NULL), SBCNULLP, "Handle Obj Nill");
 
-    for ( idx = 0; idx < *hndlcnt; idx++) {
+    for (UINTN idx = 0; idx < *hndlcnt; idx++) {
         retval = SBC_IsFlieAccess(hndl[idx], f_path);
-        if (EFI_ERROR(retval)) {
-            continue;
+        if (!EFI_ERROR(retval)) {
+            *hndlcnt = idx;  
+            ret = SBCOK;
+            goto errdone;
         }
-
-        break;
     }
 
-    if (EFI_ERROR(retval)) {
-        ret = SBCNOTFND;
-        goto errdone;
-    }
-
-    *hndlcnt = idx;
+    eprint("File not found in %u handles", *hndlcnt);
+    *hndlcnt = (UINTN)-1;
+    ret = SBCNOTFND;
 
 errdone:
     return ret;
@@ -567,7 +564,7 @@ UINTN  SBC_FileSysFindHndl(EFI_HANDLE *handle)
     //      hdlcnt, *h);
 
     *handle = *h;
-  return hdlcnt;
+    return hdlcnt;
 }
 
 
@@ -1245,18 +1242,18 @@ VOID  SBCGetBlkIoHandleParse(VOID)
   for(HandleListWalker = HandleList
       ; HandleListWalker != NULL && *HandleListWalker != NULL
       ; HandleListWalker++) {
-    Name = NULL;
-    gEfiShellProtocol->GetDeviceName(*HandleListWalker
-                                     ,EFI_DEVICE_NAME_USE_COMPONENT_NAME|EFI_DEVICE_NAME_USE_DEVICE_PATH
-                                     ,(CHAR8 *)Language, &Name);
+        Name = NULL;
+        gEfiShellProtocol->GetDeviceName(*HandleListWalker
+                                         ,EFI_DEVICE_NAME_USE_COMPONENT_NAME|EFI_DEVICE_NAME_USE_DEVICE_PATH
+                                         ,(CHAR8 *)Language, &Name);
 
 
-    ZeroMem(DeviceName, sizeof DeviceName);
-    AsciiSPrint(DeviceName, StrSize(Name), "%S", Name);
+        ZeroMem(DeviceName, sizeof DeviceName);
+        AsciiSPrint(DeviceName, StrSize(Name), "%S", Name);
 
-    SBC_mem_print_bin("Deviec Name", (UINT8 *)DeviceName, 16);
+        SBC_mem_print_bin("Deviec Name", (UINT8 *)DeviceName, 16);
 
-    
+        
 
 
   }

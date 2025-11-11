@@ -10,7 +10,7 @@
 #   define OSID_KERNEL_PATH            L"\\vmlinuz" 
 #endif
 
-#ifndef _FSBL_TEST_
+#ifndef _SSBL_TEST_RUN_
 #   define OSID_KERNEL_PATH            L"\\vmlinuz"         
 #   define EFI_BOOT_FSBL_PATH          L"\\EFI\\BOOT\\bootx64.efi"
 #   define EFI_BOOT_SSBL_PATH          L"\\EFI\\BOOT\\SSBL.efi"

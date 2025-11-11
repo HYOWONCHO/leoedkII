@@ -73,21 +73,23 @@ typedef struct _t_bm_lookup_table {
 #define SBC_KEY_MODE_LEN                    2
 #define SBC_RECOVERY_LEN                    2
 
-#pragma pack(1)
+#pragma pack(push, 1)
 /*!
+    \struct rawprt_hdr_t
     \brief Raw Partition Header  structure
 */
 typedef struct _rawprt_hdr_t {
-    UINT32      magicid;                        /**< Identifier for SBC Raw-Partition */
-    UINT8       prtinfo[SBC_PRTNIFO_LEN];       /**< Partition information */
+    UINT32      magicid;                                /**< Identifier for SBC Raw-Partition */
+    UINT8       prtinfo[SBC_PRTNIFO_LEN];               /**< Partition information */
     UINT8       reserv[SBC_HDR_SKIP_LEN];
-    UINT16      bootmode;                        /**< Boot Mode */   
-    UINT16      keymode;                        /*! Key Mode*/
-    UINT16      rcvmode;                        /*! Recover mode */     
-    UINT8       bootpres[SBC_BOOT_PRES_LEN];    /**< Boot pres */
+    UINT16      bootmode;                               /**< Boot Mode */   
+    UINT16      keymode;                                /*! Key Mode*/
+    UINT16      rcvmode;                                /*! Recover mode */     
+    UINT8       bootpres[SBC_BOOT_PRES_LEN];            /**< Boot pres */
+    UINT8       bootpres_reserv[SBC_BOOT_PRES_LEN];     /**< Boot pres */
 }rawprt_hdr_t;
 
-#pragma pack()
+#pragma pack(pop)
 
 #define BOOT_FW_SRTOFS                      0x00000200
 

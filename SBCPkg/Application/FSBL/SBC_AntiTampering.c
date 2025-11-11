@@ -1358,7 +1358,7 @@ SBCStatus  SBC_DeviceIdKyeVerify(VOID *blkio, UINT8 *fwid, UINT8 *deckey)
         goto errdone;
     }
 
-#ifdef _FSBL_TEST_
+#if defined(_FSBL_TEST_) || defined(_SSBL_TEST_RUN_)
     SBC_external_mem_print_bin("Certificate Pubkey", pubkey, pubkeyl);
     dprint("PublicK Key Match Done ...");
 
@@ -1368,7 +1368,7 @@ SBCStatus  SBC_DeviceIdKyeVerify(VOID *blkio, UINT8 *fwid, UINT8 *deckey)
     if(CompareMem(key_pair.q.value,  pubkey, pubkeyl) != 0) {
         SBC_BuildHexFormattedMessage(
             (CONST VOID *)pubkey, (UINTN)pubkeyl,
-            L"SBC_Dice_OSID failed to create OSID (%s)\n",
+            L"SBC_Dice_Verify Failed to Device ID Verify (%s)\n",
             mrgmsg, sizeof mrgmsg);
 
         sbc_err_sysprn(SBC_LOG_CMN_PRIO_ERR, 2,
@@ -1840,7 +1840,7 @@ SBCStatus  SBC_SSBL_Verify(VOID *blkhnd, VOID *ansr,  UINTN nrombank, UINTN bm, 
             .value = NULL
     };
 
-#ifndef _UNIT_TEST_ON_
+#if 1 //ndef _SSBL_TEST_RUN_
     UINT32          imglen = SBC_RAWPRT_DFLT_BLK_SZ;
     UINT8           *loadimg = NULL;
     UINTN           startlba = 0;
@@ -1851,8 +1851,8 @@ SBCStatus  SBC_SSBL_Verify(VOID *blkhnd, VOID *ansr,  UINTN nrombank, UINTN bm, 
     // Boot FW location compute according to Boot Mode
     //
     if (bm != BOOT_MODE_FACTORY) {
-        bsofs = (BOOT_SECTOR1_OFS | ((nrombank - 1) << 20));
-        startlba = ((bsofs | BOOT_SSBL_OFS) >> SBC_RAWPRT_DFLT_SHIFT);
+        bsofs = (BOOT_SECTOR1_OFS + ((nrombank - 1) << 27));
+        startlba = ((bsofs + BOOT_SSBL_OFS) >> SBC_RAWPRT_DFLT_SHIFT);
     }
     else {
 
@@ -1871,7 +1871,10 @@ SBCStatus  SBC_SSBL_Verify(VOID *blkhnd, VOID *ansr,  UINTN nrombank, UINTN bm, 
 
     CopyMem((void *)&imglen, &imghdr[0], sizeof imglen);
 
-    dprint("SSBL Image Len : %ld (0x%lx)",imglen,imglen);
+    dprint("SSBL Image  (Addr : 0x%lx) Len : %ld (0x%lx)",
+           (bsofs | BOOT_SSBL_OFS), 
+           imglen,
+           imglen);
     //
     //Compute the Alligned by 512
     //
@@ -1906,20 +1909,17 @@ SBCStatus  SBC_SSBL_Verify(VOID *blkhnd, VOID *ansr,  UINTN nrombank, UINTN bm, 
     hndlcnt = SBC_FindEfiFileSystemProtocol(&hndl);
 
     for (idx = 0; idx < hndlcnt; idx++) {
-      retval = SBC_IsFlieAccess(hndl[idx], fname);
-      if (EFI_ERROR(retval)) {
-        dprint("\\EFI\\BOOT\\SSBL.efi.bin not found in index %d", idx);
-        continue;
-      }
-
-      break;
+        retval = SBC_IsFlieAccess(hndl[idx], fname);
+        if (!EFI_ERROR(retval)) {
+            break;
+        }
+        dprint("%s not found in index %d", fname, idx);
     }
 
     if (EFI_ERROR(retval)) {
-      dprint("\\EFI\\BOOT\\SSBL.efi.bin not found in index %d", idx);
-      ret = SBCNOTFND;
-
-      goto errdone;
+        dprint("%s not found in any of %u handles", fname, hndlcnt);
+        ret = SBCNOTFND;
+        goto errdone;
     }
 
     rdlv.value = AllocatePool(f_size);
@@ -1984,13 +1984,11 @@ SBCStatus  SBC_SSBL_Verify(VOID *blkhnd, VOID *ansr,  UINTN nrombank, UINTN bm, 
         goto errdone;
     }
 
-
-
     SBC_mem_print_bin("SSBL Certi", (UINT8  *)info.certi, (UINTN)bsinfo.m.certlen);
     SBC_mem_print_bin("SSBL Signature", (UINT8  *)info.signature, (UINTN)bsinfo.m.siglen);
 
     //dprint("SSBL image len : %d", fsbl_len);
-
+    fsbl_len += (bsinfo.m.fwinfolen + bsinfo.m.certlen  + bsinfo.m.banswlen);
     ret = SBC_HashCompute(
                      NULL, /* Not yet used */
                      rdlv.value,
@@ -2019,24 +2017,6 @@ SBCStatus  SBC_SSBL_Verify(VOID *blkhnd, VOID *ansr,  UINTN nrombank, UINTN bm, 
         ret = SBCFAIL;
         goto errdone;
     }
-//
-//  if (ansr == NULL) {
-//    goto errdone;
-//  }
-//
-//  //sbc_err_sysprn(SBC_LOG_CMN_PRIO_INFO, 2, L"SBC", L"FSBL", L"CSC-01", 23, L"VERIFY", L"SSBL Integrate check is Done\n");
-//  //Print(L"SSBL Verify Success !!!\n");
-//
-//  ((LV_t *)ansr)->value = AllocateZeroPool(bsinfo.m.banswlen);
-//  if (((LV_t *)ansr)->value == NULL) {
-//      //sbc_err_sysprn(SBC_LOG_CMN_PRIO_INFO, 2, L"SBC", L"FSBL", L"CSC-01", 23, L"VERIFY", L"FSBL Integrate check is Done\n");
-//      eprint("Base Answer buffer allocate fail");
-//      ret = SBCNULLP;
-//      goto errdone;
-//  }
-//
-//  ((LV_t *)ansr)->length = bsinfo.m.banswlen;
-//  CopyMem(((LV_t *)ansr)->value, info.baseansw, bsinfo.m.banswlen);
 
 #endif
 
@@ -2068,11 +2048,12 @@ errdone:
       EcFree(EcPubKey);
     }
 
-
+#ifndef _SSBL_TEST_RUN_
     if (loadimg != NULL) {
       FreePool(loadimg);
       rdlv.value = NULL;
     }
+#endif
 
 //  if (ret != SBCOK) {
 //      sbc_err_sysprn(SBC_LOG_CMN_PRIO_INFO, 2, L"SBC", L"FSBL", L"CSC-01", 23, L"VERIFY", L"SSBL Integrate check is Fail\n");
@@ -2367,14 +2348,14 @@ SBCStatus  SBC_FSBL_Verify(VOID *blkhnd, VOID *ansr, UINTN normbank, UINTN bm, U
 
     ////SBC_external_mem_print_bin("BSINFO", (UINT8 *)&bsinfo, sizeof bsinfo);
 
-//  dprint("----------- FSBL Boot Service Informmtion ------------");
-//  dprint("Signature Len     : %d", bsinfo.m.siglen );
-//  dprint("Firmware Info Len : %d", bsinfo.m.fwinfolen );
-//  dprint("Certificate Len   : %d", bsinfo.m.certlen );
-//  dprint("BaseAnswer Len    : %d", bsinfo.m.banswlen );
-//  dprint("BSinfo verdion    : %d", bsinfo.m.bsinfv );
-//  dprint("Spec.1 Value      : %d", bsinfo.m.reserv1 );
-//  dprint("Spec.2 Value      : %d", bsinfo.m.reserv2 );
+    dprint("----------- FSBL Boot Service Informmtion ------------");
+    dprint("Signature Len     : %d", bsinfo.m.siglen );
+    dprint("Firmware Info Len : %d", bsinfo.m.fwinfolen );
+    dprint("Certificate Len   : %d", bsinfo.m.certlen );
+    dprint("BaseAnswer Len    : %d", bsinfo.m.banswlen );
+    dprint("BSinfo verdion    : %d", bsinfo.m.bsinfv );
+    dprint("Spec.1 Value      : %d", bsinfo.m.reserv1 );
+    dprint("Spec.2 Value      : %d", bsinfo.m.reserv2 );
 
     bsinfolen = bsinfo.m.siglen + bsinfo.m.fwinfolen + bsinfo.m.certlen  + bsinfo.m.banswlen;
 
@@ -3223,6 +3204,7 @@ SBCStatus  SBC_FSBLIntgCheck([[gnu::unused]]EFI_HANDLE *h_image , VOID *blkio, V
     switch (mode) {
     case BOOT_MODE_NORMAL:
     case BOOT_MODE_UPDATE:
+    case BOOT_MODE_RECOVERY:
       startlba = (SYS_CONF_START_OFS >> SBC_RAWPRT_DFLT_SHIFT);
       imglen = ALIGN_VALUE(SYS_SETTING_STORAGE_LEN, ((EFI_BLOCK_IO_PROTOCOL *)blkio)->Media->BlockSize);
       break;
@@ -3280,9 +3262,9 @@ SBCStatus  SBC_FSBLIntgCheck([[gnu::unused]]EFI_HANDLE *h_image , VOID *blkio, V
                                 SBCENCFAIL, 
                                 "CA decrypt fail");    
 
-    SBC_mem_print_bin("RootCA", decbuf, calen);
+    SBC_mem_print_bin("RawFS RootCA", decbuf, calen);
 
-    SBC_mem_print_bin("RootCA", cert, certlen);
+    SBC_mem_print_bin("Firmware RootCA", cert, certlen);
 #else
     calen = rootca_certi_lv.length;
     cabuf = (UINT8 *)rootca_certi_lv.value;
