@@ -28,6 +28,8 @@
 #define SBC_AT_HASH_LEN             32
 #define SBC_BLKDEV_BLKSZ            512
 
+#define SBC_BOOTFW_BKN_OFS          27
+
 /*!
     \defgroup DigestSystem
     \{

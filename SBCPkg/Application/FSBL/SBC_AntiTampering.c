@@ -223,7 +223,7 @@ SBCStatus _ssbl_image_load(VOID *blkhnd, LV_t *lv,  UINTN normbank, UINTN bm)
     UINT8           imghdr[SBC_RAWPRT_DFLT_BLK_SZ] = {0, };
 
     if (bm != BOOT_MODE_FACTORY) {
-      bsofs = (BOOT_SECTOR1_OFS | ((normbank - 1) << 20));
+      bsofs = (BOOT_SECTOR1_OFS | ((normbank - 1) << SBC_BOOTFW_BKN_OFS));
       startlba = ((bsofs | BOOT_SSBL_OFS) >> SBC_RAWPRT_DFLT_SHIFT);
     }
     else {

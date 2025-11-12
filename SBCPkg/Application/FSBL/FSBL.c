@@ -253,7 +253,7 @@ SBCStatus SBC_BootModeFactory(VOID *blkhnd, VOID *ImageHandle)
 
     CopyMem(imghdr, tmp_prtheader, sizeof(rawprt_hdr_t));
 
-    SBC_external_mem_print_bin("Write Partition Header", imghdr, 512);
+    //SBC_external_mem_print_bin("Write Partition Header", imghdr, 512);
 
     //ret = SBC_RawPrtBlockWrite(h_blkio, (UINT8 *)imghdr, SBC_RAWPRT_DFLT_BLK_SZ, 0);
     //SBC_RET_VALIDATE_ERRCODEMSG((ret == SBCOK), ret, "Key mode change fail");
@@ -308,22 +308,25 @@ SBCStatus SBC_BootModeNormalAndpUdate(VOID *blkhnd, VOID *ImageHandle, UINTN nro
   LV_t wrlv;
   //UINT8 *imgssbl = NULL;
 
-  dprint("----- Normal Boot SSBL running ( Bank Id : 0x%x ) -----", nrombank);
+  dprint("----- Normal and Update Boot SSBL running ( Bank Id : 0x%x ) -----", nrombank);
 
   SBC_RET_VALIDATE_ERRCODEMSG((nrombank > 0 && nrombank < 3), SBCINVPARAM, "Invalid Parameter for SSBL bank");
   SBC_RET_VALIDATE_ERRCODEMSG((blkhnd != NULL), SBCNULLP, "Block I/O Handle Nill");
 
-  bsofs = (BOOT_SECTOR1_OFS | ((nrombank - 1) << 20));
+  bsofs = (BOOT_SECTOR1_OFS | ((nrombank - 1) << SBC_BOOTFW_BKN_OFS));
   startlba = ((bsofs | BOOT_SSBL_OFS) >> SBC_RAWPRT_DFLT_SHIFT);
+
+  dprint("Running SSBL Info. addr : 0x%lx, Image Len : %ld ", (bsofs | BOOT_SSBL_OFS), imglen);
 
   ret = SBC_RawPrtReadBlock(blkhnd, (void *)imghdr, &imglen, startlba);
   if (ret != SBCOK) {
-    //Print(L"SSBL Factory Block Read Fail \n");
+    eprint("Raw-Parttiion SSBL Image Not Found");
     goto errdone;
   }
 
-
   CopyMem((void *)&imglen, &imghdr[0], sizeof imglen);
+
+  dprint("Running SSBL addr : 0x%lx, Image Len : %ld ", (bsofs | BOOT_SSBL_OFS), imglen);
  
   imglen = ALIGN_VALUE(imglen, SBC_RAWPRT_DFLT_BLK_SZ);
   //dprint("Boot Service Allocate ");
