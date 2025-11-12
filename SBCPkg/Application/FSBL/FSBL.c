@@ -1355,7 +1355,7 @@ UefiMain (
 
       ret = SBC_BootModeNormalAndpUdate(h_blkio, ImageHandle, currbank_id);
       if (ret != SBCOK) {
-          eprint("Normal Boot Fail");
+          eprint("BOOT_MODE_NORMAL Boot Fail");
           retval = EFI_INVALID_PARAMETER;
           is_boot_status = FALSE;
           goto errdone;
@@ -1409,7 +1409,7 @@ UefiMain (
 
       ret = SBC_BootModeFactory(h_blkio, ImageHandle);
       if (ret != SBCOK) {
-          eprint("Factory Boot Fail");
+          eprint("BOOT_MODE_FACTORY Boot Fail");
           factory_md_abnormal_boot_state(&btproc);
           retval = EFI_INVALID_PARAMETER;
           is_boot_status = FALSE;
@@ -1473,7 +1473,7 @@ UefiMain (
 #endif     
       ret = SBC_BootModeNormalAndpUdate(h_blkio, ImageHandle, currbank_id);
       if (ret != SBCOK) {
-          eprint("Normal Boot Fail");
+          eprint("BOOT_MODE_UPDATE Boot Fail");
           retval = EFI_INVALID_PARAMETER;
           is_boot_status = FALSE;
           goto errdone;
@@ -1524,7 +1524,7 @@ UefiMain (
       // Previously Boot FW loading 
       ret = SBC_BootModeNormalAndpUdate(h_blkio, ImageHandle, prevbank_id);
       if (ret != SBCOK) {
-          eprint("Normal Boot Fail");
+          eprint("BOOT_MODE_RECOVERY Boot Fail");
           retval = EFI_INVALID_PARAMETER;
           is_boot_status = FALSE;
           goto errdone;
