@@ -728,7 +728,7 @@ errdone:
 
 }
 
-void SBC_RecoveryBootProcessing(VOID *priv)
+void  SBC_RecoveryBootProcessing(VOID *priv)
 {
     SBCStatus ret = SBCOK;
     //sb_rcv_proc_t *p = NULL;
@@ -897,12 +897,22 @@ errdone:
 
     if(bt_proc->bootst == SB_PROC_ST_ABNRAM) {
         sbc_err_sysprn(SBC_LOG_CMN_PRIO_INFO, 2,
-         SYS_LOG_HOST_BOOT,
-         SYS_LOG_APP_NAME,
-         SYS_LOG_CSC_NAME,
-         1,
-         L"Detectoin",
-         L"SBC_VENDOR_SP System Reset - Boot State Ab-normal");
+                         SYS_LOG_HOST_BOOT,
+                         SYS_LOG_APP_NAME,
+                         SYS_LOG_CSC_NAME,
+                         1,
+                         L"Detectoin",
+                         L"SBC_VENDOR_SP System Reset - Recovery Boot State Ab-normal");
+    }
+    else {
+        sbc_err_sysprn(SBC_LOG_CMN_PRIO_INFO, 2,
+                         SYS_LOG_HOST_BOOT,
+                    SYS_LOG_APP_NAME,
+                         SYS_LOG_CSC_NAME,
+                         1,
+                         L"Detectoin",
+                         L"SBC_VENDOR_SP System Reset - Recovery Boot State Normal");     
+
     }
 
     SBC_RebootSystem();
@@ -1169,6 +1179,25 @@ SBCStatus  SBC_SecureBootCheck(VOID *priv)
 
     case BOOT_MODE_UPDATE:
         ret = SBC_UpdateBootPorcsesing(priv);
+
+        if(ret != SBCOK) {
+            sbc_err_sysprn(SBC_LOG_CMN_PRIO_INFO, 2,
+                           SYS_LOG_HOST_BOOT,
+                           SYS_LOG_APP_NAME,
+                           SYS_LOG_CSC_NAME,
+                             1,
+                             L"Detectoin",
+                             L"SBC_VENDOR_SP System Reset - Update Boot State Ab-Normal");     
+        }
+        else {
+            sbc_err_sysprn(SBC_LOG_CMN_PRIO_INFO, 2,
+                           SYS_LOG_HOST_BOOT,
+                           SYS_LOG_APP_NAME,
+                           SYS_LOG_CSC_NAME,
+                             1,
+                             L"Detectoin",
+                             L"SBC_VENDOR_SP System Reset - Update Boot State Normal");
+        }
 
 
         //dprint();
