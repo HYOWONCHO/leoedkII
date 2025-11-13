@@ -9,7 +9,7 @@ import filectrl
 import fwcrypt
 
 
-base_answer = "rlwlekqdksrlfdl."
+base_answer = "sat-based-answer"
 fw_info = "fw_v_1.0"
 
 #fwfname     = "FSBL.efi"

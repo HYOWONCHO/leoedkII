@@ -23,6 +23,8 @@
 #   define EFI_BOOT_SSBL_PATH          L"\\EFI\\BOOT\\SSBL.efi.bin"
 #endif
 
+#define SBC_BOOTFW_BKN_OFS          27
+
 /**
  * @def SBC_AT_HASH_LEN
  * @brief Length of the authentication hash (in bytes).
