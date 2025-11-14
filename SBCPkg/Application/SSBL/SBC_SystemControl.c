@@ -309,6 +309,7 @@ errdone:
 #endif
 static SBCStatus _update_behavior_for_km(void *priv)
 {
+    BOOLEAN skip_protsw = FALSE;
     SBCStatus ret = SBCOK;
     boot_proc_t *bp = (boot_proc_t *)priv;
 
@@ -344,9 +345,12 @@ static SBCStatus _update_behavior_for_km(void *priv)
 #ifdef _HANDLE_PROTSW_
         ret =  _proetcted_sw_re_enc_dec((void *)bp);
         if(ret != SBCOK) {
+            skip_protsw = TRUE;
             eprint("Detection _proetcted_sw_re_enc_dec ");
             goto errdone;
         }
+
+        skip_protsw = TRUE;
 #endif
         ret = SBC_BootKeyModeChange(BOOT_MODE_NORMAL, KEY_MODE_NORMAL, priv);
         if(ret != SBCOK) {
@@ -410,8 +414,8 @@ errdone:
                      SYS_LOG_CSC_NAME,
                      0,
                      L"Validation",
-                     L"SBC_VENDOR_SP Firmware Restore Fail \n");
-                goto restore_fail;
+                     L"SBC_VENDOR_SP Previously Firmware Restore Fail \n");
+                goto errdone;
             }
 
             sbc_err_sysprn(SBC_LOG_CMN_PRIO_INFO, 2,
@@ -420,21 +424,74 @@ errdone:
                      SYS_LOG_CSC_NAME,
                      0,
                      L"Validation",
-                     L"SBC_VENDOR_SP Firmware Restore Success \n");
+                     L"SBC_VENDOR_SP Previously Firmware Restore Success \n");
+
+#ifdef _HANDLE_PROTSW_
+            if(skip_protsw != TRUE) {
+                ret =  _proetcted_sw_re_enc_dec((void *)bp);
+                if(ret != SBCOK) {
+                    eprint("Detection _proetcted_sw_re_enc_dec ");
+                    goto errdone;
+                }
+            }
+#endif
 
         }
         else {
-restore_fail:
+
             sbc_err_sysprn(SBC_LOG_CMN_PRIO_INFO, 2,
                  SYS_LOG_HOST_BOOT,
                  SYS_LOG_APP_NAME,
                  SYS_LOG_CSC_NAME,
                  0,
                  L"Validation",
-                 L"SBC_VENDOR_SP Previously Firmware Not Exists \n");
+                 L"SBC_VENDOR_SP Previously Firmware Not Exists, Restoring Start \n");
+
             SBC_BootKeyModeChange(BOOT_MODE_FACTORY,
                                   KEY_MODE_UPDATE,
                                   priv);
+
+
+            UINTN bytes_read = 0ULL;
+            UINTN dst_offset = 0ULL;
+            UINTN src_offset = 0ULL;
+            EFI_STATUS Status = EFI_SUCCESS;
+            src_offset = (BOOT_SECTOR3_OFS + BOOT_SSBL_OFS);
+            dst_offset = (BOOT_SECTOR1_OFS + BOOT_SSBL_OFS + ((bp->curr_sw_bnk -1) << SBC_BOOTFW_BKN_OFS));
+            dprint("Restoring Firmware Source Offset :0x%lx", src_offset);
+            dprint("Restoring Firmware Destnation Offset :0x%lx", dst_offset);
+
+            Status = SBC_CopyBlockReadAndBlockWrite(bp->blkhnd, src_offset, dst_offset, (UINT32 *)&bytes_read);
+
+            if(EFI_ERROR(Status)) {
+                eprint("Restoring FW Fail (%r)", Status);
+                sbc_err_sysprn(SBC_LOG_CMN_PRIO_INFO, 2,
+                     SYS_LOG_HOST_BOOT,
+                     SYS_LOG_APP_NAME,
+                     SYS_LOG_CSC_NAME,
+                     0,
+                     L"Validation",
+                     L"SBC_VENDOR_SP Factory Firmware Restore Fail \n");
+                goto errdone;
+            }
+
+            sbc_err_sysprn(SBC_LOG_CMN_PRIO_INFO, 2,
+                     SYS_LOG_HOST_BOOT,
+                     SYS_LOG_APP_NAME,
+                     SYS_LOG_CSC_NAME,
+                     0,
+                     L"Validation",
+                     L"SBC_VENDOR_SP Factory Firmware Restore Success \n");
+
+#ifdef _HANDLE_PROTSW_
+            if(skip_protsw != TRUE) {
+                ret =  _proetcted_sw_re_enc_dec((void *)bp);
+                if(ret != SBCOK) {
+                    eprint("Detection _proetcted_sw_re_enc_dec ");
+                    goto errdone;
+                }
+            }
+#endif
         }
     }
     else {
