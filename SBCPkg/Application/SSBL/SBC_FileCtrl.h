@@ -11,6 +11,7 @@
 #define SBC_FILECTRL_H
 
 #include "SBC_ErrorType.h"
+#include <Protocol/BlockIo.h>
 
 #define BOOT_VENDOR_BASEDIR     L"\\EFI\\rocky"
 
@@ -20,6 +21,14 @@
 #define BOOT_MODE_STRFACTORY    "factory"
 
 
+/**
+ * @def FILE_CHUNK_SZ
+ * @brief Default file read/write chunk size in bytes.
+ *
+ * @see SBC_CopyFileToBlockDevice()
+ * @see SBC_CopyBlockDeviceToFile()
+ */
+#define FILE_CHUNK_SZ   (128 * 1024)   // 128KB
 
 /**
  * @enum boot_mode_t
@@ -879,4 +888,122 @@ EFI_STATUS SBC_LogWriteFile(EFI_HANDLE ImageHandle, CHAR16 *FileNames, LV_t *out
  * If the format is corrupted or the key is invalid, the operation may fail.
  */
 SBCStatus SBC_LoadSystemSetting(VOID *blkio, VOID *blob);
+
+
+/**
+ * @fn EFI_STATUS SBC_CopyFileToBlockDevice(
+ *       IN CHAR16 *SrcPath,
+ *       IN VOID   *_Blk,
+ *       IN UINT64 ByteOffset,
+ *       OUT UINT64 *BytesWritten OPTIONAL)
+ * @brief Copy a file from the EFI file system into a block device region.
+ *
+ * @param[in]  SrcPath       Unicode path of the source file to be copied.
+ * @param[in]  _Blk          Pointer to a block device handle implementing
+ *                           EFI_BLOCK_IO_PROTOCOL.
+ * @param[in]  ByteOffset    Starting byte offset on the block device where
+ *                           the file data will be written.
+ * @param[out] BytesWritten  Optional pointer that receives the number of bytes
+ *                           successfully written to the block device.
+ *
+ * @retval EFI_SUCCESS            The file was successfully written to the block device.
+ * @retval EFI_INVALID_PARAMETER  One or more parameters are NULL or invalid.
+ * @retval EFI_NOT_FOUND          The source file could not be opened.
+ * @retval EFI_DEVICE_ERROR       A read/write error occurred on the block device.
+ * @retval EFI_OUT_OF_RESOURCES   Memory allocation failed during the operation.
+ */
+EFI_STATUS SBC_CopyFileToBlockDevice(IN CHAR16 *SrcPath,
+                      IN VOID *_Blk,
+                      IN UINT64 ByteOffset,
+                      OUT UINT64 *BytesWritten OPTIONAL);
+
+
+
+/**
+ * @fn EFI_STATUS SBC_CopyBlockDeviceToFile(
+ *       IN VOID   *_Blk,
+ *       IN UINT64  ByteOffset,
+ *       IN UINT64  DataBytes,
+ *       IN CHAR16 *DstPath,
+ *       OUT UINT64 *BytesRead OPTIONAL)
+ * @brief Copy a block device region to a destination file.
+ *
+ * @param[in]  _Blk        Pointer to the block device handle
+ *                         implementing the EFI_BLOCK_IO_PROTOCOL.
+ * @param[in]  ByteOffset  Byte offset within the block device where copying begins.
+ * @param[in]  DataBytes   Total number of bytes to copy from the block device.
+ * @param[in]  DstPath     Unicode path of the destination file to be created or overwritten.
+ * @param[out] BytesRead   Optional pointer that receives the number of bytes actually read
+ *                         from the block device.
+ *
+ * @retval EFI_SUCCESS           Data successfully copied from block device to file.
+ * @retval EFI_INVALID_PARAMETER One or more input parameters are invalid or NULL.
+ * @retval EFI_DEVICE_ERROR      Block device I/O operation failed.
+ * @retval EFI_OUT_OF_RESOURCES  Memory allocation or file creation failed.
+ * @retval EFI_VOLUME_CORRUPTED  Destination file system encountered an error.
+ */
+EFI_STATUS SBC_CopyBlockDeviceToFile(
+    IN VOID   *_Blk,
+    IN UINT64  ByteOffset,
+    IN UINT64  DataBytes,
+    IN CHAR16 *DstPath,
+    OUT UINT64 *BytesRead OPTIONAL);
+
+
+/**
+ * @fn EFI_STATUS SBC_CopyBlockDeviceToFileWithSize(
+ *       IN VOID   *_Blk,
+ *       IN UINT64  ByteOffset,
+ *       IN CHAR16 *DstPath,
+ *       OUT UINT64 *BytesRead OPTIONAL)
+ * @brief Copy data from a block device to a file until the end of the device region.
+ *
+ * @param[in]  _Blk        Pointer to a block device handle implementing
+ *                         EFI_BLOCK_IO_PROTOCOL.
+ * @param[in]  ByteOffset  Starting byte offset within the block device.
+ * @param[in]  DstPath     Unicode destination file path where the extracted
+ *                         data will be written.
+ * @param[out] BytesRead   Optional pointer that receives the total number of
+ *                         bytes successfully read from the block device.
+ *
+ * @retval EFI_SUCCESS           Data successfully copied to the output file.
+ * @retval EFI_INVALID_PARAMETER One or more parameters are invalid or NULL.
+ * @retval EFI_DEVICE_ERROR      Block I/O read failure occurred.
+ * @retval EFI_NOT_FOUND         Unable to create or open the destination file.
+ * @retval EFI_OUT_OF_RESOURCES  Memory or buffer allocation failed.
+ */
+EFI_STATUS SBC_CopyBlockDeviceToFileWithSize(
+    IN VOID   *_Blk,        /**< [in] Block device handle. */
+    IN UINT64  ByteOffset,  /**< [in] Start offset in the block device. */
+    IN CHAR16 *DstPath,     /**< [in] Destination file path. */
+    OUT UINT64 *BytesRead   /**< [out, optional] Total bytes read. */
+);
+
+
+/**
+ * @fn EFI_STATUS SBC_RawReadSizeFromOffset(
+ *       IN  EFI_BLOCK_IO_PROTOCOL *Blk,
+ *       IN  UINT64                 ByteOffset,
+ *       OUT UINT32                *OutSize)
+ * @brief Read a 32-bit size value from a raw block device at a given offset.
+ *
+ * @param[in]  Blk         Pointer to the block device (EFI_BLOCK_IO_PROTOCOL)
+ *                         from which the size field will be read.
+ * @param[in]  ByteOffset  Absolute byte offset within the block device where
+ *                         the 32-bit size value is stored.
+ * @param[out] OutSize     Pointer to a 32-bit variable that receives the size
+ *                         value read from the device.
+ *
+ * @retval EFI_SUCCESS            The size value was successfully read.
+ * @retval EFI_INVALID_PARAMETER  One or more input parameters are invalid or NULL.
+ * @retval EFI_DEVICE_ERROR       A read failure occurred on the block device.
+ * @retval EFI_BAD_BUFFER_SIZE    Offset or alignment is not compatible with the device.
+ */
+EFI_STATUS  SBC_RawReadSizeFromOffset(
+    IN  EFI_BLOCK_IO_PROTOCOL *Blk,   /**< [in] Block device handle */
+    IN  UINT64                 ByteOffset, /**< [in] Offset of the size field */
+    OUT UINT32                *OutSize      /**< [out] Returned size value */
+);
+
+
 #endif

@@ -1684,6 +1684,118 @@ STATIC EFI_STATUS SBC_BlkWriteArbitrary(IN EFI_BLOCK_IO_PROTOCOL *Blk,
     return EFI_SUCCESS;
 }
 
+
+EFI_STATUS SBC_CopyBlockDeviceToFile(
+    IN VOID   *_Blk,
+    IN UINT64  ByteOffset,
+    IN UINT64  DataBytes,
+    IN CHAR16 *DstPath,
+    OUT UINT64 *BytesRead OPTIONAL
+)
+{
+    if (BytesRead) *BytesRead = 0;
+    if (!_Blk || !DstPath) return EFI_INVALID_PARAMETER;
+
+    EFI_STATUS Status;
+    EFI_BLOCK_IO_PROTOCOL *Blk = (EFI_BLOCK_IO_PROTOCOL*)_Blk;
+    EFI_SIMPLE_FILE_SYSTEM_PROTOCOL *Fs = NULL;
+    EFI_FILE_PROTOCOL *Root = NULL, *OutFile = NULL;
+
+    // Block I/O Media
+    EFI_BLOCK_IO_MEDIA *m = Blk->Media;
+    if (!m || !m->MediaPresent)
+        return EFI_NO_MEDIA;
+
+    UINT32 BlockSize = m->BlockSize;
+    UINT64 TotalBytes = (m->LastBlock + 1ULL) * (UINT64)BlockSize;
+
+    //
+    // 범위 체크
+    //
+    if (ByteOffset > TotalBytes || ByteOffset + DataBytes > TotalBytes) {
+        return EFI_INVALID_PARAMETER;
+    }
+
+    //
+    // 1) Filesystem 찾기
+    //
+    Status = gBS->LocateProtocol(&gEfiSimpleFileSystemProtocolGuid, NULL, (VOID**)&Fs);
+    if (EFI_ERROR(Status)) return Status;
+
+    Status = Fs->OpenVolume(Fs, &Root);
+    if (EFI_ERROR(Status)) return Status;
+
+    //
+    // 2) 출력 파일 생성
+    //
+    Status = Root->Open(
+                    Root,
+                    &OutFile,
+                    DstPath,
+                    EFI_FILE_MODE_READ | EFI_FILE_MODE_WRITE | EFI_FILE_MODE_CREATE,
+                    0
+                );
+    if (EFI_ERROR(Status)) {
+        Root->Close(Root);
+        return Status;
+    }
+
+    //
+    // 3) CHUNK 로 Block Device 읽기
+    //
+    UINT64 remaining = DataBytes;
+    UINT64 offset = ByteOffset;
+    UINT64 readTotal = 0;
+
+    UINT8 *buf = AllocatePool(FILE_CHUNK_SZ);
+    if (!buf) {
+        OutFile->Close(OutFile);
+        Root->Close(Root);
+        return EFI_OUT_OF_RESOURCES;
+    }
+
+    while (remaining > 0) {
+
+        UINTN chunk = (remaining > FILE_CHUNK_SZ) ? FILE_CHUNK_SZ : (UINTN)remaining;
+
+        //
+        // Block Device → Read
+        //
+        Status = SBC_BlkReadArbitrary(Blk, offset, buf, chunk);
+        if (EFI_ERROR(Status)) {
+            break;
+        }
+
+        //
+        // 파일에 Write
+        //
+        UINTN wr = chunk;
+        Status = OutFile->Write(OutFile, &wr, buf);
+        if (EFI_ERROR(Status)) {
+            break;
+        }
+
+        offset     += chunk;
+        remaining  -= chunk;
+        readTotal  += chunk;
+
+        // 진행률 표시
+        UINTN pct = (UINTN)((readTotal * 100) / DataBytes);
+        Print(L"\rReading from Block: %3u%%", pct);
+    }
+
+    Print(L"\rReading from Block: 100%%\n");
+
+    if (buf) FreePool(buf);
+
+    OutFile->Close(OutFile);
+    Root->Close(Root);
+
+    if (BytesRead) *BytesRead = readTotal;
+
+    return Status;
+}
+
 /**
  * @brief Copy a file into a block device at given byte offset.
  */
