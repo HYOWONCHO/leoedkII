@@ -1777,6 +1777,92 @@ errdone:
 
 }
 
+EFI_STATUS SBC_BlkWriteArbitrary(IN EFI_BLOCK_IO_PROTOCOL *Blk,
+                  IN UINT64 Ofs,
+                  IN CONST VOID *Buf,
+                  IN UINTN Len)
+{
+    if (!Blk || !Buf || Len == 0) return EFI_INVALID_PARAMETER;
+
+    EFI_BLOCK_IO_MEDIA *m = Blk->Media;
+    if (!m || !m->MediaPresent) return EFI_NO_MEDIA;
+
+    UINT32 B = m->BlockSize;
+    UINT64 totalBytes = (m->LastBlock + 1ULL) * (UINT64)B;
+    if (Ofs > totalBytes || Ofs + Len > totalBytes) return EFI_INVALID_PARAMETER;
+
+    EFI_STATUS Status = EFI_SUCCESS;
+
+    UINT64 cur = Ofs;
+    const UINT8 *p = (const UINT8*)Buf;
+    UINTN remain = Len;
+
+    // 1) 선두 partial block 처리
+    UINTN intra = (UINTN)(cur % B);
+    if (intra != 0) {
+        UINT64 lba = cur / B;
+        UINT8 *blkbuf = AllocatePool(B);
+        if (!blkbuf) return EFI_OUT_OF_RESOURCES;
+
+        Status = Blk->ReadBlocks(Blk, m->MediaId, lba, B, blkbuf);
+        if (EFI_ERROR(Status)) { FreePool(blkbuf); return Status; }
+
+        UINTN can = (UINTN)B - intra;
+        if (can > remain) can = remain;
+
+        CopyMem(blkbuf + intra, p, can);
+        Status = Blk->WriteBlocks(Blk, m->MediaId, lba, B, blkbuf);
+        FreePool(blkbuf);
+        if (EFI_ERROR(Status)) return Status;
+
+        cur += can;
+        p   += can;
+        remain -= can;
+    }
+
+    // 2) 중간 full blocks
+    while (remain >= B) {
+        UINT64 lba = cur / B;
+        // 최대한 여러 블록을 한 번에 쓰고 싶으면 여기서 배수로 합칠 수 있음
+        UINTN full = (remain / B) * B;
+        // 너무 크게 잡지 않도록 상한 (예: 4MB) — 필요시 조절
+        if (full > (4 * 1024 * 1024)) full = 4 * 1024 * 1024;
+
+        Status = Blk->WriteBlocks(Blk, m->MediaId, lba, full, (VOID*)p);
+        if (EFI_ERROR(Status)) return Status;
+
+        cur += full;
+        p   += full;
+        remain -= full;
+    }
+
+    // 3) 말미 partial block 처리
+    if (remain > 0) {
+        UINT64 lba = cur / B;
+        UINT8 *blkbuf = AllocatePool(B);
+        if (!blkbuf) return EFI_OUT_OF_RESOURCES;
+
+        Status = Blk->ReadBlocks(Blk, m->MediaId, lba, B, blkbuf);
+        if (EFI_ERROR(Status)) { FreePool(blkbuf); return Status; }
+
+        CopyMem(blkbuf, p, remain);
+        Status = Blk->WriteBlocks(Blk, m->MediaId, lba, B, blkbuf);
+        FreePool(blkbuf);
+        if (EFI_ERROR(Status)) return Status;
+
+        cur += remain;
+        p   += remain;
+        remain = 0;
+    }
+
+    // 캐시 일관성 확보 (일부 펌웨어에서 효과 없음/무시될 수 있음)
+    if (Blk->FlushBlocks) {
+        Blk->FlushBlocks(Blk);
+    }
+
+    return EFI_SUCCESS;
+}
+
 SBCStatus SBC_RawAlignedReadBlockIO(VOID *blk, UINTN off, UINTN sz, VOID *buf)
 {
 
@@ -2521,6 +2607,8 @@ EFI_STATUS SBC_RawReadSizeFromOffset(
         (szbuf[1] << 8) |
         (szbuf[2] << 16) |
         (szbuf[3] << 24);
+
+    dprint("FW Data Size : %d", *OutSize);
 
     if (*OutSize == 0)
         return EFI_BAD_BUFFER_SIZE;

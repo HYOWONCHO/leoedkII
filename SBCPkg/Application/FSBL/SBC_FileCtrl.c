@@ -1684,6 +1684,86 @@ STATIC EFI_STATUS SBC_BlkWriteArbitrary(IN EFI_BLOCK_IO_PROTOCOL *Blk,
     return EFI_SUCCESS;
 }
 
+EFI_STATUS
+SBC_BlkReadArbitrary(
+    IN  EFI_BLOCK_IO_PROTOCOL *Blk,
+    IN  UINT64                 ByteOffset,
+    OUT VOID                  *Buffer,
+    IN  UINTN                  Length
+)
+{
+    if (!Blk || !Buffer || Length == 0)
+        return EFI_INVALID_PARAMETER;
+
+    EFI_STATUS Status;
+    EFI_BLOCK_IO_MEDIA *m = Blk->Media;
+
+    if (!m || !m->MediaPresent)
+        return EFI_NO_MEDIA;
+
+    UINT32 BlockSize = m->BlockSize;
+    UINT64 LastBlock = m->LastBlock;
+
+    UINT64 TotalBytes = (LastBlock + 1ULL) * (UINT64)BlockSize;
+
+    //
+    // 범위 체크
+    //
+    if (ByteOffset >= TotalBytes ||
+        ByteOffset + Length > TotalBytes)
+        return EFI_INVALID_PARAMETER;
+
+    //
+    // ByteOffset → LBA 변환
+    //
+    UINT64 StartLba    = ByteOffset / BlockSize;
+    UINTN  InnerOffset = (UINTN)(ByteOffset % BlockSize);
+
+    UINTN EndOffset = InnerOffset + Length;
+    UINTN BlockCount = (EndOffset + BlockSize - 1) / BlockSize;
+    UINTN ReadSize   = BlockCount * BlockSize;
+
+    //
+    // aligned temp buffer 준비
+    //
+    EFI_PHYSICAL_ADDRESS Phys;
+    Status = gBS->AllocatePages(
+                    AllocateAnyPages,
+                    EfiBootServicesData,
+                    EFI_SIZE_TO_PAGES(ReadSize),
+                    &Phys
+                );
+    if (EFI_ERROR(Status))
+        return Status;
+
+    VOID *Tmp = (VOID*)(UINTN)Phys;
+
+    //
+    // Block 단위 읽기
+    //
+    Status = Blk->ReadBlocks(
+                    Blk,
+                    m->MediaId,
+                    StartLba,
+                    ReadSize,
+                    Tmp
+                );
+
+    if (EFI_ERROR(Status)) {
+        gBS->FreePages(Phys, EFI_SIZE_TO_PAGES(ReadSize));
+        return Status;
+    }
+
+    //
+    // 사용자 버퍼로 필요한 부분만 복사
+    //
+    CopyMem(Buffer, (UINT8*)Tmp + InnerOffset, Length);
+
+    gBS->FreePages(Phys, EFI_SIZE_TO_PAGES(ReadSize));
+
+    return EFI_SUCCESS;
+}
+
 
 EFI_STATUS SBC_CopyBlockDeviceToFile(
     IN VOID   *_Blk,

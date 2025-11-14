@@ -1005,5 +1005,30 @@ EFI_STATUS  SBC_RawReadSizeFromOffset(
     OUT UINT32                *OutSize      /**< [out] Returned size value */
 );
 
+/**
+ * @fn EFI_STATUS SBC_BlkWriteArbitrary(
+ *       IN EFI_BLOCK_IO_PROTOCOL *Blk,
+ *       IN UINT64                 Ofs,
+ *       IN CONST VOID            *Buf,
+ *       IN UINTN                  Len)
+ * @brief Write an arbitrary-length byte buffer into a block device.
+ * 
+ * @param[in] Blk   Pointer to the block device implementing EFI_BLOCK_IO_PROTOCOL.
+ * @param[in] Ofs   Byte offset within the block device where writing begins.
+ * @param[in] Buf   Pointer to the input buffer containing data to be written.
+ * @param[in] Len   Number of bytes to write from @p Buf.
+ *
+ * @retval EFI_SUCCESS            The buffer was successfully written to the block device.
+ * @retval EFI_INVALID_PARAMETER  One or more parameters are NULL or invalid.
+ * @retval EFI_BAD_BUFFER_SIZE    Offset or length is incompatible with the device geometry.
+ * @retval EFI_DEVICE_ERROR       Underlying storage returned an error condition.
+ * @retval EFI_OUT_OF_RESOURCES   Required working buffers could not be allocated.
+ */
+EFI_STATUS SBC_BlkWriteArbitrary(
+    IN EFI_BLOCK_IO_PROTOCOL *Blk, /**< [in] Block device handle. */
+    IN UINT64                 Ofs, /**< [in] Byte offset for writing. */
+    IN CONST VOID            *Buf, /**< [in] Source data buffer. */
+    IN UINTN                  Len  /**< [in] Length of data to write. */
+);
 
 #endif
