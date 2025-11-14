@@ -302,12 +302,12 @@ SBCStatus _prev_ssbl_image_load(VOID *blkhnd, LV_t *lv,  UINTN normbank, UINTN b
     UINT8           imghdr[SBC_RAWPRT_DFLT_BLK_SZ] = {0, };
 
     if (bm != BOOT_MODE_FACTORY) {
-      bsofs = (BOOT_SECTOR1_OFS | ((normbank - 1) << SBC_BOOTFW_BKN_OFS));
-      startlba = ((bsofs | BOOT_SSBL_OFS) >> SBC_RAWPRT_DFLT_SHIFT);
+      bsofs = (BOOT_SECTOR1_OFS + ((normbank - 1) << SBC_BOOTFW_BKN_OFS));
+      startlba = ((bsofs + BOOT_SSBL_OFS) >> SBC_RAWPRT_DFLT_SHIFT);
     }
     else {
       bsofs = BOOT_SECTOR3_OFS;
-      startlba = ((bsofs | BOOT_SSBL_OFS) >> SBC_RAWPRT_DFLT_SHIFT);
+      startlba = ((bsofs + BOOT_SSBL_OFS) >> SBC_RAWPRT_DFLT_SHIFT);
     }
 
     //dprint("BSOFS:  0x%lx, StartLBA: %lu", bsofs, startlba);

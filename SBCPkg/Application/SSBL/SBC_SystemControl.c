@@ -376,13 +376,62 @@ errdone:
              0,
              L"Validation",
              L"SBC_VENDOR_SP Update Mode operation fail \n");
+
+        sbc_err_sysprn(SBC_LOG_CMN_PRIO_INFO, 2,
+             SYS_LOG_HOST_BOOT,
+             SYS_LOG_APP_NAME,
+             SYS_LOG_CSC_NAME,
+             0,
+             L"Validation",
+             L"SBC_VENDOR_SP Firmware Restore Starting \n");
+
         if(_check_prev_fw(bp->pvs_sw_bnk) == TRUE) {
             // Previously exist in Raw Part.
             SBC_BootKeyModeChange(BOOT_MODE_RECOVERY,
                                   KEY_MODE_UPDATE,
                                   priv);
+
+            UINTN bytes_read = 0ULL;
+            UINTN dst_offset = 0ULL;
+            UINTN src_offset = 0ULL;
+            EFI_STATUS Status = EFI_SUCCESS;
+            src_offset = (BOOT_SECTOR1_OFS + BOOT_SSBL_OFS + ((bp->pvs_sw_bnk -1) << SBC_BOOTFW_BKN_OFS));
+            dst_offset = (BOOT_SECTOR1_OFS + BOOT_SSBL_OFS + ((bp->curr_sw_bnk -1) << SBC_BOOTFW_BKN_OFS));
+            dprint("Restoring Firmware Source Offset :0x%lx", src_offset);
+            dprint("Restoring Firmware Destnation Offset :0x%lx", dst_offset);
+
+            Status = SBC_CopyBlockReadAndBlockWrite(bp->blkhnd, src_offset, dst_offset, (UINT32 *)&bytes_read);
+
+            if(EFI_ERROR(Status)) {
+                eprint("Restoring FW Fail (%r)", Status);
+                sbc_err_sysprn(SBC_LOG_CMN_PRIO_INFO, 2,
+                     SYS_LOG_HOST_BOOT,
+                     SYS_LOG_APP_NAME,
+                     SYS_LOG_CSC_NAME,
+                     0,
+                     L"Validation",
+                     L"SBC_VENDOR_SP Firmware Restore Fail \n");
+                goto restore_fail;
+            }
+
+            sbc_err_sysprn(SBC_LOG_CMN_PRIO_INFO, 2,
+                     SYS_LOG_HOST_BOOT,
+                     SYS_LOG_APP_NAME,
+                     SYS_LOG_CSC_NAME,
+                     0,
+                     L"Validation",
+                     L"SBC_VENDOR_SP Firmware Restore Success \n");
+
         }
         else {
+restore_fail:
+            sbc_err_sysprn(SBC_LOG_CMN_PRIO_INFO, 2,
+                 SYS_LOG_HOST_BOOT,
+                 SYS_LOG_APP_NAME,
+                 SYS_LOG_CSC_NAME,
+                 0,
+                 L"Validation",
+                 L"SBC_VENDOR_SP Previously Firmware Not Exists \n");
             SBC_BootKeyModeChange(BOOT_MODE_FACTORY,
                                   KEY_MODE_UPDATE,
                                   priv);

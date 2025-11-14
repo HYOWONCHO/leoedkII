@@ -30,6 +30,7 @@
  */
 #define FILE_CHUNK_SZ   (128 * 1024)   // 128KB
 
+
 /**
  * @enum boot_mode_t
  * @brief Defines the various boot modes supported by the system.
@@ -1030,5 +1031,57 @@ EFI_STATUS SBC_BlkWriteArbitrary(
     IN CONST VOID            *Buf, /**< [in] Source data buffer. */
     IN UINTN                  Len  /**< [in] Length of data to write. */
 );
+
+/**
+ * @fn EFI_STATUS SBC_DeleteFileByPath(IN CHAR16 *FilePath)
+ * @brief Delete a file from the EFI file system using its Unicode path.
+ *
+ * @param[in] FilePath  Unicode path of the file to be deleted.  
+ *                      The path must be valid and located on an accessible
+ *                      EFI Simple File System volume.
+ *
+ * @retval EFI_SUCCESS           The file was successfully deleted.
+ * @retval EFI_INVALID_PARAMETER @p FilePath is NULL or invalid.
+ * @retval EFI_NOT_FOUND         The specified file does not exist.
+ * @retval EFI_ACCESS_DENIED     The file cannot be deleted due to protection
+ *                               or insufficient permissions.
+ * @retval EFI_DEVICE_ERROR      A device I/O error occurred during deletion.
+ */
+EFI_STATUS SBC_DeleteFileByPath(
+    IN CHAR16 *FilePath  /**< [in] Path of the file to delete */
+);
+
+
+/**
+ * @fn EFI_STATUS SBC_CopyBlockReadAndBlockWrite(
+ *       IN EFI_BLOCK_IO_PROTOCOL *Blk,
+ *       IN UINT64                 SrcOffset,
+ *       IN UINT64                 DstOffset,
+ *       IN UINT32                *Size OPTIONAL)
+ * @brief Read size field from offset 0–3 (if Size == 0) and copy that many bytes.
+ *
+ * Copy operation sequence:
+ *  1) If Size == 0 → Read 4 bytes from offset 0 (little-endian size)
+ *  2) Read Size bytes starting at @p SrcOffset
+ *  3) Write Size bytes starting at @p DstOffset
+ *
+ * @param[in]  Blk        Block device (EFI_BLOCK_IO_PROTOCOL).
+ * @param[in]  SrcOffset  Source byte offset.
+ * @param[in]  DstOffset  Destination byte offset.
+ * @param[in,out] Size    [in] Size to copy, OPTIONAL.
+ *                        [out] If 0 on input, returns the size read from 0–3.
+ *
+ * @retval EFI_SUCCESS           Operation succeeded.
+ * @retval EFI_INVALID_PARAMETER Null pointers or invalid device.
+ * @retval EFI_DEVICE_ERROR      Device read/write failed.
+ */
+EFI_STATUS
+SBC_CopyBlockReadAndBlockWrite(
+    IN EFI_BLOCK_IO_PROTOCOL *Blk,
+    IN UINT64 SrcOffset,
+    IN UINT64 DstOffset,
+    IN OUT UINT32 *Size OPTIONAL
+);
+
 
 #endif
