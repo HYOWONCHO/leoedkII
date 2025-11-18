@@ -59,6 +59,8 @@ typedef enum {
 #define ERR_OSID_KEY            0xC8
 #define ERR_BASEANSWR_DEC       0xC9
 #define ERR_BASEANSWR_ENC       0xCA
+
+#define ERR_PREV_FW_NOTEXIST    0xCB
 #endif
 
 

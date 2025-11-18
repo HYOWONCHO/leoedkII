@@ -2681,10 +2681,9 @@ EFI_STATUS SBC_DeleteFileByPath(
     return Status;
 }
 
-#define SBC_RW_CHUNK_SZ   1024   // 1KB
+//#define SBC_RW_CHUNK_SZ   1024   // 1KB
 
-EFI_STATUS
-SBC_CopyBlockReadAndBlockWrite(
+EFI_STATUS SBC_CopyBlockReadAndBlockWrite(
     IN EFI_BLOCK_IO_PROTOCOL *Blk,
     IN UINT64 SrcOffset,
     IN UINT64 DstOffset,

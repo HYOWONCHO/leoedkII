@@ -20,6 +20,23 @@
 #define BOOT_MODE_STRUPDATE     "update"
 #define BOOT_MODE_STRFACTORY    "factory"
 
+//
+// Chunk size for streaming copies (Block <-> Block, Block <-> File)
+//
+
+/**
+ * @def SBC_RW_CHUNK_SZ
+ * @brief Default file read/write chunk size in bytes.
+ */
+#define SBC_RW_CHUNK_SZ    1024        ///< 1KB chunk for block-to-block copy
+
+
+/**
+ * @def SBC_FILE_CHUNK_SZ
+ * @brief Default file read/write chunk size in bytes.
+ */
+#define SBC_FILE_CHUNK_SZ  (64 * 1024) ///< 64KB chunk for file operations
+
 
 /**
  * @def FILE_CHUNK_SZ
@@ -1082,6 +1099,8 @@ SBC_CopyBlockReadAndBlockWrite(
     IN UINT64 DstOffset,
     IN OUT UINT32 *Size OPTIONAL
 );
+
+
 
 
 #endif

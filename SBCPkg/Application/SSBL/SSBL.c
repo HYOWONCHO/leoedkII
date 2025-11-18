@@ -497,6 +497,15 @@ UefiMain (
 
     //dprint("Chaeck Boot Mode read from BlkIO is %d", h_rawptrheader.bootmode);
 
+#if 0   // Test for  read/write between Block 
+    retval = SBC_CopyBlockReadAndBlockWrite( btproc.blkhnd,
+                                             0x00000200,
+                                             0x08400200,
+                                             NULL);
+
+    return EFI_SUCCESS;
+#endif
+
 #if 0
     extern SBCStatus _find_kernel_path(CHAR16 *fname);
 

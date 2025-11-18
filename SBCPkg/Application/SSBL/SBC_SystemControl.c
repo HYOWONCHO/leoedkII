@@ -43,6 +43,8 @@
 #include "SBC_Kdf.h"
 #include "SBC_ProtectedSW.h"
 
+#include "SBC_Nvram.h"
+
 //EFI_GUID g_sbc_guid  = {0x1F3F7E80, 0xDB6B, 0x93FA, {0x9E, 0x61, 0x4C, 0x31, 0x3D, 0x3A}};
 
 
@@ -85,9 +87,29 @@ SBCStatus SBC_BootKeyModeChange(UINT32 newbm, UINT32 newkey, VOID *priv)
     ret = SBC_RawPrtBlockWrite(bp->blkhnd,(UINT8 *)wrbuf, 512,0);
     SBC_RET_VALIDATE_ERRCODEMSG((ret == SBCOK), ret, "Boot and Key mode write fail");
 
+    sbc_err_sysprn(SBC_LOG_CMN_PRIO_ERR, 2,
+                 SYS_LOG_HOST_BOOT,
+                 SYS_LOG_APP_NAME,
+                 SYS_LOG_CSC_NAME,
+                 0,
+                 L"Detectoin",
+                 L"SFR-Vendor-SP Success to change the Boot and Key Mode \n");
 
+        //goto errdone;
 errdone:
 
+    if(ret != SBCOK) {
+
+        sbc_err_sysprn(SBC_LOG_CMN_PRIO_ERR, 2,
+                     SYS_LOG_HOST_BOOT,
+                     SYS_LOG_APP_NAME,
+                     SYS_LOG_CSC_NAME,
+                     0,
+                     L"Detectoin",
+                     L"SFR-Vendor-SP Failed to change the Boot and Key Mode \n");
+
+        //goto errdone;
+    }
     return ret;
 }
 
@@ -313,6 +335,24 @@ static SBCStatus _update_behavior_for_km(void *priv)
     SBCStatus ret = SBCOK;
     boot_proc_t *bp = (boot_proc_t *)priv;
 
+#ifdef _TEST_ERROR_SET_    
+        if (NvramErr_IsTrue(ERR_PREV_FW_NOTEXIST)) {
+            sbc_err_sysprn(SBC_LOG_CMN_PRIO_INFO, 2,
+                 SYS_LOG_HOST_BOOT,
+                 SYS_LOG_APP_NAME,
+                 SYS_LOG_CSC_NAME,
+                 0,
+                 L"Validation",
+                 L"SBC_VENDOR_SP Previously Firmware Not Exists \n");
+
+            //ret = SBCFAIL;
+
+            bp->pvs_sw_bnk = 0;
+            ret = SBCFAIL;
+            goto errdone;
+        }
+#endif
+
     switch(bp->bootst) {
     case SB_PROC_ST_ABNRAM:
         // Operation for this is processing in 
@@ -389,6 +429,7 @@ errdone:
              L"Validation",
              L"SBC_VENDOR_SP Firmware Restore Starting \n");
 
+
         if(_check_prev_fw(bp->pvs_sw_bnk) == TRUE) {
             // Previously exist in Raw Part.
             SBC_BootKeyModeChange(BOOT_MODE_RECOVERY,
@@ -415,7 +456,8 @@ errdone:
                      0,
                      L"Validation",
                      L"SBC_VENDOR_SP Previously Firmware Restore Fail \n");
-                goto errdone;
+                ret = SBCFAIL;
+                goto errdone2;
             }
 
             sbc_err_sysprn(SBC_LOG_CMN_PRIO_INFO, 2,
@@ -430,11 +472,13 @@ errdone:
             if(skip_protsw != TRUE) {
                 ret =  _proetcted_sw_re_enc_dec((void *)bp);
                 if(ret != SBCOK) {
-                    eprint("Detection _proetcted_sw_re_enc_dec ");
-                    goto errdone;
+                    //goto errdone;
+                    ret = SBCFAIL;
                 }
             }
 #endif
+
+            ret = SBCFAIL;
 
         }
         else {
@@ -472,7 +516,8 @@ errdone:
                      0,
                      L"Validation",
                      L"SBC_VENDOR_SP Factory Firmware Restore Fail \n");
-                goto errdone;
+                ret = SBCFAIL;
+                goto errdone2;
             }
 
             sbc_err_sysprn(SBC_LOG_CMN_PRIO_INFO, 2,
@@ -488,11 +533,14 @@ errdone:
                 ret =  _proetcted_sw_re_enc_dec((void *)bp);
                 if(ret != SBCOK) {
                     eprint("Detection _proetcted_sw_re_enc_dec ");
-                    goto errdone;
+                    //goto errdone;
+                    ret = SBCFAIL;
                 }
             }
 #endif
         }
+
+        ret = SBCFAIL;
     }
     else {
         sbc_err_sysprn(SBC_LOG_CMN_PRIO_INFO, 2,
@@ -503,7 +551,7 @@ errdone:
              L"Validation",
              L"SBC_VENDOR_SP Update Mode operation done \n");
     }
-
+errdone2:
     return ret;
 }
 
