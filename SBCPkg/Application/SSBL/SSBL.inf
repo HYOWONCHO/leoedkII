@@ -128,16 +128,16 @@
 [BuildOptions]
     #Firmware Verify Real
     *_*_*_CC_FLAGS = -D_FW_VERIFY_UPTO_CRT_
-    *_*_*_CC_FLAGS = -D_USECASE_TEST_
+    #*_*_*_CC_FLAGS = -D_USECASE_TEST_
     *_*_*_CC_FLAGS = -D_HANDLE_PROTSW_
-    *_*_*_CC_FLAGS = -D_TEST_ERROR_SET_
+    #*_*_*_CC_FLAGS = -D_TEST_ERROR_SET_
 
 
     #Test Mode 
     #*_*_*_CC_FLAGS = -D_FILE_RD_BM_ -D_SBC_DEBUG_ON_
     #*_*_*_CC_FLAGS = -D_FILE_RD_BM_ -D_SSBL_TEST_
     #*_*_*_CC_FLAGS = -D_SSBL_FACTORY_TEST_
-    *_*_*_CC_FLAGS = -D_ATSW_INTGR_TEST_
+    #*_*_*_CC_FLAGS = -D_ATSW_INTGR_TEST_
 
     #Debug On
     #*_*_*_CC_FLAGS = -D_SBC_DEBUG_ON_ 

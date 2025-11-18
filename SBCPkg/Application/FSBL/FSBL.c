@@ -1216,7 +1216,7 @@ UefiMain (
                  SYS_LOG_CSC_NAME,
                  8,
                  L"Detectoin",
-                 L"SBC_SP_FW FSBL tampering check fail \n");
+                 L"SBC_SP_FW  Failed to FSBL Verify \n");
           retval = EFI_INVALID_PARAMETER;
           btproc.bootst = SB_PROC_ST_ABNRAM;
 
@@ -1267,7 +1267,10 @@ UefiMain (
 
     dprint("Boot Mode is %d", h_rawprtheader.bootmode);
     ZeroMem(mrgmsg, sizeof mrgmsg);
-    UnicodeSPrint(mrgmsg, sizeof mrgmsg, L"SBC_SP_FW FSBL Boot Mode Check (0x%x)\n", h_rawprtheader.bootmode);
+    UnicodeSPrint(mrgmsg, sizeof mrgmsg, L"SBC_SP_FW FSBL Boot Mode (0x%x) And Key Mode (0x%x) \n", 
+                  h_rawprtheader.bootmode,
+                  h_rawprtheader.keymode);
+
     sbc_err_sysprn(SBC_LOG_CMN_PRIO_INFO, 2,
                      SYS_LOG_HOST_BOOT,
                      SYS_LOG_APP_NAME,
@@ -1316,7 +1319,7 @@ UefiMain (
                      SYS_LOG_CSC_NAME,
                      8,
                      L"EVT",
-                     L"SBC_Dice_Verify Failed to Device ID verify");
+                     L"SBC_SP_FW SSBL self-verify Fail");
 
           is_boot_status = FALSE;
           retval = EFI_INVALID_PARAMETER;
@@ -1408,6 +1411,15 @@ UefiMain (
           is_boot_status = FALSE;
           goto errdone;
       }
+
+
+      sbc_err_sysprn(SBC_LOG_CMN_PRIO_INFO, 2,
+             SYS_LOG_HOST_BOOT,
+             SYS_LOG_APP_NAME,
+             SYS_LOG_CSC_NAME,
+             8,
+             SYS_LOG_EVT_VALDIATION,
+             L"SBC_Integrity_All boot components passed signature verification \n");
 #endif     
 
       ret = SBC_BootModeFactory(h_blkio, ImageHandle);
@@ -1473,6 +1485,14 @@ UefiMain (
           is_boot_status = FALSE;
           goto errdone;
       }
+
+      sbc_err_sysprn(SBC_LOG_CMN_PRIO_INFO, 2,
+             SYS_LOG_HOST_BOOT,
+             SYS_LOG_APP_NAME,
+             SYS_LOG_CSC_NAME,
+             8,
+             SYS_LOG_EVT_VALDIATION,
+             L"SBC_Integrity_All boot components passed signature verification \n");
 #endif     
       ret = SBC_BootModeNormalAndpUdate(h_blkio, ImageHandle, currbank_id);
       if (ret != SBCOK) {
@@ -1490,24 +1510,24 @@ UefiMain (
       ret = SBC_SSBL_Verify(h_blkio, NULL, prevbank_id, BOOT_MODE_RECOVERY, STR_SSBL_F_NAME);
       if (ret != SBCOK) {
             sbc_err_sysprn(SBC_LOG_CMN_PRIO_ERR, 2,
-                       SYS_LOG_HOST_BOOT,
-                       SYS_LOG_APP_NAME,
-                       SYS_LOG_CSC_NAME,
-                       8,
-                       L"Detection",
-                       L"FSBL tampering check fail");
+                 L"SBC",
+                 L"FSBL",
+                 L"Weapon System",
+                 8,
+                 L"Validation",
+                 L"SBC_SP_FW SSBL self-verify fail");
             is_boot_status = FALSE;
             retval = EFI_INVALID_PARAMETER;
             goto errdone;
       }
 
-     sbc_err_sysprn(SBC_LOG_CMN_PRIO_ERR, 2,
-                     SYS_LOG_HOST_BOOT,
-                     SYS_LOG_APP_NAME,
-                     SYS_LOG_CSC_NAME,
-                     8,
-                     L"Determine Firmare Tampering ",
-                     L"FSBL tampering check Done");
+      sbc_err_sysprn(SBC_LOG_CMN_PRIO_ERR, 2,
+           L"SBC",
+           L"FSBL",
+           L"Weapon System",
+           8,
+           L"Validation",
+           L"SBC_SP_FW SSBL self-verify Success");
 
      ret =  SBC_DeviceIdKyeVerify(h_blkio, diceid.devid, diceid.migid);
      if (ret != SBCOK) {
@@ -1522,6 +1542,14 @@ UefiMain (
              is_boot_status = FALSE;
              goto errdone;
      }
+
+    sbc_err_sysprn(SBC_LOG_CMN_PRIO_INFO, 2,
+             SYS_LOG_HOST_BOOT,
+             SYS_LOG_APP_NAME,
+             SYS_LOG_CSC_NAME,
+             8,
+             SYS_LOG_EVT_VALDIATION,
+             L"SBC_Integrity_All boot components passed signature verification \n");
 #endif  
 
       // Previously Boot FW loading 

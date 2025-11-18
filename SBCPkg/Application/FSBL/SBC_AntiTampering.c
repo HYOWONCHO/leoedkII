@@ -3285,10 +3285,29 @@ SBCStatus  SBC_FSBLIntgCheck([[gnu::unused]]EFI_HANDLE *h_image , VOID *blkio, V
       goto errdone;
     }
 
+    sbc_err_sysprn(SBC_LOG_CMN_PRIO_ERR, 2,
+                 SYS_LOG_HOST_BOOT,
+                 SYS_LOG_APP_NAME,
+                 SYS_LOG_CSC_NAME,
+                 8,
+                 L"Detectoin",
+                 L"SBC_SP_FW  Success to FSBL RootCA Verify \n");
+
 
     
 
 errdone:
+
+    if (ret != SBCOK) {
+        sbc_err_sysprn(SBC_LOG_CMN_PRIO_ERR, 2,
+                 SYS_LOG_HOST_BOOT,
+                 SYS_LOG_APP_NAME,
+                 SYS_LOG_CSC_NAME,
+                 8,
+                 L"Detectoin",
+                 L"SBC_SP_FW  Failed to FSBL RootCA Verify \n");
+    }
+
     if (imgbuf != NULL) {
         FreePool(imgbuf);
         imgbuf=  NULL;
