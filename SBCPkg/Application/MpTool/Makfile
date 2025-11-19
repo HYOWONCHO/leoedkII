@@ -1,0 +1,50 @@
+# -------------------------------------------------------
+# Project Settings
+# -------------------------------------------------------
+TARGET      := app
+BUILD_DIR   := build
+
+# -------------------------------------------------------
+# Directories
+# -------------------------------------------------------
+SRC_DIR     := src
+INC_DIR     := inc
+THIRD_INC   := 3rdparty/include
+THIRD_LIB   := 3rdparty/lib
+
+# -------------------------------------------------------
+# Compiler Settings
+# -------------------------------------------------------
+CC      := gcc
+CFLAGS  := -Wall -Wextra -O2 -I$(INC_DIR) -I$(THIRD_INC)
+LDFLAGS := -L$(THIRD_LIB)
+LDLIBS  :=                      # e.g. -lm -lpthread -lssl -lcrypto
+
+# -------------------------------------------------------
+# Source / Object Files
+# -------------------------------------------------------
+SRCS    := $(wildcard $(SRC_DIR)/*.c)
+OBJS    := $(patsubst $(SRC_DIR)/%.c,$(BUILD_DIR)/%.o,$(SRCS))
+
+# -------------------------------------------------------
+# Build Rules
+# -------------------------------------------------------
+all: $(TARGET)
+
+$(TARGET): $(OBJS)
+	$(CC) $(OBJS) $(LDFLAGS) $(LDLIBS) -o $@
+
+$(BUILD_DIR)/%.o: $(SRC_DIR)/%.c
+	@mkdir -p $(BUILD_DIR)
+	$(CC) $(CFLAGS) -c $< -o $@
+
+# -------------------------------------------------------
+# Utility
+# -------------------------------------------------------
+clean:
+	rm -rf $(BUILD_DIR) $(TARGET)
+
+re: clean all
+
+.PHONY: all clean re
+
