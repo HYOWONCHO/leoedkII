@@ -17,6 +17,8 @@
 // ANSI escape code to reset color and attributes
 #define ANSI_COLOR_RESET    "\x1b[0m"
 
+#define FSBL_LOG_PATH  L"\\EFI\\BOOT\\FSBL_sys.log"
+
 
 #define SYS_LOG_EVT_VALDIATION                  L"Validation"
 #define SYS_LOG_EVT_DETECTION                   L"Detection"

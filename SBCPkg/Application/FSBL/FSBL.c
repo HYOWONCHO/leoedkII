@@ -1008,7 +1008,7 @@ EFI_STATUS ParseShellOptions(VOID *hndl)
 }
 #endif
 
-
+extern EFI_STATUS SBC_LogFileInit(VOID);
 
 EFI_STATUS
 EFIAPI
@@ -1067,6 +1067,8 @@ UefiMain (
                  L"Detetion",
                  L"SBC_VENDOR_SP FSBL Statring");
 
+
+    SBC_LogFileInit();
 
     is_boot_status = TRUE;
 

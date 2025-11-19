@@ -1072,8 +1072,7 @@ SBC_InternalPrint (
 // SBC_LogPrint (Main Logging Function)
 // ===========================================================================
 
-VOID
-SBC_LogPrint(
+VOID SBC_LogPrint(
   CONST CHAR16* func,     // For [%s:%d] if uncommented (CHAR16*)
   UINT32 funcline,        // For [%s:%d] if uncommented
   UINT32 prio,            // Priority
@@ -1212,7 +1211,7 @@ SBC_LogPrint(
     }
 
 
-     Print(L"%s\n", full_log_msg);
+    Print(L"%s\n", full_log_msg);
     // Now wrlog points to a proper ASCII string
     CHAR8 *wrlog_ptr = AsciiLogBuffer; 
     
@@ -1227,8 +1226,52 @@ SBC_LogPrint(
 
     //dprint("SBC_LogPrint: ASCII Log msg after space removal: %a (Final Length: %d)\n", wrlog_ptr, final_ascii_len);
 
-    // _sbc_write_log_file expects CHAR8* and its strlen.
-    _sbc_write_log_file(wrlog_ptr, final_ascii_len);
+    {
+        EFI_SIMPLE_FILE_SYSTEM_PROTOCOL *SimpleFs;
+        EFI_FILE_PROTOCOL *Root;
+        EFI_FILE_PROTOCOL *File;
+        EFI_STATUS Status;
+
+        Status = gBS->HandleProtocol(
+                        gImageHandle,
+                        &gEfiSimpleFileSystemProtocolGuid,
+                        (VOID**)&SimpleFs
+                    );
+        if (!EFI_ERROR(Status)) {
+
+            Status = SimpleFs->OpenVolume(SimpleFs, &Root);
+            if (!EFI_ERROR(Status)) {
+
+                // Open file for append (READ | WRITE). Do NOT use CREATE.
+                Status = Root->Open(
+                            Root,
+                            &File,
+                            FSBL_LOG_PATH,
+                            EFI_FILE_MODE_READ | EFI_FILE_MODE_WRITE,
+                            0
+                        );
+
+                if (!EFI_ERROR(Status)) {
+
+                    // Move cursor to end for append
+                    File->SetPosition(File, (UINT64)-1);
+
+                    // Write ASCII buffer
+                    UINTN WriteLen = final_ascii_len;
+                    File->Write(File, &WriteLen, wrlog_ptr);
+
+                    // Add newline
+                    CHAR8 NewLine[2] = { '\n', 0 };
+                    UINTN NL = 1;
+                    File->Write(File, &NL, NewLine);
+
+                    File->Close(File);
+                }
+
+                Root->Close(Root);
+            }
+        }
+    }
 
 ExitLog:
     return;
@@ -1255,6 +1298,44 @@ UINTN remove_all_space(CHAR8 *buffer, UINTN buffer_size_in_bytes) {
     return write_idx; // Return new length
 }
 
+
+EFI_STATUS SBC_LogFileInit(VOID)
+{
+    EFI_SIMPLE_FILE_SYSTEM_PROTOCOL *SimpleFs;
+    EFI_FILE_PROTOCOL *Root;
+    EFI_FILE_PROTOCOL *File;
+    EFI_STATUS Status;
+
+    Status = gBS->HandleProtocol(
+                    gImageHandle,
+                    &gEfiSimpleFileSystemProtocolGuid,
+                    (VOID**)&SimpleFs
+                );
+    if (EFI_ERROR(Status))
+        return Status;
+
+    Status = SimpleFs->OpenVolume(SimpleFs, &Root);
+    if (EFI_ERROR(Status))
+        return Status;
+
+    // Try to open the file with CREATE|WRITE to truncate
+    Status = Root->Open(
+                Root,
+                &File,
+                FSBL_LOG_PATH,
+                EFI_FILE_MODE_CREATE | EFI_FILE_MODE_READ | EFI_FILE_MODE_WRITE,
+                0
+            );
+    if (!EFI_ERROR(Status)) {
+        // Immediately close → this truncates file
+        File->Close(File);
+    }
+
+    Root->Close(Root);
+    return EFI_SUCCESS;
+}
+
+#if 0
 // Replace with your actual implementation for writing to a log file or sending over network
 EFI_STATUS _sbc_write_log_file(CHAR8 *log_data, UINTN length_in_bytes) {
     if (log_data == NULL || length_in_bytes == 0) {
@@ -1264,52 +1345,53 @@ EFI_STATUS _sbc_write_log_file(CHAR8 *log_data, UINTN length_in_bytes) {
     // For demonstration, just print to console as ASCII
     //Print(L"SysLog_OUTPUT (ASCII): %a\n", log_data);
 
-    // --- Placeholder for actual network (UDP) sending ---
-    // EFI_STATUS Status;
-    // EFI_UDP4_PROTOCOL *gUdp4 = NULL; // Get this protocol instance elsewhere
-    // EFI_IP4_CONFIG_PROTOCOL *gIp4Config = NULL; // Get this protocol instance elsewhere
-    // UINT32 SyslogServerIp = 0xC0A8010A; // Example: 192.168.1.10
-    // UINT16 SyslogServerPort = 514;
-    //
-    // // Initialize UDP, configure IP, etc. (complex setup not shown)
-    // // Status = gBS->LocateProtocol(&gEfiUdp4ProtocolGuid, NULL, (VOID **)&gUdp4);
-    // // if (!EFI_ERROR(Status) && gUdp4 != NULL) {
-    // //     EFI_UDP4_TRANSMIT_DATA TxData;
-    // //     ZeroMem(&TxData, sizeof(TxData));
-    // //     TxData.DestinationAddress.Addr[0] = (UINT8)(SyslogServerIp >> 24);
-    // //     ...
-    // //     TxData.FragmentCount = 1;
-    // //     TxData.Fragment[0].FragmentLength = (UINT32)length_in_bytes;
-    // //     TxData.Fragment[0].FragmentBuffer = log_data;
-    // //     Status = gUdp4->Transmit(gUdp4, &TxData);
-    // // }
-    //
-    // --- Placeholder for actual file writing ---
-    // EFI_STATUS Status;
-    // EFI_SIMPLE_FILE_SYSTEM_PROTOCOL *gFs = NULL; // Get this protocol instance elsewhere
-    // EFI_FILE_PROTOCOL *LogFile = NULL;
-    //
-    // // Locate file system protocol (e.g., on ESP or USB)
-    // // Status = gBS->LocateProtocol(&gEfiSimpleFileSystemProtocolGuid, NULL, (VOID **)&gFs);
-    // // if (!EFI_ERROR(Status) && gFs != NULL) {
-    // //     // Open root directory
-    // //     EFI_FILE_PROTOCOL *Root = NULL;
-    // //     Status = gFs->OpenVolume(gFs, &Root);
-    // //     if (!EFI_ERROR(Status) && Root != NULL) {
-    // //         // Open or create log file
-    // //         Status = Root->Open(Root, &LogFile, L"\\SysLog.log", EFI_FILE_MODE_READ | EFI_FILE_MODE_WRITE | EFI_FILE_MODE_CREATE, 0);
-    // //         if (!EFI_ERROR(Status) && LogFile != NULL) {
-    // //             // Seek to end and write
-    // //             LogFile->SetPosition(LogFile, EFI_MAX_UINT64); // Seek to end
-    // //             LogFile->Write(LogFile, &length_in_bytes, log_data);
-    // //             LogFile->Close(LogFile);
-    // //         }
-    // //         Root->Close(Root);
-    // //     }
-    // // }
+    //--- Placeholder for actual network (UDP) sending ---
+    EFI_STATUS Status;
+    EFI_UDP4_PROTOCOL *gUdp4 = NULL; // Get this protocol instance elsewhere
+    EFI_IP4_CONFIG_PROTOCOL *gIp4Config = NULL; // Get this protocol instance elsewhere
+    UINT32 SyslogServerIp = 0xC0A8010A; // Example: 192.168.1.10
+    UINT16 SyslogServerPort = 514;
+
+    // Initialize UDP, configure IP, etc. (complex setup not shown)
+    // Status = gBS->LocateProtocol(&gEfiUdp4ProtocolGuid, NULL, (VOID **)&gUdp4);
+    // if (!EFI_ERROR(Status) && gUdp4 != NULL) {
+    //     EFI_UDP4_TRANSMIT_DATA TxData;
+    //     ZeroMem(&TxData, sizeof(TxData));
+    //     TxData.DestinationAddress.Addr[0] = (UINT8)(SyslogServerIp >> 24);
+    //     ...
+    //     TxData.FragmentCount = 1;
+    //     TxData.Fragment[0].FragmentLength = (UINT32)length_in_bytes;
+    //     TxData.Fragment[0].FragmentBuffer = log_data;
+    //     Status = gUdp4->Transmit(gUdp4, &TxData);
+    // }
+
+    //--- Placeholder for actual file writing ---
+    EFI_STATUS Status;
+    EFI_SIMPLE_FILE_SYSTEM_PROTOCOL *gFs = NULL; // Get this protocol instance elsewhere
+    EFI_FILE_PROTOCOL *LogFile = NULL;
+
+    // Locate file system protocol (e.g., on ESP or USB)
+    // Status = gBS->LocateProtocol(&gEfiSimpleFileSystemProtocolGuid, NULL, (VOID **)&gFs);
+    // if (!EFI_ERROR(Status) && gFs != NULL) {
+    //     // Open root directory
+    //     EFI_FILE_PROTOCOL *Root = NULL;
+    //     Status = gFs->OpenVolume(gFs, &Root);
+    //     if (!EFI_ERROR(Status) && Root != NULL) {
+    //         // Open or create log file
+    //         Status = Root->Open(Root, &LogFile, L"\\SysLog.log", EFI_FILE_MODE_READ | EFI_FILE_MODE_WRITE | EFI_FILE_MODE_CREATE, 0);
+    //         if (!EFI_ERROR(Status) && LogFile != NULL) {
+    //             // Seek to end and write
+    //             LogFile->SetPosition(LogFile, EFI_MAX_UINT64); // Seek to end
+    //             LogFile->Write(LogFile, &length_in_bytes, log_data);
+    //             LogFile->Close(LogFile);
+    //         }
+    //         Root->Close(Root);
+    //     }
+    // }
 
     return EFI_SUCCESS;
 }
+#endif
 #if 0
 #include <Uefi.h>
 #include <Library/BaseMemoryLib.h>
