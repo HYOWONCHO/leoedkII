@@ -506,6 +506,15 @@ EFI_STATUS efi_boot_fsbl_load(LV_t *lv)
   }
 
   // 4. Open X64.efi file
+#ifndef _SSBL_TEST_
+  Status = BootDir->Open (
+                     BootDir,
+                     &X64File,
+                     L"bootx64.efi",
+                     EFI_FILE_MODE_READ, // Open for reading
+                     0 // Not creating, so attributes are 0
+                     );
+#else
   Status = BootDir->Open (
                      BootDir,
                      &X64File,
@@ -513,10 +522,7 @@ EFI_STATUS efi_boot_fsbl_load(LV_t *lv)
                      EFI_FILE_MODE_READ, // Open for reading
                      0 // Not creating, so attributes are 0
                      );
-  if (EFI_ERROR (Status)) {
-   dprint("Failed to open X64.efi: %r\n", Status);
-    goto Exit;
-  }
+#endif
 
   // 5. Get File Size
   FileInfoSize = 0;
