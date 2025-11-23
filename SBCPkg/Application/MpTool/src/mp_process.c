@@ -13,7 +13,7 @@ ssize_t dump_image_from_rawprt(void *_ctx, void **out_buf)
 
     if(ctx->dump_size <= 0) {
         fprintf(stderr, 
-                "Invalid Length for Image dump (%d)",
+                "Invalid Length for Image dump (%d) \n",
                 ctx->dump_size);
         return ret;
     }

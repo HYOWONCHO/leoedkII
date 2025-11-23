@@ -51,15 +51,19 @@ int parse_opts(int argc, char *argv[], struct cmd_ctx *ctx)
         switch (opt) {
 
             case 1: /* dumpimg */
-                printf("dumping : %d \n", opt);
+                printf("dumping : %d , argc :%d optarg : %s\n", optind, argc, optarg);
                 if (optind >= argc) {
                     print_usage(argv[0]);
                     return -1;
                 }
                 ctx->type = CMD_DUMPIMG;
-                ctx->dump_addr = strtoul(optarg, NULL, 16);
+                //ctx->dump_addr = strtoul(optarg, NULL, 16);
+                ctx->dump_addr = strtoul(argv[optind++], NULL, 16);
                 ctx->dump_size = strtoul(argv[optind], NULL, 0);
-                optind++;
+
+                printf("dump addr : 0x%lx, size : %ld \n", 
+                        ctx->dump_addr, ctx->dump_size);
+                //optind++;
                 return 0;
 
             case 2: /* loadimg */
@@ -69,23 +73,23 @@ int parse_opts(int argc, char *argv[], struct cmd_ctx *ctx)
                     return -1;
                 }
                 ctx->type = CMD_LOADIMG;
-                ctx->file      = optarg;
-                ctx->load_addr = strtoul(argv[optind],     NULL, 16);
-                ctx->load_size = strtoul(argv[optind + 1], NULL, 0);
-                optind += 2;
+                ctx->file      = argv[optind++];
+                ctx->load_addr = strtoul(argv[optind++],     NULL, 16);
+                ctx->load_size = strtoul(argv[optind], NULL, 0);
+                //optind += 2;
                 return 0;
 
             case 3: /* setpres */
                 printf("setpres: %d \n", opt);
-                if (optind + 2 >= argc) {
+                if (optind + 2 > argc) {
                     print_usage(argv[0]);
                     return -1;
                 }
                 ctx->type = CMD_SETPRES;
-                ctx->n1 = atoi(optarg);
-                ctx->c1 = argv[optind][0];
-                ctx->n2 = atoi(argv[optind + 1]);
-                ctx->c2 = argv[optind + 2][0];
+                ctx->n1 = atoi(argv[optind++]);
+                ctx->c1 = argv[optind++][0];
+                ctx->n2 = atoi(argv[optind++]);
+                ctx->c2 = argv[optind][0];
                 optind += 3;
                 return 0;
 
