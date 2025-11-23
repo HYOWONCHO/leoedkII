@@ -7,6 +7,7 @@
 
 
 #include "opt.h"
+#include "mp_process.h"
 
 int main(int argc, char *argv[])
 {
@@ -19,8 +20,15 @@ int main(int argc, char *argv[])
     switch (ctx.type) {
 
         case CMD_DUMPIMG:
-            printf("dumpimg: addr=0x%lx size=%lu\n",
-                    ctx.dump_addr, ctx.dump_size);
+            uint8_t *buf = NULL;
+            printf("dumpimg: path=%s addr=0x%lx size=%lu\n",
+                    ctx.dev_path, ctx.dump_addr, ctx.dump_size);
+
+            dump_image_from_rawprt(&ctx, &buf);
+            if(buf) {
+                free(buf);
+                buf = NULL;
+            }
             break;
 
         case CMD_LOADIMG:

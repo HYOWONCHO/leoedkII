@@ -11,6 +11,7 @@ enum cmd_type {
 
 struct cmd_ctx {
     enum cmd_type type;
+    const char *dev_path;
 
     /* dumpimg */
     unsigned long dump_addr;

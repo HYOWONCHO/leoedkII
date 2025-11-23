@@ -11,7 +11,6 @@
 
 #include "raw_device_ctrl.h"
 
-
 ssize_t raw_read(const char *dev, void *buf, size_t size, off_t offset)
 {
     int fd;
