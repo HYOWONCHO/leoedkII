@@ -14,7 +14,7 @@
 ssize_t raw_read(const char *dev, void *buf, size_t size, off_t offset)
 {
     int fd;
-    ssize_t ret = 1;
+    ssize_t ret = -1;
 
 
     fd = open(dev, O_RDONLY);
@@ -49,6 +49,8 @@ ssize_t raw_write(const char *dev, const void *buf, size_t size, off_t offset)
         fprintf(stderr, "open %s: %s\n", dev, strerror(errno));
         goto errdone;
     }
+
+    hex_dump("write image", buf, size);
 
     ret = pwrite(fd, buf, size, offset);
     if(ret < 0) {

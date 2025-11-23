@@ -15,18 +15,33 @@
  *
  * This prints the buffer in a classic "hexdump -C" style.
  */
+
+
+
 static inline void hex_dump(const char *title, const void *buf, size_t len)
 {
     const uint8_t *data = (const uint8_t *)buf;
     size_t i, j;
 
-    if(title) {
-        printf("%s (len : %d):\n", title, len);
+    if (title)
+        printf("%s (len: %zu):\n", title, len);
+
+    /* print column index header */
+    printf("          ");
+    for (j = 0; j < 16; j++) {
+        printf("%02X ", (unsigned int)j);
+        if (j == 7)
+            printf(" ");
     }
+    printf("\n");
+
+    /* separator line */
+    printf("----------------------------------------------------------------\n");
 
     for (i = 0; i < len; i += 16) {
 
         /* offset */
+        //printf("%08zx  ", i);
         printf("%08zx  ", i);
 
         /* hex bytes */

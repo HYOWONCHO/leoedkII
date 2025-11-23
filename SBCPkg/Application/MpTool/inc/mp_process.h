@@ -7,5 +7,5 @@
 
 
 ssize_t dump_image_from_rawprt(void *_ctx, void **out_buf);
-
+ssize_t set_boot_pres(void *_ctx);
 #endif

@@ -39,6 +39,7 @@ int main(int argc, char *argv[])
         case CMD_SETPRES:
             printf("setpres: %d %c %d %c\n",
                     ctx.n1, ctx.c1, ctx.n2, ctx.c2);
+            set_boot_pres(&ctx);
             break;
 
         case CMD_GETPRES:
