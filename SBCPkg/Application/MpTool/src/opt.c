@@ -10,6 +10,8 @@ static struct option long_opts[] = {
     { "loadimg", required_argument, 0, 2 },
     { "setpres", required_argument, 0, 3 },
     { "getpres", no_argument,       0, 4 },
+    { "setbkm", required_argument, 0, 5 },
+    { "getbkm", no_argument,       0, 6 },
     { 0, 0, 0, 0 },
 };
 
@@ -20,6 +22,8 @@ void print_usage(const char *prog)
     printf("  %s --loadimg <device path> <file> <hex_addr> <size>\n", prog);
     printf("  %s --setpres <device_path> <n1> <c1> <n2> <c2>\n", prog);
     printf("  %s --getpres <device_path>\n", prog);
+    printf("  %s --setbkm <device path> <boot mode> <key mode>\n", prog);
+    printf("  %s --getbkm <device path> \n", prog);
 }
 
 
@@ -97,6 +101,51 @@ int parse_opts(int argc, char *argv[], struct cmd_ctx *ctx)
                 printf("getpres: %d \n", opt);
                 ctx->type = CMD_GETPRES;
                 return 0;
+            case 5:
+                ssize_t ret = -1;
+                if (optind >= argc) {
+                    print_usage(argv[0]);
+                    return -1;
+                }
+
+                ctx->type = CMD_SETBM;
+                ctx->bm = strtoul(argv[optind++], NULL, 16);
+                ctx->km = strtoul(argv[optind++], NULL, 16);
+
+                ret = raw_write(ctx->dev_path, 
+                                (const void *)&ctx->bm, 2, 0x72);
+
+                if (ret < 0) {
+                    fprintf(stderr, "Boot Mode write fail \n");
+                    return -1;
+                }
+                ret = raw_write(ctx->dev_path, 
+                                (const void *)&ctx->km, 2, 0x74);   
+                
+                if (ret < 0) {
+                    fprintf(stderr, "Key Mode write fail \n");
+                    return -1;
+                }
+
+                //break;
+            case 6:
+                uint8_t bkm_buf[4] = {0, };
+                if (optind >= argc) {
+                    print_usage(argv[0]);
+                    return -1;
+                }
+
+                ret = raw_read(ctx->dev_path,
+                               (void *)bkm_buf, 4, 0x72);
+                if (ret < 0) {
+                    fprintf(stderr, "Bot Mode read fail \n");
+                    return -1;
+                }
+
+
+
+                hex_dump("Boot and Key Mode", bkm_buf, 4);
+                break;
 
             default:
                 printf("unknown : %d \n", opt);

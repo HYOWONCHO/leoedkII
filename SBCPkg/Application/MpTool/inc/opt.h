@@ -7,6 +7,8 @@ enum cmd_type {
     CMD_LOADIMG,
     CMD_SETPRES,
     CMD_GETPRES,
+    CMD_SETBM,
+    CMD_GETBM
 };
 
 struct cmd_ctx {
@@ -27,6 +29,10 @@ struct cmd_ctx {
     char c1;
     int n2;
     char c2;
+
+    /* boot and key mode */
+    uint16_t bm;
+    uint16_t km;
 };
 
 int parse_opts(int argc, char *argv[], struct cmd_ctx *ctx);

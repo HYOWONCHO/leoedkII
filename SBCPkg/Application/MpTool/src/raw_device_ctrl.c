@@ -95,6 +95,8 @@ int copy_file_to_raw(const char *dev, const char *file)
         return -1;
     }
 
+    print("%s file length is %ld \n", file, file_size);
+
     /*
      * 1) write 4-byte file size header at offset 0
      */
@@ -117,7 +119,57 @@ int copy_file_to_raw(const char *dev, const char *file)
      * 2) file → raw device (offset starts at 4)
      */
     off_t dst_offset = 4;
+#if 1
+    while (done < file_size) {
 
+        size_t to_read = BLK_SIZE;
+        size_t remain = file_size - done;
+
+        if (remain < BLK_SIZE)
+            to_read = remain;
+
+        /* read block from file */
+        ret = read(fd, blk, to_read);
+        if (ret < 0) {
+            fprintf(stderr, "read(%s): %s\n", file, strerror(errno));
+            close(fd);
+            return -1;
+        }
+        if ((size_t)ret != to_read) {
+            fprintf(stderr, "file partial read %zd/%zu\n", ret, to_read);
+            close(fd);
+            return -1;
+        }
+
+        /* pad last block */
+        if (to_read < BLK_SIZE)
+            memset(blk + to_read, 0, BLK_SIZE - to_read);
+
+        /* write block to raw */
+        ret = raw_write(dev, blk, BLK_SIZE, dst_offset + done);
+        if (ret < 0) {
+            fprintf(stderr, "raw_write(%s): %s\n", dev, strerror(errno));
+            close(fd);
+            return -1;
+        }
+        if (ret != BLK_SIZE) {
+            fprintf(stderr, "raw_write: partial write %zd/%d\n", ret, BLK_SIZE);
+            close(fd);
+            return -1;
+        }
+
+        done += BLK_SIZE;
+
+        /* ==== Progress Display ==== */
+        double progress = (double)done / file_size * 100.0;
+        fprintf(stdout, "\r[%.2f%%] Writing to %s ...", progress, dev);
+        fflush(stdout);
+    }
+
+    /* make sure final line ends cleanly */
+    fprintf(stdout, "\r[100.00%%] Write completed successfully!\n");
+
+#else
     while (done < file_size) {
 
         size_t to_read = BLK_SIZE;
@@ -160,6 +212,8 @@ int copy_file_to_raw(const char *dev, const char *file)
 
         done += BLK_SIZE;
     }
+#endif
+
 
     close(fd);
     return 0;

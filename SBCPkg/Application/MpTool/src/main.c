@@ -34,6 +34,8 @@ int main(int argc, char *argv[])
         case CMD_LOADIMG:
             printf("loadimg: file=%s addr=0x%lx size=%lu\n",
                     ctx.file, ctx.load_addr, ctx.load_size);
+
+            copy_file_to_raw((const char *)ctx.dev_path, (const char *)ctx.file);
             break;
 
         case CMD_SETPRES:
@@ -46,6 +48,12 @@ int main(int argc, char *argv[])
             printf("getpres\n");
             break;
 
+        case CMD_SETBM:
+            printf("setting boot mode \n");
+            break;
+        case CMD_GETBM:
+            printf("getting boot mode \n");s
+            break;
         default:
             print_usage(argv[0]);
             break;
