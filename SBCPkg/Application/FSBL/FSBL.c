@@ -177,16 +177,30 @@ SBCStatus SBC_BootModeFactory(VOID *blkhnd, VOID *ImageHandle)
   [[maybe_unused]]UINTN endlba = 0;
   [[maybe_unused]]INTN       hndlcnt = 0;
   __attribute__((unused))EFI_STATUS retval;
-  CHAR16 *fname = L"\\EFI\\BOOT\\SSBL.efi";
+
+  [[gnu::unused]]CHAR16 *fname = L"\\EFI\\BOOT\\SSBL.efi";
 
 
   LV_t wrlv;
+
+#ifdef _ALL_PASS_
+   sbc_err_sysprn(SBC_LOG_CMN_PRIO_INFO, 2,
+                 SYS_LOG_HOST_BOOT,
+                 SYS_LOG_APP_NAME,
+                 SYS_LOG_CSC_NAME,
+                 0,
+                 L"Detetion",
+                 L"SBC_VENDOR_SP Factory SSBL Forced Running"); 
+  SBC_SSBL_LoadAndStart(ImageHandle);
+  return SBCOK;
+#endif
 
   SBC_RET_VALIDATE_ERRCODEMSG((blkhnd != NULL), SBCNULLP, "Block I/O Handle Nill");
 
   startlba = ((BOOT_SECTOR3_OFS | BOOT_SSBL_OFS) >> SBC_RAWPRT_DFLT_SHIFT);
 
-
+#if 1 //ndef _ALL_PASS_
+//#error "ALL PASSED ENABLE not COmpile"
   ret = SBC_RawPrtReadBlock(blkhnd, (void *)imghdr, &imglen, startlba);
   if (ret != SBCOK) {
     //Print(L"SSBL Factory Block Read Fail \n");
@@ -224,7 +238,7 @@ SBCStatus SBC_BootModeFactory(VOID *blkhnd, VOID *ImageHandle)
 
   _lv_set_data(&wrlv,&loadimg[4], imglen - 4);
 
-#if 1
+
   //for (int idx = 0; idx < hndlcnt; idx++) {
     retval = SBC_WriteFile(ssbl_img_hndl[0], fname, &wrlv);
   //  if (EFI_ERROR(retval)) {
@@ -307,7 +321,10 @@ SBCStatus SBC_BootModeNormalAndpUdate(VOID *blkhnd, VOID *ImageHandle, UINTN nro
 
   LV_t wrlv;
   //UINT8 *imgssbl = NULL;
-
+#ifdef _ALL_PASS_
+  SBC_BootModeFactory(blkhnd, ImageHandle);
+  return SBCOK;
+#endif
   dprint("----- Normal and Update Boot SSBL running ( Bank Id : 0x%x ) -----", nrombank);
 
   SBC_RET_VALIDATE_ERRCODEMSG((nrombank > 0 && nrombank < 3), SBCINVPARAM, "Invalid Parameter for SSBL bank");
@@ -354,7 +371,7 @@ SBCStatus SBC_BootModeNormalAndpUdate(VOID *blkhnd, VOID *ImageHandle, UINTN nro
   _lv_set_data(&wrlv,&loadimg[4], imglen - 4);
 
   //SBC_mem_print_bin("SSBL Load Image", wrlv.value, 512);
-#if 1
+#ifndef _ALL_PASS_
 
   //  for (idx = 0; idx < hndlcnt; idx++) {
   //
@@ -1100,6 +1117,9 @@ UefiMain (
 
     dprint("Pres Low : 0x%04x Cur. Bank ID : %d , Prev. Bank ID : %d ", pres_low, currbank_id, prevbank_id);
 
+#ifdef _ALL_PASS_
+    h_rawprtheader.bootmode = BOOT_MODE_FACTORY;
+#endif
 
     btproc.curr_sw_bnk = currbank_id;
     btproc.pvs_sw_bnk = prevbank_id;
@@ -1221,8 +1241,9 @@ UefiMain (
                  L"SBC_SP_FW  Failed to FSBL Verify \n");
           retval = EFI_INVALID_PARAMETER;
           btproc.bootst = SB_PROC_ST_ABNRAM;
-
+#ifndef _ALL_PASS_
           goto errdone;
+#endif
 
     }
 #endif
@@ -1251,7 +1272,9 @@ UefiMain (
              L"SBC_Dice_Key HW&SW Base Key Creation Fail");
         retval = EFI_INVALID_PARAMETER;
         btproc.bootst = SB_PROC_ST_ABNRAM;
-        goto errdone;
+#ifndef _ALL_PASS_
+          goto errdone;
+#endif
     }
 
     btproc.dice = (VOID *)&diceid;
@@ -1281,6 +1304,7 @@ UefiMain (
                      L"Information",
                      mrgmsg);
 
+
     switch (h_rawprtheader.bootmode) {
     case BOOT_MODE_NORMAL:
       dprint("Boot Mode is BOOT_MODE_NORMAL");
@@ -1306,6 +1330,9 @@ UefiMain (
                            L"SBC_BootFW_Update Fail to MigrationKey Creation \n");
               retval = EFI_INVALID_PARAMETER;
               btproc.bootst = SB_PROC_ST_ABNRAM;
+#ifndef _ALL_PASS_
+              goto errdone;
+#endif
           }
 
           // 
@@ -1325,7 +1352,9 @@ UefiMain (
 
           is_boot_status = FALSE;
           retval = EFI_INVALID_PARAMETER;
-          //goto errdone;
+#ifndef _ALL_PASS_
+          goto errdone;
+#endif
       }
 
       sbc_err_sysprn(SBC_LOG_CMN_PRIO_ERR, 2,
@@ -1347,7 +1376,9 @@ UefiMain (
                      L"SBC_Dice_Verify Failed to Device ID verify");
           retval = EFI_INVALID_PARAMETER;
           is_boot_status = FALSE;
+#ifndef _ALL_PASS_
           goto errdone;
+#endif
       }
 
       sbc_err_sysprn(SBC_LOG_CMN_PRIO_INFO, 2,
@@ -1366,7 +1397,9 @@ UefiMain (
           eprint("BOOT_MODE_NORMAL Boot Fail");
           retval = EFI_INVALID_PARAMETER;
           is_boot_status = FALSE;
+#ifndef _ALL_PASS_
           goto errdone;
+#endif
       }
       break;
     case BOOT_MODE_FACTORY:
@@ -1386,7 +1419,9 @@ UefiMain (
             is_boot_status = FALSE;
             retval = EFI_INVALID_PARAMETER;
             factory_md_abnormal_boot_state(&btproc);
-            goto errdone;
+#ifndef _ALL_PASS_
+          goto errdone;
+#endif
       }
 
       sbc_err_sysprn(SBC_LOG_CMN_PRIO_ERR, 2,
@@ -1411,7 +1446,9 @@ UefiMain (
           factory_md_abnormal_boot_state(&btproc);
           retval = EFI_INVALID_PARAMETER;
           is_boot_status = FALSE;
+#ifndef _ALL_PASS_
           goto errdone;
+#endif
       }
 
 
@@ -1430,7 +1467,9 @@ UefiMain (
           factory_md_abnormal_boot_state(&btproc);
           retval = EFI_INVALID_PARAMETER;
           is_boot_status = FALSE;
+#ifndef _ALL_PASS_
           goto errdone;
+#endif
       }
 //    if (is_boot_status != TRUE) {
 //      goto errdone;
@@ -1463,7 +1502,9 @@ UefiMain (
                  L"SBC_SP_FW SSBL self-verify Fail");
             is_boot_status = FALSE;
             retval = EFI_INVALID_PARAMETER;
-            goto errdone;
+#ifndef _ALL_PASS_
+          goto errdone;
+#endif
       }
 
       sbc_err_sysprn(SBC_LOG_CMN_PRIO_ERR, 2,
@@ -1485,7 +1526,9 @@ UefiMain (
                      L"SBC_Dice_Verify Failed to Device ID verify");
           retval = EFI_INVALID_PARAMETER;
           is_boot_status = FALSE;
+#ifndef _ALL_PASS_
           goto errdone;
+#endif
       }
 
       sbc_err_sysprn(SBC_LOG_CMN_PRIO_INFO, 2,
@@ -1501,7 +1544,9 @@ UefiMain (
           eprint("BOOT_MODE_UPDATE Boot Fail");
           retval = EFI_INVALID_PARAMETER;
           is_boot_status = FALSE;
+#ifndef _ALL_PASS_
           goto errdone;
+#endif
       }
 
       break;
@@ -1520,7 +1565,9 @@ UefiMain (
                  L"SBC_SP_FW SSBL self-verify fail");
             is_boot_status = FALSE;
             retval = EFI_INVALID_PARAMETER;
-            goto errdone;
+#ifndef _ALL_PASS_
+          goto errdone;
+#endif
       }
 
       sbc_err_sysprn(SBC_LOG_CMN_PRIO_ERR, 2,
@@ -1542,7 +1589,9 @@ UefiMain (
                      L"SBC_Dice_Verify Failed to Device ID verify");
              retval = EFI_INVALID_PARAMETER;
              is_boot_status = FALSE;
-             goto errdone;
+#ifndef _ALL_PASS_
+          goto errdone;
+#endif
      }
 
     sbc_err_sysprn(SBC_LOG_CMN_PRIO_INFO, 2,
@@ -1560,7 +1609,9 @@ UefiMain (
           eprint("BOOT_MODE_RECOVERY Boot Fail");
           retval = EFI_INVALID_PARAMETER;
           is_boot_status = FALSE;
+#ifndef _ALL_PASS_
           goto errdone;
+#endif
       }
       break;
     default:
@@ -1605,7 +1656,11 @@ errdone:
     //dprint("sys_ns_var : %ld", sys_ns_var);
 
     SBC_LogElapsedTime(L"x FSBL Boot Time", sys_ns_var);
+#ifndef _ALL_PASS_
     SBC_ShutdownSystem();
+#else 
+    SBC_BootModeFactory(h_blkio, ImageHandle);
+#endif
     return retval;
 }
 

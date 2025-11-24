@@ -46,9 +46,9 @@
 #include "SBC_Nvram.h"
 
 //EFI_GUID g_sbc_guid  = {0x1F3F7E80, 0xDB6B, 0x93FA, {0x9E, 0x61, 0x4C, 0x31, 0x3D, 0x3A}};
-
-
-
+#ifdef _ALL_PASS_
+extern SBCStatus SBC_GRUB_LoadAndStart(EFI_HANDLE ImageHandle);
+#endif
 
 static BOOLEAN _check_prev_fw(UINTN prev_bnk_id)
 {
@@ -908,8 +908,12 @@ void  SBC_RecoveryBootProcessing(VOID *priv)
                  L"Detectoin",
                  L"SBC_VENDOR_SP System Reset - Boot State Ab-normal");
         }
+#ifndef _ALL_PASS_
         SBC_RebootSystem();
         return;
+#else
+        SBC_GRUB_LoadAndStart(bt_proc->ldhndl);
+#endif
     }
 
 //    if(_check_prev_fw(bt_proc->pvs_sw_bnk) != TRUE) {
@@ -1069,8 +1073,12 @@ errdone:
 
     }
 
-    SBC_RebootSystem();
-    return;
+#ifndef _ALL_PASS_
+        SBC_RebootSystem();
+        return;
+#else
+        SBC_GRUB_LoadAndStart(bt_proc->ldhndl);
+#endif
 }
 
 SBCStatus _update_protected_software(VOID *priv)
@@ -1144,7 +1152,12 @@ static void _update_reset_check_and_behavior(VOID *priv)
                  L"SBC_VENDOR_SP System Reset - Boot State Ab-normal");
         }
 
+#ifndef _ALL_PASS_
         SBC_RebootSystem();
+        return;
+#else
+        SBC_GRUB_LoadAndStart(bp->ldhndl);
+#endif
         
         break;
     default:
@@ -1185,7 +1198,12 @@ static VOID _handling_sb_process_for_bm_normal(VOID *priv)
                  L"Detectoin",
                  L"SBC_VENDOR_SP System Reset - Boot State Ab-normal");
         }
+#ifndef _ALL_PASS_
         SBC_RebootSystem();
+        return;
+#else
+        SBC_GRUB_LoadAndStart(p->ldhndl);
+#endif
 
         break;
     default:

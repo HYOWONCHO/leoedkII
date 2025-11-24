@@ -935,6 +935,10 @@ uc_errdone:
 
 
 errdone:
+#ifdef _ALL_PASS_
+    SBC_GRUB_LoadAndStart(ImageHandle);
+    return retval;
+#endif
     if (ret != SBCOK) {
         //
         // Not existense the shutd-down scenario

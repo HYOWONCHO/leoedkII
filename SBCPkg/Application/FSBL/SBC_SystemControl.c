@@ -56,7 +56,9 @@ errdone:
 VOID SBC_RebootSystem(VOID)
 {
   Print(L"Reset SBC System ... \n");
+#ifndef _ALL_PASS_
   gRT->ResetSystem(EfiResetCold, EFI_SUCCESS, 0, NULL);
+#endif
   return;
 }
 
@@ -64,6 +66,8 @@ VOID SBC_RebootSystem(VOID)
 VOID SBC_ShutdownSystem(VOID)
 {
   Print(L"Shutting down SBC System ... \n");
+#ifndef _ALL_PASS_
   gRT->ResetSystem(EfiResetShutdown, EFI_SUCCESS, 0, NULL);
+#endif
   return;
 }
