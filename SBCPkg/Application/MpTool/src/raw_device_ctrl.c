@@ -50,7 +50,7 @@ ssize_t raw_write(const char *dev, const void *buf, size_t size, off_t offset)
         goto errdone;
     }
 
-    hex_dump("write image", buf, size);
+    //hex_dump("write image", buf, size);
 
     ret = pwrite(fd, buf, size, offset);
     if(ret < 0) {
@@ -95,7 +95,7 @@ int copy_file_to_raw(const char *dev, const char *file)
         return -1;
     }
 
-    print("%s file length is %ld \n", file, file_size);
+    printf("%s file length is %ld \n", file, file_size);
 
     /*
      * 1) write 4-byte file size header at offset 0

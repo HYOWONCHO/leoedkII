@@ -8,6 +8,8 @@
 
 #include "opt.h"
 #include "mp_process.h"
+#include "log_print.h"
+#include "raw_device_ctrl.h"
 
 int main(int argc, char *argv[])
 {
@@ -45,14 +47,25 @@ int main(int argc, char *argv[])
             break;
 
         case CMD_GETPRES:
+            uint8_t pres_buf[8] = {0, };
+            ssize_t ret = -1;
             printf("getpres\n");
+
+            ret = raw_read(ctx.dev_path, pres_buf, sizeof pres_buf, 0x78);
+            if(ret < 0) {
+                fprintf(stderr, "pres reading fail");
+                return -1;
+            }
+
+            hex_dump("Boot Presence", pres_buf, sizeof pres_buf);
+
             break;
 
         case CMD_SETBM:
-            printf("setting boot mode \n");
+            //printf("setting boot mode \n");
             break;
         case CMD_GETBM:
-            printf("getting boot mode \n");s
+           // printf("getting boot mode \n");
             break;
         default:
             print_usage(argv[0]);

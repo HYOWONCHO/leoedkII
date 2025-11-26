@@ -4,6 +4,7 @@
 #include <getopt.h>
 
 #include "opt.h"
+#include "raw_device_ctrl.h"
 
 static struct option long_opts[] = {
     { "dumpimg", required_argument, 0, 1 },
@@ -17,13 +18,13 @@ static struct option long_opts[] = {
 
 void print_usage(const char *prog)
 {
-    printf("Usage:\n");
+    printf(MAGENTA "Usage:\n");
     printf("  %s --dumpimg <device path> <hex_addr> <size>\n", prog);
     printf("  %s --loadimg <device path> <file> <hex_addr> <size>\n", prog);
     printf("  %s --setpres <device_path> <n1> <c1> <n2> <c2>\n", prog);
     printf("  %s --getpres <device_path>\n", prog);
     printf("  %s --setbkm <device path> <boot mode> <key mode>\n", prog);
-    printf("  %s --getbkm <device path> \n", prog);
+    printf("  %s --getbkm <device path> \n" RESET, prog);
 }
 
 
@@ -32,12 +33,13 @@ void print_usage(const char *prog)
 int parse_opts(int argc, char *argv[], struct cmd_ctx *ctx)
 {
     int opt, idx = 0;
+    int optind_pass = 0;
 
     memset(ctx, 0, sizeof(*ctx));
 
     /* 첫 번째 인자는 항상 dev_path 이어야 한다 */
     if (argc < 3) {  /* 최소: <tool> <dev> <option> */
-        printf("argc : %d \n", argc);
+        //printf("argc : %d \n", argc);
         print_usage(argv[0]);
         return -1;
     }
@@ -51,11 +53,11 @@ int parse_opts(int argc, char *argv[], struct cmd_ctx *ctx)
 
     while ((opt = getopt_long(argc, argv, "", long_opts, &idx)) != -1) {
 
-        printf("opt pargins : %d \n", opt);
+        //printf("opt pargins : %d \n", opt);
         switch (opt) {
 
             case 1: /* dumpimg */
-                printf("dumping : %d , argc :%d optarg : %s\n", optind, argc, optarg);
+                //printf("dumping : %d , argc :%d optarg : %s\n", optind, argc, optarg);
                 if (optind >= argc) {
                     print_usage(argv[0]);
                     return -1;
@@ -65,13 +67,13 @@ int parse_opts(int argc, char *argv[], struct cmd_ctx *ctx)
                 ctx->dump_addr = strtoul(argv[optind++], NULL, 16);
                 ctx->dump_size = strtoul(argv[optind], NULL, 0);
 
-                printf("dump addr : 0x%lx, size : %ld \n", 
-                        ctx->dump_addr, ctx->dump_size);
+                //printf("dump addr : 0x%lx, size : %ld \n", 
+                //        ctx->dump_addr, ctx->dump_size);
                 //optind++;
                 return 0;
 
             case 2: /* loadimg */
-                printf("loading : %d \n", opt);
+                //printf("loading : %d \n", opt);
                 if (optind + 1 >= argc) {
                     print_usage(argv[0]);
                     return -1;
@@ -84,7 +86,7 @@ int parse_opts(int argc, char *argv[], struct cmd_ctx *ctx)
                 return 0;
 
             case 3: /* setpres */
-                printf("setpres: %d \n", opt);
+                //printf("setpres: %d \n", opt);
                 if (optind + 2 > argc) {
                     print_usage(argv[0]);
                     return -1;
@@ -98,7 +100,7 @@ int parse_opts(int argc, char *argv[], struct cmd_ctx *ctx)
                 return 0;
 
             case 4: /* getpres */
-                printf("getpres: %d \n", opt);
+                //printf("getpres: %d \n", opt);
                 ctx->type = CMD_GETPRES;
                 return 0;
             case 5:
@@ -127,10 +129,14 @@ int parse_opts(int argc, char *argv[], struct cmd_ctx *ctx)
                     return -1;
                 }
 
+                optind_pass = 1;
+
                 //break;
             case 6:
                 uint8_t bkm_buf[4] = {0, };
-                if (optind >= argc) {
+
+                ctx->type = CMD_GETBM;
+                if (optind >= argc && optind_pass == 0) {
                     print_usage(argv[0]);
                     return -1;
                 }
@@ -145,7 +151,7 @@ int parse_opts(int argc, char *argv[], struct cmd_ctx *ctx)
 
 
                 hex_dump("Boot and Key Mode", bkm_buf, 4);
-                break;
+                return 0;
 
             default:
                 printf("unknown : %d \n", opt);

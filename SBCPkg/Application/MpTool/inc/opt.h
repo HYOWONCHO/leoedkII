@@ -1,6 +1,8 @@
 #ifndef _OPT_H
 #define _OPT_H
 
+#include "log_print.h"
+
 enum cmd_type {
     CMD_NONE = 0,
     CMD_DUMPIMG,

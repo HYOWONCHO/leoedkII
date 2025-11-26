@@ -8,6 +8,15 @@
 
 #include "opt.h"
 
+#define RESET   "\033[0m"
+#define RED     "\033[31m"
+#define GREEN   "\033[32m"
+#define YELLOW  "\033[33m"
+#define BLUE    "\033[34m"
+#define MAGENTA "\033[35m"
+#define CYAN    "\033[36m"
+#define WHITE   "\033[37m"
+
 /**
  * hex_dump - print hex dump (16-byte aligned, with ASCII)
  * @buf:   pointer to input buffer
@@ -24,19 +33,19 @@ static inline void hex_dump(const char *title, const void *buf, size_t len)
     size_t i, j;
 
     if (title)
-        printf("%s (len: %zu):\n", title, len);
+        printf(GREEN "%s (len: %zu):\n" RESET, title, len);
 
     /* print column index header */
     printf("          ");
     for (j = 0; j < 16; j++) {
-        printf("%02X ", (unsigned int)j);
+        printf(YELLOW "%02X ", (unsigned int)j);
         if (j == 7)
             printf(" ");
     }
     printf("\n");
 
     /* separator line */
-    printf("----------------------------------------------------------------\n");
+    printf("----------------------------------------------------------------------\n" RESET);
 
     for (i = 0; i < len; i += 16) {
 
