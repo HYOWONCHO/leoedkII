@@ -71,7 +71,7 @@ errdone:
 
 //0x00000000 : [ 4 bytes ] = file_size
 //0x00000004 : [ file contents ... ] (512-byte aligned)
-int copy_file_to_raw(const char *dev, const char *file)
+int copy_file_to_raw(const char *dev, const char *file, size_t offset)
 {
     int fd;
     struct stat st;
@@ -102,7 +102,8 @@ int copy_file_to_raw(const char *dev, const char *file)
      */
     uint32_t hdr = (uint32_t)file_size;   /* endian 변환 없음 */
 
-    ret = raw_write(dev, &hdr, sizeof(hdr), 0);
+
+    ret = raw_write(dev, &hdr, sizeof(hdr), offset);
     if (ret < 0) {
         fprintf(stderr, "raw_write(%s, hdr): %s\n",
                 dev, strerror(errno));
@@ -118,7 +119,7 @@ int copy_file_to_raw(const char *dev, const char *file)
     /*
      * 2) file → raw device (offset starts at 4)
      */
-    off_t dst_offset = 4;
+    off_t dst_offset = offset + 4;
 #if 1
     while (done < file_size) {
 

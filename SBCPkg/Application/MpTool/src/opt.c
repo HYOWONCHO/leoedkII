@@ -79,9 +79,13 @@ int parse_opts(int argc, char *argv[], struct cmd_ctx *ctx)
                     return -1;
                 }
                 ctx->type = CMD_LOADIMG;
+                //printf("%s:%d \n", __FUNCTION__, __LINE__);
                 ctx->file      = argv[optind++];
+                //printf("%s:%d \n", __FUNCTION__, __LINE__);
                 ctx->load_addr = strtoul(argv[optind++],     NULL, 16);
+                //printf("%s:%d \n", __FUNCTION__, __LINE__);
                 ctx->load_size = strtoul(argv[optind], NULL, 0);
+                //printf("%s:%d \n", __FUNCTION__, __LINE__);
                 //optind += 2;
                 return 0;
 

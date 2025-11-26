@@ -14,7 +14,7 @@ int copy_raw_to_raw(const char *src_dev, const char *dst_dev,
                size_t copy_size);
 
 
-int copy_file_to_raw(const char *dev, const char *file);
+int copy_file_to_raw(const char *dev, const char *file, size_t offset);
 
 ssize_t raw_read(const char *dev, void *buf, size_t size, off_t offset);
 ssize_t raw_write(const char *dev, const void *buf, size_t size, off_t offset);

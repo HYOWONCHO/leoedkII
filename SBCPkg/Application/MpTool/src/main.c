@@ -37,7 +37,7 @@ int main(int argc, char *argv[])
             printf("loadimg: file=%s addr=0x%lx size=%lu\n",
                     ctx.file, ctx.load_addr, ctx.load_size);
 
-            copy_file_to_raw((const char *)ctx.dev_path, (const char *)ctx.file);
+            copy_file_to_raw((const char *)ctx.dev_path, (const char *)ctx.file, ctx.load_addr);
             break;
 
         case CMD_SETPRES:
