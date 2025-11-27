@@ -1379,9 +1379,31 @@ SBCStatus  SBC_SecureBootCheck(VOID *priv)
         // Added at 20251019 - In factory mode, boot is not normal
         // System need to begin shutdown 
         //
+
         if(bp->bootst == SB_PROC_ST_ABNRAM) {
-            SBC_ShutdownSystem();
+            goto errdone;
         }
+
+       ret = SBC_BaseAnswerEncryptStore(
+                            bp->blkhnd,
+                            ((LV_t *)bp->baseansr)->value,
+                            ((LV_t *)bp->baseansr)->length,
+                            ((atp_ident_t *)bp->keyinfo)->osid,
+                            BASE_ANS_KEY_STR
+        );
+
+       if(ret != SBCOK) {
+           bp->bootst = SB_PROC_ST_ABNRAM;
+           goto errdone;
+       }
+
+       ret = SBC_BootKeyModeChange(BOOT_MODE_FACTORY, KEY_MODE_NORMAL, (void *)bp);
+       if (ret != SBCOK) {
+           bp->bootst = SB_PROC_ST_NRMA;
+           goto errdone;
+       }
+
+
         
         break;
     default:
@@ -1393,6 +1415,12 @@ SBCStatus  SBC_SecureBootCheck(VOID *priv)
 
 
 errdone:
+
+
+    if(bp->bootst == SB_PROC_ST_ABNRAM && bp->bm == BOOT_MODE_FACTORY) {
+        SBC_ShutdownSystem();
+        return ret;
+    }
 
     if(ret != SBCOK) {
         eprint("Boot is AbNormal");

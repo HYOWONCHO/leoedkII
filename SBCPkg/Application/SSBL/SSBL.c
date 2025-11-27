@@ -367,7 +367,7 @@ UINT32 FindPreviouslyBank(UINT32 bankid)
     return ret;
 }
 
-static VOID _get_fw_bankid(UINT32 val, UINT32 *cur, UINT32 *prev)
+static BOOLEAN _get_fw_bankid(UINT32 val, UINT32 *cur, UINT32 *prev)
 {
     UINT8 bank_first;
     UINT8 bank_second;
@@ -376,6 +376,10 @@ static VOID _get_fw_bankid(UINT32 val, UINT32 *cur, UINT32 *prev)
     bank_second = (UINT8)((val >> 24) & 0xFF);
 
     dprint("Banke First : %c , Bank Second : %c \n", bank_first, bank_second);
+
+    if (bank_first == 'P' && bank_second == 'P') {
+       return TRUE;
+    }
 
     if(bank_first == 'C') {
         *cur = (val) & 0xFF;
@@ -391,7 +395,7 @@ static VOID _get_fw_bankid(UINT32 val, UINT32 *cur, UINT32 *prev)
         *prev = (val >> 16) & 0xFF;
     }
 
-    return;
+    return FALSE;
 
 }
 
@@ -461,7 +465,7 @@ UefiMain (
     // Check the Preference SSBL bank
     CopyMem((void *)&pres_low, (void *)&h_rawptrheader.bootpres[0], 4);
 
-    _get_fw_bankid(pres_low, &currbank_id, &prevbank_id);
+    btproc.is_factory = _get_fw_bankid(pres_low, &currbank_id, &prevbank_id);
     dprint("Pres Low : 0x%04x Cur. Bank ID : %d , Prev. Bank ID : %d ", pres_low, currbank_id, prevbank_id);
     //prevbank_id = FindPreviouslyBank(currbank_id);
 
@@ -794,21 +798,27 @@ uc_errdone:
     case BOOT_MODE_FACTORY:
        dprint("Boot Mode is BOOT_MODE_FACTORY");
 
-       ret = SBC_BootKeyModeChange(BOOT_MODE_FACTORY, KEY_MODE_NORMAL, (void *)&btproc);
-       if (ret != SBCOK) {
-           btproc.bootst = SB_PROC_ST_NRMA;
-       }
+
+
 
 
        // If boot status is abnromal, system should be shutdown.
-       if (btproc.bootst != SB_PROC_ST_NRMA) {
-           eprint("Factory Boot Mode is Abnormal, so, it goes to shutdown state");
-           ret = SBCFAIL;
-           goto errdone;
-       }
+//     if (btproc.bootst != SB_PROC_ST_NRMA) {
+//         eprint("Factory Boot Mode is Abnormal, so, it goes to shutdown state");
+//         ret = SBCFAIL;
+//         goto errdone;
+//     }
+
+//    ret = SBC_SecureBootCheck((VOID *)&btproc);
+//    if (ret != SBCOK) {
+//        eprint("Secure Boot check fail for BOOT_MODE_FACTORY");
+//        goto errdone;
+//    }
       
        //dprint("Factory Boot Mode !!! \n");
-      break;
+       ret = SBCFAIL;
+       goto errdone;
+       break;
     case BOOT_MODE_UPDATE:
         dprint("Boot Mode BOOT_MODE_UPDATE");
 #ifdef _FILE_RD_BM_

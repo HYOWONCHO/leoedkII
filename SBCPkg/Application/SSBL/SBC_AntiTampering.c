@@ -2936,7 +2936,8 @@ SBCStatus SBC_GenMigrationKey(void *priv, void *outmsg)
     //
     // If previoulsy firmwrae not existense, it's compute using FACTORY image 
     //
-    if (fwinf->mbr.fsbln == 0) {
+    //if (fwinf->mbr.fsbln == 0) {
+    if (p->is_factory == TRUE) {
         startaddr = BOOT_SECTOR3_OFS; //(BOOT_SECTOR1_OFS | (BOOT_FW_IMGMAX *  (p->pvs_sw_bnk - 1)));
         startlba = (startaddr >> SBC_RAWPRT_DFLT_SHIFT);
         imglen = ALIGN_VALUE(sizeof *fwinf, SBC_RAWPRT_DFLT_BLK_SZ);
