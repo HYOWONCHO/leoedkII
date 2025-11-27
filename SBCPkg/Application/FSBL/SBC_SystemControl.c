@@ -6,6 +6,12 @@
 #include <Library/MemoryAllocationLib.h>
 #include <Library/UefiBootServicesTableLib.h>
 
+#include <Library/DevicePathLib.h>
+#include <Library/PrintLib.h>
+#include <Protocol/SimpleFileSystem.h>
+#include <Protocol/BlockIo.h>
+//#include <Library/DevicePathToTextLib.h>
+
 #include "SBC_SystemControl.h"
 #include "SBC_AntiTampering.h"
 #include "SBC_Hashing.h"
@@ -51,6 +57,110 @@ SBCStatus SBC_BootKeyModeChange(UINT32 newbm, UINT32 newkey, VOID *priv)
 errdone:
 
     return ret;
+}
+/**
+ * @brief Print FSx: and BLKy: mapping table (UEFI Shell "map" equivalent).
+ */
+VOID PrintMappingTable()
+{
+    EFI_STATUS Status;
+    EFI_HANDLE *HandleBuffer = NULL;
+    UINTN HandleCount = 0;
+    UINTN i;
+
+    EFI_SIMPLE_FILE_SYSTEM_PROTOCOL *Sfsp;
+    EFI_BLOCK_IO_PROTOCOL *Blk;
+
+    //
+    // 1. Find all handles
+    //
+    Status = gBS->LocateHandleBuffer(
+        AllHandles,
+        NULL,
+        NULL,
+        &HandleCount,
+        &HandleBuffer
+    );
+
+    if (EFI_ERROR(Status)) {
+        Print(L"LocateHandleBuffer failed: %r\n", Status);
+        return;
+    }
+
+    UINT32 FsIndex = 0;
+    UINT32 BlkIndex = 0;
+
+    Print(L"=== Mapping Table ===\n\n");
+
+    //
+    // 2. FSx: 출력
+    //
+    for (i = 0; i < HandleCount; i++) {
+
+        Status = gBS->HandleProtocol(
+            HandleBuffer[i],
+            &gEfiSimpleFileSystemProtocolGuid,
+            (VOID**)&Sfsp
+        );
+
+        if (!EFI_ERROR(Status)) {
+            EFI_DEVICE_PATH_PROTOCOL *Dp;
+            Status = gBS->HandleProtocol(
+                HandleBuffer[i],
+                &gEfiDevicePathProtocolGuid,
+                (VOID**)&Dp
+            );
+            if (EFI_ERROR(Status)) continue;
+
+            CHAR16 *DpText = ConvertDevicePathToText(Dp, TRUE, FALSE);
+
+            Print(
+                L"FS%u: Alias(s):HD%ua:;BLK%u:\n",
+                FsIndex,
+                FsIndex,
+                FsIndex
+            );
+            Print(L"      %s\n\n", DpText);
+
+            FreePool(DpText);
+            FsIndex++;
+        }
+    }
+
+
+    //
+    // 3. BLKx: 출력
+    //
+    for (i = 0; i < HandleCount; i++) {
+
+        Status = gBS->HandleProtocol(
+            HandleBuffer[i],
+            &gEfiBlockIoProtocolGuid,
+            (VOID**)&Blk
+        );
+
+        if (!EFI_ERROR(Status)) {
+
+            EFI_DEVICE_PATH_PROTOCOL *Dp;
+
+            Status = gBS->HandleProtocol(
+                HandleBuffer[i],
+                &gEfiDevicePathProtocolGuid,
+                (VOID**)&Dp
+            );
+            if (EFI_ERROR(Status)) continue;
+
+            CHAR16 *DpText = ConvertDevicePathToText(Dp, TRUE, FALSE);
+
+            Print(L"BLK%u: Alias(s):\n", BlkIndex);
+            Print(L"      %s\n\n", DpText);
+
+            FreePool(DpText);
+            BlkIndex++;
+        }
+    }
+
+    gBS->FreePool(HandleBuffer);
 }
 
 /**

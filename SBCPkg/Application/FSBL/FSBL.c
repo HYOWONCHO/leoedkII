@@ -1064,6 +1064,7 @@ EFI_STATUS ParseShellOptions(VOID *hndl)
 
 extern EFI_STATUS SBC_LogFileInit(VOID);
 extern EFI_STATUS MapRebuild(VOID);
+extern VOID PrintMappingTable();
 EFI_STATUS
 EFIAPI
 UefiMain (
@@ -1129,6 +1130,8 @@ UefiMain (
                  L"Detetion",
                  L"SBC_VENDOR_SP Success to Reconnect to All controller \n");
     }
+
+    PrintMappingTable();
     SBC_LogElapsedTime(L"SBC Driver Load", driver_load_ns);
 
 
