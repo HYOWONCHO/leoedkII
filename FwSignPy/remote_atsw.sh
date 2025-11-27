@@ -68,9 +68,9 @@ LOGFILE="${LOG_NAME}_${DATETIME}.log"
 # Prepare Remote Command
 # ==========================================
 if [ -n "$VAR" ]; then
-    REMOTE_CMD="sudo $VAR $SCRIPT"
+    REMOTE_CMD="$VAR $SCRIPT"
 else
-    REMOTE_CMD="sudo $SCRIPT"
+    REMOTE_CMD="$SCRIPT"
 fi
 
 # Check script exist on remote

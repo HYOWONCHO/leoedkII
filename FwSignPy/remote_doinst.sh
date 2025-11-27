@@ -43,7 +43,7 @@ if [[ $? -ne 0 ]]; then
     exit 1
 fi
 
-REMOTE_CMD="sudo $SCRIPT $DEV $IPADDR"
+REMOTE_CMD="$SCRIPT $DEV $IPADDR"
 
 echo -e "${YELLOW}[INFO] Exec: ${NC}$REMOTE_CMD"
 sleep 1
