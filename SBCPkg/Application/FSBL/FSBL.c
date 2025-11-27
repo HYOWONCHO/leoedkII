@@ -1172,7 +1172,7 @@ UefiMain (
     CopyMem((void *)&pres_low, (void *)&h_rawprtheader.bootpres[0], 4);
     //CopyMem((void *)&pres_hi, (void *)&h_rawprtheader.bootpres[4], 4);
 
-    _get_fw_bankid(pres_low, &currbank_id, &prevbank_id);
+    btproc.is_factory = _get_fw_bankid(pres_low, &currbank_id, &prevbank_id);
 
     dprint("Pres Low : 0x%04x Cur. Bank ID : %d , Prev. Bank ID : %d ", pres_low, currbank_id, prevbank_id);
 
