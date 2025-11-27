@@ -1174,7 +1174,8 @@ UefiMain (
 
     btproc.is_factory = _get_fw_bankid(pres_low, &currbank_id, &prevbank_id);
 
-    dprint("Pres Low : 0x%04x Cur. Bank ID : %d , Prev. Bank ID : %d ", pres_low, currbank_id, prevbank_id);
+    dprint("Pres Low : 0x%04x Cur. Bank ID : %d , Prev. Bank ID : %d , IS_FACTTORY : %b", 
+           pres_low, currbank_id, prevbank_id, btproc.is_factory);
 
 #ifdef _ALL_PASS_
     h_rawprtheader.bootmode = BOOT_MODE_FACTORY;
