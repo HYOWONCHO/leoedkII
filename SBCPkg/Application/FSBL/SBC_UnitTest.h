@@ -24,6 +24,7 @@ typedef struct _unit_proc_t {
     UINT32      bootst;                     /*! Boot Status */
     UINT16      rcvmode;
     VOID        *imghndl;
+    BOOLEAN     is_factory;
 }unit_proc_t;
 
 typedef unit_proc_t boot_proc_t;

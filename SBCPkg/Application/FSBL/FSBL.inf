@@ -67,6 +67,13 @@
   SortLib
   UefiHiiServicesLib
 
+  #
+  # TPM2 Related Library 
+  #
+
+  #Tpm2CommandLib
+  #Tpm2DeviceLib
+
   #ShellLib
   #ShellCommandLib
 
@@ -116,8 +123,9 @@
   GCC:DEBUG_GCC5_X64_CC_FLAGS = -flto=2  -Werror=cpp 
   *_*_*_CC_FLAGS = -D_SBC_DEVID_VERIFY_
   *_*_*_CC_FLAGS = -D_SBC_DRIVER_LOAD_
-  #*_*_*_CC_FLAGS = -D_ALL_PASS_
   *_*_*_CC_FLAGS = -D_DEBUG_PRINT_ON_
+
+  #*_*_*_CC_FLAGS = -D_ALL_PASS_
 
 
 

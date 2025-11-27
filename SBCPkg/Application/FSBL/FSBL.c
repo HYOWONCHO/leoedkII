@@ -83,9 +83,10 @@ UINTN   sys_ns_var = 0ULL;
 VOID *h_blkio;               // Block I/O handle
 #ifndef _FSBL_TEST_
 static rawprt_hdr_t *tmp_prtheader;    // Raw Partition Header handle
+
 #endif
 static BOOLEAN        is_boot_status; 
-
+const unit_proc_t *tmp_btproc;
 extern SBCStatus SBC_SSBL_LoadAndStart(EFI_HANDLE ImageHandle);
 
 
@@ -725,13 +726,18 @@ Exit:
 CHAR16 mrgmsg[8192]; 
 
 
-static VOID _get_fw_bankid(UINT32 val, UINT32 *cur, UINT32 *prev)
+static BOOLEAN _get_fw_bankid(UINT32 val, UINT32 *cur, UINT32 *prev)
 {
     UINT8 bank_first;
     UINT8 bank_second;
+    //BOOLEAN is_factory = FALSE;
 
     bank_first  = (UINT8)((val >> 8) & 0xFF);
     bank_second = (UINT8)((val >> 24) & 0xFF);
+
+    if (bank_first == 'P' && bank_second == 'P') {
+       return TRUE;
+    }
 
     //Print(L"Banke First : %c , Bank Second : %c \n", bank_first, bank_second);
 
@@ -749,7 +755,7 @@ static VOID _get_fw_bankid(UINT32 val, UINT32 *cur, UINT32 *prev)
         *prev = (val >> 16) & 0xFF;
     }
 
-    return;
+    return FALSE;
 
 }
 
@@ -765,31 +771,62 @@ extern EFI_STATUS SBC_LodaDriver(CONST CHAR16 *FileName, CONST BOOLEAN  Connect)
     retval = SBC_LodaDriver(SERIAL_DXE_PATH, TRUE);
     if (EFI_ERROR (retval)){
       //Print(L"SERIAL_DXE_PATH Dxe driver load fail \n");
-      goto errdone;
+      //goto errdone;
     }
 
 
+    sbc_err_sysprn(SBC_LOG_CMN_PRIO_INFO, 2,
+                 SYS_LOG_HOST_BOOT,
+                 SYS_LOG_APP_NAME,
+                 SYS_LOG_CSC_NAME,
+                 0,
+                 L"Detection",
+                 L"Loaded to the Serial Driver");
     //sleep(1);
 
     retval = SBC_LodaDriver(FTDI_USB_SERIAL_DXE_PATH, TRUE);
     if (EFI_ERROR (retval)){
       //Print(L"FTDI_USB_SERIAL_DXE_PATH Dxe driver load fail \n");
-      goto errdone;
+      //goto errdone;
     }
+
+    sbc_err_sysprn(SBC_LOG_CMN_PRIO_INFO, 2,
+                 SYS_LOG_HOST_BOOT,
+                 SYS_LOG_APP_NAME,
+                 SYS_LOG_CSC_NAME,
+                 0,
+                 L"Detection",
+                 L"Loaded to the FTDI USB Serial Driver");
 
     //sleep(1);
     retval = SBC_LodaDriver(TERMINAL_DXE_PATH, TRUE);
     if (EFI_ERROR (retval)){
       //Print(L"TERMINAL_DXE_PATH Dxe driver load fail \n");
-      goto errdone;
+      ///goto errdone;
     }
+
+    sbc_err_sysprn(SBC_LOG_CMN_PRIO_INFO, 2,
+                 SYS_LOG_HOST_BOOT,
+                 SYS_LOG_APP_NAME,
+                 SYS_LOG_CSC_NAME,
+                 0,
+                 L"Detection",
+                 L"Loaded to the Terminal Dxe Driver");
 
     //sleep(1);
     retval = SBC_LodaDriver(XFS64_PATH, TRUE);
     if (EFI_ERROR (retval)){
       //Print(L"XFS64_PATH Dxe driver load fail \n");
-      goto errdone;
+      //goto errdone;
     }
+
+    sbc_err_sysprn(SBC_LOG_CMN_PRIO_INFO, 2,
+                 SYS_LOG_HOST_BOOT,
+                 SYS_LOG_APP_NAME,
+                 SYS_LOG_CSC_NAME,
+                 0,
+                 L"Detection",
+                 L"Loaded to the XF64 Driver");
 
     //sleep(3);
 #else
@@ -798,7 +835,7 @@ extern EFI_STATUS SBC_LodaDriver(CONST CHAR16 *FileName, CONST BOOLEAN  Connect)
     }
 #endif
 
-errdone:
+//errdone:
     return retval;
 }
 
@@ -1026,7 +1063,7 @@ EFI_STATUS ParseShellOptions(VOID *hndl)
 #endif
 
 extern EFI_STATUS SBC_LogFileInit(VOID);
-
+extern EFI_STATUS MapRebuild(VOID);
 EFI_STATUS
 EFIAPI
 UefiMain (
@@ -1073,6 +1110,25 @@ UefiMain (
     SBC_TIME_BLOCKS_NS (driver_load_ns,
         { retval = SBC_DrveriInit(); });
 
+    retval =  MapRebuild();
+    if (EFI_ERROR(retval)) {
+      sbc_err_sysprn(SBC_LOG_CMN_PRIO_INFO, 2,
+                 SYS_LOG_HOST_BOOT,
+                 SYS_LOG_APP_NAME,
+                 SYS_LOG_CSC_NAME,
+                 0,
+                 L"Detetion",
+                 L"SBC_VENDOR_SP Faile to Reconnect to All controller \n");
+    }
+    else {
+      sbc_err_sysprn(SBC_LOG_CMN_PRIO_INFO, 2,
+                 SYS_LOG_HOST_BOOT,
+                 SYS_LOG_APP_NAME,
+                 SYS_LOG_CSC_NAME,
+                 0,
+                 L"Detetion",
+                 L"SBC_VENDOR_SP Success to Reconnect to All controller \n");
+    }
     SBC_LogElapsedTime(L"SBC Driver Load", driver_load_ns);
 
 
@@ -1141,7 +1197,20 @@ UefiMain (
     //
     btproc.rcvmode = h_rawprtheader.rcvmode;
 
+    tmp_btproc = &btproc;
 
+    dprint("Boot Mode is %d", h_rawprtheader.bootmode);
+    ZeroMem(mrgmsg, sizeof mrgmsg);
+    UnicodeSPrint(mrgmsg, sizeof mrgmsg, L"SBC_SP_FW FSBL Boot Mode (0x%x) And Key Mode (0x%x) Recovery Mode (0x%x) \n", 
+                  btproc.bm, btproc.km, btproc.rcvmode);
+
+    sbc_err_sysprn(SBC_LOG_CMN_PRIO_INFO, 2,
+                     SYS_LOG_HOST_BOOT,
+                     SYS_LOG_APP_NAME,
+                     SYS_LOG_CSC_NAME,
+                     8,
+                     L"Information",
+                     mrgmsg);
 
     dprint("Boot Mode : %d , Key Mode : %d, Recovery Mode : %d",
            btproc.bm, btproc.km, h_rawprtheader.rcvmode);
@@ -1290,19 +1359,7 @@ UefiMain (
     h_rawprtheader.bootmode  = BOOT_MODE_FACTORY;
 #endif
 
-    dprint("Boot Mode is %d", h_rawprtheader.bootmode);
-    ZeroMem(mrgmsg, sizeof mrgmsg);
-    UnicodeSPrint(mrgmsg, sizeof mrgmsg, L"SBC_SP_FW FSBL Boot Mode (0x%x) And Key Mode (0x%x) \n", 
-                  h_rawprtheader.bootmode,
-                  h_rawprtheader.keymode);
 
-    sbc_err_sysprn(SBC_LOG_CMN_PRIO_INFO, 2,
-                     SYS_LOG_HOST_BOOT,
-                     SYS_LOG_APP_NAME,
-                     SYS_LOG_CSC_NAME,
-                     8,
-                     L"Information",
-                     mrgmsg);
 
 
     switch (h_rawprtheader.bootmode) {
@@ -1514,7 +1571,7 @@ UefiMain (
            8,
            L"Validation",
            L"SBC_SP_FW SSBL self-verify Success");
-
+#if 1
       ret =  SBC_DeviceIdKyeVerify(h_blkio, diceid.devid, diceid.migid);
       if (ret != SBCOK) {
           sbc_err_sysprn(SBC_LOG_CMN_PRIO_ERR, 2,
@@ -1530,6 +1587,9 @@ UefiMain (
           goto errdone;
 #endif
       }
+#endif
+
+
 
       sbc_err_sysprn(SBC_LOG_CMN_PRIO_INFO, 2,
              SYS_LOG_HOST_BOOT,

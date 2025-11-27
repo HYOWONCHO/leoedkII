@@ -4,6 +4,7 @@
 #include <Library/ResetSystemLib.h>
 #include <Library/BaseMemoryLib.h>
 #include <Library/MemoryAllocationLib.h>
+#include <Library/UefiBootServicesTableLib.h>
 
 #include "SBC_SystemControl.h"
 #include "SBC_AntiTampering.h"
@@ -50,6 +51,61 @@ SBCStatus SBC_BootKeyModeChange(UINT32 newbm, UINT32 newkey, VOID *priv)
 errdone:
 
     return ret;
+}
+
+/**
+ * @brief Reconnect all drivers to all controllers (equivalent to Shell "map -r").
+ *
+ * @return EFI_STATUS
+ */
+EFI_STATUS MapRebuild(VOID)
+{
+    EFI_STATUS Status;
+    EFI_HANDLE *HandleBuffer = NULL;
+    UINTN HandleCount = 0;
+    UINTN i;
+
+    //
+    // Step 1: Get all handles
+    //
+    Status = gBS->LocateHandleBuffer(
+        AllHandles,
+        NULL,
+        NULL,
+        &HandleCount,
+        &HandleBuffer
+    );
+
+    if (EFI_ERROR(Status)) {
+        Print(L"LocateHandleBuffer failed: %r\n", Status);
+        return Status;
+    }
+
+    Print(L"Found %u handles. Reconnecting...\n", HandleCount);
+
+    //
+    // Step 2: Reconnect every handle's controller
+    //
+    for (i = 0; i < HandleCount; i++) {
+
+        gBS->DisconnectController(
+            HandleBuffer[i],
+            NULL,
+            NULL
+        );
+
+        gBS->ConnectController(
+            HandleBuffer[i],
+            NULL,
+            NULL,
+            TRUE
+        );
+    }
+
+    Print(L"Reconnect complete.\n");
+
+    gBS->FreePool(HandleBuffer);
+    return EFI_SUCCESS;
 }
 
 

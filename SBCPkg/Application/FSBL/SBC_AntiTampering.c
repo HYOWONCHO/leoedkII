@@ -1204,6 +1204,7 @@ errdone:
 
 SBCStatus  SBC_DeviceIdKyeVerify(VOID *blkio, UINT8 *fwid, UINT8 *deckey)
 {
+    extern const unit_proc_t *tmp_btproc;
     SBCStatus ret = SBCOK;
     at_key_t key_pair;
 
@@ -1373,6 +1374,7 @@ SBCStatus  SBC_DeviceIdKyeVerify(VOID *blkio, UINT8 *fwid, UINT8 *deckey)
     dprint("PublicK Key Match Done ...");
 
 #else
+#if 0
     SBC_external_mem_print_bin("Device ID Pubkey", key_pair.q.value, key_pair.ql);
     SBC_external_mem_print_bin("Device Certificate Pubkey", pubkey, pubkeyl);
     if(CompareMem(key_pair.q.value,  pubkey, pubkeyl) != 0) {
@@ -1391,6 +1393,25 @@ SBCStatus  SBC_DeviceIdKyeVerify(VOID *blkio, UINT8 *fwid, UINT8 *deckey)
         ret = SBCINVPARAM;
         goto errdone;
     }
+#else
+    ret = SBC_FSBLIntgCheck(NULL, blkio, 
+                            decbuf, calen, 
+                            tmp_btproc->curr_sw_bnk,
+                            tmp_btproc->bm);
+    if (ret != SBCOK) {
+        sbc_err_sysprn(SBC_LOG_CMN_PRIO_ERR, 2,
+                 SYS_LOG_HOST_BOOT,
+                 SYS_LOG_APP_NAME,
+                 SYS_LOG_CSC_NAME,
+                 1,
+                 L"Detectoin",
+                 L"SBC_RootCA_Verify Faile to verify the Device Crt \n");
+        ret = SBCINVPARAM;
+        goto errdone;
+    }
+
+
+#endif
 #endif
 //  sbc_err_sysprn(SBC_LOG_CMN_PRIO_ERR, 2,
 //         L"SBC",
