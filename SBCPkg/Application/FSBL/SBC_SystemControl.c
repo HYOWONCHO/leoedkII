@@ -69,8 +69,9 @@ VOID PrintMappingTable()
     UINTN i;
 
     EFI_SIMPLE_FILE_SYSTEM_PROTOCOL *Sfsp;
-    EFI_BLOCK_IO_PROTOCOL *Blk;
-
+    [[maybe_unused]]EFI_BLOCK_IO_PROTOCOL *Blk;
+    UINT32 FsIndex = 0;
+    [[maybe_unused]]UINT32 BlkIndex = 0;
     //
     // 1. Find all handles
     //
@@ -87,8 +88,7 @@ VOID PrintMappingTable()
         return;
     }
 
-    UINT32 FsIndex = 0;
-    UINT32 BlkIndex = 0;
+
 
     Print(L"=== Mapping Table ===\n\n");
 
@@ -110,7 +110,10 @@ VOID PrintMappingTable()
                 &gEfiDevicePathProtocolGuid,
                 (VOID**)&Dp
             );
-            if (EFI_ERROR(Status)) continue;
+            if (EFI_ERROR(Status)) {
+                Print(L"Failed to Found Handle Prototol (%r) \n", Status);
+                continue;
+            }
 
             CHAR16 *DpText = ConvertDevicePathToText(Dp, TRUE, FALSE);
 
@@ -131,6 +134,7 @@ VOID PrintMappingTable()
     //
     // 3. BLKx: 출력
     //
+#if 0
     for (i = 0; i < HandleCount; i++) {
 
         Status = gBS->HandleProtocol(
@@ -159,7 +163,7 @@ VOID PrintMappingTable()
             BlkIndex++;
         }
     }
-
+#endif
     gBS->FreePool(HandleBuffer);
 }
 
@@ -214,6 +218,7 @@ EFI_STATUS MapRebuild(VOID)
 
     Print(L"Reconnect complete.\n");
 
+    gBS->Stall(50000); 
     gBS->FreePool(HandleBuffer);
     return EFI_SUCCESS;
 }
@@ -231,7 +236,13 @@ VOID SBC_RebootSystem(VOID)
 
 VOID SBC_ShutdownSystem(VOID)
 {
-  Print(L"Shutting down SBC System ... \n");
+    sbc_err_sysprn(SBC_LOG_CMN_PRIO_INFO, 2,
+         SYS_LOG_HOST_BOOT,
+         SYS_LOG_APP_NAME,
+         SYS_LOG_CSC_NAME,
+         1,
+         L"Detectoin",
+         L"SBC_VENDOR_SP System Shutdown - Boot State Ab-normal");
 #ifndef _ALL_PASS_
   gRT->ResetSystem(EfiResetShutdown, EFI_SUCCESS, 0, NULL);
 #endif

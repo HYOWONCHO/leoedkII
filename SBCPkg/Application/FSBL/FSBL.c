@@ -771,65 +771,102 @@ extern EFI_STATUS SBC_LodaDriver(CONST CHAR16 *FileName, CONST BOOLEAN  Connect)
 #ifdef _SBC_DRIVER_LOAD_
     retval = SBC_LodaDriver(SERIAL_DXE_PATH, TRUE);
     if (EFI_ERROR (retval)){
-      //Print(L"SERIAL_DXE_PATH Dxe driver load fail \n");
+        sbc_err_sysprn(SBC_LOG_CMN_PRIO_INFO, 2,
+                     SYS_LOG_HOST_BOOT,
+                     SYS_LOG_APP_NAME,
+                     SYS_LOG_CSC_NAME,
+                     0,
+                     L"Detection",
+                     L"Failed to load the Serial Driver");
       //goto errdone;
     }
+    else {
+      sbc_err_sysprn(SBC_LOG_CMN_PRIO_INFO, 2,
+                   SYS_LOG_HOST_BOOT,
+                   SYS_LOG_APP_NAME,
+                   SYS_LOG_CSC_NAME,
+                   0,
+                   L"Detection",
+                   L"Loaded to the Serial Driver");
+    }
 
-
-    sbc_err_sysprn(SBC_LOG_CMN_PRIO_INFO, 2,
-                 SYS_LOG_HOST_BOOT,
-                 SYS_LOG_APP_NAME,
-                 SYS_LOG_CSC_NAME,
-                 0,
-                 L"Detection",
-                 L"Loaded to the Serial Driver");
+    gBS->Stall(50000);   // 50ms 지연
     //sleep(1);
 
     retval = SBC_LodaDriver(FTDI_USB_SERIAL_DXE_PATH, TRUE);
     if (EFI_ERROR (retval)){
       //Print(L"FTDI_USB_SERIAL_DXE_PATH Dxe driver load fail \n");
-      //goto errdone;
-    }
-
-    sbc_err_sysprn(SBC_LOG_CMN_PRIO_INFO, 2,
+      sbc_err_sysprn(SBC_LOG_CMN_PRIO_INFO, 2,
                  SYS_LOG_HOST_BOOT,
                  SYS_LOG_APP_NAME,
                  SYS_LOG_CSC_NAME,
                  0,
                  L"Detection",
-                 L"Loaded to the FTDI USB Serial Driver");
+                 L"Failed to load the FTDI USB Serial Driver");
+      //goto errdone;
+    }
+    else {
+      sbc_err_sysprn(SBC_LOG_CMN_PRIO_INFO, 2,
+                   SYS_LOG_HOST_BOOT,
+                   SYS_LOG_APP_NAME,
+                   SYS_LOG_CSC_NAME,
+                   0,
+                   L"Detection",
+                   L"Loaded to the FTDI USB Serial Driver");
 
-    //sleep(1);
+      //sleep(1);
+    }
+
+    gBS->Stall(50000);   // 50ms 지연
     retval = SBC_LodaDriver(TERMINAL_DXE_PATH, TRUE);
     if (EFI_ERROR (retval)){
       //Print(L"TERMINAL_DXE_PATH Dxe driver load fail \n");
+      sbc_err_sysprn(SBC_LOG_CMN_PRIO_INFO, 2,
+                 SYS_LOG_HOST_BOOT,
+                 SYS_LOG_APP_NAME,
+                 SYS_LOG_CSC_NAME,
+                 0,
+                 L"Detection",
+                 L"Failed to load the Terminal Dxe Driver");
       ///goto errdone;
     }
+    else {
 
-    sbc_err_sysprn(SBC_LOG_CMN_PRIO_INFO, 2,
-                 SYS_LOG_HOST_BOOT,
-                 SYS_LOG_APP_NAME,
-                 SYS_LOG_CSC_NAME,
-                 0,
-                 L"Detection",
-                 L"Loaded to the Terminal Dxe Driver");
+      sbc_err_sysprn(SBC_LOG_CMN_PRIO_INFO, 2,
+                   SYS_LOG_HOST_BOOT,
+                   SYS_LOG_APP_NAME,
+                   SYS_LOG_CSC_NAME,
+                   0,
+                   L"Detection",
+                   L"Loaded to the Terminal Dxe Driver");
 
-    //sleep(1);
-    retval = SBC_LodaDriver(XFS64_PATH, TRUE);
-    if (EFI_ERROR (retval)){
-      //Print(L"XFS64_PATH Dxe driver load fail \n");
-      //goto errdone;
+      //sleep(1);
     }
 
-    sbc_err_sysprn(SBC_LOG_CMN_PRIO_INFO, 2,
+    gBS->Stall(50000);   // 50ms 지연
+    retval = SBC_LodaDriver(XFS64_PATH, TRUE);
+    if (EFI_ERROR (retval)){
+          sbc_err_sysprn(SBC_LOG_CMN_PRIO_INFO, 2,
                  SYS_LOG_HOST_BOOT,
                  SYS_LOG_APP_NAME,
                  SYS_LOG_CSC_NAME,
                  0,
                  L"Detection",
-                 L"Loaded to the XF64 Driver");
+                 L"Failed to load the XF64 Driver");
+      //goto errdone;
+    }
+    else {
+      sbc_err_sysprn(SBC_LOG_CMN_PRIO_INFO, 2,
+                   SYS_LOG_HOST_BOOT,
+                   SYS_LOG_APP_NAME,
+                   SYS_LOG_CSC_NAME,
+                   0,
+                   L"Detection",
+                   L"Loaded to the XF64 Driver");
 
-    //sleep(3);
+      //sleep(3);
+    }
+    gBS->Stall(50000);   // 50ms 지연
 #else
     if (retval != EFI_SUCCESS) {
         goto errdone;
@@ -1135,8 +1172,6 @@ UefiMain (
 
     PrintMappingTable();
     SBC_LogElapsedTime(L"SBC Driver Load", driver_load_ns);
-
-
     sbc_err_sysprn(SBC_LOG_CMN_PRIO_INFO, 2,
                  SYS_LOG_HOST_BOOT,
                  SYS_LOG_APP_NAME,
