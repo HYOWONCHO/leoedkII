@@ -81,6 +81,7 @@ UINTN   sys_ns_var = 0ULL;
 
 
 VOID *h_blkio;               // Block I/O handle
+
 #ifndef _FSBL_TEST_
 static rawprt_hdr_t *tmp_prtheader;    // Raw Partition Header handle
 
@@ -1062,7 +1063,7 @@ EFI_STATUS ParseShellOptions(VOID *hndl)
 }
 #endif
 
-extern EFI_STATUS SBC_LogFileInit(VOID);
+extern EFI_STATUS SBC_LogFileInit( EFI_HANDLE        logHandle);
 extern EFI_STATUS MapRebuild(VOID);
 extern VOID PrintMappingTable();
 EFI_STATUS
@@ -1106,6 +1107,7 @@ UefiMain (
 #endif
 
 
+    SBC_LogFileInit(ImageHandle);
     sys_start_time = SBC_PerfNowTicks();
 
     SBC_TIME_BLOCKS_NS (driver_load_ns,
@@ -1143,12 +1145,7 @@ UefiMain (
                  L"Detetion",
                  L"SBC_VENDOR_SP FSBL Statring");
 
-
-    SBC_LogFileInit();
-
     is_boot_status = TRUE;
-
-
 
     ZeroMem(&btproc, sizeof btproc);
     ZeroMem(&h_rawprtheader, sizeof h_rawprtheader);

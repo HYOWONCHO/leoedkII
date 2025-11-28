@@ -1083,8 +1083,7 @@ SBC_InternalPrint (
 // SBC_LogPrint (Main Logging Function)
 // ===========================================================================
 
-VOID
-SBC_LogPrint(
+VOID SBC_LogPrint(
   CONST CHAR16* func,     // For [%s:%d] if uncommented (CHAR16*)
   UINT32 funcline,        // For [%s:%d] if uncommented
   UINT32 prio,            // Priority
@@ -1223,9 +1222,9 @@ SBC_LogPrint(
     }
 
 
-     Print(L"%s\n", full_log_msg);
+    Print(L"%s\n", full_log_msg);
     // Now wrlog points to a proper ASCII string
-    CHAR8 *wrlog_ptr = AsciiLogBuffer; 
+    //CHAR8 *wrlog_ptr = AsciiLogBuffer; 
     
     // Print for debug (both Unicode and ASCII for comparison)
     //dprint("SBC_LogPrint: Full Unicode Log msg : %s \n", full_log_msg);
@@ -1234,16 +1233,133 @@ SBC_LogPrint(
     // Call your remove_all_space function (expects ASCII CHAR8*)
     // It should modify wrlog_ptr in place and return the new length.
     // Make sure remove_all_space works on a null-terminated string and updates length correctly.
-    UINTN final_ascii_len = remove_all_space(wrlog_ptr, AsciiConvertedLen); // Pass converted length, not full buffer size
+    //UINTN final_ascii_len = remove_all_space(wrlog_ptr, AsciiConvertedLen); // Pass converted length, not full buffer size
 
     //dprint("SBC_LogPrint: ASCII Log msg after space removal: %a (Final Length: %d)\n", wrlog_ptr, final_ascii_len);
 
-    // _sbc_write_log_file expects CHAR8* and its strlen.
-    _sbc_write_log_file(wrlog_ptr, final_ascii_len);
+    {
+        EFI_SIMPLE_FILE_SYSTEM_PROTOCOL *SimpleFs;
+        EFI_FILE_PROTOCOL *Root;
+        EFI_FILE_PROTOCOL *File;
+        EFI_STATUS Status;
+
+        UINTN AsciiLen = StrLen(full_log_msg) * 3 + 1;
+        
+        CHAR8 *AsciiBuf = AllocateZeroPool(AsciiLen);
+        UnicodeStrToAsciiStrS(full_log_msg, AsciiBuf, AsciiLen);
+        //dprint();
+//      Status = gBS->HandleProtocol(
+//                      write_log_handle,
+//                      &gEfiSimpleFileSystemProtocolGuid,
+//                      (VOID**)&SimpleFs
+//                  );
+
+        Status = gBS->LocateProtocol(&gEfiSimpleFileSystemProtocolGuid, NULL, (VOID**)&SimpleFs);
+        if (!EFI_ERROR(Status)) {
+
+            Status = SimpleFs->OpenVolume(SimpleFs, &Root);
+            if (!EFI_ERROR(Status)) {
+
+                // Open file for append (READ | WRITE). Do NOT use CREATE.
+                Status = Root->Open(
+                            Root,
+                            &File,
+                            SSBL_LOG_PATH,
+                            EFI_FILE_MODE_READ | EFI_FILE_MODE_WRITE,
+                            0
+                        );
+
+                if (!EFI_ERROR(Status)) {
+                    dprint();
+                    // Move cursor to end for append
+                    File->SetPosition(File, (UINT64)-1);
+
+                    // Write ASCII buffer
+//                  UINTN WriteLen = final_ascii_len;
+//                  File->Write(File, &WriteLen, wrlog_ptr);
+                    UINTN WriteLen = AsciiLen;
+                    File->Write(File, &WriteLen, AsciiBuf);
+                    // Add newline
+                    CHAR8 NewLine[2] = { '\n', 0 };
+                    UINTN NL = 1;
+                    File->Write(File, &NL, NewLine);
+
+                    File->Close(File);
+                }
+                else {
+
+                    dprint();
+                    eprint("Log File Open fail (%r) ", Status);
+                }
+
+                Root->Close(Root);
+            }
+            else {
+
+                dprint();
+                eprint("Log File OpenVolume fail (%r) ", Status);
+            }
+        }
+
+        FreePool(AsciiBuf);
+    }
 
 ExitLog:
     return;
 }
+
+
+
+EFI_STATUS SBC_LogFileInit( EFI_HANDLE        logHandle)
+{
+   
+    EFI_SIMPLE_FILE_SYSTEM_PROTOCOL *SimpleFs;
+    EFI_FILE_PROTOCOL *Root;
+    EFI_FILE_PROTOCOL *File;
+    EFI_STATUS Status;
+
+    //write_log_handle  = logHandle;
+//  Status = gBS->HandleProtocol(
+//                  logHandle,
+//                  &gEfiSimpleFileSystemProtocolGuid,
+//                  (VOID**)&SimpleFs
+//              );
+
+    Status = gBS->LocateProtocol(&gEfiSimpleFileSystemProtocolGuid, NULL, (VOID**)&SimpleFs);
+    if (EFI_ERROR(Status)) {
+        Print(L"Log File Handle Protocol Find Fail with (%r) \n", Status);
+        return Status;
+    }
+
+    Status = SimpleFs->OpenVolume(SimpleFs, &Root);
+    if (EFI_ERROR(Status)){
+        Print(L"Log File OpenVolume Fail with (%r) \n", Status);
+        return Status;
+    }
+
+    // Try to open the file with CREATE|WRITE to truncate
+    Status = Root->Open(
+                Root,
+                &File,
+                SSBL_LOG_PATH,
+                EFI_FILE_MODE_CREATE | EFI_FILE_MODE_READ | EFI_FILE_MODE_WRITE,
+                0
+            );
+    if (!EFI_ERROR(Status)) {
+        //dprint("Immediately close → this truncates file (%r)", Status);
+        File->Close(File);
+    }
+    else {
+        Print(L"Log File Open Fail with (%r) \n", Status);
+        return Status;
+    }
+
+    dprint("Log Initialize Success (%r)", Status);
+
+    Root->Close(Root);
+    return EFI_SUCCESS;
+}
+
 
 // ===========================================================================
 // Dummy External Functions (Replace with your actual implementations)

@@ -399,6 +399,7 @@ static BOOLEAN _get_fw_bankid(UINT32 val, UINT32 *cur, UINT32 *prev)
 
 }
 
+extern EFI_STATUS SBC_LogFileInit( EFI_HANDLE        logHandle);
 
 EFI_STATUS
 EFIAPI
@@ -427,6 +428,10 @@ UefiMain (
 
     
     btproc.ldhndl = ImageHandle;
+
+
+    SBC_LogFileInit(ImageHandle);
+
     sbc_err_sysprn(SBC_LOG_CMN_PRIO_INFO, 2,
                  SYS_LOG_HOST_BOOT,
                  SYS_LOG_APP_NAME,

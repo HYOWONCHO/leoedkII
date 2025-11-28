@@ -31,7 +31,7 @@
 #define SYS_LOG_HOST_BOOT                       L"AT_BOOT"
 #define SYS_LOG_APP_NAME                        L"SSBL"
 #define SYS_LOG_CSC_NAME                        L"SAT"
-
+#define SSBL_LOG_PATH                           L"\\EFI\\BOOT\\sys_log_for_ssbl.log"
 /**
  * @enum t_sbc_syslog_prio
  * @brief Defines priority levels for system logging messages.
