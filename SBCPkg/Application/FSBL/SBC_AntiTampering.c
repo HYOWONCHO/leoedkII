@@ -1855,8 +1855,9 @@ SBCStatus  SBC_SSBL_Verify(VOID *blkhnd, VOID *ansr,  UINTN nrombank, UINTN bm, 
 
     CopyMem((void *)&imglen, &imghdr[0], sizeof imglen);
 
-    dprint("SSBL Image  (Addr : 0x%lx) Len : %ld (0x%lx)",
+    dprint("SSBL Image  (Addr : 0x%lx) Start LBA : 0x%lx, Len : %ld (0x%lx)",
            (bsofs | BOOT_SSBL_OFS), 
+           startlba,
            imglen,
            imglen);
     //

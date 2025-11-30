@@ -2167,7 +2167,7 @@ errdone:
  * @param[in]  Len       Number of bytes to write
  * @return EFI_SUCCESS on success
  */
-STATIC EFI_STATUS SBC_BlkWriteArbitrary(IN EFI_BLOCK_IO_PROTOCOL *Blk,
+EFI_STATUS SBC_BlkWriteArbitrary(IN EFI_BLOCK_IO_PROTOCOL *Blk,
                   IN UINT64 Ofs,
                   IN CONST VOID *Buf,
                   IN UINTN Len)
@@ -2443,6 +2443,85 @@ EFI_STATUS SBC_CopyBlockDeviceToFile(
     if (BytesRead) *BytesRead = readTotal;
 
     return Status;
+}
+
+
+SBCStatus SBC_DeleteFile (
+    IN CHAR16 *FilePath
+    )
+{
+    if (FilePath == NULL)
+        return SBCNULLP;
+
+    EFI_STATUS Status;
+    EFI_SIMPLE_FILE_SYSTEM_PROTOCOL *Fs = NULL;
+    EFI_FILE_PROTOCOL *Root = NULL;
+    EFI_FILE_PROTOCOL *File = NULL;
+
+    //
+    // Locate FS protocol
+    //
+    Status = gBS->LocateProtocol(
+                    &gEfiSimpleFileSystemProtocolGuid,
+                    NULL,
+                    (VOID**)&Fs
+                );
+    if (EFI_ERROR(Status))
+        return SBCFAIL;
+
+    //
+    // Open root
+    //
+    Status = Fs->OpenVolume(Fs, &Root);
+    if (EFI_ERROR(Status))
+        return SBCFAIL;
+
+    //
+    // Try open target file
+    //
+    Status = Root->Open(
+                    Root,
+                    &File,
+                    FilePath,
+                    EFI_FILE_MODE_READ | EFI_FILE_MODE_WRITE,
+                    0
+                );
+
+    if (Status == EFI_NOT_FOUND) {
+        Root->Close(Root);
+        return SBCNOTFND;
+    }
+
+    if (EFI_ERROR(Status)) {
+        Root->Close(Root);
+        return SBCFAIL;
+    }
+
+    //
+    // Delete file
+    //
+    Status = File->Delete(File);
+
+    //
+    // Close root directory
+    //
+    Root->Close(Root);
+
+    //
+    // 🔥 Workaround: Re-open Root to prevent Write-Protected issues
+    //
+    {
+        EFI_FILE_PROTOCOL *TmpRoot = NULL;
+        EFI_STATUS St2 = Fs->OpenVolume(Fs, &TmpRoot);
+        if (!EFI_ERROR(St2)) {
+            TmpRoot->Close(TmpRoot); // Just open + close for cleanup
+        }
+    }
+
+    if (EFI_ERROR(Status))
+        return SBCFAIL;
+
+    return SBCOK;
 }
 
 /**

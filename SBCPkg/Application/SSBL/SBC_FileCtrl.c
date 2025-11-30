@@ -159,102 +159,288 @@ errdone:
 }
 
 
-
-//SBCStatus  SBC_GetFileSize(IN CHAR16 *FileName, OUT *FileSize)
-SBCStatus  SBC_GetFileSize(CHAR16 *FileName, UINTN  *FileSize)
+//
+// FS Handle의 Root 디렉토리 전체 내용 출력
+//
+STATIC
+VOID
+SBC_DumpFsHandleContents(
+    EFI_SIMPLE_FILE_SYSTEM_PROTOCOL *SimpleFs
+)
 {
     EFI_STATUS Status;
-
-    EFI_HANDLE *ImageHandle;
-    EFI_SIMPLE_FILE_SYSTEM_PROTOCOL *FileSystem;
     EFI_FILE_PROTOCOL *Root;
-    EFI_FILE_PROTOCOL *File;
-    UINTN              InfoSize = 0;
-    EFI_FILE_INFO     *FileInfo;
-    UINTN               hndlcnt;
-    UINTN               idx;
+    EFI_FILE_PROTOCOL *Dir;
+    EFI_FILE_INFO *Info;
+    UINTN InfoSize;
 
+    dprint("    ---- Dumping FS Handle Contents ----");
 
-    hndlcnt = SBC_FindEfiFileSystemProtocol(&ImageHandle);
-    if (hndlcnt <= 0) {
-        dprint("File Sys handle find fail : %d \n", hndlcnt);
-        return SBCFAIL;
-        //sbc_err_sysprn()
+    //
+    // Root 열기
+    //
+    Status = SimpleFs->OpenVolume(SimpleFs, &Root);
+    if (EFI_ERROR(Status)) {
+        eprint("    OpenVolume() failed: %r", Status);
+        return;
     }
 
-    for (idx = 0; idx < hndlcnt; idx++) {
-        Status = SBC_IsFlieAccess(ImageHandle[idx], FileName);
+    //
+    // 현재 디렉토리(".") 열기
+    //
+    Status = Root->Open(Root, &Dir, L".", EFI_FILE_MODE_READ, 0);
+    if (EFI_ERROR(Status)) {
+        eprint("    Root open('.') failed: %r", Status);
+        return;
+    }
+
+    //
+    // 디렉토리 읽기
+    //
+    while (TRUE) {
+        InfoSize = 0;
+
+        Status = Dir->GetInfo(
+                    Dir,
+                    &gEfiFileInfoGuid,
+                    &InfoSize,
+                    NULL
+                 );
+
+        if (Status != EFI_BUFFER_TOO_SMALL)
+            break;
+
+        Info = AllocateZeroPool(InfoSize);
+        if (!Info)
+            break;
+
+        Status = Dir->Read(Dir, &InfoSize, Info);
+        if (EFI_ERROR(Status) || InfoSize == 0) {
+            FreePool(Info);
+            break;
+        }
+
+        if (Info->FileName[0] != L'\0') {
+            dprint("      • %s (%ld bytes)", Info->FileName, Info->FileSize);
+        }
+
+        FreePool(Info);
+    }
+
+    Dir->Close(Dir);
+
+    dprint("    ---- End Of FS Handle Contents ----");
+}
+
+
+//
+// 파일 크기 검색 + FS 전체 내용 출력
+//
+SBCStatus SBC_GetFileSize(
+    IN  CHAR16 *FileName,
+    OUT UINTN  *FileSize
+)
+{
+    EFI_STATUS                        Status;
+    EFI_SIMPLE_FILE_SYSTEM_PROTOCOL  *SimpleFs;
+    EFI_FILE_PROTOCOL                *Root;
+    EFI_FILE_PROTOCOL                *File;
+    EFI_FILE_INFO                    *FileInfo;
+    EFI_HANDLE                       *Handles = NULL;
+    UINTN                             HandleCount = 0;
+    UINTN                             InfoSize = 0;
+
+    dprint("==== SBC_GetFileSizeSimple() called ====");
+    dprint("  Target File : %s", FileName);
+
+    //
+    // 1) FS Handle 전체 획득
+    //
+    Status = gBS->LocateHandleBuffer(
+                    ByProtocol,
+                    &gEfiSimpleFileSystemProtocolGuid,
+                    NULL,
+                    &HandleCount,
+                    &Handles
+                 );
+
+    if (EFI_ERROR(Status)) {
+        eprint("  LocateHandleBuffer failed: %r", Status);
+        return SBCNOTFND;
+    }
+
+    dprint("  Found FS handles: %d", HandleCount);
+
+    //
+    // 2) Handle 순회
+    //
+    for (UINTN i = 0; i < HandleCount; i++) {
+
+        dprint("  -> Checking FS Handle[%d]: %p", i, Handles[i]);
+
+        Status = gBS->HandleProtocol(
+                        Handles[i],
+                        &gEfiSimpleFileSystemProtocolGuid,
+                        (VOID**)&SimpleFs
+                     );
         if (EFI_ERROR(Status)) {
-            //eprint("Is File (%r)", Status);
+            eprint("    HandleProtocol failed: %r", Status);
             continue;
         }
 
-        break;
-    }
+        //
+        // ✔ 파일 검색 전에 이 FS의 디렉토리 내용을 먼저 보여줌
+        //
+        SBC_DumpFsHandleContents(SimpleFs);
 
-    if (EFI_ERROR(Status)) {
-        eprint("File %r", Status);
-        return SBCFAIL;
-    }
-
-
-    Status = gBS->HandleProtocol(ImageHandle[idx],
-                                   &gEfiSimpleFileSystemProtocolGuid,
-                                   (VOID **)&FileSystem);
-    if(EFI_ERROR(Status)) {
-        DEBUG((DEBUG_ERROR, " %a:%d Locate File Systam fail (%r) \r\n",
-               __FUNCTION__, __LINE__, Status));
-        return SBCFAIL;
-    }
-
-    // Open the root directory of the volume.
-    Status = FileSystem->OpenVolume(FileSystem, &Root);
+        //
+        // Root 열기
+        //
+        Status = SimpleFs->OpenVolume(SimpleFs, &Root);
         if (EFI_ERROR(Status)) {
-        eprint("Failed to open volume: %r\n", Status);
-        return SBCFAIL;
-    }
+            eprint("    OpenVolume failed: %r", Status);
+            continue;
+        }
 
-    // Open the file using the provided Unicode file name.
-    Status = Root->Open(Root, &File, FileName, EFI_FILE_MODE_READ, 0);
+        //
+        // 3) 파일 오픈 시도
+        //
+        dprint("    Trying to open target file...");
+
+        Status = Root->Open(
+                        Root,
+                        &File,
+                        FileName,
+                        EFI_FILE_MODE_READ,
+                        0
+                     );
+
         if (EFI_ERROR(Status)) {
-        eprint("Failed to open file %s: %r\n", FileName, Status);
-        Root->Close(Root);
-        return SBCFAIL;
-    }
+            eprint("    File not found in this FS.");
+            continue;
+        }
 
-    // Query for the size of buffer needed to hold the file info.
-    Status = File->GetInfo(File, &gEfiFileInfoGuid, &InfoSize, NULL);
-    if (Status != EFI_BUFFER_TOO_SMALL) {
-        eprint("Unexpected status when querying file info size: %r\n", Status);
-        File->Close(File);
-        Root->Close(Root);
-        return SBCFAIL;
-    }
+        dprint("    File opened!");
 
-    // Allocate memory for the file info structure.
-    FileInfo = AllocatePool(InfoSize);
-        if (FileInfo == NULL) {
-        File->Close(File);
-        Root->Close(Root);
-        eprint("Allocate memory for the file info structure : EFI_OUT_OF_RESOURCES ");
-        return SBCFAIL;
-    }
+        //
+        // 파일 Info 크기 확보
+        //
+        Status = File->GetInfo(File, &gEfiFileInfoGuid, &InfoSize, NULL);
+        if (Status != EFI_BUFFER_TOO_SMALL) {
+            eprint("    GetInfo size failed: %r", Status);
+            File->Close(File);
+            continue;
+        }
 
-    // Retrieve the file info.
-    Status = File->GetInfo(File, &gEfiFileInfoGuid, &InfoSize, FileInfo);
-    if (EFI_ERROR(Status)) {
-        eprint("Failed to retrieve file info: %r\n", Status);
-    } else {
+        FileInfo = AllocateZeroPool(InfoSize);
+        if (!FileInfo) {
+            eprint("    Out of memory");
+            File->Close(File);
+            continue;
+        }
+
+        //
+        // 실제 정보 획득
+        //
+        Status = File->GetInfo(File, &gEfiFileInfoGuid, &InfoSize, FileInfo);
+        if (EFI_ERROR(Status)) {
+            eprint("    GetInfo failed: %r", Status);
+            FreePool(FileInfo);
+            File->Close(File);
+            continue;
+        }
+
+        if (FileInfo->Attribute & EFI_FILE_DIRECTORY) {
+            dprint("UEFI thinks '%s' is DIRECTORY (XFS driver limitation).", FileName);
+        }
+        else {
+            dprint("UEFI thinks '%s' is FILES (XFS driver limitation).", FileName);
+        }
+
+
         *FileSize = FileInfo->FileSize;
+
+        dprint("File Attribute = 0x%x", FileInfo->Attribute);
+        dprint("File PhysicalSize = %ld", FileInfo->PhysicalSize);
+        dprint("    SUCCESS! FileSize = %ld bytes", *FileSize);
+
+        FreePool(FileInfo);
+        File->Close(File);
+        FreePool(Handles);
+
+        dprint("==== SBC_GetFileSizeSimple() OK ====");
+        return SBCOK;
     }
 
-    dprint("File Size : %d", *FileSize);
+    //
+    // 파일을 찾지 못함
+    //
+    eprint("==== SBC_GetFileSizeSimple() FAIL ====");
+    FreePool(Handles);
+    return SBCNOTFND;
+}
 
-    // Clean up allocated memory and open handles.
-    FreePool(FileInfo);
-    File->Close(File);
-    Root->Close(Root);
-    return SBCOK;
+EFI_STATUS SBC_ReadFile(EFI_HANDLE ImageHandle, CHAR16 *FileNames, LV_t *out)
+{
+  EFI_STATUS Status;
+  EFI_SIMPLE_FILE_SYSTEM_PROTOCOL *FileSystem;
+  EFI_FILE_PROTOCOL *RootDir, *File;
+//UINTN BufferSize = 128;
+//CHAR8 Buffer[128];
+
+
+  //TODO
+  // out buffer nill check
+    //DEBUG((DEBUG_ERROR,"Image Handle : %p \r\n", ImageHandle));
+    //DEBUG((DEBUG_ERROR,"Read File : %s \r\n", (CHAR8 *)FileNames));
+
+  //dprint("Read File : %s", FileNames);
+
+  // Locate file system
+  Status = gBS->HandleProtocol(ImageHandle,
+                               &gEfiSimpleFileSystemProtocolGuid,
+                               (VOID **)&FileSystem);
+  if(EFI_ERROR(Status)) {
+    DEBUG((DEBUG_ERROR, " %a:%d Locate File Systam fail (%r) \r\n",
+           __FUNCTION__, __LINE__, Status));
+    return Status;
+  }
+
+  // Open the roor directory
+  Status = FileSystem->OpenVolume(FileSystem, &RootDir);
+  if (EFI_ERROR(Status)) {
+        DEBUG((DEBUG_ERROR, " %a:%d OpenVolume File Systam fail (%r) \r\n",
+           __FUNCTION__, __LINE__, Status));
+    return Status;
+  }
+
+  // Open the file
+  Status = RootDir->Open(RootDir, &File, FileNames, EFI_FILE_MODE_READ, 0);
+  if (EFI_ERROR(Status)) {
+      DEBUG((DEBUG_ERROR, " %a:%d RootDir->Open fail (%r) \r\n",
+     __FUNCTION__, __LINE__, Status));
+    return Status;
+  }
+
+  // Read the file
+  Status = File->Read(File, (UINTN *)&out->length, out->value);
+  if (EFI_ERROR(Status)) {
+      DEBUG((DEBUG_ERROR, " %a:%d File->Read fail (%r) \r\n",
+              __FUNCTION__, __LINE__, Status));
+      //Print(L"File Content: %a\n", Buffer);
+      return Status;
+  }
+
+  //out->length = BufferSize;
+  //CopyMem(out->value, Buffer, out->length);
+
+  //SBC_external_mem_print_bin((CHAR8 *)FileNames, (UINT8 *)out->value, (UINTN)out->length);
+
+  // Close the file
+  File->Close(File);
+  RootDir->Close(RootDir);
+  return Status;
+
 
 }
 

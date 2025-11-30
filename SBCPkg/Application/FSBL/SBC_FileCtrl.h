@@ -452,6 +452,18 @@ SBCStatus SBC_FileReadUnicodeSimple(
     OUT UINTN     *OutLength
 );
 
+EFI_STATUS SBC_CopyBlockDeviceToFile(
+    IN VOID   *_Blk,
+    IN UINT64  ByteOffset,
+    IN UINT64  DataBytes,
+    IN CHAR16 *DstPath,
+    OUT UINT64 *BytesRead OPTIONAL
+);
+
+SBCStatus SBC_DeleteFile (
+    IN CHAR16 *FilePath
+    );
+
 EFI_STATUS SBC_WriteFile(EFI_HANDLE ImageHandle, CHAR16 *FileNames, LV_t *out);
 
 UINTN SBC_FindEfiFileSystemProtocol(EFI_HANDLE **handle);

@@ -175,7 +175,7 @@ SBCStatus SBC_BootModeFactory(VOID *blkhnd, VOID *ImageHandle)
   UINT8   *loadimg = NULL;
   
 
-  EFI_HANDLE  *ssbl_img_hndl;
+  [[maybe_unused]]EFI_HANDLE  *ssbl_img_hndl;
   [[maybe_unused]]UINTN endlba = 0;
   [[maybe_unused]]INTN       hndlcnt = 0;
   __attribute__((unused))EFI_STATUS retval;
@@ -183,7 +183,7 @@ SBCStatus SBC_BootModeFactory(VOID *blkhnd, VOID *ImageHandle)
   [[gnu::unused]]CHAR16 *fname = L"\\EFI\\BOOT\\SSBL.efi";
 
 
-  LV_t wrlv;
+  [[gnu::unused]]LV_t wrlv;
 
 #ifdef _ALL_PASS_
    sbc_err_sysprn(SBC_LOG_CMN_PRIO_INFO, 2,
@@ -214,8 +214,19 @@ SBCStatus SBC_BootModeFactory(VOID *blkhnd, VOID *ImageHandle)
 
   CopyMem((void *)&imglen, &imghdr[0], sizeof imglen);
 
+  dprint("Write SSBL Image  (Addr : 0x%lx) Start LBA : 0x%lx, Len : %ld (0x%lx)",
+       (0 | BOOT_SSBL_OFS), 
+       startlba,
+       imglen,
+       imglen);
  
-  imglen = ALIGN_VALUE(imglen, SBC_RAWPRT_DFLT_BLK_SZ);
+//imglen = ALIGN_VALUE(imglen, SBC_RAWPRT_DFLT_BLK_SZ);
+//
+//    dprint("After SSBL Image  (Addr : 0x%lx) Start LBA : 0x%lx, Len : %ld (0x%lx)",
+//         (0 | BOOT_SSBL_OFS),
+//         startlba,
+//         imglen,
+//         imglen);
 
   dprint("Boot Service Allocate ");
   retval = gBS->AllocatePool(EfiBootServicesData, imglen, (VOID **)&loadimg);
@@ -225,40 +236,51 @@ SBCStatus SBC_BootModeFactory(VOID *blkhnd, VOID *ImageHandle)
     goto errdone;
   }
 
-  ret = SBC_RawPrtReadBlock(blkhnd, (void *)loadimg, &imglen, startlba);
-  if (ret != SBCOK) {
-    //Print(L"SSBL Factory Block Read Fail \n");
-    goto errdone;
-  }
-
-  if ((hndlcnt = SBC_FindEfiFileSystemProtocol(&ssbl_img_hndl)) <= 0) {
-    //Print(L"File SYstem Handle Found fail \n");
-    ret = SBCIO;
-    goto errdone;
-  }
-
-
-  _lv_set_data(&wrlv,&loadimg[4], imglen - 4);
-
-
-  //for (int idx = 0; idx < hndlcnt; idx++) {
-    retval = SBC_WriteFile(ssbl_img_hndl[0], fname, &wrlv);
-  //  if (EFI_ERROR(retval)) {
-  //      ret = SBCIO;
-  //      continue;
-  //      //goto errdone;
-  //  }
-
-  //  break;
-  //}
-
+  retval = SBC_CopyBlockDeviceToFile(blkhnd,
+                                     (BOOT_SECTOR3_OFS | BOOT_SSBL_OFS) + 4,
+                                     imglen,
+                                     fname,
+                                     NULL);
   if (EFI_ERROR(retval)) {
-    eprint("%s file write fail %r", fname, retval);
-    ret = SBCIO;
+    eprint("Factory SSBL File Create Fail");
+    ret = SBCNOTFND;
     goto errdone;
   }
-
-
+//
+//ret = SBC_RawPrtReadBlock(blkhnd, (void *)loadimg, &imglen, startlba);
+//if (ret != SBCOK) {
+//  //Print(L"SSBL Factory Block Read Fail \n");
+//  goto errdone;
+//}
+//
+//if ((hndlcnt = SBC_FindEfiFileSystemProtocol(&ssbl_img_hndl)) <= 0) {
+//  //Print(L"File SYstem Handle Found fail \n");
+//  ret = SBCIO;
+//  goto errdone;
+//}
+//
+//
+//_lv_set_data(&wrlv,&loadimg[4], imglen - 4);
+//
+//
+////for (int idx = 0; idx < hndlcnt; idx++) {
+//  retval = SBC_WriteFile(ssbl_img_hndl[0], fname, &wrlv);
+////  if (EFI_ERROR(retval)) {
+////      ret = SBCIO;
+////      continue;
+////      //goto errdone;
+////  }
+//
+////  break;
+////}
+//
+//if (EFI_ERROR(retval)) {
+//  eprint("%s file write fail %r", fname, retval);
+//  ret = SBCIO;
+//  goto errdone;
+//}
+//
+//
 
   //Print(L"SSBL Write is Done \n");
   //SBC_mem_print_bin("SSBL Header", imghdr, imglen);
@@ -1145,10 +1167,42 @@ UefiMain (
 
 
     SBC_LogFileInit(ImageHandle);
+ 
     sys_start_time = SBC_PerfNowTicks();
 
     SBC_TIME_BLOCKS_NS (driver_load_ns,
         { retval = SBC_DrveriInit(); });
+
+    ret = SBC_DeleteFile (EFI_BOOT_SSBL_PATH);
+     if (ret == SBCNOTFND) {
+             sbc_err_sysprn(SBC_LOG_CMN_PRIO_INFO, 2,
+                  SYS_LOG_HOST_BOOT,
+                  SYS_LOG_APP_NAME,
+                  SYS_LOG_CSC_NAME,
+                  0,
+                  L"Detetion",
+                  L"SBC_VENDOR_SP Can not found \\EFI\\BOOT\\SSBL.efi \n");
+     }
+
+     if ((ret != SBCOK) && (ret != SBCNOTFND )) {
+             sbc_err_sysprn(SBC_LOG_CMN_PRIO_ERR, 2,
+                  SYS_LOG_HOST_BOOT,
+                  SYS_LOG_APP_NAME,
+                  SYS_LOG_CSC_NAME,
+                  0,
+                  L"Detetion",
+                  L"SBC_VENDOR_SP Failed to delete the \\EFI\\BOOT\\SSBL.efi \n");
+             goto errdone;
+     }
+
+     sbc_err_sysprn(SBC_LOG_CMN_PRIO_INFO, 2,
+                  SYS_LOG_HOST_BOOT,
+                  SYS_LOG_APP_NAME,
+                  SYS_LOG_CSC_NAME,
+                  0,
+                  L"Detetion",
+                  L"SBC_VENDOR_SP Success to delete the \\EFI\\BOOT\\SSBL.efi \n");
+
 
     retval =  MapRebuild();
     if (EFI_ERROR(retval)) {
@@ -1169,8 +1223,10 @@ UefiMain (
                  L"Detetion",
                  L"SBC_VENDOR_SP Success to Reconnect to All controller \n");
     }
-
+#ifdef _DEBUG_PRINT_ON_
     PrintMappingTable();
+#endif
+
     SBC_LogElapsedTime(L"SBC Driver Load", driver_load_ns);
     sbc_err_sysprn(SBC_LOG_CMN_PRIO_INFO, 2,
                  SYS_LOG_HOST_BOOT,
