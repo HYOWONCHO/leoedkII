@@ -825,6 +825,15 @@ uc_errdone:
         //dprint("sys_ns_var : %ld", sys_ns_var);
 
         SBC_LogElapsedTime(L"SSBL Factoory Boot Time", sys_ns_var); 
+
+        sbc_err_sysprn(SBC_LOG_CMN_PRIO_NOTICE, 2, 
+            SYS_LOG_HOST_BOOT, 
+            SYS_LOG_APP_NAME, 
+            SYS_LOG_CSC_NAME, 
+            8, 
+            L"Validation ", 
+            L"SBC_VENDOR_SP Grub Load Done");  
+
         ret = SBC_GRUB_LoadAndStart(ImageHandle);
         if(ret != SBCOK) {
             sbc_err_sysprn(SBC_LOG_CMN_PRIO_ERR, 2, 
