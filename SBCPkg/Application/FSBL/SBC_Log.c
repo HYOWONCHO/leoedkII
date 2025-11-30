@@ -1260,7 +1260,7 @@ VOID SBC_LogPrint(
                         );
 
                 if (!EFI_ERROR(Status)) {
-                    dprint();
+                    //dprint();
                     // Move cursor to end for append
                     File->SetPosition(File, (UINT64)-1);
 

@@ -71,290 +71,19 @@ VOID SBC_AntiTamperingDeInit(VOID *priv)
     return;
 }
 
-/**
-  Read a text file from any available filesystem and convert it to UTF-16.
-
-  @param[in]  FileName     Full UEFI file path (e.g., L"\\EFI\\BOOT\\config.txt")
-  @param[out] OutBuffer    Pointer to receive allocated UTF-16 buffer
-  @param[out] OutLength    Number of UTF-16 characters (excluding NULL)
-
-  @retval SBCOK   The file was successfully located and read
-  @retval SBCNOTFND  The file could not be found or read
-**/
-SBCStatus SBC_FileReadUnicodeSimple(
-    IN  CHAR16    *FileName,
-    OUT CHAR16  **OutBuffer,
-    OUT UINTN     *OutLength
-)
-{
-    EFI_STATUS                        Status;
-    EFI_HANDLE                       *Handles = NULL;
-    UINTN                             HandleCount = 0;
-    EFI_SIMPLE_FILE_SYSTEM_PROTOCOL  *SimpleFs;
-    EFI_FILE_PROTOCOL                *Root;
-    EFI_FILE_PROTOCOL                *File;
-    EFI_FILE_INFO                    *FileInfo = NULL;
-    UINTN                             FileInfoSize = 0;
-    UINT8                            *AsciiBuf = NULL;
-    CHAR16                          *UniBuf = NULL;
-
-    dprint("==== SBC_FileReadUnicodeSimple() ====");
-    dprint("  Target File : %s", FileName);
-
-    //
-    // Locate all available filesystem handles
-    //
-    Status = gBS->LocateHandleBuffer(
-                    ByProtocol,
-                    &gEfiSimpleFileSystemProtocolGuid,
-                    NULL,
-                    &HandleCount,
-                    &Handles
-                 );
-    if (EFI_ERROR(Status)) {
-        eprint("  LocateHandleBuffer() failed: %r", Status);
-        return SBCNOTFND;
-    }
-
-    dprint("  Found FS handles: %d", HandleCount);
-
-    //
-    // Iterate through all filesystem handles
-    //
-    for (UINTN i = 0; i < HandleCount; i++) {
-
-        dprint("  -> Trying FS Handle[%d] = %p", i, Handles[i]);
-
-        //
-        // Obtain SimpleFileSystem protocol
-        //
-        Status = gBS->HandleProtocol(
-                        Handles[i],
-                        &gEfiSimpleFileSystemProtocolGuid,
-                        (VOID**)&SimpleFs
-                     );
-        if (EFI_ERROR(Status)) {
-            eprint("     HandleProtocol failed: %r", Status);
-            continue;
-        }
-
-        //
-        // Open root directory
-        //
-        Status = SimpleFs->OpenVolume(SimpleFs, &Root);
-        if (EFI_ERROR(Status)) {
-            eprint("     OpenVolume failed: %r", Status);
-            continue;
-        }
-
-        //
-        // Try opening the target file
-        //
-        Status = Root->Open(
-                        Root,
-                        &File,
-                        FileName,
-                        EFI_FILE_MODE_READ,
-                        0
-                     );
-        if (EFI_ERROR(Status)) {
-            dprint("     File not present in this filesystem");
-            continue;
-        }
-
-        dprint("     File opened");
-
-        //
-        // Get EFI_FILE_INFO size
-        //
-        Status = File->GetInfo(File, &gEfiFileInfoGuid, &FileInfoSize, NULL);
-        if (Status != EFI_BUFFER_TOO_SMALL) {
-            eprint("     GetInfo(size) failed: %r", Status);
-            File->Close(File);
-            continue;
-        }
-
-        FileInfo = AllocateZeroPool(FileInfoSize);
-        if (!FileInfo) {
-            eprint("     Out of memory (FileInfo)");
-            File->Close(File);
-            continue;
-        }
-
-        //
-        // Retrieve actual file info
-        //
-        Status = File->GetInfo(File, &gEfiFileInfoGuid, &FileInfoSize, FileInfo);
-        if (EFI_ERROR(Status)) {
-            eprint("     GetInfo failed: %r", Status);
-            FreePool(FileInfo);
-            File->Close(File);
-            continue;
-        }
-
-        //
-        // Reject directories
-        //
-        if (FileInfo->Attribute & EFI_FILE_DIRECTORY) {
-            eprint("     ERROR: '%s' is directory (Attr=0x%x)",
-                   FileName, FileInfo->Attribute);
-            FreePool(FileInfo);
-            File->Close(File);
-            continue;
-        }
-
-        dprint("     FileSize = %ld bytes", FileInfo->FileSize);
-
-        //
-        // Allocate ASCII buffer and read file content
-        //
-        AsciiBuf = AllocateZeroPool(FileInfo->FileSize + 1);
-        if (!AsciiBuf) {
-            eprint("     Out of memory (AsciiBuf)");
-            FreePool(FileInfo);
-            File->Close(File);
-            continue;
-        }
-
-        UINTN ReadSize = FileInfo->FileSize;
-        Status = File->Read(File, &ReadSize, AsciiBuf);
-        if (EFI_ERROR(Status)) {
-            eprint("     Read failed: %r", Status);
-            FreePool(AsciiBuf);
-            FreePool(FileInfo);
-            File->Close(File);
-            continue;
-        }
-
-        //
-        // Convert ASCII → UTF-16
-        //
-        UINTN UniSize = (ReadSize + 1) * sizeof(CHAR16);
-        UniBuf = AllocateZeroPool(UniSize);
-        if (!UniBuf) {
-            eprint("     Out of memory (Unicode buffer)");
-            FreePool(AsciiBuf);
-            FreePool(FileInfo);
-            File->Close(File);
-            continue;
-        }
-
-        for (UINTN j = 0; j < ReadSize; j++) {
-            UniBuf[j] = (CHAR16)AsciiBuf[j];
-        }
-        UniBuf[ReadSize] = L'\0';
-
-        //
-        // Return results
-        //
-        *OutBuffer = UniBuf;
-        *OutLength = ReadSize;
-
-        dprint("     UTF-16 read OK (%ld chars)", *OutLength);
-
-        FreePool(AsciiBuf);
-        FreePool(FileInfo);
-        File->Close(File);
-        FreePool(Handles);
-
-        dprint("==== SBC_FileReadUnicodeSimple() OK ====");
-        return SBCOK;
-    }
-
-    //
-    // File not found in any filesystem
-    //
-    eprint("==== SBC_FileReadUnicodeSimple() FAIL ====");
-    FreePool(Handles);
-    return SBCNOTFND;
-}
 
 
 
 SBCStatus _find_kernel_path(CHAR16 **buf, UINTN *len_of_kernel)
 {
-
-    //UINT8 errmsg[512] = {0, };
     SBCStatus ret = SBCOK;
-//  UINTN               len_of_kernel = 0;
-//  UINTN               hndlcnt;
-//  EFI_HANDLE          *hndl;
-//  UINTN               idx;
-//  LV_t lv;
-//  EFI_STATUS          Status;
-//  [[gnu::unused]]CHAR8   *ascii_str;
-    //UINTN x;
 
-    //SBC_RET_VALIDATE_ERRCODEMSG((fname != NULL), SBCNULLP, "Object point to NILL");
-
-//  ret = SBC_GetFileSize( KERNEL_DIR_FILE, &len_of_kernel);
-//  SBC_RET_VALIDATE_ERRCODEMSG((ret == SBCOK), ret, "File Not Found");
-//
-//  hndlcnt = SBC_FindEfiFileSystemProtocol(&hndl);
-//  if (hndlcnt <= 0) {
-//      eprint("File System Handle find fail : %d", hndlcnt);
-//      return SBCFAIL;
-//  }
-//
-//  for (idx = 0; idx < hndlcnt; idx++) {
-//      Status = SBC_IsFlieAccess(hndl[idx], KERNEL_DIR_FILE);
-//      if (EFI_ERROR(Status)) {
-//          continue;
-//      }
-//
-//      break;
-//  }
-//
-//  if (EFI_ERROR(Status)) {
-//      eprint("%s  : %r", KERNEL_DIR_FILE, Status);
-//      return SBCFAIL;
-//  }
-
-    
-
-//  lv.value = fname; // AllocateZeroPool(512);
-//  lv.length = len_of_kernel;
-//  dprint("%s size %d", KERNEL_DIR_FILE, lv.length);
-//  SBC_RET_VALIDATE_ERRCODEMSG((lv.value != NULL), SBCNULLP, "Out of Memory");
-//
-//  Status = SBC_ReadFile(hndl[idx], KERNEL_DIR_FILE, &lv);
-//  if (EFI_ERROR(Status)) {
-//      eprint("%s file read fail with %r", KERNEL_DIR_FILE, Status);
-//      ret = SBCNOTFND;
-//      goto errdone;
-//  }
-
-    //AsciiStrToUnicodeStr(lv.value, fname);
-    //CopyMem((void *)fname, (const void *)lv.value, lv.length);
-    //fname[lv.length] = '\0';
-
-    // File name convert from Ascii to Unicode string 
-//  ascii_str = (CHAR8 *)lv.value;
-//  SBC_mem_print_bin("Kernel Path", (UINT8 *)lv.value, lv.length );
-//  dprint("kernel name : %a", lv.value);
-//  //ascii_str[lv.length] = '\0';
-//  for ( x = 0;x < lv.length /* ascii_str[x] != '\0' */; x++) {
-//      fname[x] = (CHAR16)ascii_str[x];
-//  }
-//
-//  fname[x] = L'\0';
-    //SBC_mem_print_bin("Kernel Path", (UINT8 *)lv.value, lv.length );
-   
-    //ascii_str = (CHAR8 *)lv.value;
-    //dprintt();
-    //ascii_str[lv.length] = '\0';
-    //dprint();
-    //AsciiStrToUnicodeStrS(ascii_str, fname,lv.length);
-    //dprintt();
     
     ret = SBC_FileReadUnicodeSimple(KERNEL_DIR_FILE, buf, len_of_kernel);
-    dprint("kernel path : %s", (CHAR16 *)*buf);
-//errdone:
-//
-//    if (lv.value != NULL) {
-//        FreePool(lv.value);
-//        lv.value = NULL;
-//    }
+
+    //SBC_mem_print_bin("Kernel path" , buf, *len_of_kernel);
+
+    dprint("kernel path : %s (count : %d )", (CHAR16 *)*buf, *len_of_kernel);
 
     return ret;
 
@@ -1470,7 +1199,7 @@ SBCStatus  SBC_DeviceIdKyeVerify(VOID *blkio, UINT8 *fwid, UINT8 *deckey)
 
     //SBC_mem_print_bin("12 Device ID cert", (UINT8 *)loadbuf, ldlen);
 #if 1 //ndef _FSBL_TEST_ 
-    offset = SYS_CONF_FWID_CRT_OFS;
+    offset = SYS_CONF_DEVID_CRT_OFS;
 #else
 
     UINT8 rawData[428] = {                                           
@@ -1629,6 +1358,14 @@ SBCStatus  SBC_DeviceIdKyeVerify(VOID *blkio, UINT8 *fwid, UINT8 *deckey)
 
 #endif
 #endif
+
+    sbc_err_sysprn(SBC_LOG_CMN_PRIO_INFO, 2,
+                 SYS_LOG_HOST_BOOT,
+                 SYS_LOG_APP_NAME,
+                 SYS_LOG_CSC_NAME,
+                 1,
+                 L"Detectoin",
+                 L"SBC_RootCA_Verify Success to verify the Device Crt \n");
 //  sbc_err_sysprn(SBC_LOG_CMN_PRIO_ERR, 2,
 //         L"SBC",
 //         L"FSBL",

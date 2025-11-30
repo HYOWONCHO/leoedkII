@@ -1343,6 +1343,206 @@ errdone:
 
 }
 
+
+/**
+  Read a text file from any available filesystem and convert it to UTF-16.
+
+  @param[in]  FileName     Full UEFI file path (e.g., L"\\EFI\\BOOT\\config.txt")
+  @param[out] OutBuffer    Pointer to receive allocated UTF-16 buffer
+  @param[out] OutLength    Number of UTF-16 characters (excluding NULL)
+
+  @retval SBCOK   The file was successfully located and read
+  @retval SBCNOTFND  The file could not be found or read
+**/
+SBCStatus SBC_FileReadUnicodeSimple(
+    IN  CHAR16    *FileName,
+    OUT CHAR16  **OutBuffer,
+    OUT UINTN     *OutLength
+)
+{
+    EFI_STATUS                        Status;
+    EFI_HANDLE                       *Handles = NULL;
+    UINTN                             HandleCount = 0;
+    EFI_SIMPLE_FILE_SYSTEM_PROTOCOL  *SimpleFs;
+    EFI_FILE_PROTOCOL                *Root;
+    EFI_FILE_PROTOCOL                *File;
+    EFI_FILE_INFO                    *FileInfo = NULL;
+    UINTN                             FileInfoSize = 0;
+    UINT8                            *AsciiBuf = NULL;
+    CHAR16                          *UniBuf = NULL;
+
+    dprint("==== SBC_FileReadUnicode() ====");
+    dprint("  Target File : %s", FileName);
+
+    //
+    // Locate all available filesystem handles
+    //
+    Status = gBS->LocateHandleBuffer(
+                    ByProtocol,
+                    &gEfiSimpleFileSystemProtocolGuid,
+                    NULL,
+                    &HandleCount,
+                    &Handles
+                 );
+    if (EFI_ERROR(Status)) {
+        eprint("  LocateHandleBuffer() failed: %r", Status);
+        return SBCNOTFND;
+    }
+
+    dprint("  Found FS handles: %d", HandleCount);
+
+    //
+    // Iterate through all filesystem handles
+    //
+    for (UINTN i = 0; i < HandleCount; i++) {
+
+        dprint("  -> Trying FS Handle[%d] = %p", i, Handles[i]);
+
+        //
+        // Obtain SimpleFileSystem protocol
+        //
+        Status = gBS->HandleProtocol(
+                        Handles[i],
+                        &gEfiSimpleFileSystemProtocolGuid,
+                        (VOID**)&SimpleFs
+                     );
+        if (EFI_ERROR(Status)) {
+            eprint("     HandleProtocol failed: %r", Status);
+            continue;
+        }
+
+        //
+        // Open root directory
+        //
+        Status = SimpleFs->OpenVolume(SimpleFs, &Root);
+        if (EFI_ERROR(Status)) {
+            eprint("     OpenVolume failed: %r", Status);
+            continue;
+        }
+
+        //
+        // Try opening the target file
+        //
+        Status = Root->Open(
+                        Root,
+                        &File,
+                        FileName,
+                        EFI_FILE_MODE_READ,
+                        0
+                     );
+        if (EFI_ERROR(Status)) {
+            dprint("     File not present in this filesystem");
+            continue;
+        }
+
+        dprint("     File opened");
+
+        //
+        // Get EFI_FILE_INFO size
+        //
+        Status = File->GetInfo(File, &gEfiFileInfoGuid, &FileInfoSize, NULL);
+        if (Status != EFI_BUFFER_TOO_SMALL) {
+            eprint("     GetInfo(size) failed: %r", Status);
+            File->Close(File);
+            continue;
+        }
+
+        FileInfo = AllocateZeroPool(FileInfoSize);
+        if (!FileInfo) {
+            eprint("     Out of memory (FileInfo)");
+            File->Close(File);
+            continue;
+        }
+
+        //
+        // Retrieve actual file info
+        //
+        Status = File->GetInfo(File, &gEfiFileInfoGuid, &FileInfoSize, FileInfo);
+        if (EFI_ERROR(Status)) {
+            eprint("     GetInfo failed: %r", Status);
+            FreePool(FileInfo);
+            File->Close(File);
+            continue;
+        }
+
+        //
+        // Reject directories
+        //
+        if (FileInfo->Attribute & EFI_FILE_DIRECTORY) {
+            eprint("     ERROR: '%s' is directory (Attr=0x%x)",
+                   FileName, FileInfo->Attribute);
+            FreePool(FileInfo);
+            File->Close(File);
+            continue;
+        }
+
+        dprint("     FileSize = %ld bytes", FileInfo->FileSize);
+
+        //
+        // Allocate ASCII buffer and read file content
+        //
+        AsciiBuf = AllocateZeroPool(FileInfo->FileSize + 1);
+        if (!AsciiBuf) {
+            eprint("     Out of memory (AsciiBuf)");
+            FreePool(FileInfo);
+            File->Close(File);
+            continue;
+        }
+
+        UINTN ReadSize = FileInfo->FileSize;
+        Status = File->Read(File, &ReadSize, AsciiBuf);
+        if (EFI_ERROR(Status)) {
+            eprint("     Read failed: %r", Status);
+            FreePool(AsciiBuf);
+            FreePool(FileInfo);
+            File->Close(File);
+            continue;
+        }
+
+        //
+        // Convert ASCII → UTF-16
+        //
+        UINTN UniSize = (ReadSize + 1) * sizeof(CHAR16);
+        UniBuf = AllocateZeroPool(UniSize);
+        if (!UniBuf) {
+            eprint("     Out of memory (Unicode buffer)");
+            FreePool(AsciiBuf);
+            FreePool(FileInfo);
+            File->Close(File);
+            continue;
+        }
+
+        for (UINTN j = 0; j < ReadSize; j++) {
+            UniBuf[j] = (CHAR16)AsciiBuf[j];
+        }
+        UniBuf[ReadSize] = L'\0';
+
+        //
+        // Return results
+        //
+        *OutBuffer = UniBuf;
+        *OutLength = ReadSize;
+
+        dprint("     UTF-16 read OK (%ld chars)", *OutLength);
+
+        FreePool(AsciiBuf);
+        FreePool(FileInfo);
+        File->Close(File);
+        FreePool(Handles);
+
+        dprint("==== SBC_FileReadUnicode() OK ====");
+        return SBCOK;
+    }
+
+    //
+    // File not found in any filesystem
+    //
+    eprint("==== SBC_FileReadUnicode() FAIL ====");
+    FreePool(Handles);
+    return SBCNOTFND;
+}
+
+
 SBCStatus  SBC_BlkIoHandleInit(OUT VOID **hblk, OUT VOID *hdr)
 {
 #define     SBC_MAGIC_LEN           0x04

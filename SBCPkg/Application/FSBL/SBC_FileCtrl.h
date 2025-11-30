@@ -435,6 +435,23 @@ SBCStatus SBC_RawAlignedReadBlockIO(VOID *blk, UINTN off, UINTN sz, VOID *buf);
  */
 SBCStatus SBC_RawAlignedWriteBlockIO(VOID *blk, UINTN off, UINTN sz, CONST VOID *buf);
 
+
+/**
+  Read a text file from any available filesystem and convert it to UTF-16.
+
+  @param[in]  FileName     Full UEFI file path (e.g., L"\\EFI\\BOOT\\config.txt")
+  @param[out] OutBuffer    Pointer to receive allocated UTF-16 buffer
+  @param[out] OutLength    Number of UTF-16 characters (excluding NULL)
+
+  @retval SBCOK   The file was successfully located and read
+  @retval SBCNOTFND  The file could not be found or read
+**/
+SBCStatus SBC_FileReadUnicodeSimple(
+    IN  CHAR16    *FileName,
+    OUT CHAR16  **OutBuffer,
+    OUT UINTN     *OutLength
+);
+
 EFI_STATUS SBC_WriteFile(EFI_HANDLE ImageHandle, CHAR16 *FileNames, LV_t *out);
 
 UINTN SBC_FindEfiFileSystemProtocol(EFI_HANDLE **handle);
