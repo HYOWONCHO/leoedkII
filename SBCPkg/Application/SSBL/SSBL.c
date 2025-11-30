@@ -438,7 +438,7 @@ UefiMain (
                  SYS_LOG_CSC_NAME,
                  0,
                  L"Detetion",
-                 L"SBC_VENDOR_SP SSBL Statring");
+                 L"SBC_VENDOR_SP *** SSBL Statring ***");
 
     sys_start_time = SBC_PerfNowTicks();
 
@@ -814,14 +814,38 @@ uc_errdone:
 //         goto errdone;
 //     }
 
-//    ret = SBC_SecureBootCheck((VOID *)&btproc);
-//    if (ret != SBCOK) {
-//        eprint("Secure Boot check fail for BOOT_MODE_FACTORY");
-//        goto errdone;
-//    }
-      
+       ret = SBC_SecureBootCheck((VOID *)&btproc);
+       if (ret != SBCOK) {
+           eprint("Secure Boot check fail for BOOT_MODE_FACTORY");
+           goto errdone;
+       }
+        sys_end_time = SBC_PerfNowTicks();
+        //dprint("sys_end_time : %ld (%ld)", sys_end_time, sys_end_time - sys_start_time);
+        sys_ns_var  = SBC_PerfTicksTons(_PerfDeltaTicks(sys_start_time, sys_end_time));
+        //dprint("sys_ns_var : %ld", sys_ns_var);
+
+        SBC_LogElapsedTime(L"SSBL Factoory Boot Time", sys_ns_var); 
+        ret = SBC_GRUB_LoadAndStart(ImageHandle);
+        if(ret != SBCOK) {
+            sbc_err_sysprn(SBC_LOG_CMN_PRIO_ERR, 2, 
+                    SYS_LOG_HOST_BOOT, 
+                    SYS_LOG_APP_NAME, 
+                   SYS_LOG_CSC_NAME, 
+                    8, 
+                    L"Detection ", 
+                    L"SBC_VENDOR_SP Grub Load fail");
+            retval = EFI_INVALID_PARAMETER;
+        }
+
+        sbc_err_sysprn(SBC_LOG_CMN_PRIO_NOTICE, 2, 
+            SYS_LOG_HOST_BOOT, 
+            SYS_LOG_APP_NAME, 
+            SYS_LOG_CSC_NAME, 
+            8, 
+            L"Validation ", 
+            L"SBC_VENDOR_SP Grub Load Done");      
        //dprint("Factory Boot Mode !!! \n");
-       ret = SBCFAIL;
+       //ret = SBCFAIL;
        goto errdone;
        break;
     case BOOT_MODE_UPDATE:

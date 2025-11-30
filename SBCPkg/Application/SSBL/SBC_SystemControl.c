@@ -1436,6 +1436,14 @@ errdone:
 VOID SBC_RebootSystem(VOID)
 {
     //Print(L"System Reset ... \n");
+
+    sbc_err_sysprn(SBC_LOG_CMN_PRIO_INFO, 2,
+         SYS_LOG_HOST_BOOT,
+         SYS_LOG_APP_NAME,
+         SYS_LOG_CSC_NAME,
+         1,
+         L"Detectoin",
+         L"SBC_VENDOR_SP System Reboo Re-starting ");
     gRT->ResetSystem(EfiResetCold, EFI_SUCCESS, 0, NULL);
     while(TRUE) { };
 

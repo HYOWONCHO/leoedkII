@@ -482,8 +482,18 @@ SBCStatus SBC_SSBL_LoadAndStart(EFI_HANDLE ImageHandle)
       //Print(L"Failed to convert device path to string.\n");
       //return SBCFAIL;
     }
+
+    sbc_err_sysprn(SBC_LOG_CMN_PRIO_INFO, 2,
+                 SYS_LOG_HOST_BOOT,
+                 SYS_LOG_APP_NAME,
+                 SYS_LOG_CSC_NAME,
+                 0,
+                 L"Detetion",
+                 L"SBC_VENDOR_SP Jump to SSBL !!!"); 
+
     EFI_STATUS Status = gBS->LoadImage(FALSE, gImageHandle, DevicePath, NULL, 0, &ImageHandle);
     if (!EFI_ERROR(Status)) {
+      
       gBS->StartImage(ImageHandle, NULL, NULL);
       return SBCOK;
     }
