@@ -846,7 +846,7 @@ uc_errdone:
             L"SBC_VENDOR_SP Grub Load Done");      
        //dprint("Factory Boot Mode !!! \n");
        //ret = SBCFAIL;
-       goto errdone;
+       //goto errdone;
        break;
     case BOOT_MODE_UPDATE:
         dprint("Boot Mode BOOT_MODE_UPDATE");
