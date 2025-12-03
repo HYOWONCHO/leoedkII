@@ -4,7 +4,7 @@
 
 #include "log_print.h"
 
-#define BLK_SIZE        512
+#define BLK_SIZE        (1<<20)
 
 int raw_read_u32(const char *dev, off_t offset, uint32_t *out);
 
