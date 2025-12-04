@@ -27,13 +27,13 @@ file(GLOB SRC_FILES
 # -----------------------------------------------------------
 # Build executable
 # -----------------------------------------------------------
-add_executable(sbc_tpm_example ${SRC_FILES})
+add_executable(sbc_tpm ${SRC_FILES})
 
 # -----------------------------------------------------------
 # Link TPM2-TSS libraries
 #   tss2-esys, tss2-tcti-device 필요
 # -----------------------------------------------------------
-target_link_libraries(sbc_tpm_example
+target_link_libraries(sbc_tpm
     tss2-esys
     tss2-mu
     tss2-rc
