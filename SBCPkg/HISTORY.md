@@ -1,17 +1,26 @@
-# LEOTEST Module and Backup History
+# Projectory History
 
-## 2025-05-07 ( Filename : Leotest_20250507.tgz )
+This document tracks the development history of the **SBC TPM2 Test Application Example Project**, including major changes, feature additions, and structural updates.
+
+## 🏁 v0.1.0 — Initial Project Setup
+**Date:** 2025-12-04  
+**Status:** Initial Release
   * ECC Key Generation Code modify
   * ECDH API implement
   * External debug print feature add
   * ECC Key gen and ECDH test function written
 
-## 2025-05-09 ( Filename : Leotest_20250509.tgz )
+## 🏁 v0.1.0 — Initial Project Setup
+**Date:** 2025-12-08 
+**Status:** Initial Release
   * ECDH Module test done
   * String to Hex convert module written
   * Written the HASH Module and vectory test
 
-## 2025-05-12
+## 🏁 v0.1.0 — Initial Project Setup
+**Date:** 2025-12-09  
+**Status:** Initial Release
   * ECDH TEST BUG FIXED
   * ECDSA API DESIGN AND test
   * AES AND SHA TEST
+
