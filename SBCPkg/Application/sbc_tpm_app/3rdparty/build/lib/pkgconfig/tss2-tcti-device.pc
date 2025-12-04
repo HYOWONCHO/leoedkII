@@ -1,0 +1,12 @@
+prefix=/opt/sbc-tpm2-build
+exec_prefix=${prefix}
+libdir=${exec_prefix}/lib
+includedir=${prefix}/include
+
+Name: tss2-tcti-device
+Description: TCTI library for communicating with a TPM device node.
+URL: https://github.com/tpm2-software/tpm2-tss
+Version: leoedkII_tag_sbcpkg_v5.2.1-rc-9-g5cfa5f31-dirty
+Requires.private: tss2-mu
+Cflags: -I${includedir} -I${includedir}/tss2
+Libs: -ltss2-tcti-device -L${libdir}

@@ -1,0 +1,13 @@
+prefix=/opt/sbc-tpm2-build
+exec_prefix=${prefix}
+libdir=${exec_prefix}/lib
+includedir=${prefix}/include
+
+Name: tss2-esys
+Description: TPM2 Enhanced System API library.
+URL: https://github.com/tpm2-software/tpm2-tss
+Version: leoedkII_tag_sbcpkg_v5.2.1-rc-9-g5cfa5f31-dirty
+Requires.private: tss2-mu tss2-sys
+Cflags: -I${includedir} -I${includedir}/tss2
+Libs: -ltss2-esys -L${libdir}
+Libs.private:    -lcrypto 

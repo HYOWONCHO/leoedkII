@@ -1,0 +1,11 @@
+prefix=/opt/sbc-tpm2-build
+exec_prefix=${prefix}
+libdir=${exec_prefix}/lib
+includedir=${prefix}/include
+
+Name: tss2-tcti-spidev
+Description: TCTI library for communicating with the TPM over spidev.
+URL: https://github.com/tpm2-software/tpm2-tss
+Version: leoedkII_tag_sbcpkg_v5.2.1-rc-9-g5cfa5f31-dirty
+Cflags: -I${includedir} -I${includedir}/tss
+Libs: -ltss2-tcti-spi-helper -ltss2-tcti-spi-ltt2go -L${libdir}
