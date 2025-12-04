@@ -1,0 +1,3 @@
+/home/leoc/workspace_leo/leoedkII/SBCPkg/Application/TbTool/build/CMakeFiles/tb_tool.dir
+/home/leoc/workspace_leo/leoedkII/SBCPkg/Application/TbTool/build/CMakeFiles/edit_cache.dir
+/home/leoc/workspace_leo/leoedkII/SBCPkg/Application/TbTool/build/CMakeFiles/rebuild_cache.dir

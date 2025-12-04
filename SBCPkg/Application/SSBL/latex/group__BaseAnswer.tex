@@ -1,0 +1,923 @@
+\doxysection{In terms of the Base Answer behavior}
+\hypertarget{group__BaseAnswer}{}\label{group__BaseAnswer}\index{In terms of the Base Answer behavior@{In terms of the Base Answer behavior}}
+Collaboration diagram for In terms of the Base Answer behavior\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=327pt]{group__BaseAnswer}
+\end{center}
+\end{figure}
+\doxysubsubsection*{Modules}
+\begin{DoxyCompactItemize}
+\item 
+\mbox{\hyperlink{group__IntegrityCheck}{Integrity\+Check}}
+\end{DoxyCompactItemize}
+\doxysubsubsection*{Data Structures}
+\begin{DoxyCompactItemize}
+\item 
+struct \mbox{\hyperlink{struct__base__ansid__t}{\+\_\+base\+\_\+ansid\+\_\+t}}
+\item 
+struct \mbox{\hyperlink{struct__t__baseansr}{\+\_\+t\+\_\+baseansr}}
+\item 
+union \mbox{\hyperlink{union__t__fsbl__bsifo}{\+\_\+t\+\_\+fsbl\+\_\+bsifo}}
+\item 
+struct \mbox{\hyperlink{struct__t__fsbl__bsinfo__ptr}{\+\_\+t\+\_\+fsbl\+\_\+bsinfo\+\_\+ptr}}
+\item 
+struct \mbox{\hyperlink{struct__t__mig__key}{\+\_\+t\+\_\+mig\+\_\+key}}
+\item 
+struct \mbox{\hyperlink{structbase__ansid__t}{base\+\_\+ansid\+\_\+t}}
+\item 
+struct \mbox{\hyperlink{structbaseansr__t}{baseansr\+\_\+t}}
+\begin{DoxyCompactList}\small\item\em (Deprecated) Base Answer encryption data structure \end{DoxyCompactList}\item 
+struct \mbox{\hyperlink{structfsbl__bsinfo__ptr__t}{fsbl\+\_\+bsinfo\+\_\+ptr\+\_\+t}}
+\begin{DoxyCompactList}\small\item\em (Deprecated) Pointer mapping for FSBL Boot Security Information. \end{DoxyCompactList}\item 
+union \mbox{\hyperlink{unionfsbl__bsinfo__t}{fsbl\+\_\+bsinfo\+\_\+t}}
+\begin{DoxyCompactList}\small\item\em FSBL and SSBL Boot Security Information structure. \end{DoxyCompactList}\item 
+struct \mbox{\hyperlink{structmig__key__t}{mig\+\_\+key\+\_\+t}}
+\begin{DoxyCompactList}\small\item\em (Deprecated) Migration key information structure. \end{DoxyCompactList}\end{DoxyCompactItemize}
+\doxysubsubsection*{Macros}
+\begin{DoxyCompactItemize}
+\item 
+\#define \mbox{\hyperlink{group__BaseAnswer_gabf27e27b8df1a91d8b97d99e0be0cb1b}{BASE\+\_\+\+ANS\+\_\+\+BLK\+\_\+\+LBA}}~0
+\begin{DoxyCompactList}\small\item\em Logical Block Address (LBA) index for Base Answer storage. \end{DoxyCompactList}\item 
+\#define \mbox{\hyperlink{group__BaseAnswer_ga4c6c5ff58e035d9347f00abe682716f5}{BASE\+\_\+\+ANS\+\_\+\+BLK\+\_\+\+LEN}}~512
+\begin{DoxyCompactList}\small\item\em Base Answer block size (in bytes). \end{DoxyCompactList}\item 
+\#define \mbox{\hyperlink{group__BaseAnswer_ga837d78946cde3f9d1e30b39c6c65a2f6}{BASE\+\_\+\+ANS\+\_\+\+IV\+\_\+\+KEY\+\_\+\+STR}}~12
+\begin{DoxyCompactList}\small\item\em Initialization Vector (IV) size for Base Answer encryption (in bytes). \end{DoxyCompactList}\item 
+\#define \mbox{\hyperlink{group__BaseAnswer_gad15de8430dc7d4a984b05fd62370946a}{BASE\+\_\+\+ANS\+\_\+\+KEY\+\_\+\+STR}}~32
+\begin{DoxyCompactList}\small\item\em Base Answer encryption/decryption key strength (in bytes). \end{DoxyCompactList}\item 
+\#define \mbox{\hyperlink{group__BaseAnswer_ga2fdd5e105fc2a8a8189513cb1679313a}{BASE\+\_\+\+ANS\+\_\+\+MAX\+\_\+\+LEN}}~256
+\begin{DoxyCompactList}\small\item\em Maximum supported base answer length (in bytes). \end{DoxyCompactList}\item 
+\#define \mbox{\hyperlink{group__BaseAnswer_ga8edf430c239fa9c0e265d5b7bb1ef85d}{BASE\+\_\+\+ANS\+\_\+\+SAT\+\_\+\+OFFSET}}~0x100
+\begin{DoxyCompactList}\small\item\em Offset position for Base Answer storage area (in bytes). \end{DoxyCompactList}\item 
+\#define \mbox{\hyperlink{group__BaseAnswer_ga04cfafb08a311a3ed34f622140d7b279}{BASE\+\_\+\+ANS\+\_\+\+STREAM\+\_\+\+LEN}}~512
+\begin{DoxyCompactList}\small\item\em Length of the Base Answer data stream (in bytes). \end{DoxyCompactList}\item 
+\#define \mbox{\hyperlink{group__BaseAnswer_gae1b76ef4123c7c8856c94d52b6c1e448}{BASE\+\_\+\+ANS\+\_\+\+TAG\+\_\+\+LEN}}~16
+\begin{DoxyCompactList}\small\item\em Authentication tag length for AES-\/\+GCM encryption (in bytes). \end{DoxyCompactList}\item 
+\#define \mbox{\hyperlink{group__BaseAnswer_ga271f2c61e3fec89398a7f36f6b214cca}{BASE\+\_\+\+ANSW\+\_\+\+DEFLEN}}~16
+\begin{DoxyCompactList}\small\item\em Default length of the base answer (in bytes). \end{DoxyCompactList}\item 
+\Hypertarget{group__BaseAnswer_ga267dda722d319c03362c88544e733168}\label{group__BaseAnswer_ga267dda722d319c03362c88544e733168} 
+\#define {\bfseries FSBL\+\_\+\+BNIFO\+\_\+\+SIZE}~8
+\end{DoxyCompactItemize}
+\doxysubsubsection*{Typedefs}
+\begin{DoxyCompactItemize}
+\item 
+\Hypertarget{group__BaseAnswer_ga01ca6243bd2b8b96c7fa51270766b94b}\label{group__BaseAnswer_ga01ca6243bd2b8b96c7fa51270766b94b} 
+typedef struct \mbox{\hyperlink{struct__base__ansid__t}{\+\_\+base\+\_\+ansid\+\_\+t}} {\bfseries base\+\_\+ansid\+\_\+t}
+\item 
+\Hypertarget{group__BaseAnswer_gad02f9bd982d75d5bac3d370ac99131e3}\label{group__BaseAnswer_gad02f9bd982d75d5bac3d370ac99131e3} 
+typedef struct \mbox{\hyperlink{struct__t__baseansr}{\+\_\+t\+\_\+baseansr}} {\bfseries baseansr\+\_\+t}
+\item 
+\Hypertarget{group__BaseAnswer_ga614550ab5216c775c41de97e9f344f6d}\label{group__BaseAnswer_ga614550ab5216c775c41de97e9f344f6d} 
+typedef struct \mbox{\hyperlink{struct__t__fsbl__bsinfo__ptr}{\+\_\+t\+\_\+fsbl\+\_\+bsinfo\+\_\+ptr}} {\bfseries fsbl\+\_\+bsinfo\+\_\+ptr\+\_\+t}
+\item 
+\Hypertarget{group__BaseAnswer_ga01f77a3e69973acf5d09ad3e1643318d}\label{group__BaseAnswer_ga01f77a3e69973acf5d09ad3e1643318d} 
+typedef union \mbox{\hyperlink{union__t__fsbl__bsifo}{\+\_\+t\+\_\+fsbl\+\_\+bsifo}} {\bfseries fsbl\+\_\+bsinfo\+\_\+t}
+\item 
+\Hypertarget{group__BaseAnswer_ga471f3d2c8c25a434349b0d6ebf2d3f23}\label{group__BaseAnswer_ga471f3d2c8c25a434349b0d6ebf2d3f23} 
+typedef struct \mbox{\hyperlink{struct__t__mig__key}{\+\_\+t\+\_\+mig\+\_\+key}} {\bfseries mig\+\_\+key\+\_\+t}
+\end{DoxyCompactItemize}
+\doxysubsubsection*{Functions}
+\begin{DoxyCompactItemize}
+\item 
+VOID \mbox{\hyperlink{group__BaseAnswer_ga02c7d00fb4a75b89ae7fb92c1cbe224c}{SBC\+\_\+\+Anti\+Tamper\+Deinit}} (VOID \texorpdfstring{$\ast$}{*}priv)
+\begin{DoxyCompactList}\small\item\em De-\/\+Initializes the Anti-\/\+Tampering context and module. \end{DoxyCompactList}\item 
+VOID \mbox{\hyperlink{group__BaseAnswer_ga83c2a68b09d4bb5bf238c27749663b23}{SBC\+\_\+\+Anti\+Tamper\+Init}} (VOID \texorpdfstring{$\ast$}{*}priv)
+\begin{DoxyCompactList}\small\item\em Initializes the Anti-\/\+Tampering context and module. \end{DoxyCompactList}\item 
+SBCStatus \mbox{\hyperlink{group__BaseAnswer_ga37ecf55c15dac92a487353d6783ad001}{SBC\+\_\+\+Base\+Answer\+Encrypt\+Store}} (VOID \texorpdfstring{$\ast$}{*}blkhnd, UINT8 \texorpdfstring{$\ast$}{*}msg, UINT32 msgl, UINT8 \texorpdfstring{$\ast$}{*}key, UINT32 keyl)
+\begin{DoxyCompactList}\small\item\em Encrypt and store a message using the provided security key. \end{DoxyCompactList}\item 
+SBCStatus \mbox{\hyperlink{group__BaseAnswer_gad993c7407ff302f90f0b4bbf4a618db2}{SBC\+\_\+\+Base\+Answer\+Validate}} (VOID \texorpdfstring{$\ast$}{*}blkhnd, UINT8 \texorpdfstring{$\ast$}{*}answer, UINTN answerl, UINT8 \texorpdfstring{$\ast$}{*}key, UINTN keylen, BOOLEAN ischeck)
+\begin{DoxyCompactList}\small\item\em Validate the device authentication answer using the provided key. \end{DoxyCompactList}\item 
+\Hypertarget{group__BaseAnswer_ga9355dbf6f50f0d5b7b19a1ca6b47d142}\label{group__BaseAnswer_ga9355dbf6f50f0d5b7b19a1ca6b47d142} 
+SBCStatus {\bfseries SBC\+\_\+\+Blk\+Io\+Handle\+Init} (OUT VOID \texorpdfstring{$\ast$}{*}\texorpdfstring{$\ast$}{*}hblk, OUT VOID \texorpdfstring{$\ast$}{*}hdr)
+\item 
+\Hypertarget{group__BaseAnswer_gadac983e333f364bf0976a9ceca1f9630}\label{group__BaseAnswer_gadac983e333f364bf0976a9ceca1f9630} 
+SBCStatus {\bfseries SBC\+\_\+\+Device\+Id\+Kye\+Verify} (VOID \texorpdfstring{$\ast$}{*}blkio, UINT8 \texorpdfstring{$\ast$}{*}devid, UINT8 \texorpdfstring{$\ast$}{*}deckey)
+\item 
+SBCStatus \mbox{\hyperlink{group__BaseAnswer_gabc62c881d2dc4feb5a902de829dd27b4}{SBC\+\_\+\+Device\+Secuirty\+Key\+Create}} (VOID \texorpdfstring{$\ast$}{*}key)
+\begin{DoxyCompactList}\small\item\em Create a new device security key. \end{DoxyCompactList}\item 
+SBCStatus \mbox{\hyperlink{group__BaseAnswer_gafc1ce4080717748806d1bc8f57ecad3c}{SBC\+\_\+\+Dice\+IDKey\+Verify}} (VOID \texorpdfstring{$\ast$}{*}priv)
+\begin{DoxyCompactList}\small\item\em FWID and OSID certificate verification. \end{DoxyCompactList}\item 
+\Hypertarget{group__BaseAnswer_gadce26185b00ff3ccd13ba1ef69c3b2e8}\label{group__BaseAnswer_gadce26185b00ff3ccd13ba1ef69c3b2e8} 
+SBCStatus {\bfseries SBC\+\_\+\+FSBL\+\_\+\+Verify} (VOID \texorpdfstring{$\ast$}{*}blkhnd, VOID \texorpdfstring{$\ast$}{*}ansr, UINTN normbank, UINTN bm)
+\item 
+SBCStatus \mbox{\hyperlink{group__BaseAnswer_gad75f3501899d5c6fd9f859572c7cda85}{SBC\+\_\+\+FSBLIntg\+Check}} (EFI\+\_\+\+HANDLE \texorpdfstring{$\ast$}{*}h\+\_\+image, VOID \texorpdfstring{$\ast$}{*}blkio, VOID \texorpdfstring{$\ast$}{*}cert, UINTN certle, UINTN nrombank, UINTN mode)
+\item 
+SBCStatus \mbox{\hyperlink{group__BaseAnswer_gae8a785ace6ba8fb538bba6a21b694bd9}{SBC\+\_\+\+Gen\+Device\+ID}} (UINT8 \texorpdfstring{$\ast$}{*}devid)
+\item 
+\Hypertarget{group__BaseAnswer_ga7ad786b746bd8ab686e74e801e8ff37c}\label{group__BaseAnswer_ga7ad786b746bd8ab686e74e801e8ff37c} 
+SBCStatus {\bfseries SBC\+\_\+\+Gen\+FWID} (VOID \texorpdfstring{$\ast$}{*}priv, UINT8 \texorpdfstring{$\ast$}{*}devid, UINT8 \texorpdfstring{$\ast$}{*}fwid, UINTN normbank, UINTN bm)
+\item 
+\Hypertarget{group__BaseAnswer_ga9872dc2256381ca4a01bafd27548d540}\label{group__BaseAnswer_ga9872dc2256381ca4a01bafd27548d540} 
+SBCStatus {\bfseries SBC\+\_\+\+Gen\+Migration\+Key} (void \texorpdfstring{$\ast$}{*}priv, void \texorpdfstring{$\ast$}{*}outmsg)
+\item 
+SBCStatus \mbox{\hyperlink{group__BaseAnswer_ga771842561f61acb4ca58e01f53849ce4}{SBC\+\_\+\+Gen\+OSID}} (EFI\+\_\+\+HANDLE \texorpdfstring{$\ast$}{*}h\+\_\+image, UINT8 \texorpdfstring{$\ast$}{*}fwid, UINT8 \texorpdfstring{$\ast$}{*}osid)
+\item 
+\Hypertarget{group__BaseAnswer_ga97628bd67556a9fb898072ffa4cb5fd6}\label{group__BaseAnswer_ga97628bd67556a9fb898072ffa4cb5fd6} 
+SBCStatus {\bfseries SBC\+\_\+\+SSBL\+\_\+\+Verify} (VOID \texorpdfstring{$\ast$}{*}blkhnd, VOID \texorpdfstring{$\ast$}{*}ansr, UINTN nrombank, UINT16 bm)
+\end{DoxyCompactItemize}
+\doxysubsubsection*{Variables}
+\begin{DoxyCompactItemize}
+\item 
+\mbox{\hyperlink{group__BaseAnswer_ga8d55980da12dbdd3fae663593a8914a4}{UINT32}} \mbox{\hyperlink{group__BaseAnswer_gab3674e94cab01c88bde522407719c6d3}{\+\_\+t\+\_\+fsbl\+\_\+bsifo\+::banswlen}}\+: 8
+\item 
+VOID \texorpdfstring{$\ast$}{*} \mbox{\hyperlink{group__BaseAnswer_gafdfbcb118935fc36743d39813a8f581a}{\+\_\+t\+\_\+fsbl\+\_\+bsinfo\+\_\+ptr\+::baseansw}}
+\item 
+\mbox{\hyperlink{group__BaseAnswer_ga8d55980da12dbdd3fae663593a8914a4}{UINT32}} \mbox{\hyperlink{group__BaseAnswer_ga67704b7bf35684d38e6432a0c8bfdaa6}{\+\_\+t\+\_\+fsbl\+\_\+bsifo\+::bsinfv}}\+: 8
+\item 
+VOID \texorpdfstring{$\ast$}{*} \mbox{\hyperlink{group__BaseAnswer_ga04d1fc2a626ffc4abd1d3f7c6556cca9}{\+\_\+t\+\_\+fsbl\+\_\+bsinfo\+\_\+ptr\+::certi}}
+\item 
+\mbox{\hyperlink{group__BaseAnswer_ga8d55980da12dbdd3fae663593a8914a4}{UINT32}} \mbox{\hyperlink{group__BaseAnswer_gaf9f2d299935e1bd9c864f44ef30adb73}{\+\_\+t\+\_\+fsbl\+\_\+bsifo\+::certlen}}\+: 16
+\item 
+UINT8 \mbox{\hyperlink{group__BaseAnswer_ga92a3f62d5ee30f9353895bb444d4c70e}{atp\+\_\+ident\+\_\+t\+::devid}} \mbox{[}\mbox{\hyperlink{group__DigestSystem_ga9cfb9654f5feaa1727c7f41f0fe36678}{ATP\+\_\+\+IDENT\+\_\+\+KEY\+\_\+\+STG}}\mbox{]}
+\item 
+\Hypertarget{group__BaseAnswer_ga589258e2bcdf879966345920b7b107f6}\label{group__BaseAnswer_ga589258e2bcdf879966345920b7b107f6} 
+UINT8 {\bfseries \+\_\+base\+\_\+ansid\+\_\+t\+::encmsg} \mbox{[}\mbox{\hyperlink{group__BaseAnswer_ga2fdd5e105fc2a8a8189513cb1679313a}{BASE\+\_\+\+ANS\+\_\+\+MAX\+\_\+\+LEN}}\mbox{]}
+\begin{DoxyCompactList}\small\item\em Length of Encrypted Base Answer string. \end{DoxyCompactList}\item 
+UINT32 \mbox{\hyperlink{group__BaseAnswer_ga86ab4178923e3bfbd033440928b955bf}{\+\_\+t\+\_\+mig\+\_\+key\+::fsbl\+\_\+pres\+\_\+bank}}
+\item 
+UINTN \mbox{\hyperlink{group__BaseAnswer_gafabb23d18c6896833f6aecbb9d2dfa6e}{\+\_\+fhnd\+\_\+img\+\_\+t\+::fsbladdr}}
+\item 
+UINT32 \mbox{\hyperlink{group__BaseAnswer_gae848b9ee565c9b51d1a0cb218edf97f2}{\+\_\+fhnd\+\_\+img\+\_\+t\+::fsbln}}
+\item 
+UINT8 \mbox{\hyperlink{group__BaseAnswer_gaf24328035c8471a6bed24ac096e1da19}{atp\+\_\+ident\+\_\+t\+::fwid}} \mbox{[}\mbox{\hyperlink{group__DigestSystem_ga9cfb9654f5feaa1727c7f41f0fe36678}{ATP\+\_\+\+IDENT\+\_\+\+KEY\+\_\+\+STG}}\mbox{]}
+\item 
+VOID \texorpdfstring{$\ast$}{*} \mbox{\hyperlink{group__BaseAnswer_ga7ec8aa0da1dfc2d2beda0e88c4d428ac}{\+\_\+t\+\_\+fsbl\+\_\+bsinfo\+\_\+ptr\+::fwinfo}}
+\item 
+\mbox{\hyperlink{group__BaseAnswer_ga8d55980da12dbdd3fae663593a8914a4}{UINT32}} \mbox{\hyperlink{group__BaseAnswer_ga2fd4aa8d94d92c0632f89e512932e817}{\+\_\+t\+\_\+fsbl\+\_\+bsifo\+::fwinfolen}}\+: 8
+\item 
+VOID \texorpdfstring{$\ast$}{*} \mbox{\hyperlink{group__BaseAnswer_gadfe4d901fa3a54a4eb4a07788423a06d}{\+\_\+t\+\_\+baseansr\+::iohndl}}
+\item 
+\Hypertarget{group__BaseAnswer_gaf4a82c6b82a902d9aa46bd277fde7df1}\label{group__BaseAnswer_gaf4a82c6b82a902d9aa46bd277fde7df1} 
+UINT8 {\bfseries \+\_\+base\+\_\+ansid\+\_\+t\+::iv} \mbox{[}\mbox{\hyperlink{group__BaseAnswer_ga837d78946cde3f9d1e30b39c6c65a2f6}{BASE\+\_\+\+ANS\+\_\+\+IV\+\_\+\+KEY\+\_\+\+STR}}\mbox{]}
+\begin{DoxyCompactList}\small\item\em Base Answer decrypt key. \end{DoxyCompactList}\item 
+VOID \texorpdfstring{$\ast$}{*} \mbox{\hyperlink{group__BaseAnswer_gae5ddb95699415a92749d0a4f8c3f3d64}{\+\_\+t\+\_\+baseansr\+::iv}}
+\item 
+\Hypertarget{group__BaseAnswer_ga681ba67af5596277eeea892e14d52b3d}\label{group__BaseAnswer_ga681ba67af5596277eeea892e14d52b3d} 
+UINT8 {\bfseries \+\_\+base\+\_\+ansid\+\_\+t\+::key} \mbox{[}\mbox{\hyperlink{group__BaseAnswer_gad15de8430dc7d4a984b05fd62370946a}{BASE\+\_\+\+ANS\+\_\+\+KEY\+\_\+\+STR}}\mbox{]}
+\begin{DoxyCompactList}\small\item\em Encrypted base answer message. \end{DoxyCompactList}\item 
+UINT8 \mbox{\hyperlink{group__BaseAnswer_ga740ce062297c6c2d45c4b7ee9ec3ea13}{\+\_\+t\+\_\+mig\+\_\+key\+::key}} \mbox{[}SBC\+\_\+\+AT\+\_\+\+HASH\+\_\+\+LEN\mbox{]}
+\item 
+\begin{tabbing}
+xx\=xx\=xx\=xx\=xx\=xx\=xx\=xx\=xx\=\kill
+struct \{\\
+\>\mbox{\hyperlink{group__BaseAnswer_ga8d55980da12dbdd3fae663593a8914a4}{UINT32}} \mbox{\hyperlink{group__BaseAnswer_gab3674e94cab01c88bde522407719c6d3}{\_t\_fsbl\_bsifo::banswlen}}: 8\\
+\>\mbox{\hyperlink{group__BaseAnswer_ga8d55980da12dbdd3fae663593a8914a4}{UINT32}} \mbox{\hyperlink{group__BaseAnswer_ga67704b7bf35684d38e6432a0c8bfdaa6}{\_t\_fsbl\_bsifo::bsinfv}}: 8\\
+\>\mbox{\hyperlink{group__BaseAnswer_ga8d55980da12dbdd3fae663593a8914a4}{UINT32}} \mbox{\hyperlink{group__BaseAnswer_gaf9f2d299935e1bd9c864f44ef30adb73}{\_t\_fsbl\_bsifo::certlen}}: 16\\
+\>\mbox{\hyperlink{group__BaseAnswer_ga8d55980da12dbdd3fae663593a8914a4}{UINT32}} \mbox{\hyperlink{group__BaseAnswer_ga2fd4aa8d94d92c0632f89e512932e817}{\_t\_fsbl\_bsifo::fwinfolen}}: 8\\
+\>\mbox{\hyperlink{group__BaseAnswer_ga8d55980da12dbdd3fae663593a8914a4}{UINT32}} \mbox{\hyperlink{group__BaseAnswer_gac714ebae8f1f35847726d9993331a0df}{\_t\_fsbl\_bsifo::reserv1}}: 8\\
+\>\mbox{\hyperlink{group__BaseAnswer_ga8d55980da12dbdd3fae663593a8914a4}{UINT32}} \mbox{\hyperlink{group__BaseAnswer_ga680f64568482adcba1359389c4e33dfc}{\_t\_fsbl\_bsifo::reserv2}}: 8\\
+\>\mbox{\hyperlink{group__BaseAnswer_ga8d55980da12dbdd3fae663593a8914a4}{UINT32}} \mbox{\hyperlink{group__BaseAnswer_ga13bfa8208d32a997346268a5f226efb0}{\_t\_fsbl\_bsifo::siglen}}: 8\\
+\} \mbox{\hyperlink{group__BaseAnswer_ga0203318e16b6d5f60d801e38f13bb7ec}{\_t\_fsbl\_bsifo::m}}\\
+
+\end{tabbing}\begin{DoxyCompactList}\small\item\em Member field representation of Boot Security Info. \end{DoxyCompactList}\item 
+UINT8 \mbox{\hyperlink{group__BaseAnswer_ga9b922cc8189b848db05b2955498f71d8}{\+\_\+hw\+\_\+unique\+\_\+info\+\_\+t\+::mbsn}} \mbox{[}64\mbox{]}
+\item 
+UINTN \mbox{\hyperlink{group__BaseAnswer_ga8eb12b00f77918b7230e7ffcf03c8329}{\+\_\+hw\+\_\+unique\+\_\+info\+\_\+t\+::mbsnl}}
+\item 
+UINT8 \mbox{\hyperlink{group__BaseAnswer_ga38f8fd52d7185527881536df9d714209}{atp\+\_\+ident\+\_\+t\+::migid}} \mbox{[}\mbox{\hyperlink{group__DigestSystem_ga9cfb9654f5feaa1727c7f41f0fe36678}{ATP\+\_\+\+IDENT\+\_\+\+KEY\+\_\+\+STG}}\mbox{]}
+\item 
+UINT8 \mbox{\hyperlink{group__BaseAnswer_ga73a33adf63975dc56ece462b3b3a26f5}{\+\_\+hw\+\_\+unique\+\_\+info\+\_\+t\+::mmsn}} \mbox{[}64\mbox{]}
+\item 
+UINTN \mbox{\hyperlink{group__BaseAnswer_ga762b14d86a405365c138e9063bba75c9}{\+\_\+hw\+\_\+unique\+\_\+info\+\_\+t\+::mmsnl}}
+\item 
+VOID \texorpdfstring{$\ast$}{*} \mbox{\hyperlink{group__BaseAnswer_gaae7c44ab9158516948ddee88aa82bda6}{\+\_\+t\+\_\+baseansr\+::msg}}
+\item 
+\Hypertarget{group__BaseAnswer_ga229317b383ce03911a8f586b14cbdb64}\label{group__BaseAnswer_ga229317b383ce03911a8f586b14cbdb64} 
+UINT32 {\bfseries \+\_\+base\+\_\+ansid\+\_\+t\+::msglen}
+\item 
+UINTN \mbox{\hyperlink{group__BaseAnswer_ga9e360efc460a4ae6b22d87fe261f363d}{\+\_\+t\+\_\+baseansr\+::msglen}}
+\item 
+UINT8 \mbox{\hyperlink{group__BaseAnswer_ga79bc330e5b1bd53e99b85aba1591a9a7}{\+\_\+hw\+\_\+unique\+\_\+info\+\_\+t\+::nvmesn}} \mbox{[}64\mbox{]}
+\item 
+UINTN \mbox{\hyperlink{group__BaseAnswer_gaa0f8cb9b3a933e07287ed532b36bcd5b}{\+\_\+hw\+\_\+unique\+\_\+info\+\_\+t\+::nvmesnl}}
+\item 
+UINT32 \mbox{\hyperlink{group__BaseAnswer_ga119996c5e9c5e9a0211bb637ce3bfb5f}{\+\_\+t\+\_\+mig\+\_\+key\+::os\+\_\+pres\+\_\+bank}}
+\item 
+UINT8 \mbox{\hyperlink{group__BaseAnswer_ga1d478ea5c92898eb8d6b82f76dd000ed}{atp\+\_\+ident\+\_\+t\+::osid}} \mbox{[}\mbox{\hyperlink{group__DigestSystem_ga9cfb9654f5feaa1727c7f41f0fe36678}{ATP\+\_\+\+IDENT\+\_\+\+KEY\+\_\+\+STG}}\mbox{]}
+\item 
+\mbox{\hyperlink{group__BaseAnswer_ga8d55980da12dbdd3fae663593a8914a4}{UINT32}} \mbox{\hyperlink{group__BaseAnswer_gac714ebae8f1f35847726d9993331a0df}{\+\_\+t\+\_\+fsbl\+\_\+bsifo\+::reserv1}}\+: 8
+\item 
+\mbox{\hyperlink{group__BaseAnswer_ga8d55980da12dbdd3fae663593a8914a4}{UINT32}} \mbox{\hyperlink{group__BaseAnswer_ga680f64568482adcba1359389c4e33dfc}{\+\_\+t\+\_\+fsbl\+\_\+bsifo\+::reserv2}}\+: 8
+\item 
+\mbox{\hyperlink{group__BaseAnswer_ga8d55980da12dbdd3fae663593a8914a4}{UINT32}} \mbox{\hyperlink{group__BaseAnswer_ga13bfa8208d32a997346268a5f226efb0}{\+\_\+t\+\_\+fsbl\+\_\+bsifo\+::siglen}}\+: 8
+\item 
+VOID \texorpdfstring{$\ast$}{*} \mbox{\hyperlink{group__BaseAnswer_ga8f9a772b6da54d98fc16e77865d8e8b1}{\+\_\+t\+\_\+fsbl\+\_\+bsinfo\+\_\+ptr\+::signature}}
+\item 
+UINT32 \mbox{\hyperlink{group__BaseAnswer_ga2de527544721885d9ac03437b66ed50f}{\+\_\+t\+\_\+mig\+\_\+key\+::ssbl\+\_\+pres\+\_\+bank}}
+\item 
+UINTN \mbox{\hyperlink{group__BaseAnswer_gaca0cb0fc51a9b2e73c28828298468bbf}{\+\_\+fhnd\+\_\+img\+\_\+t\+::ssbladdr}}
+\item 
+UINT32 \mbox{\hyperlink{group__BaseAnswer_ga89b102e2dafab21c1a098957f4ad8fe9}{\+\_\+fhnd\+\_\+img\+\_\+t\+::ssbln}}
+\item 
+\Hypertarget{group__BaseAnswer_gad7aef58f4be52ec5ef5a0f219c155025}\label{group__BaseAnswer_gad7aef58f4be52ec5ef5a0f219c155025} 
+UINT8 {\bfseries \+\_\+base\+\_\+ansid\+\_\+t\+::tag} \mbox{[}\mbox{\hyperlink{group__BaseAnswer_gae1b76ef4123c7c8856c94d52b6c1e448}{BASE\+\_\+\+ANS\+\_\+\+TAG\+\_\+\+LEN}}\mbox{]}
+\begin{DoxyCompactList}\small\item\em Base Answer decrypt IV value. \end{DoxyCompactList}\item 
+VOID \texorpdfstring{$\ast$}{*} \mbox{\hyperlink{group__BaseAnswer_gaef28949b9e7cc88986760cd9fbd24484}{\+\_\+t\+\_\+baseansr\+::tag}}
+\item 
+UINT8 \mbox{\hyperlink{group__BaseAnswer_ga8d55980da12dbdd3fae663593a8914a4}{\+\_\+t\+\_\+fsbl\+\_\+bsifo\+::value}} \mbox{[}FSBL\+\_\+\+BNIFO\+\_\+\+SIZE\mbox{]}
+\end{DoxyCompactItemize}
+
+
+\doxysubsection{Detailed Description}
+
+
+\doxysubsection{Macro Definition Documentation}
+\Hypertarget{group__BaseAnswer_gabf27e27b8df1a91d8b97d99e0be0cb1b}\label{group__BaseAnswer_gabf27e27b8df1a91d8b97d99e0be0cb1b} 
+\index{In terms of the Base Answer behavior@{In terms of the Base Answer behavior}!BASE\_ANS\_BLK\_LBA@{BASE\_ANS\_BLK\_LBA}}
+\index{BASE\_ANS\_BLK\_LBA@{BASE\_ANS\_BLK\_LBA}!In terms of the Base Answer behavior@{In terms of the Base Answer behavior}}
+\doxysubsubsection{\texorpdfstring{BASE\_ANS\_BLK\_LBA}{BASE\_ANS\_BLK\_LBA}}
+{\footnotesize\ttfamily \#define BASE\+\_\+\+ANS\+\_\+\+BLK\+\_\+\+LBA~0}
+
+
+
+Logical Block Address (LBA) index for Base Answer storage. 
+
+Indicates the starting LBA address where Base Answer data is stored on the block device. \Hypertarget{group__BaseAnswer_ga4c6c5ff58e035d9347f00abe682716f5}\label{group__BaseAnswer_ga4c6c5ff58e035d9347f00abe682716f5} 
+\index{In terms of the Base Answer behavior@{In terms of the Base Answer behavior}!BASE\_ANS\_BLK\_LEN@{BASE\_ANS\_BLK\_LEN}}
+\index{BASE\_ANS\_BLK\_LEN@{BASE\_ANS\_BLK\_LEN}!In terms of the Base Answer behavior@{In terms of the Base Answer behavior}}
+\doxysubsubsection{\texorpdfstring{BASE\_ANS\_BLK\_LEN}{BASE\_ANS\_BLK\_LEN}}
+{\footnotesize\ttfamily \#define BASE\+\_\+\+ANS\+\_\+\+BLK\+\_\+\+LEN~512}
+
+
+
+Base Answer block size (in bytes). 
+
+Defines the block I/O size used for read and write operations related to Base Answer data storage. \Hypertarget{group__BaseAnswer_ga837d78946cde3f9d1e30b39c6c65a2f6}\label{group__BaseAnswer_ga837d78946cde3f9d1e30b39c6c65a2f6} 
+\index{In terms of the Base Answer behavior@{In terms of the Base Answer behavior}!BASE\_ANS\_IV\_KEY\_STR@{BASE\_ANS\_IV\_KEY\_STR}}
+\index{BASE\_ANS\_IV\_KEY\_STR@{BASE\_ANS\_IV\_KEY\_STR}!In terms of the Base Answer behavior@{In terms of the Base Answer behavior}}
+\doxysubsubsection{\texorpdfstring{BASE\_ANS\_IV\_KEY\_STR}{BASE\_ANS\_IV\_KEY\_STR}}
+{\footnotesize\ttfamily \#define BASE\+\_\+\+ANS\+\_\+\+IV\+\_\+\+KEY\+\_\+\+STR~12}
+
+
+
+Initialization Vector (IV) size for Base Answer encryption (in bytes). 
+
+Defines the IV length used in AES-\/\+GCM encryption for Base Answer operations. The standard IV size is 12 bytes.
+
+Base Answer IV size \Hypertarget{group__BaseAnswer_gad15de8430dc7d4a984b05fd62370946a}\label{group__BaseAnswer_gad15de8430dc7d4a984b05fd62370946a} 
+\index{In terms of the Base Answer behavior@{In terms of the Base Answer behavior}!BASE\_ANS\_KEY\_STR@{BASE\_ANS\_KEY\_STR}}
+\index{BASE\_ANS\_KEY\_STR@{BASE\_ANS\_KEY\_STR}!In terms of the Base Answer behavior@{In terms of the Base Answer behavior}}
+\doxysubsubsection{\texorpdfstring{BASE\_ANS\_KEY\_STR}{BASE\_ANS\_KEY\_STR}}
+{\footnotesize\ttfamily \#define BASE\+\_\+\+ANS\+\_\+\+KEY\+\_\+\+STR~32}
+
+
+
+Base Answer encryption/decryption key strength (in bytes). 
+
+Defines the size of the AES-\/\+GCM key used for Base Answer encryption and decryption. A value of 32 bytes represents a 256-\/bit key strength.
+
+Base Answer Encrypt/\+Decrypt Key Strength \Hypertarget{group__BaseAnswer_ga2fdd5e105fc2a8a8189513cb1679313a}\label{group__BaseAnswer_ga2fdd5e105fc2a8a8189513cb1679313a} 
+\index{In terms of the Base Answer behavior@{In terms of the Base Answer behavior}!BASE\_ANS\_MAX\_LEN@{BASE\_ANS\_MAX\_LEN}}
+\index{BASE\_ANS\_MAX\_LEN@{BASE\_ANS\_MAX\_LEN}!In terms of the Base Answer behavior@{In terms of the Base Answer behavior}}
+\doxysubsubsection{\texorpdfstring{BASE\_ANS\_MAX\_LEN}{BASE\_ANS\_MAX\_LEN}}
+{\footnotesize\ttfamily \#define BASE\+\_\+\+ANS\+\_\+\+MAX\+\_\+\+LEN~256}
+
+
+
+Maximum supported base answer length (in bytes). 
+
+Specifies the upper limit of the base answer buffer to prevent overflow or excessive memory allocation. \Hypertarget{group__BaseAnswer_ga8edf430c239fa9c0e265d5b7bb1ef85d}\label{group__BaseAnswer_ga8edf430c239fa9c0e265d5b7bb1ef85d} 
+\index{In terms of the Base Answer behavior@{In terms of the Base Answer behavior}!BASE\_ANS\_SAT\_OFFSET@{BASE\_ANS\_SAT\_OFFSET}}
+\index{BASE\_ANS\_SAT\_OFFSET@{BASE\_ANS\_SAT\_OFFSET}!In terms of the Base Answer behavior@{In terms of the Base Answer behavior}}
+\doxysubsubsection{\texorpdfstring{BASE\_ANS\_SAT\_OFFSET}{BASE\_ANS\_SAT\_OFFSET}}
+{\footnotesize\ttfamily \#define BASE\+\_\+\+ANS\+\_\+\+SAT\+\_\+\+OFFSET~0x100}
+
+
+
+Offset position for Base Answer storage area (in bytes). 
+
+Specifies the offset (0x100 = 256 bytes) from the base block address to the start of the Base Answer data region.
+
+Offset (256 bytes) \Hypertarget{group__BaseAnswer_ga04cfafb08a311a3ed34f622140d7b279}\label{group__BaseAnswer_ga04cfafb08a311a3ed34f622140d7b279} 
+\index{In terms of the Base Answer behavior@{In terms of the Base Answer behavior}!BASE\_ANS\_STREAM\_LEN@{BASE\_ANS\_STREAM\_LEN}}
+\index{BASE\_ANS\_STREAM\_LEN@{BASE\_ANS\_STREAM\_LEN}!In terms of the Base Answer behavior@{In terms of the Base Answer behavior}}
+\doxysubsubsection{\texorpdfstring{BASE\_ANS\_STREAM\_LEN}{BASE\_ANS\_STREAM\_LEN}}
+{\footnotesize\ttfamily \#define BASE\+\_\+\+ANS\+\_\+\+STREAM\+\_\+\+LEN~512}
+
+
+
+Length of the Base Answer data stream (in bytes). 
+
+Defines the total length of the encrypted data stream used in Base Answer operations. \Hypertarget{group__BaseAnswer_gae1b76ef4123c7c8856c94d52b6c1e448}\label{group__BaseAnswer_gae1b76ef4123c7c8856c94d52b6c1e448} 
+\index{In terms of the Base Answer behavior@{In terms of the Base Answer behavior}!BASE\_ANS\_TAG\_LEN@{BASE\_ANS\_TAG\_LEN}}
+\index{BASE\_ANS\_TAG\_LEN@{BASE\_ANS\_TAG\_LEN}!In terms of the Base Answer behavior@{In terms of the Base Answer behavior}}
+\doxysubsubsection{\texorpdfstring{BASE\_ANS\_TAG\_LEN}{BASE\_ANS\_TAG\_LEN}}
+{\footnotesize\ttfamily \#define BASE\+\_\+\+ANS\+\_\+\+TAG\+\_\+\+LEN~16}
+
+
+
+Authentication tag length for AES-\/\+GCM encryption (in bytes). 
+
+Defines the size of the authentication tag appended to encrypted Base Answer data. A 16-\/byte tag is typical for AES-\/\+GCM integrity verification.
+
+Base Answer TAG size \Hypertarget{group__BaseAnswer_ga271f2c61e3fec89398a7f36f6b214cca}\label{group__BaseAnswer_ga271f2c61e3fec89398a7f36f6b214cca} 
+\index{In terms of the Base Answer behavior@{In terms of the Base Answer behavior}!BASE\_ANSW\_DEFLEN@{BASE\_ANSW\_DEFLEN}}
+\index{BASE\_ANSW\_DEFLEN@{BASE\_ANSW\_DEFLEN}!In terms of the Base Answer behavior@{In terms of the Base Answer behavior}}
+\doxysubsubsection{\texorpdfstring{BASE\_ANSW\_DEFLEN}{BASE\_ANSW\_DEFLEN}}
+{\footnotesize\ttfamily \#define BASE\+\_\+\+ANSW\+\_\+\+DEFLEN~16}
+
+
+
+Default length of the base answer (in bytes). 
+
+Defines the standard size of the base answer payload used in authentication or secure key exchange. 
+
+\doxysubsection{Function Documentation}
+\Hypertarget{group__BaseAnswer_ga02c7d00fb4a75b89ae7fb92c1cbe224c}\label{group__BaseAnswer_ga02c7d00fb4a75b89ae7fb92c1cbe224c} 
+\index{In terms of the Base Answer behavior@{In terms of the Base Answer behavior}!SBC\_AntiTamperDeinit@{SBC\_AntiTamperDeinit}}
+\index{SBC\_AntiTamperDeinit@{SBC\_AntiTamperDeinit}!In terms of the Base Answer behavior@{In terms of the Base Answer behavior}}
+\doxysubsubsection{\texorpdfstring{SBC\_AntiTamperDeinit()}{SBC\_AntiTamperDeinit()}}
+{\footnotesize\ttfamily VOID SBC\+\_\+\+Anti\+Tamper\+Deinit (\begin{DoxyParamCaption}\item[{VOID \texorpdfstring{$\ast$}{*}}]{priv }\end{DoxyParamCaption})}
+
+
+
+De-\/\+Initializes the Anti-\/\+Tampering context and module. 
+
+\begin{DoxyAuthor}{Author}
+leonc (10/31/25)
+\end{DoxyAuthor}
+
+\begin{DoxyParams}[1]{Parameters}
+\mbox{\texttt{ in}}  & {\em priv} & Pointer to a \doxylink{structboot__proc__t}{boot\+\_\+proc\+\_\+t} structure containing initialization \textbackslash{}retrun None \\
+\hline
+\end{DoxyParams}
+\Hypertarget{group__BaseAnswer_ga83c2a68b09d4bb5bf238c27749663b23}\label{group__BaseAnswer_ga83c2a68b09d4bb5bf238c27749663b23} 
+\index{In terms of the Base Answer behavior@{In terms of the Base Answer behavior}!SBC\_AntiTamperInit@{SBC\_AntiTamperInit}}
+\index{SBC\_AntiTamperInit@{SBC\_AntiTamperInit}!In terms of the Base Answer behavior@{In terms of the Base Answer behavior}}
+\doxysubsubsection{\texorpdfstring{SBC\_AntiTamperInit()}{SBC\_AntiTamperInit()}}
+{\footnotesize\ttfamily VOID SBC\+\_\+\+Anti\+Tamper\+Init (\begin{DoxyParamCaption}\item[{VOID \texorpdfstring{$\ast$}{*}}]{priv }\end{DoxyParamCaption})}
+
+
+
+Initializes the Anti-\/\+Tampering context and module. 
+
+\begin{DoxyAuthor}{Author}
+leonc (10/31/25)
+\end{DoxyAuthor}
+
+\begin{DoxyParams}[1]{Parameters}
+\mbox{\texttt{ in}}  & {\em priv} & Pointer to a \doxylink{structboot__proc__t}{boot\+\_\+proc\+\_\+t} structure containing initialization \textbackslash{}retrun None \\
+\hline
+\end{DoxyParams}
+\Hypertarget{group__BaseAnswer_ga37ecf55c15dac92a487353d6783ad001}\label{group__BaseAnswer_ga37ecf55c15dac92a487353d6783ad001} 
+\index{In terms of the Base Answer behavior@{In terms of the Base Answer behavior}!SBC\_BaseAnswerEncryptStore@{SBC\_BaseAnswerEncryptStore}}
+\index{SBC\_BaseAnswerEncryptStore@{SBC\_BaseAnswerEncryptStore}!In terms of the Base Answer behavior@{In terms of the Base Answer behavior}}
+\doxysubsubsection{\texorpdfstring{SBC\_BaseAnswerEncryptStore()}{SBC\_BaseAnswerEncryptStore()}}
+{\footnotesize\ttfamily SBCStatus SBC\+\_\+\+Base\+Answer\+Encrypt\+Store (\begin{DoxyParamCaption}\item[{VOID \texorpdfstring{$\ast$}{*}}]{blkhnd,  }\item[{UINT8 \texorpdfstring{$\ast$}{*}}]{msg,  }\item[{UINT32}]{msgl,  }\item[{UINT8 \texorpdfstring{$\ast$}{*}}]{key,  }\item[{UINT32}]{keyl }\end{DoxyParamCaption})}
+
+
+
+Encrypt and store a message using the provided security key. 
+
+
+\begin{DoxyParams}[1]{Parameters}
+\mbox{\texttt{ in}}  & {\em blkhnd} & Pointer to the block I/O or storage handle where the encrypted message will be written. \\
+\hline
+\mbox{\texttt{ in}}  & {\em msg} & Pointer to the plain message buffer to be encrypted. \\
+\hline
+\mbox{\texttt{ in}}  & {\em msgl} & Length of the message buffer {\ttfamily msg}, in bytes. \\
+\hline
+\mbox{\texttt{ in}}  & {\em key} & Pointer to the encryption key buffer. \\
+\hline
+\mbox{\texttt{ in}}  & {\em keyl} & Length of the encryption key buffer {\ttfamily key}, in bytes.\\
+\hline
+\end{DoxyParams}
+
+\begin{DoxyRetVals}{Return values}
+{\em SBCOK} & Message successfully encrypted and stored. \\
+\hline
+{\em SBCFAIL} & Encryption or storage operation failed. \\
+\hline
+{\em SBCNULLP} & One or more input pointers are NULL. \\
+\hline
+{\em SBCIO} & Device or I/O failure occurred during storage. \\
+\hline
+{\em SBCINVPARAM} & Invalid parameter (e.\+g., zero length or invalid handle). \\
+\hline
+\end{DoxyRetVals}
+Here is the call graph for this function\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=350pt]{group__BaseAnswer_ga37ecf55c15dac92a487353d6783ad001_cgraph}
+\end{center}
+\end{figure}
+\Hypertarget{group__BaseAnswer_gad993c7407ff302f90f0b4bbf4a618db2}\label{group__BaseAnswer_gad993c7407ff302f90f0b4bbf4a618db2} 
+\index{In terms of the Base Answer behavior@{In terms of the Base Answer behavior}!SBC\_BaseAnswerValidate@{SBC\_BaseAnswerValidate}}
+\index{SBC\_BaseAnswerValidate@{SBC\_BaseAnswerValidate}!In terms of the Base Answer behavior@{In terms of the Base Answer behavior}}
+\doxysubsubsection{\texorpdfstring{SBC\_BaseAnswerValidate()}{SBC\_BaseAnswerValidate()}}
+{\footnotesize\ttfamily SBCStatus SBC\+\_\+\+Base\+Answer\+Validate (\begin{DoxyParamCaption}\item[{VOID \texorpdfstring{$\ast$}{*}}]{blkhnd,  }\item[{UINT8 \texorpdfstring{$\ast$}{*}}]{answer,  }\item[{UINTN}]{answerl,  }\item[{UINT8 \texorpdfstring{$\ast$}{*}}]{key,  }\item[{UINTN}]{keylen,  }\item[{BOOLEAN}]{ischeck }\end{DoxyParamCaption})}
+
+
+
+Validate the device authentication answer using the provided key. 
+
+
+\begin{DoxyParams}[1]{Parameters}
+\mbox{\texttt{ in}}  & {\em blkhnd} & Pointer to the block I/O or device handle used for validation. \\
+\hline
+\mbox{\texttt{ in}}  & {\em answer} & Pointer to the answer buffer received from the device or host. \\
+\hline
+\mbox{\texttt{ in}}  & {\em answerl} & Length of the {\ttfamily answer} buffer, in bytes. \\
+\hline
+\mbox{\texttt{ in}}  & {\em key} & Pointer to the security key used for validation. \\
+\hline
+\mbox{\texttt{ in}}  & {\em keylen} & Length of the {\ttfamily key} buffer, in bytes. \\
+\hline
+\mbox{\texttt{ in}}  & {\em ischeck} & Boolean flag indicating whether to perform strict validation.
+\begin{DoxyItemize}
+\item TRUE \+: Perform full verification (compare with expected digest)
+\item FALSE\+: Do not perform verification, just copy the base-\/answer in proveded buffer
+\end{DoxyItemize}\\
+\hline
+\end{DoxyParams}
+
+\begin{DoxyRetVals}{Return values}
+{\em SBCOK} & The answer was successfully validated. \\
+\hline
+{\em SBCFAIL} & Validation failed (mismatch or computation error). \\
+\hline
+{\em SBCNULLP} & One or more input pointers are NULL. \\
+\hline
+{\em SBCIO} & Device I/O or communication error occurred. \\
+\hline
+{\em SBCINVPARAM} & Invalid parameter or key length.\\
+\hline
+\end{DoxyRetVals}
+\begin{DoxyNote}{Note}
+This function may internally use a cryptographic algorithm (e.\+g., AES, HMAC, or SHA) depending on the implementation.
+\end{DoxyNote}
+\begin{DoxySeeAlso}{See also}
+\doxylink{group__BaseAnswer_gabc62c881d2dc4feb5a902de829dd27b4}{SBC\+\_\+\+Device\+Secuirty\+Key\+Create()} 
+
+SBC\+\_\+\+Device\+Security\+Key\+Verify() 
+\end{DoxySeeAlso}
+Here is the call graph for this function\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=350pt]{group__BaseAnswer_gad993c7407ff302f90f0b4bbf4a618db2_cgraph}
+\end{center}
+\end{figure}
+Here is the caller graph for this function\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=350pt]{group__BaseAnswer_gad993c7407ff302f90f0b4bbf4a618db2_icgraph}
+\end{center}
+\end{figure}
+\Hypertarget{group__BaseAnswer_gabc62c881d2dc4feb5a902de829dd27b4}\label{group__BaseAnswer_gabc62c881d2dc4feb5a902de829dd27b4} 
+\index{In terms of the Base Answer behavior@{In terms of the Base Answer behavior}!SBC\_DeviceSecuirtyKeyCreate@{SBC\_DeviceSecuirtyKeyCreate}}
+\index{SBC\_DeviceSecuirtyKeyCreate@{SBC\_DeviceSecuirtyKeyCreate}!In terms of the Base Answer behavior@{In terms of the Base Answer behavior}}
+\doxysubsubsection{\texorpdfstring{SBC\_DeviceSecuirtyKeyCreate()}{SBC\_DeviceSecuirtyKeyCreate()}}
+{\footnotesize\ttfamily SBCStatus SBC\+\_\+\+Device\+Secuirty\+Key\+Create (\begin{DoxyParamCaption}\item[{VOID \texorpdfstring{$\ast$}{*}}]{key }\end{DoxyParamCaption})}
+
+
+
+Create a new device security key. 
+
+
+\begin{DoxyParams}[1]{Parameters}
+\mbox{\texttt{ out}}  & {\em key} & Pointer to a buffer where the generated security key will be stored.\\
+\hline
+\end{DoxyParams}
+
+\begin{DoxyRetVals}{Return values}
+{\em SBCOK} & The security key was successfully generated. \\
+\hline
+{\em SBCFAIL} & Failed to create the security key due to internal error. \\
+\hline
+{\em SBCNULLP} & The input pointer {\ttfamily key} is NULL. \\
+\hline
+{\em SBCIO} & Hardware or I/O failure occurred during key generation.\\
+\hline
+\end{DoxyRetVals}
+\begin{DoxySeeAlso}{See also}
+SBC\+\_\+\+Device\+Security\+Key\+Load() 
+
+SBC\+\_\+\+Device\+Security\+Key\+Verify() 
+\end{DoxySeeAlso}
+Here is the call graph for this function\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=350pt]{group__BaseAnswer_gabc62c881d2dc4feb5a902de829dd27b4_cgraph}
+\end{center}
+\end{figure}
+Here is the caller graph for this function\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=350pt]{group__BaseAnswer_gabc62c881d2dc4feb5a902de829dd27b4_icgraph}
+\end{center}
+\end{figure}
+\Hypertarget{group__BaseAnswer_gafc1ce4080717748806d1bc8f57ecad3c}\label{group__BaseAnswer_gafc1ce4080717748806d1bc8f57ecad3c} 
+\index{In terms of the Base Answer behavior@{In terms of the Base Answer behavior}!SBC\_DiceIDKeyVerify@{SBC\_DiceIDKeyVerify}}
+\index{SBC\_DiceIDKeyVerify@{SBC\_DiceIDKeyVerify}!In terms of the Base Answer behavior@{In terms of the Base Answer behavior}}
+\doxysubsubsection{\texorpdfstring{SBC\_DiceIDKeyVerify()}{SBC\_DiceIDKeyVerify()}}
+{\footnotesize\ttfamily SBCStatus SBC\+\_\+\+Dice\+IDKey\+Verify (\begin{DoxyParamCaption}\item[{VOID \texorpdfstring{$\ast$}{*}}]{priv }\end{DoxyParamCaption})}
+
+
+
+FWID and OSID certificate verification. 
+
+\begin{DoxyAuthor}{Author}
+leoc (9/18/25)
+\end{DoxyAuthor}
+
+\begin{DoxyParams}[1]{Parameters}
+\mbox{\texttt{ in}}  & {\em priv} & Pointer to Boot Process Structure\\
+\hline
+\end{DoxyParams}
+\begin{DoxyReturn}{Returns}
+On success, return the SBCOK, otherwise, return the approiate error value ~\newline
+ 
+\end{DoxyReturn}
+Here is the caller graph for this function\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=350pt]{group__BaseAnswer_gafc1ce4080717748806d1bc8f57ecad3c_icgraph}
+\end{center}
+\end{figure}
+\Hypertarget{group__BaseAnswer_gad75f3501899d5c6fd9f859572c7cda85}\label{group__BaseAnswer_gad75f3501899d5c6fd9f859572c7cda85} 
+\index{In terms of the Base Answer behavior@{In terms of the Base Answer behavior}!SBC\_FSBLIntgCheck@{SBC\_FSBLIntgCheck}}
+\index{SBC\_FSBLIntgCheck@{SBC\_FSBLIntgCheck}!In terms of the Base Answer behavior@{In terms of the Base Answer behavior}}
+\doxysubsubsection{\texorpdfstring{SBC\_FSBLIntgCheck()}{SBC\_FSBLIntgCheck()}}
+{\footnotesize\ttfamily SBCStatus SBC\+\_\+\+FSBLIntg\+Check (\begin{DoxyParamCaption}\item[{EFI\+\_\+\+HANDLE \texorpdfstring{$\ast$}{*}}]{h\+\_\+image,  }\item[{VOID \texorpdfstring{$\ast$}{*}}]{blkio,  }\item[{VOID \texorpdfstring{$\ast$}{*}}]{cert,  }\item[{UINTN}]{certlen,  }\item[{UINTN}]{nrombank,  }\item[{UINTN}]{mode }\end{DoxyParamCaption})}
+
+\begin{DoxyAuthor}{Author}
+leonc (10/31/25)
+\end{DoxyAuthor}
+
+\begin{DoxyParams}{Parameters}
+{\em h\+\_\+image} & Unused EFI Image handle ( reserved for future use) \\
+\hline
+{\em blkio} & Pointer to a EFI\+\_\+\+BLOCK\+\_\+\+IO\+\_\+\+PROTOCOL \\
+\hline
+{\em cert} & Pointer to a Root CA \\
+\hline
+{\em certle} & Length of Cert. in bytes \\
+\hline
+{\em nrombank} & Bank ID for SSBL Firmware of Raw-\/partition \\
+\hline
+{\em mode} & Boot Mode indicator\\
+\hline
+\end{DoxyParams}
+\begin{DoxyReturn}{Returns}
+SBCStatus
+\begin{DoxyItemize}
+\item SBCOK \+: Verification Succeeded
+\item SBCINVPARAM \+: Invalid Parameters
+\item SBCNULLP \+: Memory Allocation fail 
+\end{DoxyItemize}
+\end{DoxyReturn}
+Here is the call graph for this function\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=350pt]{group__BaseAnswer_gad75f3501899d5c6fd9f859572c7cda85_cgraph}
+\end{center}
+\end{figure}
+Here is the caller graph for this function\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=350pt]{group__BaseAnswer_gad75f3501899d5c6fd9f859572c7cda85_icgraph}
+\end{center}
+\end{figure}
+\Hypertarget{group__BaseAnswer_gae8a785ace6ba8fb538bba6a21b694bd9}\label{group__BaseAnswer_gae8a785ace6ba8fb538bba6a21b694bd9} 
+\index{In terms of the Base Answer behavior@{In terms of the Base Answer behavior}!SBC\_GenDeviceID@{SBC\_GenDeviceID}}
+\index{SBC\_GenDeviceID@{SBC\_GenDeviceID}!In terms of the Base Answer behavior@{In terms of the Base Answer behavior}}
+\doxysubsubsection{\texorpdfstring{SBC\_GenDeviceID()}{SBC\_GenDeviceID()}}
+{\footnotesize\ttfamily SBCStatus SBC\+\_\+\+Gen\+Device\+ID (\begin{DoxyParamCaption}\item[{UINT8 \texorpdfstring{$\ast$}{*}}]{devid }\end{DoxyParamCaption})}
+
+Creation the Device ID
+
+\begin{DoxyAuthor}{Author}
+leoc (6/2/25)
+\end{DoxyAuthor}
+
+\begin{DoxyParams}{Parameters}
+{\em devid} & Pointer to Device ID buffer\\
+\hline
+\end{DoxyParams}
+\begin{DoxyReturn}{Returns}
+On Success, return the SBCOK, otherwise, return the apporiate error value. 
+\end{DoxyReturn}
+\begin{DoxyNote}{Note}
+Device ID = HASH\+\_\+\+SHA256(Base Board SN \texorpdfstring{$\vert$}{|}\texorpdfstring{$\vert$}{|} Memory SN \texorpdfstring{$\vert$}{|}\texorpdfstring{$\vert$}{|} NVME SSD SN \texorpdfstring{$\vert$}{|}\texorpdfstring{$\vert$}{|} FSLBL stream) 
+\end{DoxyNote}
+SBC\+\_\+mem\+\_\+print\+\_\+bin("{}\+Print out key"{}, (UINT8 \texorpdfstring{$\ast$}{*})print\+\_\+out\+\_\+key, sizeof print\+\_\+out\+\_\+key);Here is the call graph for this function\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=350pt]{group__BaseAnswer_gae8a785ace6ba8fb538bba6a21b694bd9_cgraph}
+\end{center}
+\end{figure}
+\Hypertarget{group__BaseAnswer_ga771842561f61acb4ca58e01f53849ce4}\label{group__BaseAnswer_ga771842561f61acb4ca58e01f53849ce4} 
+\index{In terms of the Base Answer behavior@{In terms of the Base Answer behavior}!SBC\_GenOSID@{SBC\_GenOSID}}
+\index{SBC\_GenOSID@{SBC\_GenOSID}!In terms of the Base Answer behavior@{In terms of the Base Answer behavior}}
+\doxysubsubsection{\texorpdfstring{SBC\_GenOSID()}{SBC\_GenOSID()}}
+{\footnotesize\ttfamily SBCStatus SBC\+\_\+\+Gen\+OSID (\begin{DoxyParamCaption}\item[{EFI\+\_\+\+HANDLE \texorpdfstring{$\ast$}{*}}]{h\+\_\+image,  }\item[{UINT8 \texorpdfstring{$\ast$}{*}}]{fwid,  }\item[{UINT8 \texorpdfstring{$\ast$}{*}}]{osid }\end{DoxyParamCaption})}
+
+\begin{DoxyAuthor}{Author}
+leoc (6/2/25)
+\end{DoxyAuthor}
+
+\begin{DoxyParams}{Parameters}
+{\em h\+\_\+image} & EFI Image Handle \\
+\hline
+{\em devid} & Pointer to Firmware ID buffer where computed \\
+\hline
+{\em osid} & Pointer to OS ID buffer\\
+\hline
+\end{DoxyParams}
+\begin{DoxyReturn}{Returns}
+On Success, return the SBCOK, otherwise, return the apporiate error value. 
+\end{DoxyReturn}
+Here is the call graph for this function\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=346pt]{group__BaseAnswer_ga771842561f61acb4ca58e01f53849ce4_cgraph}
+\end{center}
+\end{figure}
+
+
+\doxysubsection{Variable Documentation}
+\Hypertarget{group__BaseAnswer_ga8a5d23b4a397b2dff12a30bb9446bb30}\label{group__BaseAnswer_ga8a5d23b4a397b2dff12a30bb9446bb30} 
+\index{In terms of the Base Answer behavior@{In terms of the Base Answer behavior}!banswlen@{banswlen}}
+\index{banswlen@{banswlen}!In terms of the Base Answer behavior@{In terms of the Base Answer behavior}}
+\doxysubsubsection{\texorpdfstring{[]}{[]}\hspace{0.1cm}{\footnotesize\ttfamily [1/2]}}
+{\footnotesize\ttfamily UINT32  \{ ... \} \+::banswlen}
+
+Base-\/answer data length (in bytes). \Hypertarget{group__BaseAnswer_gab3674e94cab01c88bde522407719c6d3}\label{group__BaseAnswer_gab3674e94cab01c88bde522407719c6d3} 
+\index{In terms of the Base Answer behavior@{In terms of the Base Answer behavior}!banswlen@{banswlen}}
+\index{banswlen@{banswlen}!In terms of the Base Answer behavior@{In terms of the Base Answer behavior}}
+\doxysubsubsection{\texorpdfstring{banswlen}{banswlen}\hspace{0.1cm}{\footnotesize\ttfamily [2/2]}}
+{\footnotesize\ttfamily \mbox{\hyperlink{group__BaseAnswer_ga8d55980da12dbdd3fae663593a8914a4}{UINT32}} \+\_\+t\+\_\+fsbl\+\_\+bsifo\+::banswlen}
+
+Base-\/answer data length (in bytes). \Hypertarget{group__BaseAnswer_gafdfbcb118935fc36743d39813a8f581a}\label{group__BaseAnswer_gafdfbcb118935fc36743d39813a8f581a} 
+\index{In terms of the Base Answer behavior@{In terms of the Base Answer behavior}!baseansw@{baseansw}}
+\index{baseansw@{baseansw}!In terms of the Base Answer behavior@{In terms of the Base Answer behavior}}
+\doxysubsubsection{\texorpdfstring{baseansw}{baseansw}}
+{\footnotesize\ttfamily VOID\texorpdfstring{$\ast$}{*} \+\_\+t\+\_\+fsbl\+\_\+bsinfo\+\_\+ptr\+::baseansw}
+
+Pointer to Base Answer data region. \Hypertarget{group__BaseAnswer_ga1e78b5040d95bd6040f3571605aad971}\label{group__BaseAnswer_ga1e78b5040d95bd6040f3571605aad971} 
+\index{In terms of the Base Answer behavior@{In terms of the Base Answer behavior}!bsinfv@{bsinfv}}
+\index{bsinfv@{bsinfv}!In terms of the Base Answer behavior@{In terms of the Base Answer behavior}}
+\doxysubsubsection{\texorpdfstring{[]}{[]}\hspace{0.1cm}{\footnotesize\ttfamily [1/2]}}
+{\footnotesize\ttfamily UINT32  \{ ... \} \+::bsinfv}
+
+Boot Security Info structure version. \Hypertarget{group__BaseAnswer_ga67704b7bf35684d38e6432a0c8bfdaa6}\label{group__BaseAnswer_ga67704b7bf35684d38e6432a0c8bfdaa6} 
+\index{In terms of the Base Answer behavior@{In terms of the Base Answer behavior}!bsinfv@{bsinfv}}
+\index{bsinfv@{bsinfv}!In terms of the Base Answer behavior@{In terms of the Base Answer behavior}}
+\doxysubsubsection{\texorpdfstring{bsinfv}{bsinfv}\hspace{0.1cm}{\footnotesize\ttfamily [2/2]}}
+{\footnotesize\ttfamily \mbox{\hyperlink{group__BaseAnswer_ga8d55980da12dbdd3fae663593a8914a4}{UINT32}} \+\_\+t\+\_\+fsbl\+\_\+bsifo\+::bsinfv}
+
+Boot Security Info structure version. \Hypertarget{group__BaseAnswer_ga04d1fc2a626ffc4abd1d3f7c6556cca9}\label{group__BaseAnswer_ga04d1fc2a626ffc4abd1d3f7c6556cca9} 
+\index{In terms of the Base Answer behavior@{In terms of the Base Answer behavior}!certi@{certi}}
+\index{certi@{certi}!In terms of the Base Answer behavior@{In terms of the Base Answer behavior}}
+\doxysubsubsection{\texorpdfstring{certi}{certi}}
+{\footnotesize\ttfamily VOID\texorpdfstring{$\ast$}{*} \+\_\+t\+\_\+fsbl\+\_\+bsinfo\+\_\+ptr\+::certi}
+
+Pointer to certificate data region. \Hypertarget{group__BaseAnswer_ga892a213546492f093b567637adf2b837}\label{group__BaseAnswer_ga892a213546492f093b567637adf2b837} 
+\index{In terms of the Base Answer behavior@{In terms of the Base Answer behavior}!certlen@{certlen}}
+\index{certlen@{certlen}!In terms of the Base Answer behavior@{In terms of the Base Answer behavior}}
+\doxysubsubsection{\texorpdfstring{[]}{[]}\hspace{0.1cm}{\footnotesize\ttfamily [1/2]}}
+{\footnotesize\ttfamily UINT32  \{ ... \} \+::certlen}
+
+Certificate length (in bytes). \Hypertarget{group__BaseAnswer_gaf9f2d299935e1bd9c864f44ef30adb73}\label{group__BaseAnswer_gaf9f2d299935e1bd9c864f44ef30adb73} 
+\index{In terms of the Base Answer behavior@{In terms of the Base Answer behavior}!certlen@{certlen}}
+\index{certlen@{certlen}!In terms of the Base Answer behavior@{In terms of the Base Answer behavior}}
+\doxysubsubsection{\texorpdfstring{certlen}{certlen}\hspace{0.1cm}{\footnotesize\ttfamily [2/2]}}
+{\footnotesize\ttfamily \mbox{\hyperlink{group__BaseAnswer_ga8d55980da12dbdd3fae663593a8914a4}{UINT32}} \+\_\+t\+\_\+fsbl\+\_\+bsifo\+::certlen}
+
+Certificate length (in bytes). \Hypertarget{group__BaseAnswer_ga92a3f62d5ee30f9353895bb444d4c70e}\label{group__BaseAnswer_ga92a3f62d5ee30f9353895bb444d4c70e} 
+\index{In terms of the Base Answer behavior@{In terms of the Base Answer behavior}!devid@{devid}}
+\index{devid@{devid}!In terms of the Base Answer behavior@{In terms of the Base Answer behavior}}
+\doxysubsubsection{\texorpdfstring{devid}{devid}}
+{\footnotesize\ttfamily UINT8 atp\+\_\+ident\+\_\+t\+::devid\mbox{[}\mbox{\hyperlink{group__DigestSystem_ga9cfb9654f5feaa1727c7f41f0fe36678}{ATP\+\_\+\+IDENT\+\_\+\+KEY\+\_\+\+STG}}\mbox{]}}
+
+Device ID -\/ Unique identifier for the hardware device. \Hypertarget{group__BaseAnswer_ga86ab4178923e3bfbd033440928b955bf}\label{group__BaseAnswer_ga86ab4178923e3bfbd033440928b955bf} 
+\index{In terms of the Base Answer behavior@{In terms of the Base Answer behavior}!fsbl\_pres\_bank@{fsbl\_pres\_bank}}
+\index{fsbl\_pres\_bank@{fsbl\_pres\_bank}!In terms of the Base Answer behavior@{In terms of the Base Answer behavior}}
+\doxysubsubsection{\texorpdfstring{fsbl\_pres\_bank}{fsbl\_pres\_bank}}
+{\footnotesize\ttfamily UINT32 \+\_\+t\+\_\+mig\+\_\+key\+::fsbl\+\_\+pres\+\_\+bank}
+
+FSBL key storage bank index. \Hypertarget{group__BaseAnswer_gafabb23d18c6896833f6aecbb9d2dfa6e}\label{group__BaseAnswer_gafabb23d18c6896833f6aecbb9d2dfa6e} 
+\index{In terms of the Base Answer behavior@{In terms of the Base Answer behavior}!fsbladdr@{fsbladdr}}
+\index{fsbladdr@{fsbladdr}!In terms of the Base Answer behavior@{In terms of the Base Answer behavior}}
+\doxysubsubsection{\texorpdfstring{fsbladdr}{fsbladdr}}
+{\footnotesize\ttfamily UINTN \+\_\+fhnd\+\_\+img\+\_\+t\+::fsbladdr}
+
+Memory address where the FSBL image is located. \Hypertarget{group__BaseAnswer_gae848b9ee565c9b51d1a0cb218edf97f2}\label{group__BaseAnswer_gae848b9ee565c9b51d1a0cb218edf97f2} 
+\index{In terms of the Base Answer behavior@{In terms of the Base Answer behavior}!fsbln@{fsbln}}
+\index{fsbln@{fsbln}!In terms of the Base Answer behavior@{In terms of the Base Answer behavior}}
+\doxysubsubsection{\texorpdfstring{fsbln}{fsbln}}
+{\footnotesize\ttfamily UINT32 \+\_\+fhnd\+\_\+img\+\_\+t\+::fsbln}
+
+Length of the FSBL image, in bytes. \Hypertarget{group__BaseAnswer_gaf24328035c8471a6bed24ac096e1da19}\label{group__BaseAnswer_gaf24328035c8471a6bed24ac096e1da19} 
+\index{In terms of the Base Answer behavior@{In terms of the Base Answer behavior}!fwid@{fwid}}
+\index{fwid@{fwid}!In terms of the Base Answer behavior@{In terms of the Base Answer behavior}}
+\doxysubsubsection{\texorpdfstring{fwid}{fwid}}
+{\footnotesize\ttfamily UINT8 atp\+\_\+ident\+\_\+t\+::fwid\mbox{[}\mbox{\hyperlink{group__DigestSystem_ga9cfb9654f5feaa1727c7f41f0fe36678}{ATP\+\_\+\+IDENT\+\_\+\+KEY\+\_\+\+STG}}\mbox{]}}
+
+Firmware ID -\/ Identifier derived from firmware image or version. \Hypertarget{group__BaseAnswer_ga7ec8aa0da1dfc2d2beda0e88c4d428ac}\label{group__BaseAnswer_ga7ec8aa0da1dfc2d2beda0e88c4d428ac} 
+\index{In terms of the Base Answer behavior@{In terms of the Base Answer behavior}!fwinfo@{fwinfo}}
+\index{fwinfo@{fwinfo}!In terms of the Base Answer behavior@{In terms of the Base Answer behavior}}
+\doxysubsubsection{\texorpdfstring{fwinfo}{fwinfo}}
+{\footnotesize\ttfamily VOID\texorpdfstring{$\ast$}{*} \+\_\+t\+\_\+fsbl\+\_\+bsinfo\+\_\+ptr\+::fwinfo}
+
+Pointer to firmware information structure. \Hypertarget{group__BaseAnswer_ga2fd4aa8d94d92c0632f89e512932e817}\label{group__BaseAnswer_ga2fd4aa8d94d92c0632f89e512932e817} 
+\index{In terms of the Base Answer behavior@{In terms of the Base Answer behavior}!fwinfolen@{fwinfolen}}
+\index{fwinfolen@{fwinfolen}!In terms of the Base Answer behavior@{In terms of the Base Answer behavior}}
+\doxysubsubsection{\texorpdfstring{fwinfolen}{fwinfolen}\hspace{0.1cm}{\footnotesize\ttfamily [1/2]}}
+{\footnotesize\ttfamily \mbox{\hyperlink{group__BaseAnswer_ga8d55980da12dbdd3fae663593a8914a4}{UINT32}} \+\_\+t\+\_\+fsbl\+\_\+bsifo\+::fwinfolen}
+
+Firmware info length (in bytes). \Hypertarget{group__BaseAnswer_ga33748cd39577a22ff87ec37ffd590d2a}\label{group__BaseAnswer_ga33748cd39577a22ff87ec37ffd590d2a} 
+\index{In terms of the Base Answer behavior@{In terms of the Base Answer behavior}!fwinfolen@{fwinfolen}}
+\index{fwinfolen@{fwinfolen}!In terms of the Base Answer behavior@{In terms of the Base Answer behavior}}
+\doxysubsubsection{\texorpdfstring{[]}{[]}\hspace{0.1cm}{\footnotesize\ttfamily [2/2]}}
+{\footnotesize\ttfamily UINT32  \{ ... \} \+::fwinfolen}
+
+Firmware info length (in bytes). \Hypertarget{group__BaseAnswer_gadfe4d901fa3a54a4eb4a07788423a06d}\label{group__BaseAnswer_gadfe4d901fa3a54a4eb4a07788423a06d} 
+\index{In terms of the Base Answer behavior@{In terms of the Base Answer behavior}!iohndl@{iohndl}}
+\index{iohndl@{iohndl}!In terms of the Base Answer behavior@{In terms of the Base Answer behavior}}
+\doxysubsubsection{\texorpdfstring{iohndl}{iohndl}}
+{\footnotesize\ttfamily VOID\texorpdfstring{$\ast$}{*} \+\_\+t\+\_\+baseansr\+::iohndl}
+
+Handle to I/O or block device used for encryption. \Hypertarget{group__BaseAnswer_gae5ddb95699415a92749d0a4f8c3f3d64}\label{group__BaseAnswer_gae5ddb95699415a92749d0a4f8c3f3d64} 
+\index{In terms of the Base Answer behavior@{In terms of the Base Answer behavior}!iv@{iv}}
+\index{iv@{iv}!In terms of the Base Answer behavior@{In terms of the Base Answer behavior}}
+\doxysubsubsection{\texorpdfstring{iv}{iv}}
+{\footnotesize\ttfamily VOID\texorpdfstring{$\ast$}{*} \+\_\+t\+\_\+baseansr\+::iv}
+
+Pointer to initialization vector (IV). \Hypertarget{group__BaseAnswer_ga740ce062297c6c2d45c4b7ee9ec3ea13}\label{group__BaseAnswer_ga740ce062297c6c2d45c4b7ee9ec3ea13} 
+\index{In terms of the Base Answer behavior@{In terms of the Base Answer behavior}!key@{key}}
+\index{key@{key}!In terms of the Base Answer behavior@{In terms of the Base Answer behavior}}
+\doxysubsubsection{\texorpdfstring{key}{key}}
+{\footnotesize\ttfamily UINT8 \+\_\+t\+\_\+mig\+\_\+key\+::key\mbox{[}SBC\+\_\+\+AT\+\_\+\+HASH\+\_\+\+LEN\mbox{]}}
+
+Migration key (32-\/byte hash or AES key). \Hypertarget{group__BaseAnswer_ga0203318e16b6d5f60d801e38f13bb7ec}\label{group__BaseAnswer_ga0203318e16b6d5f60d801e38f13bb7ec} 
+\index{In terms of the Base Answer behavior@{In terms of the Base Answer behavior}!m@{m}}
+\index{m@{m}!In terms of the Base Answer behavior@{In terms of the Base Answer behavior}}
+\doxysubsubsection{\texorpdfstring{[struct]}{[struct]}}
+{\footnotesize\ttfamily struct  \{ ... \}  \+\_\+t\+\_\+fsbl\+\_\+bsifo\+::m}
+
+
+
+Member field representation of Boot Security Info. 
+
+Bitfield view of Boot Security Info. \Hypertarget{group__BaseAnswer_ga9b922cc8189b848db05b2955498f71d8}\label{group__BaseAnswer_ga9b922cc8189b848db05b2955498f71d8} 
+\index{In terms of the Base Answer behavior@{In terms of the Base Answer behavior}!mbsn@{mbsn}}
+\index{mbsn@{mbsn}!In terms of the Base Answer behavior@{In terms of the Base Answer behavior}}
+\doxysubsubsection{\texorpdfstring{mbsn}{mbsn}}
+{\footnotesize\ttfamily UINT8 \+\_\+hw\+\_\+unique\+\_\+info\+\_\+t\+::mbsn\mbox{[}64\mbox{]}}
+
+Motherboard serial number (UTF-\/8 or binary). \Hypertarget{group__BaseAnswer_ga8eb12b00f77918b7230e7ffcf03c8329}\label{group__BaseAnswer_ga8eb12b00f77918b7230e7ffcf03c8329} 
+\index{In terms of the Base Answer behavior@{In terms of the Base Answer behavior}!mbsnl@{mbsnl}}
+\index{mbsnl@{mbsnl}!In terms of the Base Answer behavior@{In terms of the Base Answer behavior}}
+\doxysubsubsection{\texorpdfstring{mbsnl}{mbsnl}}
+{\footnotesize\ttfamily UINTN \+\_\+hw\+\_\+unique\+\_\+info\+\_\+t\+::mbsnl}
+
+Length of the motherboard serial number. \Hypertarget{group__BaseAnswer_ga38f8fd52d7185527881536df9d714209}\label{group__BaseAnswer_ga38f8fd52d7185527881536df9d714209} 
+\index{In terms of the Base Answer behavior@{In terms of the Base Answer behavior}!migid@{migid}}
+\index{migid@{migid}!In terms of the Base Answer behavior@{In terms of the Base Answer behavior}}
+\doxysubsubsection{\texorpdfstring{migid}{migid}}
+{\footnotesize\ttfamily UINT8 atp\+\_\+ident\+\_\+t\+::migid\mbox{[}\mbox{\hyperlink{group__DigestSystem_ga9cfb9654f5feaa1727c7f41f0fe36678}{ATP\+\_\+\+IDENT\+\_\+\+KEY\+\_\+\+STG}}\mbox{]}}
+
+Migration key ID -\/ Identifier used for secure migration or rekeying. \Hypertarget{group__BaseAnswer_ga73a33adf63975dc56ece462b3b3a26f5}\label{group__BaseAnswer_ga73a33adf63975dc56ece462b3b3a26f5} 
+\index{In terms of the Base Answer behavior@{In terms of the Base Answer behavior}!mmsn@{mmsn}}
+\index{mmsn@{mmsn}!In terms of the Base Answer behavior@{In terms of the Base Answer behavior}}
+\doxysubsubsection{\texorpdfstring{mmsn}{mmsn}}
+{\footnotesize\ttfamily UINT8 \+\_\+hw\+\_\+unique\+\_\+info\+\_\+t\+::mmsn\mbox{[}64\mbox{]}}
+
+Memory module serial number. \Hypertarget{group__BaseAnswer_ga762b14d86a405365c138e9063bba75c9}\label{group__BaseAnswer_ga762b14d86a405365c138e9063bba75c9} 
+\index{In terms of the Base Answer behavior@{In terms of the Base Answer behavior}!mmsnl@{mmsnl}}
+\index{mmsnl@{mmsnl}!In terms of the Base Answer behavior@{In terms of the Base Answer behavior}}
+\doxysubsubsection{\texorpdfstring{mmsnl}{mmsnl}}
+{\footnotesize\ttfamily UINTN \+\_\+hw\+\_\+unique\+\_\+info\+\_\+t\+::mmsnl}
+
+Length of the memory serial number. \Hypertarget{group__BaseAnswer_gaae7c44ab9158516948ddee88aa82bda6}\label{group__BaseAnswer_gaae7c44ab9158516948ddee88aa82bda6} 
+\index{In terms of the Base Answer behavior@{In terms of the Base Answer behavior}!msg@{msg}}
+\index{msg@{msg}!In terms of the Base Answer behavior@{In terms of the Base Answer behavior}}
+\doxysubsubsection{\texorpdfstring{msg}{msg}}
+{\footnotesize\ttfamily VOID\texorpdfstring{$\ast$}{*} \+\_\+t\+\_\+baseansr\+::msg}
+
+Encrypted message buffer. \Hypertarget{group__BaseAnswer_ga9e360efc460a4ae6b22d87fe261f363d}\label{group__BaseAnswer_ga9e360efc460a4ae6b22d87fe261f363d} 
+\index{In terms of the Base Answer behavior@{In terms of the Base Answer behavior}!msglen@{msglen}}
+\index{msglen@{msglen}!In terms of the Base Answer behavior@{In terms of the Base Answer behavior}}
+\doxysubsubsection{\texorpdfstring{msglen}{msglen}}
+{\footnotesize\ttfamily UINTN \+\_\+t\+\_\+baseansr\+::msglen}
+
+Length of the encrypted message, in bytes. \Hypertarget{group__BaseAnswer_ga79bc330e5b1bd53e99b85aba1591a9a7}\label{group__BaseAnswer_ga79bc330e5b1bd53e99b85aba1591a9a7} 
+\index{In terms of the Base Answer behavior@{In terms of the Base Answer behavior}!nvmesn@{nvmesn}}
+\index{nvmesn@{nvmesn}!In terms of the Base Answer behavior@{In terms of the Base Answer behavior}}
+\doxysubsubsection{\texorpdfstring{nvmesn}{nvmesn}}
+{\footnotesize\ttfamily UINT8 \+\_\+hw\+\_\+unique\+\_\+info\+\_\+t\+::nvmesn\mbox{[}64\mbox{]}}
+
+NVMe or SSD serial number. \Hypertarget{group__BaseAnswer_gaa0f8cb9b3a933e07287ed532b36bcd5b}\label{group__BaseAnswer_gaa0f8cb9b3a933e07287ed532b36bcd5b} 
+\index{In terms of the Base Answer behavior@{In terms of the Base Answer behavior}!nvmesnl@{nvmesnl}}
+\index{nvmesnl@{nvmesnl}!In terms of the Base Answer behavior@{In terms of the Base Answer behavior}}
+\doxysubsubsection{\texorpdfstring{nvmesnl}{nvmesnl}}
+{\footnotesize\ttfamily UINTN \+\_\+hw\+\_\+unique\+\_\+info\+\_\+t\+::nvmesnl}
+
+Length of the NVMe/\+SSD serial number. \Hypertarget{group__BaseAnswer_ga119996c5e9c5e9a0211bb637ce3bfb5f}\label{group__BaseAnswer_ga119996c5e9c5e9a0211bb637ce3bfb5f} 
+\index{In terms of the Base Answer behavior@{In terms of the Base Answer behavior}!os\_pres\_bank@{os\_pres\_bank}}
+\index{os\_pres\_bank@{os\_pres\_bank}!In terms of the Base Answer behavior@{In terms of the Base Answer behavior}}
+\doxysubsubsection{\texorpdfstring{os\_pres\_bank}{os\_pres\_bank}}
+{\footnotesize\ttfamily UINT32 \+\_\+t\+\_\+mig\+\_\+key\+::os\+\_\+pres\+\_\+bank}
+
+OS key storage bank index. \Hypertarget{group__BaseAnswer_ga1d478ea5c92898eb8d6b82f76dd000ed}\label{group__BaseAnswer_ga1d478ea5c92898eb8d6b82f76dd000ed} 
+\index{In terms of the Base Answer behavior@{In terms of the Base Answer behavior}!osid@{osid}}
+\index{osid@{osid}!In terms of the Base Answer behavior@{In terms of the Base Answer behavior}}
+\doxysubsubsection{\texorpdfstring{osid}{osid}}
+{\footnotesize\ttfamily UINT8 atp\+\_\+ident\+\_\+t\+::osid\mbox{[}\mbox{\hyperlink{group__DigestSystem_ga9cfb9654f5feaa1727c7f41f0fe36678}{ATP\+\_\+\+IDENT\+\_\+\+KEY\+\_\+\+STG}}\mbox{]}}
+
+OS ID -\/ Identifier for the operating system or boot layer. \Hypertarget{group__BaseAnswer_gac714ebae8f1f35847726d9993331a0df}\label{group__BaseAnswer_gac714ebae8f1f35847726d9993331a0df} 
+\index{In terms of the Base Answer behavior@{In terms of the Base Answer behavior}!reserv1@{reserv1}}
+\index{reserv1@{reserv1}!In terms of the Base Answer behavior@{In terms of the Base Answer behavior}}
+\doxysubsubsection{\texorpdfstring{reserv1}{reserv1}\hspace{0.1cm}{\footnotesize\ttfamily [1/2]}}
+{\footnotesize\ttfamily \mbox{\hyperlink{group__BaseAnswer_ga8d55980da12dbdd3fae663593a8914a4}{UINT32}} \+\_\+t\+\_\+fsbl\+\_\+bsifo\+::reserv1}
+
+Reserved field for alignment/future use. \Hypertarget{group__BaseAnswer_ga6914432bf3cf93001f52e67c6e23fbc2}\label{group__BaseAnswer_ga6914432bf3cf93001f52e67c6e23fbc2} 
+\index{In terms of the Base Answer behavior@{In terms of the Base Answer behavior}!reserv1@{reserv1}}
+\index{reserv1@{reserv1}!In terms of the Base Answer behavior@{In terms of the Base Answer behavior}}
+\doxysubsubsection{\texorpdfstring{[]}{[]}\hspace{0.1cm}{\footnotesize\ttfamily [2/2]}}
+{\footnotesize\ttfamily UINT32  \{ ... \} \+::reserv1}
+
+Reserved field for alignment/future use. \Hypertarget{group__BaseAnswer_ga680f64568482adcba1359389c4e33dfc}\label{group__BaseAnswer_ga680f64568482adcba1359389c4e33dfc} 
+\index{In terms of the Base Answer behavior@{In terms of the Base Answer behavior}!reserv2@{reserv2}}
+\index{reserv2@{reserv2}!In terms of the Base Answer behavior@{In terms of the Base Answer behavior}}
+\doxysubsubsection{\texorpdfstring{reserv2}{reserv2}\hspace{0.1cm}{\footnotesize\ttfamily [1/2]}}
+{\footnotesize\ttfamily \mbox{\hyperlink{group__BaseAnswer_ga8d55980da12dbdd3fae663593a8914a4}{UINT32}} \+\_\+t\+\_\+fsbl\+\_\+bsifo\+::reserv2}
+
+Reserved field for alignment/future use. \Hypertarget{group__BaseAnswer_ga7800bc56f67b15a4b7f414910a170882}\label{group__BaseAnswer_ga7800bc56f67b15a4b7f414910a170882} 
+\index{In terms of the Base Answer behavior@{In terms of the Base Answer behavior}!reserv2@{reserv2}}
+\index{reserv2@{reserv2}!In terms of the Base Answer behavior@{In terms of the Base Answer behavior}}
+\doxysubsubsection{\texorpdfstring{[]}{[]}\hspace{0.1cm}{\footnotesize\ttfamily [2/2]}}
+{\footnotesize\ttfamily UINT32  \{ ... \} \+::reserv2}
+
+Reserved field for alignment/future use. \Hypertarget{group__BaseAnswer_ga28435f4eb48d83bf374b584eff661d41}\label{group__BaseAnswer_ga28435f4eb48d83bf374b584eff661d41} 
+\index{In terms of the Base Answer behavior@{In terms of the Base Answer behavior}!siglen@{siglen}}
+\index{siglen@{siglen}!In terms of the Base Answer behavior@{In terms of the Base Answer behavior}}
+\doxysubsubsection{\texorpdfstring{[]}{[]}\hspace{0.1cm}{\footnotesize\ttfamily [1/2]}}
+{\footnotesize\ttfamily UINT32  \{ ... \} \+::siglen}
+
+Signature length (in bytes). \Hypertarget{group__BaseAnswer_ga13bfa8208d32a997346268a5f226efb0}\label{group__BaseAnswer_ga13bfa8208d32a997346268a5f226efb0} 
+\index{In terms of the Base Answer behavior@{In terms of the Base Answer behavior}!siglen@{siglen}}
+\index{siglen@{siglen}!In terms of the Base Answer behavior@{In terms of the Base Answer behavior}}
+\doxysubsubsection{\texorpdfstring{siglen}{siglen}\hspace{0.1cm}{\footnotesize\ttfamily [2/2]}}
+{\footnotesize\ttfamily \mbox{\hyperlink{group__BaseAnswer_ga8d55980da12dbdd3fae663593a8914a4}{UINT32}} \+\_\+t\+\_\+fsbl\+\_\+bsifo\+::siglen}
+
+Signature length (in bytes). \Hypertarget{group__BaseAnswer_ga8f9a772b6da54d98fc16e77865d8e8b1}\label{group__BaseAnswer_ga8f9a772b6da54d98fc16e77865d8e8b1} 
+\index{In terms of the Base Answer behavior@{In terms of the Base Answer behavior}!signature@{signature}}
+\index{signature@{signature}!In terms of the Base Answer behavior@{In terms of the Base Answer behavior}}
+\doxysubsubsection{\texorpdfstring{signature}{signature}}
+{\footnotesize\ttfamily VOID\texorpdfstring{$\ast$}{*} \+\_\+t\+\_\+fsbl\+\_\+bsinfo\+\_\+ptr\+::signature}
+
+Pointer to digital signature data region. \Hypertarget{group__BaseAnswer_ga2de527544721885d9ac03437b66ed50f}\label{group__BaseAnswer_ga2de527544721885d9ac03437b66ed50f} 
+\index{In terms of the Base Answer behavior@{In terms of the Base Answer behavior}!ssbl\_pres\_bank@{ssbl\_pres\_bank}}
+\index{ssbl\_pres\_bank@{ssbl\_pres\_bank}!In terms of the Base Answer behavior@{In terms of the Base Answer behavior}}
+\doxysubsubsection{\texorpdfstring{ssbl\_pres\_bank}{ssbl\_pres\_bank}}
+{\footnotesize\ttfamily UINT32 \+\_\+t\+\_\+mig\+\_\+key\+::ssbl\+\_\+pres\+\_\+bank}
+
+SSBL key storage bank index. \Hypertarget{group__BaseAnswer_gaca0cb0fc51a9b2e73c28828298468bbf}\label{group__BaseAnswer_gaca0cb0fc51a9b2e73c28828298468bbf} 
+\index{In terms of the Base Answer behavior@{In terms of the Base Answer behavior}!ssbladdr@{ssbladdr}}
+\index{ssbladdr@{ssbladdr}!In terms of the Base Answer behavior@{In terms of the Base Answer behavior}}
+\doxysubsubsection{\texorpdfstring{ssbladdr}{ssbladdr}}
+{\footnotesize\ttfamily UINTN \+\_\+fhnd\+\_\+img\+\_\+t\+::ssbladdr}
+
+Memory address where the SSBL image is located. \Hypertarget{group__BaseAnswer_ga89b102e2dafab21c1a098957f4ad8fe9}\label{group__BaseAnswer_ga89b102e2dafab21c1a098957f4ad8fe9} 
+\index{In terms of the Base Answer behavior@{In terms of the Base Answer behavior}!ssbln@{ssbln}}
+\index{ssbln@{ssbln}!In terms of the Base Answer behavior@{In terms of the Base Answer behavior}}
+\doxysubsubsection{\texorpdfstring{ssbln}{ssbln}}
+{\footnotesize\ttfamily UINT32 \+\_\+fhnd\+\_\+img\+\_\+t\+::ssbln}
+
+Length of the SSBL image, in bytes. \Hypertarget{group__BaseAnswer_gaef28949b9e7cc88986760cd9fbd24484}\label{group__BaseAnswer_gaef28949b9e7cc88986760cd9fbd24484} 
+\index{In terms of the Base Answer behavior@{In terms of the Base Answer behavior}!tag@{tag}}
+\index{tag@{tag}!In terms of the Base Answer behavior@{In terms of the Base Answer behavior}}
+\doxysubsubsection{\texorpdfstring{tag}{tag}}
+{\footnotesize\ttfamily VOID\texorpdfstring{$\ast$}{*} \+\_\+t\+\_\+baseansr\+::tag}
+
+Pointer to authentication tag for AES-\/\+GCM. \Hypertarget{group__BaseAnswer_ga8d55980da12dbdd3fae663593a8914a4}\label{group__BaseAnswer_ga8d55980da12dbdd3fae663593a8914a4} 
+\index{In terms of the Base Answer behavior@{In terms of the Base Answer behavior}!value@{value}}
+\index{value@{value}!In terms of the Base Answer behavior@{In terms of the Base Answer behavior}}
+\doxysubsubsection{\texorpdfstring{value}{value}}
+{\footnotesize\ttfamily UINT8 \+\_\+t\+\_\+fsbl\+\_\+bsifo\+::value\mbox{[}FSBL\+\_\+\+BNIFO\+\_\+\+SIZE\mbox{]}}
+
+Raw byte array representation for serialization. \input{group__IntegrityCheck}

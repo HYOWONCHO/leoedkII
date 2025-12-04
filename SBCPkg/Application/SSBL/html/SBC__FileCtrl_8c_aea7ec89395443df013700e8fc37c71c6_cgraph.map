@@ -1,0 +1,7 @@
+<map id="SBC_ProtSwLoadRawPrt" name="SBC_ProtSwLoadRawPrt">
+<area shape="rect" id="Node000001" title="Loads and decrypts protected software data from a raw partition." alt="" coords="5,31,188,56"/>
+<area shape="rect" id="Node000002" href="$SBC__Log_8c.html#aec2665cef895254b1d095577024bdb26" title=" " alt="" coords="251,5,439,31"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="188,31,237,26,238,32,188,37"/>
+<area shape="rect" id="Node000003" href="$SBC__FileCtrl_8c.html#a0bffd54719b02c63355534614cdb450b" title="Read arbitrary bytes to a Block I/O device." alt="" coords="236,55,455,80"/>
+<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="188,49,223,53,222,58,188,55"/>
+</map>

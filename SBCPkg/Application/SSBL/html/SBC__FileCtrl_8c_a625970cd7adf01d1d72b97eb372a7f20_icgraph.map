@@ -1,0 +1,10 @@
+<map id="SBC_FindEfiFileSystemProtocol" name="SBC_FindEfiFileSystemProtocol">
+<area shape="rect" id="Node000001" title="Locates all handles that support the EFI Simple File System Protocol." alt="" coords="645,5,876,31"/>
+<area shape="rect" id="Node000002" href="$group__BaseAnswer.html#gad993c7407ff302f90f0b4bbf4a618db2" title="Validate the device authentication answer using the provided key." alt="" coords="227,5,417,31"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="631,21,418,21,418,15,631,15"/>
+<area shape="rect" id="Node000004" href="$SBC__FileCtrl_8c.html#a3780e2b73175c8b93f7bb5107e1737c3" title="Retrieve the size of a specified file in the UEFI file system." alt="" coords="465,31,597,56"/>
+<area shape="poly" id="edge3_Node000001_Node000004" title=" " alt="" coords="632,35,598,39,597,33,632,30"/>
+<area shape="rect" id="Node000003" href="$SBC__SystemControl_8c.html#a7fb21fbb14d2c0fd55b69537f919b9e6" title="Perform secure boot integrity and authenticity verification." alt="" coords="5,5,179,31"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="213,21,179,21,179,15,213,15"/>
+<area shape="poly" id="edge4_Node000004_Node000002" title=" " alt="" coords="451,36,417,32,418,27,452,31"/>
+</map>

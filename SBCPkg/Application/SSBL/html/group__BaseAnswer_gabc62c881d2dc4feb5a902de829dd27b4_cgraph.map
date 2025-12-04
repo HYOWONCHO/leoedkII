@@ -1,0 +1,9 @@
+<map id="SBC_DeviceSecuirtyKeyCreate" name="SBC_DeviceSecuirtyKeyCreate">
+<area shape="rect" id="Node000001" title="Create a new device security key." alt="" coords="5,31,232,56"/>
+<area shape="rect" id="Node000002" href="$SBC__Log_8c.html#a77ecccb9a45ff6e87c23dec0781ebd6f" title="Build a formatted Unicode message containing a hexadecimal representation of binary data." alt="" coords="280,5,521,31"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="232,31,266,27,267,33,232,36"/>
+<area shape="rect" id="Node000004" href="$SBC__Hashing_8c.html#ae8bb2fa9f36321b9eb37b1e8ed51a4cc" title=" " alt="" coords="326,55,475,80"/>
+<area shape="poly" id="edge3_Node000001_Node000004" title=" " alt="" coords="232,50,313,57,312,63,232,56"/>
+<area shape="rect" id="Node000003" href="$SBC__Log_8c.html#aec2665cef895254b1d095577024bdb26" title=" " alt="" coords="569,5,757,31"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="521,15,555,15,555,21,521,21"/>
+</map>

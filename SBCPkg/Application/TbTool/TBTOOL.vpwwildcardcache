@@ -1,0 +1,37 @@
+<WildcardCache version="1">
+	<Project File="TBTOOL.vpj">
+		<Wildcards>
+			<W F="*.c" Wildcards="*.c;*.cc;*.cpp;*.cppm;*.cp;*.cxx;*.c++;*.h;*.hh;*.hpp;*.hxx;*.h++;*.inl;*.ixx;*.xpm;*.mpp;*.mxx" Excludes="*.tiff;*.tbz;*.pdb;*.avi;*.msi;*.cpgz;*.rpm;*.class;*.a;*.gif;*.taz;*.bin;*.jpg;*.svgz;*.exe;*.mp3;*.jar;*.ico;*.tif;*.txz;*.sl;*.png;*.jpeg;*.tar;*.Z;*.sta;*.xslx;*.gz;*.bz2;*.xz;*.mpeg;*.vpb;*.chm;*.dll;*.7z;*.lib;*.so;*.ex;*.tgz;*.war;*.vtg;*.docx;*.rar;*.o;*.wmv;*.cpio;*.zip;*.bmp;*.suo;*.xlsx;*.7zip;*.winmd;*.pdf;*.obj;*.z;*.tbz2;.git/;.svn/;.CVS/;SSCS/;.DS_Store;*.vpw;*.vpj;*.vpwhist;*.vpwhistxml;*.vpwhistu;*.vpwhistuxml;*.vpwwildcardcache" CompileExt="" ResourceExt="" Recurse="1" D="1"/>
+		</Wildcards>
+		<Files>
+			inc/raw_device_ctrl.h
+			build/CMakeFiles/3.28.3/CompilerIdC/CMakeCCompilerId.c
+			inc/log_print.h
+			inc/mp_process.h
+			inc/raw_prt_addr.h
+			src/opt.c
+			src/raw_device_ctrl.c
+			inc/opt.h
+			src/mp_process.c
+			inc/raw_prt_ds.h
+			src/main.c
+		</Files>
+		<Folders>
+			134092078245010460 build/CMakeFiles/CMakeScratch/
+			134092078270408840 build/CMakeFiles/tb_tool.dir/src/
+			134092078242628840 build/CMakeFiles/3.28.3/CompilerIdC/
+			134080680038906480 3rdparty/include/
+			134092078240328840 build/CMakeFiles/pkgRedirects/
+			134092078270698840 build/
+			134092078241038840 build/CMakeFiles/3.28.3/CompilerIdC/tmp/
+			134092078245150540 build/CMakeFiles/3.28.3/
+			134080680107660840 3rdparty/lib/
+			134092078271251280 build/CMakeFiles/
+			134092078245174840 build/CMakeFiles/tb_tool.dir/
+			134083481106541460 inc/
+			134084178329090000 src/
+			134080680107660840 3rdparty/
+			134092120132356830
+		</Folders>
+	</Project>
+</WildcardCache>

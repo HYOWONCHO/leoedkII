@@ -1,0 +1,13 @@
+<map id="SBC_RawPrtReadBlock" name="SBC_RawPrtReadBlock">
+<area shape="rect" id="Node000001" title="Read a raw data block from a physical storage device (LBA&#45;based)." alt="" coords="671,23,844,48"/>
+<area shape="rect" id="Node000002" href="$group__BaseAnswer.html#gad993c7407ff302f90f0b4bbf4a618db2" title="Validate the device authentication answer using the provided key." alt="" coords="227,23,417,48"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="688,23,622,13,544,8,466,13,381,25,381,20,465,7,544,3,623,8,689,17"/>
+<area shape="rect" id="Node000004" href="$group__BaseAnswer.html#gad75f3501899d5c6fd9f859572c7cda85" title=" " alt="" coords="465,23,623,48"/>
+<area shape="poly" id="edge3_Node000001_Node000004" title=" " alt="" coords="657,38,623,38,623,33,657,33"/>
+<area shape="rect" id="Node000005" href="$SBC__FileCtrl_8c.html#a97a56b26ac9301048e3c4180424b71b7" title="Loads system configuration data from a block I/O device into a memory blob." alt="" coords="229,72,415,97"/>
+<area shape="poly" id="edge5_Node000001_Node000005" title=" " alt="" coords="680,53,623,62,416,82,415,77,622,57,679,48"/>
+<area shape="rect" id="Node000003" href="$SBC__SystemControl_8c.html#a7fb21fbb14d2c0fd55b69537f919b9e6" title="Perform secure boot integrity and authenticity verification." alt="" coords="5,48,179,73"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="213,50,179,54,178,49,213,45"/>
+<area shape="poly" id="edge4_Node000004_Node000002" title=" " alt="" coords="451,38,418,38,418,33,451,33"/>
+<area shape="poly" id="edge6_Node000005_Node000003" title=" " alt="" coords="215,76,179,73,179,67,216,71"/>
+</map>

@@ -1,0 +1,463 @@
+\doxysection{SBC\+\_\+\+Log.\+c File Reference}
+\hypertarget{SBC__Log_8c}{}\label{SBC__Log_8c}\index{SBC\_Log.c@{SBC\_Log.c}}
+
+
+Logging utility implementation for SBC system modules.  
+
+
+{\ttfamily \#include $<$Uefi.\+h$>$}\newline
+{\ttfamily \#include $<$Library/\+Uefi\+Lib.\+h$>$}\newline
+{\ttfamily \#include $<$Library/\+Print\+Lib.\+h$>$}\newline
+{\ttfamily \#include $<$Library/\+Base\+Memory\+Lib.\+h$>$}\newline
+{\ttfamily \#include $<$Library/\+Debug\+Lib.\+h$>$}\newline
+{\ttfamily \#include $<$Library/\+Uefi\+Runtime\+Services\+Table\+Lib.\+h$>$}\newline
+{\ttfamily \#include $<$Library/\+Memory\+Allocation\+Lib.\+h$>$}\newline
+{\ttfamily \#include $<$Library/\+Uefi\+Boot\+Services\+Table\+Lib.\+h$>$}\newline
+{\ttfamily \#include "{}SBC\+\_\+\+Log.\+h"{}}\newline
+Include dependency graph for SBC\+\_\+\+Log.\+c\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=350pt]{SBC__Log_8c__incl}
+\end{center}
+\end{figure}
+\doxysubsubsection*{Macros}
+\begin{DoxyCompactItemize}
+\item 
+\Hypertarget{SBC__Log_8c_a1bc425dea8a81f366f42b6338dd1251a}\label{SBC__Log_8c_a1bc425dea8a81f366f42b6338dd1251a} 
+\#define {\bfseries FMT\+\_\+\+INT32\+\_\+\+DFORMAT}~L"{}"{}
+\item 
+\Hypertarget{SBC__Log_8c_a896949e04bb0923111df1ba7f7de3962}\label{SBC__Log_8c_a896949e04bb0923111df1ba7f7de3962} 
+\#define {\bfseries FMT\+\_\+\+INT64\+\_\+\+DFORMAT}~L"{}ll"{}
+\item 
+\Hypertarget{SBC__Log_8c_a20e011e47f5fdb855836751a323492bc}\label{SBC__Log_8c_a20e011e47f5fdb855836751a323492bc} 
+\#define {\bfseries FMT\+\_\+\+UINT32\+\_\+\+DFORMAT}~L"{}"{}
+\item 
+\Hypertarget{SBC__Log_8c_a7a2b0b52fdf08ad233d84ee960348d8c}\label{SBC__Log_8c_a7a2b0b52fdf08ad233d84ee960348d8c} 
+\#define {\bfseries FMT\+\_\+\+UINT32\+\_\+\+XFORMAT}~L"{}"{}
+\item 
+\Hypertarget{SBC__Log_8c_a839dffb893531c67401abf0c9de6d078}\label{SBC__Log_8c_a839dffb893531c67401abf0c9de6d078} 
+\#define {\bfseries FMT\+\_\+\+UINT64\+\_\+\+DFORMAT}~L"{}ll"{}
+\item 
+\Hypertarget{SBC__Log_8c_ae58c6d41ebe8737efe334df174dd55bb}\label{SBC__Log_8c_ae58c6d41ebe8737efe334df174dd55bb} 
+\#define {\bfseries FMT\+\_\+\+UINT64\+\_\+\+XFORMAT}~L"{}ll"{}
+\item 
+\Hypertarget{SBC__Log_8c_a45db13d622cb21897aa934e5ad411c83}\label{SBC__Log_8c_a45db13d622cb21897aa934e5ad411c83} 
+\#define {\bfseries LINE\+\_\+\+LEN}~16
+\item 
+\Hypertarget{SBC__Log_8c_a818a44c4b9a878d39c0e71f70d8c3814}\label{SBC__Log_8c_a818a44c4b9a878d39c0e71f70d8c3814} 
+\#define {\bfseries Pcd\+Get32}(Token\+Name)~8192
+\end{DoxyCompactItemize}
+\doxysubsubsection*{Functions}
+\begin{DoxyCompactItemize}
+\item 
+UINTN \mbox{\hyperlink{SBC__Log_8c_a4af24e4ae4d853d01fba2ed243a73b44}{\+\_\+\+Log\+Fmt\+VPrint}} (IN CONST CHAR16 \texorpdfstring{$\ast$}{*}Format, IN VA\+\_\+\+LIST Va\+List\+Maker, IN OUT CHAR16 \texorpdfstring{$\ast$}{*}Log\+Buf, IN UINTN Buf\+Len\+Bytes)
+\item 
+\Hypertarget{SBC__Log_8c_ac9e62d2e02faf4b6a5504cf47ca318ad}\label{SBC__Log_8c_ac9e62d2e02faf4b6a5504cf47ca318ad} 
+EFI\+\_\+\+STATUS {\bfseries \+\_\+sbc\+\_\+write\+\_\+log\+\_\+file} (CHAR8 \texorpdfstring{$\ast$}{*}log\+\_\+data, UINTN length\+\_\+in\+\_\+bytes)
+\item 
+UINTN \mbox{\hyperlink{SBC__Log_8c_ad000d76a2b5134d940b1e8f5c4a994f8}{My\+Unicode\+Strn\+LenS}} (IN CONST CHAR16 \texorpdfstring{$\ast$}{*}String, IN UINTN Max\+Size)
+\item 
+UINTN \mbox{\hyperlink{SBC__Log_8c_ab4d1be704d67bc13aa943a4c82d96168}{My\+Unicode\+Str\+To\+Ascii\+StrS}} (OUT CHAR8 \texorpdfstring{$\ast$}{*}Destination, IN UINTN Destination\+Size, IN CONST CHAR16 \texorpdfstring{$\ast$}{*}Source)
+\item 
+\Hypertarget{SBC__Log_8c_a0f1934c2c369d8b90c514353b1a1f68a}\label{SBC__Log_8c_a0f1934c2c369d8b90c514353b1a1f68a} 
+UINTN {\bfseries remove\+\_\+all\+\_\+space} (CHAR8 \texorpdfstring{$\ast$}{*}buffer, UINTN buffer\+\_\+size\+\_\+in\+\_\+bytes)
+\item 
+EFI\+\_\+\+STATUS \mbox{\hyperlink{SBC__Log_8c_a77ecccb9a45ff6e87c23dec0781ebd6f}{SBC\+\_\+\+Build\+Hex\+Formatted\+Message}} (IN CONST VOID \texorpdfstring{$\ast$}{*}Pub\+Key, IN UINTN Pub\+Key\+Size, IN CONST CHAR16 \texorpdfstring{$\ast$}{*}Format\+String, OUT CHAR16 \texorpdfstring{$\ast$}{*}Out\+Msg, IN UINTN Out\+Msg\+Bytes)
+\begin{DoxyCompactList}\small\item\em Build a formatted Unicode message containing a hexadecimal representation of binary data. \end{DoxyCompactList}\item 
+void \mbox{\hyperlink{SBC__Log_8c_a4eef09d3e49bf44a244bdc81ebee42f6}{SBC\+\_\+external\+\_\+mem\+\_\+print\+\_\+bin}} (CHAR8 \texorpdfstring{$\ast$}{*}title, UINT8 \texorpdfstring{$\ast$}{*}buffer, UINT32 length)
+\begin{DoxyCompactList}\small\item\em Print binary data in hexadecimal format for debugging. \end{DoxyCompactList}\item 
+\Hypertarget{SBC__Log_8c_aa8a57ee913f4eb4ca950dece1f11bd11}\label{SBC__Log_8c_aa8a57ee913f4eb4ca950dece1f11bd11} 
+UINTN {\bfseries SBC\+\_\+\+Internal\+Print} (IN CONST CHAR16 \texorpdfstring{$\ast$}{*}Format, IN VA\+\_\+\+LIST Marker)
+\item 
+\Hypertarget{SBC__Log_8c_ad95b7922715b5ddd02c2342b11a9d270}\label{SBC__Log_8c_ad95b7922715b5ddd02c2342b11a9d270} 
+VOID {\bfseries SBC\+\_\+\+Log\+Elapsed\+Time} (const CHAR16 \texorpdfstring{$\ast$}{*}Tag, UINTN Ns)
+\item 
+\Hypertarget{SBC__Log_8c_a841b233e86e543497729711ad6915fcd}\label{SBC__Log_8c_a841b233e86e543497729711ad6915fcd} 
+VOID {\bfseries SBC\+\_\+\+Log\+Hex\+Key\+Conv\+To\+Char16} (VOID \texorpdfstring{$\ast$}{*}out, VOID \texorpdfstring{$\ast$}{*}msgbuf, VOID \texorpdfstring{$\ast$}{*}keymsg)
+\item 
+UINTN \mbox{\hyperlink{SBC__Log_8c_aec2665cef895254b1d095577024bdb26}{SBC\+\_\+\+Log\+Hex\+To\+Str\+Char16}} (UINT8 \texorpdfstring{$\ast$}{*}data, UINTN len, CHAR16 \texorpdfstring{$\ast$}{*}out, UINTN out\+\_\+cap, BOOLEAN loweracse, CHAR16 sep)
+\item 
+UINTN \mbox{\hyperlink{SBC__Log_8c_a8bf9b72474296d7328f929571acd60ca}{SBC\+\_\+\+Log\+Hex\+To\+Str\+Char8}} (UINT8 \texorpdfstring{$\ast$}{*}data, UINTN len, CHAR8 \texorpdfstring{$\ast$}{*}out, UINTN out\+\_\+cap, BOOLEAN loweracse, CHAR8 sep)
+\item 
+\Hypertarget{SBC__Log_8c_ae796e3617358f8fecc953e3b1fcf22f4}\label{SBC__Log_8c_ae796e3617358f8fecc953e3b1fcf22f4} 
+CHAR16 \texorpdfstring{$\ast$}{*} {\bfseries SBC\+\_\+\+Log\+Mrg} (CONST CHAR16 \texorpdfstring{$\ast$}{*}fmt,...)
+\item 
+VOID \mbox{\hyperlink{SBC__Log_8c_a7e0e639bf5d1c4384c2de755f3d34625}{SBC\+\_\+\+Log\+Print}} (CONST CHAR16 \texorpdfstring{$\ast$}{*}func, UINT32 funcline, UINT32 prio, UINT32 ver, CHAR16 \texorpdfstring{$\ast$}{*}host, CHAR16 \texorpdfstring{$\ast$}{*}appname, CHAR16 \texorpdfstring{$\ast$}{*}csc, UINT32 sfrid, CHAR16 \texorpdfstring{$\ast$}{*}evtype, CHAR16 \texorpdfstring{$\ast$}{*}format,...)
+\begin{DoxyCompactList}\small\item\em Print a formatted log message with metadata and variable arguments. \end{DoxyCompactList}\item 
+void \mbox{\hyperlink{SBC__Log_8c_a69cb7fed1bea1977ffcc81ccc1a16648}{SBC\+\_\+mem\+\_\+print\+\_\+bin}} (CHAR8 \texorpdfstring{$\ast$}{*}title, UINT8 \texorpdfstring{$\ast$}{*}buffer, UINT32 length)
+\begin{DoxyCompactList}\small\item\em Print binary data in hexadecimal format for debugging. \end{DoxyCompactList}\end{DoxyCompactItemize}
+\doxysubsubsection*{Variables}
+\begin{DoxyCompactItemize}
+\item 
+\Hypertarget{SBC__Log_8c_aa4a89ef579689e3adc159af0f2884fd0}\label{SBC__Log_8c_aa4a89ef579689e3adc159af0f2884fd0} 
+CONST CHAR16 \texorpdfstring{$\ast$}{*}CONST {\bfseries g\+Empty\+String\+Uefi} = L"{}"{}
+\item 
+\Hypertarget{SBC__Log_8c_ae8aa154806e96807eb9795bd7fa60be8}\label{SBC__Log_8c_ae8aa154806e96807eb9795bd7fa60be8} 
+CONST CHAR8 \texorpdfstring{$\ast$}{*}CONST {\bfseries g\+Null\+String\+Ascii} = "{}(null)"{}
+\item 
+\Hypertarget{SBC__Log_8c_a8faa42ec2ddf44912cd7bfa6f473dfbc}\label{SBC__Log_8c_a8faa42ec2ddf44912cd7bfa6f473dfbc} 
+CONST CHAR16 \texorpdfstring{$\ast$}{*}CONST {\bfseries g\+Null\+String\+Uefi} = L"{}(null)"{}
+\item 
+\Hypertarget{SBC__Log_8c_a7a8aa3685552a048ea697496438bb98b}\label{SBC__Log_8c_a7a8aa3685552a048ea697496438bb98b} 
+CHAR16 {\bfseries str\+\_\+log\+\_\+format} \mbox{[}8192\mbox{]}
+\end{DoxyCompactItemize}
+
+
+\doxysubsection{Detailed Description}
+Logging utility implementation for SBC system modules. 
+
+Copyright (C) 2024 by Security Platform Inc. \texorpdfstring{$\ast$}{*} This file is part of the SBC Project. \texorpdfstring{$\ast$}{*}
+\begin{DoxyItemize}
+\item This software contains confidential and proprietary information of \texorpdfstring{$\ast$}{*} Security Platform Inc. Unauthorized reproduction, distribution, or \texorpdfstring{$\ast$}{*} disclosure of this software, in whole or in part, is strictly prohibited. \texorpdfstring{$\ast$}{*}
+\end{DoxyItemize}
+
+\begin{DoxyAuthor}{Author}
+LEON 
+\end{DoxyAuthor}
+\begin{DoxyVersion}{Version}
+1.\+0 
+\end{DoxyVersion}
+\begin{DoxyDate}{Date}
+2025-\/10-\/31
+\end{DoxyDate}
+\begin{DoxyCopyright}{Copyright}
+(c) 2025 Security Platform Inc. All rights reserved. 
+\end{DoxyCopyright}
+
+
+\doxysubsection{Function Documentation}
+\Hypertarget{SBC__Log_8c_a4af24e4ae4d853d01fba2ed243a73b44}\label{SBC__Log_8c_a4af24e4ae4d853d01fba2ed243a73b44} 
+\index{SBC\_Log.c@{SBC\_Log.c}!\_LogFmtVPrint@{\_LogFmtVPrint}}
+\index{\_LogFmtVPrint@{\_LogFmtVPrint}!SBC\_Log.c@{SBC\_Log.c}}
+\doxysubsubsection{\texorpdfstring{\_LogFmtVPrint()}{\_LogFmtVPrint()}}
+{\footnotesize\ttfamily UINTN \+\_\+\+Log\+Fmt\+VPrint (\begin{DoxyParamCaption}\item[{IN CONST CHAR16 \texorpdfstring{$\ast$}{*}}]{Format,  }\item[{IN VA\+\_\+\+LIST}]{Va\+List\+Maker,  }\item[{IN OUT CHAR16 \texorpdfstring{$\ast$}{*}}]{Log\+Buf,  }\item[{IN UINTN}]{Buf\+Len\+Bytes }\end{DoxyParamCaption})}
+
+Formats a variable argument list into a Unicode string buffer, handling NULL CHAR16\texorpdfstring{$\ast$}{*} arguments safely.
+
+This function parses the format string and uses arguments from Va\+List\+Maker to construct a formatted Unicode string in Log\+Buf. It performs NULL checks for s specifiers to prevent hard faults.
+
+
+\begin{DoxyParams}{Parameters}
+{\em Format} & The format string. \\
+\hline
+{\em Va\+List\+Maker} & The VA\+\_\+\+LIST containing the arguments. \\
+\hline
+{\em Log\+Buf} & The destination buffer for the formatted Unicode string. \\
+\hline
+{\em Buf\+Len\+Bytes} & The remaining size of Log\+Buf in BYTES.\\
+\hline
+\end{DoxyParams}
+
+\begin{DoxyRetVals}{Return values}
+{\em The} & number of CHAR16s written to Log\+Buf (excluding null terminator). \\
+\hline
+\end{DoxyRetVals}
+Here is the caller graph for this function\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=288pt]{SBC__Log_8c_a4af24e4ae4d853d01fba2ed243a73b44_icgraph}
+\end{center}
+\end{figure}
+\Hypertarget{SBC__Log_8c_ad000d76a2b5134d940b1e8f5c4a994f8}\label{SBC__Log_8c_ad000d76a2b5134d940b1e8f5c4a994f8} 
+\index{SBC\_Log.c@{SBC\_Log.c}!MyUnicodeStrnLenS@{MyUnicodeStrnLenS}}
+\index{MyUnicodeStrnLenS@{MyUnicodeStrnLenS}!SBC\_Log.c@{SBC\_Log.c}}
+\doxysubsubsection{\texorpdfstring{MyUnicodeStrnLenS()}{MyUnicodeStrnLenS()}}
+{\footnotesize\ttfamily UINTN My\+Unicode\+Strn\+LenS (\begin{DoxyParamCaption}\item[{IN CONST CHAR16 \texorpdfstring{$\ast$}{*}}]{String,  }\item[{IN UINTN}]{Max\+Size }\end{DoxyParamCaption})}
+
+Returns the length of a Null-\/terminated Unicode string, up to a specified maximum size. (Similar to Strn\+LenS in EDK II\textquotesingle{}s Safe\+String\+Lib)
+
+
+\begin{DoxyParams}{Parameters}
+{\em String} & A pointer to a Null-\/terminated Unicode string. \\
+\hline
+{\em Max\+Size} & The maximum number of Unicode characters to examine.\\
+\hline
+\end{DoxyParams}
+
+\begin{DoxyRetVals}{Return values}
+{\em 0} & If String is NULL or empty. \\
+\hline
+{\em Others} & The length of String, or Max\+Size if the string is longer than Max\+Size and no Null-\/terminator is found. \\
+\hline
+\end{DoxyRetVals}
+\Hypertarget{SBC__Log_8c_ab4d1be704d67bc13aa943a4c82d96168}\label{SBC__Log_8c_ab4d1be704d67bc13aa943a4c82d96168} 
+\index{SBC\_Log.c@{SBC\_Log.c}!MyUnicodeStrToAsciiStrS@{MyUnicodeStrToAsciiStrS}}
+\index{MyUnicodeStrToAsciiStrS@{MyUnicodeStrToAsciiStrS}!SBC\_Log.c@{SBC\_Log.c}}
+\doxysubsubsection{\texorpdfstring{MyUnicodeStrToAsciiStrS()}{MyUnicodeStrToAsciiStrS()}}
+{\footnotesize\ttfamily UINTN My\+Unicode\+Str\+To\+Ascii\+StrS (\begin{DoxyParamCaption}\item[{OUT CHAR8 \texorpdfstring{$\ast$}{*}}]{Destination,  }\item[{IN UINTN}]{Destination\+Size,  }\item[{IN CONST CHAR16 \texorpdfstring{$\ast$}{*}}]{Source }\end{DoxyParamCaption})}
+
+Converts a Null-\/terminated Unicode string to a Null-\/terminated ASCII string. (Similar to Unicode\+Str\+To\+Ascii\+StrS in EDK II\textquotesingle{}s Safe\+String\+Lib)
+
+
+\begin{DoxyParams}{Parameters}
+{\em Destination} & A pointer to the buffer to store the ASCII string. \\
+\hline
+{\em Destination\+Size} & The size in bytes of the Destination buffer. \\
+\hline
+{\em Source} & A pointer to the Null-\/terminated Unicode string.\\
+\hline
+\end{DoxyParams}
+
+\begin{DoxyRetVals}{Return values}
+{\em The} & length of the converted ASCII string (not including null terminator). Returns 0 if Source is NULL, or Destination\+Size is too small for null terminator. Truncates if Source is too long. \\
+\hline
+\end{DoxyRetVals}
+Here is the caller graph for this function\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=341pt]{SBC__Log_8c_ab4d1be704d67bc13aa943a4c82d96168_icgraph}
+\end{center}
+\end{figure}
+\Hypertarget{SBC__Log_8c_a77ecccb9a45ff6e87c23dec0781ebd6f}\label{SBC__Log_8c_a77ecccb9a45ff6e87c23dec0781ebd6f} 
+\index{SBC\_Log.c@{SBC\_Log.c}!SBC\_BuildHexFormattedMessage@{SBC\_BuildHexFormattedMessage}}
+\index{SBC\_BuildHexFormattedMessage@{SBC\_BuildHexFormattedMessage}!SBC\_Log.c@{SBC\_Log.c}}
+\doxysubsubsection{\texorpdfstring{SBC\_BuildHexFormattedMessage()}{SBC\_BuildHexFormattedMessage()}}
+{\footnotesize\ttfamily EFI\+\_\+\+STATUS SBC\+\_\+\+Build\+Hex\+Formatted\+Message (\begin{DoxyParamCaption}\item[{IN CONST VOID \texorpdfstring{$\ast$}{*}}]{Pub\+Key,  }\item[{IN UINTN}]{Pub\+Key\+Size,  }\item[{IN CONST CHAR16 \texorpdfstring{$\ast$}{*}}]{Format\+String,  }\item[{OUT CHAR16 \texorpdfstring{$\ast$}{*}}]{Out\+Msg,  }\item[{IN UINTN}]{Out\+Msg\+Bytes }\end{DoxyParamCaption})}
+
+
+
+Build a formatted Unicode message containing a hexadecimal representation of binary data. 
+
+Example usage\+: 
+\begin{DoxyCode}{0}
+\DoxyCodeLine{CHAR16\ Msg[256];}
+\DoxyCodeLine{\mbox{\hyperlink{SBC__Log_8c_a77ecccb9a45ff6e87c23dec0781ebd6f}{SBC\_BuildHexFormattedMessage}}(KeyData,\ KeyLen,\ L\textcolor{stringliteral}{"{}Public\ Key:\ \%s"{}},\ Msg,\ \textcolor{keyword}{sizeof}(Msg));}
+
+\end{DoxyCode}
+
+
+The resulting message will contain the prefix text defined by the format string, followed by the converted hexadecimal string of {\ttfamily Pub\+Key}.
+
+
+\begin{DoxyParams}[1]{Parameters}
+\mbox{\texttt{ in}}  & {\em Pub\+Key} & Pointer to the binary data (e.\+g., public key or hash) to be converted. \\
+\hline
+\mbox{\texttt{ in}}  & {\em Pub\+Key\+Size} & Size of the binary data buffer in bytes. \\
+\hline
+\mbox{\texttt{ in}}  & {\em Format\+String} & Unicode (CHAR16) format string that defines how the final message should be constructed. Example\+: {\ttfamily L"{}\+Key Digest\+: \%s"{}}. \\
+\hline
+\mbox{\texttt{ out}}  & {\em Out\+Msg} & Pointer to a caller-\/allocated buffer that receives the formatted message. The buffer must be large enough to store the formatted text and the hexadecimal string. \\
+\hline
+\mbox{\texttt{ in}}  & {\em Out\+Msg\+Bytes} & Size of the output buffer {\ttfamily Out\+Msg}, in bytes.\\
+\hline
+\end{DoxyParams}
+
+\begin{DoxyRetVals}{Return values}
+{\em EFI\+\_\+\+SUCCESS} & The formatted message was successfully created. \\
+\hline
+{\em EFI\+\_\+\+INVALID\+\_\+\+PARAMETER} & One or more parameters are NULL or invalid. \\
+\hline
+{\em EFI\+\_\+\+BUFFER\+\_\+\+TOO\+\_\+\+SMALL} & The output buffer is too small for the generated message. \\
+\hline
+{\em EFI\+\_\+\+OUT\+\_\+\+OF\+\_\+\+RESOURCES} & Memory allocation or internal buffer operation failed. \\
+\hline
+\end{DoxyRetVals}
+Here is the call graph for this function\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=350pt]{SBC__Log_8c_a77ecccb9a45ff6e87c23dec0781ebd6f_cgraph}
+\end{center}
+\end{figure}
+Here is the caller graph for this function\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=350pt]{SBC__Log_8c_a77ecccb9a45ff6e87c23dec0781ebd6f_icgraph}
+\end{center}
+\end{figure}
+\Hypertarget{SBC__Log_8c_a4eef09d3e49bf44a244bdc81ebee42f6}\label{SBC__Log_8c_a4eef09d3e49bf44a244bdc81ebee42f6} 
+\index{SBC\_Log.c@{SBC\_Log.c}!SBC\_external\_mem\_print\_bin@{SBC\_external\_mem\_print\_bin}}
+\index{SBC\_external\_mem\_print\_bin@{SBC\_external\_mem\_print\_bin}!SBC\_Log.c@{SBC\_Log.c}}
+\doxysubsubsection{\texorpdfstring{SBC\_external\_mem\_print\_bin()}{SBC\_external\_mem\_print\_bin()}}
+{\footnotesize\ttfamily void SBC\+\_\+external\+\_\+mem\+\_\+print\+\_\+bin (\begin{DoxyParamCaption}\item[{CHAR8 \texorpdfstring{$\ast$}{*}}]{title,  }\item[{UINT8 \texorpdfstring{$\ast$}{*}}]{buffer,  }\item[{UINT32}]{length }\end{DoxyParamCaption})}
+
+
+
+Print binary data in hexadecimal format for debugging. 
+
+
+\begin{DoxyParams}[1]{Parameters}
+\mbox{\texttt{ in}}  & {\em title} & display name strings  \\
+\hline
+\mbox{\texttt{ in}}  & {\em buffer} & print buffer  \\
+\hline
+\mbox{\texttt{ in}}  & {\em length} & length of buffer \\
+\hline
+\end{DoxyParams}
+Here is the caller graph for this function\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=350pt]{SBC__Log_8c_a4eef09d3e49bf44a244bdc81ebee42f6_icgraph}
+\end{center}
+\end{figure}
+\Hypertarget{SBC__Log_8c_aec2665cef895254b1d095577024bdb26}\label{SBC__Log_8c_aec2665cef895254b1d095577024bdb26} 
+\index{SBC\_Log.c@{SBC\_Log.c}!SBC\_LogHexToStrChar16@{SBC\_LogHexToStrChar16}}
+\index{SBC\_LogHexToStrChar16@{SBC\_LogHexToStrChar16}!SBC\_Log.c@{SBC\_Log.c}}
+\doxysubsubsection{\texorpdfstring{SBC\_LogHexToStrChar16()}{SBC\_LogHexToStrChar16()}}
+{\footnotesize\ttfamily UINTN SBC\+\_\+\+Log\+Hex\+To\+Str\+Char16 (\begin{DoxyParamCaption}\item[{UINT8 \texorpdfstring{$\ast$}{*}}]{data,  }\item[{UINTN}]{len,  }\item[{CHAR16 \texorpdfstring{$\ast$}{*}}]{out,  }\item[{UINTN}]{out\+\_\+cap,  }\item[{BOOLEAN}]{loweracse,  }\item[{CHAR16}]{sep }\end{DoxyParamCaption})}
+
+\begin{DoxyAuthor}{Author}
+leoc (9/25/25)
+\end{DoxyAuthor}
+
+\begin{DoxyParams}{Parameters}
+{\em data} & Pointer to input byte array \\
+\hline
+{\em len} & Length of Data \\
+\hline
+{\em out} & Pointer to output byte array \\
+\hline
+{\em out\+\_\+cap} & Lengthh of output element \\
+\hline
+{\em loweracse} & Specify the Upper and Lower case \\
+\hline
+{\em sep} & Specify the delimiter\\
+\hline
+\end{DoxyParams}
+\begin{DoxyReturn}{Returns}
+UINTN Actual recorded CHAR16 length excluding NULL character, On failure, return the 0 
+\end{DoxyReturn}
+Here is the caller graph for this function\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=350pt]{SBC__Log_8c_aec2665cef895254b1d095577024bdb26_icgraph}
+\end{center}
+\end{figure}
+\Hypertarget{SBC__Log_8c_a8bf9b72474296d7328f929571acd60ca}\label{SBC__Log_8c_a8bf9b72474296d7328f929571acd60ca} 
+\index{SBC\_Log.c@{SBC\_Log.c}!SBC\_LogHexToStrChar8@{SBC\_LogHexToStrChar8}}
+\index{SBC\_LogHexToStrChar8@{SBC\_LogHexToStrChar8}!SBC\_Log.c@{SBC\_Log.c}}
+\doxysubsubsection{\texorpdfstring{SBC\_LogHexToStrChar8()}{SBC\_LogHexToStrChar8()}}
+{\footnotesize\ttfamily UINTN SBC\+\_\+\+Log\+Hex\+To\+Str\+Char8 (\begin{DoxyParamCaption}\item[{UINT8 \texorpdfstring{$\ast$}{*}}]{data,  }\item[{UINTN}]{len,  }\item[{CHAR8 \texorpdfstring{$\ast$}{*}}]{out,  }\item[{UINTN}]{out\+\_\+cap,  }\item[{BOOLEAN}]{loweracse,  }\item[{CHAR8}]{sep }\end{DoxyParamCaption})}
+
+\begin{DoxyAuthor}{Author}
+leoc (9/25/25)
+\end{DoxyAuthor}
+
+\begin{DoxyParams}{Parameters}
+{\em data} & Pointer to input byte array \\
+\hline
+{\em len} & Length of Data \\
+\hline
+{\em out} & Pointer to output byte array \\
+\hline
+{\em out\+\_\+cap} & Lengthh of output element \\
+\hline
+{\em loweracse} & Specify the Upper and Lower case \\
+\hline
+{\em sep} & Specify the delimiter\\
+\hline
+\end{DoxyParams}
+\begin{DoxyReturn}{Returns}
+UINTN Actual recorded CHAR8 length excluding NULL character, On failure, return the 0 
+\end{DoxyReturn}
+\Hypertarget{SBC__Log_8c_a7e0e639bf5d1c4384c2de755f3d34625}\label{SBC__Log_8c_a7e0e639bf5d1c4384c2de755f3d34625} 
+\index{SBC\_Log.c@{SBC\_Log.c}!SBC\_LogPrint@{SBC\_LogPrint}}
+\index{SBC\_LogPrint@{SBC\_LogPrint}!SBC\_Log.c@{SBC\_Log.c}}
+\doxysubsubsection{\texorpdfstring{SBC\_LogPrint()}{SBC\_LogPrint()}}
+{\footnotesize\ttfamily VOID SBC\+\_\+\+Log\+Print (\begin{DoxyParamCaption}\item[{CONST CHAR16 \texorpdfstring{$\ast$}{*}}]{func,  }\item[{UINT32}]{funcline,  }\item[{UINT32}]{prio,  }\item[{UINT32}]{ver,  }\item[{CHAR16 \texorpdfstring{$\ast$}{*}}]{host,  }\item[{CHAR16 \texorpdfstring{$\ast$}{*}}]{appname,  }\item[{CHAR16 \texorpdfstring{$\ast$}{*}}]{csc,  }\item[{UINT32}]{sfrid,  }\item[{CHAR16 \texorpdfstring{$\ast$}{*}}]{evtype,  }\item[{CHAR16 \texorpdfstring{$\ast$}{*}}]{format,  }\item[{}]{... }\end{DoxyParamCaption})}
+
+
+
+Print a formatted log message with metadata and variable arguments. 
+
+
+\begin{DoxyParams}[1]{Parameters}
+\mbox{\texttt{ in}}  & {\em func} & Name of the function where the log is generated (Unicode string). \\
+\hline
+\mbox{\texttt{ in}}  & {\em funcline} & Source code line number where the log was called. \\
+\hline
+\mbox{\texttt{ in}}  & {\em prio} & Log priority or severity level (e.\+g., DEBUG, INFO, WARN, ERROR). \\
+\hline
+\mbox{\texttt{ in}}  & {\em ver} & Log version or protocol version identifier. \\
+\hline
+\mbox{\texttt{ in}}  & {\em host} & Host or system identifier (Unicode string). \\
+\hline
+\mbox{\texttt{ in}}  & {\em appname} & Application or module name (Unicode string). \\
+\hline
+\mbox{\texttt{ in}}  & {\em csc} & Customer or component identifier (Unicode string). \\
+\hline
+\mbox{\texttt{ in}}  & {\em sfrid} & SFR (Software Fault Record) or event identifier. \\
+\hline
+\mbox{\texttt{ in}}  & {\em evtype} & Event type (e.\+g., "{}\+BOOT"{}, "{}\+SECURE"{}, "{}\+RUNTIME"{}). \\
+\hline
+\mbox{\texttt{ in}}  & {\em format} & Format string for variable arguments (Unicode string). \\
+\hline
+\mbox{\texttt{ in}}  & {\em ...} & Variable arguments for printf-\/style formatting.\\
+\hline
+\end{DoxyParams}
+
+\begin{DoxyRetVals}{Return values}
+{\em None} & \\
+\hline
+\end{DoxyRetVals}
+
+\begin{DoxyParams}[1]{Parameters}
+\mbox{\texttt{ in}}  & {\em func} & Function name string  \\
+\hline
+\mbox{\texttt{ in}}  & {\em funcline} & Line number of the log call  \\
+\hline
+\mbox{\texttt{ in}}  & {\em prio} & Log priority (DEBUG, INFO, WARN, ERROR, etc.)  \\
+\hline
+\mbox{\texttt{ in}}  & {\em ver} & Log version or schema ID  \\
+\hline
+\mbox{\texttt{ in}}  & {\em host} & Host or system identifier  \\
+\hline
+\mbox{\texttt{ in}}  & {\em appname} & Application or module name  \\
+\hline
+\mbox{\texttt{ in}}  & {\em csc} & Customer or component code  \\
+\hline
+\mbox{\texttt{ in}}  & {\em sfrid} & Software Fault Record (SFR) or event ID  \\
+\hline
+\mbox{\texttt{ in}}  & {\em evtype} & Event type string (e.\+g., L"{}\+BOOT"{})  \\
+\hline
+\mbox{\texttt{ in}}  & {\em format} & Format string for variable arguments \\
+\hline
+\end{DoxyParams}
+Here is the call graph for this function\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=341pt]{SBC__Log_8c_a7e0e639bf5d1c4384c2de755f3d34625_cgraph}
+\end{center}
+\end{figure}
+\Hypertarget{SBC__Log_8c_a69cb7fed1bea1977ffcc81ccc1a16648}\label{SBC__Log_8c_a69cb7fed1bea1977ffcc81ccc1a16648} 
+\index{SBC\_Log.c@{SBC\_Log.c}!SBC\_mem\_print\_bin@{SBC\_mem\_print\_bin}}
+\index{SBC\_mem\_print\_bin@{SBC\_mem\_print\_bin}!SBC\_Log.c@{SBC\_Log.c}}
+\doxysubsubsection{\texorpdfstring{SBC\_mem\_print\_bin()}{SBC\_mem\_print\_bin()}}
+{\footnotesize\ttfamily void SBC\+\_\+mem\+\_\+print\+\_\+bin (\begin{DoxyParamCaption}\item[{CHAR8 \texorpdfstring{$\ast$}{*}}]{title,  }\item[{UINT8 \texorpdfstring{$\ast$}{*}}]{buffer,  }\item[{UINT32}]{length }\end{DoxyParamCaption})}
+
+
+
+Print binary data in hexadecimal format for debugging. 
+
+
+\begin{DoxyParams}[1]{Parameters}
+\mbox{\texttt{ in}}  & {\em title} & display name strings  \\
+\hline
+\mbox{\texttt{ in}}  & {\em buffer} & print buffer  \\
+\hline
+\mbox{\texttt{ in}}  & {\em length} & length of buffer \\
+\hline
+\end{DoxyParams}
+Here is the caller graph for this function\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=350pt]{SBC__Log_8c_a69cb7fed1bea1977ffcc81ccc1a16648_icgraph}
+\end{center}
+\end{figure}

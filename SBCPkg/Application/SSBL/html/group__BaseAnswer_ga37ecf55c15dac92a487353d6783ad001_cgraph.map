@@ -1,0 +1,9 @@
+<map id="SBC_BaseAnswerEncryptStore" name="SBC_BaseAnswerEncryptStore">
+<area shape="rect" id="Node000001" title="Encrypt and store a message using the provided security key." alt="" coords="5,31,229,56"/>
+<area shape="rect" id="Node000002" href="$SBC__Log_8c.html#a77ecccb9a45ff6e87c23dec0781ebd6f" title="Build a formatted Unicode message containing a hexadecimal representation of binary data." alt="" coords="277,5,519,31"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="229,31,264,27,264,33,230,36"/>
+<area shape="rect" id="Node000004" href="$SBC__Log_8c.html#a4eef09d3e49bf44a244bdc81ebee42f6" title="Print binary data in hexadecimal format for debugging." alt="" coords="287,55,509,80"/>
+<area shape="poly" id="edge3_Node000001_Node000004" title=" " alt="" coords="230,50,274,54,274,59,229,56"/>
+<area shape="rect" id="Node000003" href="$SBC__Log_8c.html#aec2665cef895254b1d095577024bdb26" title=" " alt="" coords="567,5,755,31"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="519,15,553,15,553,21,519,21"/>
+</map>

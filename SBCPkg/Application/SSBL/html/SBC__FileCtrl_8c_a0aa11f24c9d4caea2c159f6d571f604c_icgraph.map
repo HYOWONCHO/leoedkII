@@ -1,0 +1,12 @@
+<map id="SBC_IsFlieAccess" name="SBC_IsFlieAccess">
+<area shape="rect" id="Node000001" title="Checks if a specified file is accessible in the EFI file system." alt="" coords="675,31,813,56"/>
+<area shape="rect" id="Node000002" href="$SBC__FileCtrl_8c.html#aa6cce7b71dc832b2dcae5709d1b801f0" title="Searches for a valid EFI handle that can access the specified file." alt="" coords="465,5,627,31"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="661,35,627,31,627,26,661,30"/>
+<area shape="rect" id="Node000005" href="$SBC__FileCtrl_8c.html#a3780e2b73175c8b93f7bb5107e1737c3" title="Retrieve the size of a specified file in the UEFI file system." alt="" coords="480,55,612,80"/>
+<area shape="poly" id="edge4_Node000001_Node000005" title=" " alt="" coords="661,56,612,62,612,57,661,51"/>
+<area shape="rect" id="Node000003" href="$group__BaseAnswer.html#gad993c7407ff302f90f0b4bbf4a618db2" title="Validate the device authentication answer using the provided key." alt="" coords="227,31,417,56"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="452,31,418,35,417,30,451,26"/>
+<area shape="rect" id="Node000004" href="$SBC__SystemControl_8c.html#a7fb21fbb14d2c0fd55b69537f919b9e6" title="Perform secure boot integrity and authenticity verification." alt="" coords="5,31,179,56"/>
+<area shape="poly" id="edge3_Node000003_Node000004" title=" " alt="" coords="213,46,179,46,179,41,213,41"/>
+<area shape="poly" id="edge5_Node000005_Node000003" title=" " alt="" coords="466,61,417,56,418,51,466,56"/>
+</map>

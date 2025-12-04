@@ -1,0 +1,110 @@
+\doxysection{\+\_\+boot\+\_\+proc\+\_\+t Struct Reference}
+\hypertarget{struct__boot__proc__t}{}\label{struct__boot__proc__t}\index{\_boot\_proc\_t@{\_boot\_proc\_t}}
+\doxysubsubsection*{Data Fields}
+\begin{DoxyCompactItemize}
+\item 
+VOID \texorpdfstring{$\ast$}{*} \mbox{\hyperlink{struct__boot__proc__t_a887580ccdf6a629fdf01b5b3fe942593}{baseansr}}
+\item 
+VOID \texorpdfstring{$\ast$}{*} \mbox{\hyperlink{struct__boot__proc__t_a1f6e5faf1263d8dddf07af9485cbeb96}{blkhnd}}
+\item 
+UINT16 \mbox{\hyperlink{struct__boot__proc__t_a9685cf77702eef0cdad4c0ec0e6e1817}{bm}}
+\item 
+UINT32 \mbox{\hyperlink{struct__boot__proc__t_a6319d6bb110139a96facaa846c05a294}{bootst}}
+\item 
+UINTN \mbox{\hyperlink{struct__boot__proc__t_ab13a9133459104fddc35e74b9bb4eaca}{curr\+\_\+sw\+\_\+bnk}}
+\item 
+VOID \texorpdfstring{$\ast$}{*} \mbox{\hyperlink{struct__boot__proc__t_a0aac9d34c759dad8fe7e00556936f545}{diceid}}
+\item 
+VOID \texorpdfstring{$\ast$}{*} \mbox{\hyperlink{struct__boot__proc__t_a586876e4dfcb42a79e6695533ac5ff05}{keyinfo}}
+\item 
+UINT16 \mbox{\hyperlink{struct__boot__proc__t_a249ff9dfa7434ebf84a41588f8ae9e5c}{km}}
+\item 
+VOID \texorpdfstring{$\ast$}{*} \mbox{\hyperlink{struct__boot__proc__t_ab9a4c0184727d0dcf37e4fd0056bdb5f}{ldhndl}}
+\item 
+UINTN \mbox{\hyperlink{struct__boot__proc__t_a32953c645dce40cfc85197a27ecb6892}{pvs\+\_\+sw\+\_\+bnk}}
+\item 
+VOID \texorpdfstring{$\ast$}{*} \mbox{\hyperlink{struct__boot__proc__t_a1b9c4e5f4a3aa21c1b80f730d7bf855d}{rawprt\+\_\+hdr}}
+\item 
+UINTN \mbox{\hyperlink{struct__boot__proc__t_aa8cbed8c67904d104e4fb809a71cf07a}{rcvmode}}
+\end{DoxyCompactItemize}
+
+
+\doxysubsection{Field Documentation}
+\Hypertarget{struct__boot__proc__t_a887580ccdf6a629fdf01b5b3fe942593}\label{struct__boot__proc__t_a887580ccdf6a629fdf01b5b3fe942593} 
+\index{\_boot\_proc\_t@{\_boot\_proc\_t}!baseansr@{baseansr}}
+\index{baseansr@{baseansr}!\_boot\_proc\_t@{\_boot\_proc\_t}}
+\doxysubsubsection{\texorpdfstring{baseansr}{baseansr}}
+{\footnotesize\ttfamily VOID\texorpdfstring{$\ast$}{*} \+\_\+boot\+\_\+proc\+\_\+t\+::baseansr}
+
+Pointer to base answer data \Hypertarget{struct__boot__proc__t_a1f6e5faf1263d8dddf07af9485cbeb96}\label{struct__boot__proc__t_a1f6e5faf1263d8dddf07af9485cbeb96} 
+\index{\_boot\_proc\_t@{\_boot\_proc\_t}!blkhnd@{blkhnd}}
+\index{blkhnd@{blkhnd}!\_boot\_proc\_t@{\_boot\_proc\_t}}
+\doxysubsubsection{\texorpdfstring{blkhnd}{blkhnd}}
+{\footnotesize\ttfamily VOID\texorpdfstring{$\ast$}{*} \+\_\+boot\+\_\+proc\+\_\+t\+::blkhnd}
+
+Block I/O handle for accessing storage. \Hypertarget{struct__boot__proc__t_a9685cf77702eef0cdad4c0ec0e6e1817}\label{struct__boot__proc__t_a9685cf77702eef0cdad4c0ec0e6e1817} 
+\index{\_boot\_proc\_t@{\_boot\_proc\_t}!bm@{bm}}
+\index{bm@{bm}!\_boot\_proc\_t@{\_boot\_proc\_t}}
+\doxysubsubsection{\texorpdfstring{bm}{bm}}
+{\footnotesize\ttfamily UINT16 \+\_\+boot\+\_\+proc\+\_\+t\+::bm}
+
+Boot mode (e.\+g., normal, recovery, factory). \Hypertarget{struct__boot__proc__t_a6319d6bb110139a96facaa846c05a294}\label{struct__boot__proc__t_a6319d6bb110139a96facaa846c05a294} 
+\index{\_boot\_proc\_t@{\_boot\_proc\_t}!bootst@{bootst}}
+\index{bootst@{bootst}!\_boot\_proc\_t@{\_boot\_proc\_t}}
+\doxysubsubsection{\texorpdfstring{bootst}{bootst}}
+{\footnotesize\ttfamily UINT32 \+\_\+boot\+\_\+proc\+\_\+t\+::bootst}
+
+Boot status (see boot\+\_\+st\+\_\+t). \Hypertarget{struct__boot__proc__t_ab13a9133459104fddc35e74b9bb4eaca}\label{struct__boot__proc__t_ab13a9133459104fddc35e74b9bb4eaca} 
+\index{\_boot\_proc\_t@{\_boot\_proc\_t}!curr\_sw\_bnk@{curr\_sw\_bnk}}
+\index{curr\_sw\_bnk@{curr\_sw\_bnk}!\_boot\_proc\_t@{\_boot\_proc\_t}}
+\doxysubsubsection{\texorpdfstring{curr\_sw\_bnk}{curr\_sw\_bnk}}
+{\footnotesize\ttfamily UINTN \+\_\+boot\+\_\+proc\+\_\+t\+::curr\+\_\+sw\+\_\+bnk}
+
+Currently selected software bank ID. \Hypertarget{struct__boot__proc__t_a0aac9d34c759dad8fe7e00556936f545}\label{struct__boot__proc__t_a0aac9d34c759dad8fe7e00556936f545} 
+\index{\_boot\_proc\_t@{\_boot\_proc\_t}!diceid@{diceid}}
+\index{diceid@{diceid}!\_boot\_proc\_t@{\_boot\_proc\_t}}
+\doxysubsubsection{\texorpdfstring{diceid}{diceid}}
+{\footnotesize\ttfamily VOID\texorpdfstring{$\ast$}{*} \+\_\+boot\+\_\+proc\+\_\+t\+::diceid}
+
+Pointer to DICE ID \Hypertarget{struct__boot__proc__t_a586876e4dfcb42a79e6695533ac5ff05}\label{struct__boot__proc__t_a586876e4dfcb42a79e6695533ac5ff05} 
+\index{\_boot\_proc\_t@{\_boot\_proc\_t}!keyinfo@{keyinfo}}
+\index{keyinfo@{keyinfo}!\_boot\_proc\_t@{\_boot\_proc\_t}}
+\doxysubsubsection{\texorpdfstring{keyinfo}{keyinfo}}
+{\footnotesize\ttfamily VOID\texorpdfstring{$\ast$}{*} \+\_\+boot\+\_\+proc\+\_\+t\+::keyinfo}
+
+Pointer to key information (e.\+g., \doxylink{structatp__ident__t}{atp\+\_\+ident\+\_\+t} structure). \Hypertarget{struct__boot__proc__t_a249ff9dfa7434ebf84a41588f8ae9e5c}\label{struct__boot__proc__t_a249ff9dfa7434ebf84a41588f8ae9e5c} 
+\index{\_boot\_proc\_t@{\_boot\_proc\_t}!km@{km}}
+\index{km@{km}!\_boot\_proc\_t@{\_boot\_proc\_t}}
+\doxysubsubsection{\texorpdfstring{km}{km}}
+{\footnotesize\ttfamily UINT16 \+\_\+boot\+\_\+proc\+\_\+t\+::km}
+
+Key mode ~\newline
+ \Hypertarget{struct__boot__proc__t_ab9a4c0184727d0dcf37e4fd0056bdb5f}\label{struct__boot__proc__t_ab9a4c0184727d0dcf37e4fd0056bdb5f} 
+\index{\_boot\_proc\_t@{\_boot\_proc\_t}!ldhndl@{ldhndl}}
+\index{ldhndl@{ldhndl}!\_boot\_proc\_t@{\_boot\_proc\_t}}
+\doxysubsubsection{\texorpdfstring{ldhndl}{ldhndl}}
+{\footnotesize\ttfamily VOID\texorpdfstring{$\ast$}{*} \+\_\+boot\+\_\+proc\+\_\+t\+::ldhndl}
+
+Load handle (e.\+g., image handle or context). \Hypertarget{struct__boot__proc__t_a32953c645dce40cfc85197a27ecb6892}\label{struct__boot__proc__t_a32953c645dce40cfc85197a27ecb6892} 
+\index{\_boot\_proc\_t@{\_boot\_proc\_t}!pvs\_sw\_bnk@{pvs\_sw\_bnk}}
+\index{pvs\_sw\_bnk@{pvs\_sw\_bnk}!\_boot\_proc\_t@{\_boot\_proc\_t}}
+\doxysubsubsection{\texorpdfstring{pvs\_sw\_bnk}{pvs\_sw\_bnk}}
+{\footnotesize\ttfamily UINTN \+\_\+boot\+\_\+proc\+\_\+t\+::pvs\+\_\+sw\+\_\+bnk}
+
+Previously selected software bank ID. \Hypertarget{struct__boot__proc__t_a1b9c4e5f4a3aa21c1b80f730d7bf855d}\label{struct__boot__proc__t_a1b9c4e5f4a3aa21c1b80f730d7bf855d} 
+\index{\_boot\_proc\_t@{\_boot\_proc\_t}!rawprt\_hdr@{rawprt\_hdr}}
+\index{rawprt\_hdr@{rawprt\_hdr}!\_boot\_proc\_t@{\_boot\_proc\_t}}
+\doxysubsubsection{\texorpdfstring{rawprt\_hdr}{rawprt\_hdr}}
+{\footnotesize\ttfamily VOID\texorpdfstring{$\ast$}{*} \+\_\+boot\+\_\+proc\+\_\+t\+::rawprt\+\_\+hdr}
+
+Pointer to raw partition header structure. \Hypertarget{struct__boot__proc__t_aa8cbed8c67904d104e4fb809a71cf07a}\label{struct__boot__proc__t_aa8cbed8c67904d104e4fb809a71cf07a} 
+\index{\_boot\_proc\_t@{\_boot\_proc\_t}!rcvmode@{rcvmode}}
+\index{rcvmode@{rcvmode}!\_boot\_proc\_t@{\_boot\_proc\_t}}
+\doxysubsubsection{\texorpdfstring{rcvmode}{rcvmode}}
+{\footnotesize\ttfamily UINTN \+\_\+boot\+\_\+proc\+\_\+t\+::rcvmode}
+
+Indicates if firmware booted from recovery mode. 
+
+The documentation for this struct was generated from the following file\+:\begin{DoxyCompactItemize}
+\item 
+SBC\+\_\+\+Boot\+Proc.\+h\end{DoxyCompactItemize}

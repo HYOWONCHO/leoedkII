@@ -1,0 +1,67 @@
+\doxysection{sw\+\_\+path\+\_\+t Struct Reference}
+\hypertarget{structsw__path__t}{}\label{structsw__path__t}\index{sw\_path\_t@{sw\_path\_t}}
+
+
+Software path and metadata descriptor.  
+
+
+
+
+{\ttfamily \#include $<$SBC\+\_\+\+Protected\+SW.\+h$>$}
+
+\doxysubsubsection*{Data Fields}
+\begin{DoxyCompactItemize}
+\item 
+CHAR8 \mbox{\hyperlink{structsw__path__t_a0a2036578ce27863c1b6e5f6f50a7399}{name}} \mbox{[}SW\+\_\+\+PATH\+\_\+\+STR\+\_\+\+LEN\mbox{]}
+\begin{DoxyCompactList}\small\item\em Name of the software component. \end{DoxyCompactList}\item 
+UINTN \mbox{\hyperlink{structsw__path__t_a9bc8f93e08af0934bbf1af7fe3d20ef6}{sw\+\_\+node\+\_\+off}}
+\begin{DoxyCompactList}\small\item\em Offset or index of the software node. \end{DoxyCompactList}\item 
+CHAR8 \mbox{\hyperlink{structsw__path__t_a2ba65dcc9aca48e4a51023038e868df1}{ver}} \mbox{[}SW\+\_\+\+PATH\+\_\+\+STR\+\_\+\+LEN\mbox{]}
+\begin{DoxyCompactList}\small\item\em Version string of the software component. \end{DoxyCompactList}\end{DoxyCompactItemize}
+
+
+\doxysubsection{Detailed Description}
+Software path and metadata descriptor. 
+
+\doxysubsection{Field Documentation}
+\Hypertarget{structsw__path__t_a0a2036578ce27863c1b6e5f6f50a7399}\label{structsw__path__t_a0a2036578ce27863c1b6e5f6f50a7399} 
+\index{sw\_path\_t@{sw\_path\_t}!name@{name}}
+\index{name@{name}!sw\_path\_t@{sw\_path\_t}}
+\doxysubsubsection{\texorpdfstring{name}{name}}
+{\footnotesize\ttfamily sw\+\_\+path\+\_\+t\+::name}
+
+
+
+Name of the software component. 
+
+Software name (ASCII string).
+
+Null-\/terminated ASCII string (max 256 bytes) identifying the protected software module (e.\+g., {\ttfamily "{}\+Kernel"{}}, {\ttfamily "{}\+FSBL"{}}, {\ttfamily "{}\+Secure\+Loader"{}}). \Hypertarget{structsw__path__t_a9bc8f93e08af0934bbf1af7fe3d20ef6}\label{structsw__path__t_a9bc8f93e08af0934bbf1af7fe3d20ef6} 
+\index{sw\_path\_t@{sw\_path\_t}!sw\_node\_off@{sw\_node\_off}}
+\index{sw\_node\_off@{sw\_node\_off}!sw\_path\_t@{sw\_path\_t}}
+\doxysubsubsection{\texorpdfstring{sw\_node\_off}{sw\_node\_off}}
+{\footnotesize\ttfamily sw\+\_\+path\+\_\+t\+::sw\+\_\+node\+\_\+off}
+
+
+
+Offset or index of the software node. 
+
+Software node offset or index.
+
+Indicates the relative position or memory offset of the software image within a larger data structure or storage block. \Hypertarget{structsw__path__t_a2ba65dcc9aca48e4a51023038e868df1}\label{structsw__path__t_a2ba65dcc9aca48e4a51023038e868df1} 
+\index{sw\_path\_t@{sw\_path\_t}!ver@{ver}}
+\index{ver@{ver}!sw\_path\_t@{sw\_path\_t}}
+\doxysubsubsection{\texorpdfstring{ver}{ver}}
+{\footnotesize\ttfamily sw\+\_\+path\+\_\+t\+::ver}
+
+
+
+Version string of the software component. 
+
+Software version (ASCII string).
+
+Null-\/terminated ASCII string (max 256 bytes) representing the version or build identifier (e.\+g., {\ttfamily "{}1.\+0.\+3"{}}, {\ttfamily "{}v2025-\/10-\/31"{}}). 
+
+The documentation for this struct was generated from the following file\+:\begin{DoxyCompactItemize}
+\item 
+SBC\+\_\+\+Protected\+SW.\+h\end{DoxyCompactItemize}

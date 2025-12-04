@@ -1,0 +1,116 @@
+\doxysection{aes\+\_\+vectortable.\+h}
+\hypertarget{aes__vectortable_8h_source}{}\label{aes__vectortable_8h_source}
+\begin{DoxyCode}{0}
+\DoxyCodeLine{00001\ \textcolor{preprocessor}{\#ifndef\ \_AES\_VECTORTABLE\_}}
+\DoxyCodeLine{00002\ \textcolor{preprocessor}{\#define\ \_AES\_VECTORTABLE\_}}
+\DoxyCodeLine{00003\ }
+\DoxyCodeLine{00004\ \textcolor{preprocessor}{\#include\ <stdint.h>}}
+\DoxyCodeLine{00005\ }
+\DoxyCodeLine{00006\ }
+\DoxyCodeLine{00007\ \textcolor{keyword}{typedef}\ \textcolor{keyword}{struct\ \ }\{}
+\DoxyCodeLine{00008\ \ \ CHAR8*\ msg;}
+\DoxyCodeLine{00009\ \ \ CHAR8*\ answer;}
+\DoxyCodeLine{00010\ \ \ CHAR8\ *key;}
+\DoxyCodeLine{00011\ \ \ CHAR8*\ iv;}
+\DoxyCodeLine{00012\ \ \ UINTN\ \ len;}
+\DoxyCodeLine{00013\ \}\mbox{\hyperlink{structSBCAESTestVectorMsg__t}{SBCAESTestVectorMsg\_t}};}
+\DoxyCodeLine{00014\ }
+\DoxyCodeLine{00015\ }
+\DoxyCodeLine{00016\ \mbox{\hyperlink{structSBCAESTestVectorMsg__t}{SBCAESTestVectorMsg\_t}}\ gt\_aescbc\_vector[]\ =\ \{}
+\DoxyCodeLine{00017\ \ \ \ \ \{}
+\DoxyCodeLine{00018\ \ \ \ \ \ \ \ \ .key\ =\ \textcolor{stringliteral}{"{}8000000000000000000000000000000000000000000000000000000000000000"{}},}
+\DoxyCodeLine{00019\ \ \ \ \ \ \ \ \ .iv\ =\ \textcolor{stringliteral}{"{}00000000000000000000000000000000"{}},}
+\DoxyCodeLine{00020\ \ \ \ \ \ \ \ \ .msg\ =\ \textcolor{stringliteral}{"{}00000000000000000000000000000000"{}},}
+\DoxyCodeLine{00021\ \ \ \ \ \ \ \ \ .answer\ =\ \textcolor{stringliteral}{"{}e35a6dcb19b201a01ebcfa8aa22b5759"{}},}
+\DoxyCodeLine{00022\ \ \ \ \ \ \ \ \ .len\ =\ 0}
+\DoxyCodeLine{00023\ \ \ \ \ \ \ \ \ \textcolor{comment}{//c4c51bb178814440f25994c287255626}}
+\DoxyCodeLine{00024\ \ \ \ \ \},}
+\DoxyCodeLine{00025\ \ \ \ \ \{}
+\DoxyCodeLine{00026\ \ \ \ \ \ \ \ \ .key\ =\ \textcolor{stringliteral}{"{}c000000000000000000000000000000000000000000000000000000000000000"{}},}
+\DoxyCodeLine{00027\ \ \ \ \ \ \ \ \ .iv\ =\ \textcolor{stringliteral}{"{}00000000000000000000000000000000"{}},}
+\DoxyCodeLine{00028\ \ \ \ \ \ \ \ \ .msg\ =\ \textcolor{stringliteral}{"{}00000000000000000000000000000000"{}},}
+\DoxyCodeLine{00029\ \ \ \ \ \ \ \ \ .answer\ =\ \textcolor{stringliteral}{"{}b29169cdcf2d83e838125a12ee6aa400"{}},}
+\DoxyCodeLine{00030\ \ \ \ \ \ \ \ \ .len\ =\ 0}
+\DoxyCodeLine{00031\ \ \ \ \ \},}
+\DoxyCodeLine{00032\ \ \ \ \ \{}
+\DoxyCodeLine{00033\ \ \ \ \ \ \ \ \ .key\ =\ \textcolor{stringliteral}{"{}ffffffff80000000000000000000000000000000000000000000000000000000"{}},}
+\DoxyCodeLine{00034\ \ \ \ \ \ \ \ \ .iv\ =\ \textcolor{stringliteral}{"{}00000000000000000000000000000000"{}},}
+\DoxyCodeLine{00035\ \ \ \ \ \ \ \ \ .msg\ =\ \textcolor{stringliteral}{"{}00000000000000000000000000000000"{}},}
+\DoxyCodeLine{00036\ \ \ \ \ \ \ \ \ .answer\ =\ \textcolor{stringliteral}{"{}33ac9eccc4cc75e2711618f80b1548e8"{}},}
+\DoxyCodeLine{00037\ \ \ \ \ \ \ \ \ .len\ \ =\ 0}
+\DoxyCodeLine{00038\ \ \ \ \ \},}
+\DoxyCodeLine{00039\ \ \ \ \ \{}
+\DoxyCodeLine{00040\ \ \ \ \ \ \ \ \ .key\ =\ \textcolor{stringliteral}{"{}fffffffffffffffffffffffffffffffffffffffffffffffffffffffffffc0000"{}},}
+\DoxyCodeLine{00041\ \ \ \ \ \ \ \ \ .iv\ =\ \textcolor{stringliteral}{"{}00000000000000000000000000000000"{}},}
+\DoxyCodeLine{00042\ \ \ \ \ \ \ \ \ .msg\ =\ \textcolor{stringliteral}{"{}00000000000000000000000000000000"{}},}
+\DoxyCodeLine{00043\ \ \ \ \ \ \ \ \ .answer\ =\ \textcolor{stringliteral}{"{}52fc3e620492ea99641ea168da5b6d52"{}},}
+\DoxyCodeLine{00044\ \ \ \ \ \ \ \ \ .len\ =\ 0}
+\DoxyCodeLine{00045\ \ \ \ \ \},}
+\DoxyCodeLine{00046\ \ \ \ \ \{}
+\DoxyCodeLine{00047\ \ \ \ \ \ \ \ \ .key\ =\ \textcolor{stringliteral}{"{}fffffffffffffffffffffffffffffffffffffffffffffffffffffffffff80000"{}},}
+\DoxyCodeLine{00048\ \ \ \ \ \ \ \ \ .iv\ =\ \textcolor{stringliteral}{"{}00000000000000000000000000000000"{}},}
+\DoxyCodeLine{00049\ \ \ \ \ \ \ \ \ .msg\ =\ \textcolor{stringliteral}{"{}00000000000000000000000000000000"{}},}
+\DoxyCodeLine{00050\ \ \ \ \ \ \ \ \ .answer\ =\ \textcolor{stringliteral}{"{}3a0a0e75a8da36735aee6684d965a778"{}},}
+\DoxyCodeLine{00051\ \ \ \ \ \ \ \ \ .len\ =\ 0}
+\DoxyCodeLine{00052\ \ \ \ \ \}}
+\DoxyCodeLine{00053\ }
+\DoxyCodeLine{00054\ \};}
+\DoxyCodeLine{00055\ }
+\DoxyCodeLine{00056\ \textcolor{keyword}{struct\ }\mbox{\hyperlink{structaes__gcm__vectors__st}{aes\_gcm\_vectors\_st}}\ \{}
+\DoxyCodeLine{00057\ \ \ \ \ \textcolor{keyword}{const}\ uint8\_t\ *key;}
+\DoxyCodeLine{00058\ \ \ \ \ \textcolor{keyword}{const}\ uint8\_t\ *auth;}
+\DoxyCodeLine{00059\ \ \ \ \ \textcolor{keywordtype}{int}\ auth\_size;}
+\DoxyCodeLine{00060\ \ \ \ \ \textcolor{keyword}{const}\ uint8\_t\ *plaintext;}
+\DoxyCodeLine{00061\ \ \ \ \ \textcolor{keywordtype}{int}\ plaintext\_size;}
+\DoxyCodeLine{00062\ \ \ \ \ \textcolor{keyword}{const}\ uint8\_t\ *iv;}
+\DoxyCodeLine{00063\ \ \ \ \ \textcolor{keyword}{const}\ uint8\_t\ *ciphertext;}
+\DoxyCodeLine{00064\ \ \ \ \ \textcolor{keyword}{const}\ uint8\_t\ *tag;}
+\DoxyCodeLine{00065\ \};}
+\DoxyCodeLine{00066\ }
+\DoxyCodeLine{00067\ \textcolor{keyword}{struct\ }\mbox{\hyperlink{structaes__gcm__vectors__st}{aes\_gcm\_vectors\_st}}\ aes\_gcm\_vectors[]\ =\ \{}
+\DoxyCodeLine{00068\ \ \ \ \ \{}
+\DoxyCodeLine{00069\ \ \ \ \ \ .key\ =\ (uint8\_t\ *)}
+\DoxyCodeLine{00070\ \ \ \ \ \ \textcolor{stringliteral}{"{}\(\backslash\)x00\(\backslash\)x00\(\backslash\)x00\(\backslash\)x00\(\backslash\)x00\(\backslash\)x00\(\backslash\)x00\(\backslash\)x00\(\backslash\)x00\(\backslash\)x00\(\backslash\)x00\(\backslash\)x00\(\backslash\)x00\(\backslash\)x00\(\backslash\)x00\(\backslash\)x00"{}},}
+\DoxyCodeLine{00071\ \ \ \ \ \ .auth\ =\ NULL,}
+\DoxyCodeLine{00072\ \ \ \ \ \ .auth\_size\ =\ 0,}
+\DoxyCodeLine{00073\ \ \ \ \ \ .plaintext\ =\ (uint8\_t\ *)}
+\DoxyCodeLine{00074\ \ \ \ \ \ \textcolor{stringliteral}{"{}\(\backslash\)x00\(\backslash\)x00\(\backslash\)x00\(\backslash\)x00\(\backslash\)x00\(\backslash\)x00\(\backslash\)x00\(\backslash\)x00\(\backslash\)x00\(\backslash\)x00\(\backslash\)x00\(\backslash\)x00\(\backslash\)x00\(\backslash\)x00\(\backslash\)x00\(\backslash\)x00"{}},}
+\DoxyCodeLine{00075\ \ \ \ \ \ .plaintext\_size\ =\ 16,}
+\DoxyCodeLine{00076\ \ \ \ \ \ .ciphertext\ =\ (uint8\_t\ *)}
+\DoxyCodeLine{00077\ \ \ \ \ \ \textcolor{stringliteral}{"{}\(\backslash\)x03\(\backslash\)x88\(\backslash\)xda\(\backslash\)xce\(\backslash\)x60\(\backslash\)xb6\(\backslash\)xa3\(\backslash\)x92\(\backslash\)xf3\(\backslash\)x28\(\backslash\)xc2\(\backslash\)xb9\(\backslash\)x71\(\backslash\)xb2\(\backslash\)xfe\(\backslash\)x78"{}},}
+\DoxyCodeLine{00078\ \ \ \ \ \ .iv\ =\ (uint8\_t\ *)\textcolor{stringliteral}{"{}\(\backslash\)x00\(\backslash\)x00\(\backslash\)x00\(\backslash\)x00\(\backslash\)x00\(\backslash\)x00\(\backslash\)x00\(\backslash\)x00\(\backslash\)x00\(\backslash\)x00\(\backslash\)x00\(\backslash\)x00"{}},}
+\DoxyCodeLine{00079\ \ \ \ \ \ .tag\ =\ (uint8\_t\ *)}
+\DoxyCodeLine{00080\ \ \ \ \ \ \textcolor{stringliteral}{"{}\(\backslash\)xab\(\backslash\)x6e\(\backslash\)x47\(\backslash\)xd4\(\backslash\)x2c\(\backslash\)xec\(\backslash\)x13\(\backslash\)xbd\(\backslash\)xf5\(\backslash\)x3a\(\backslash\)x67\(\backslash\)xb2\(\backslash\)x12\(\backslash\)x57\(\backslash\)xbd\(\backslash\)xdf"{}}}
+\DoxyCodeLine{00081\ \ \ \ \ \},}
+\DoxyCodeLine{00082\ \ \ \ \ \{}
+\DoxyCodeLine{00083\ \ \ \ \ \ .key\ =\ (uint8\_t\ *)}
+\DoxyCodeLine{00084\ \ \ \ \ \ \textcolor{stringliteral}{"{}\(\backslash\)xfe\(\backslash\)xff\(\backslash\)xe9\(\backslash\)x92\(\backslash\)x86\(\backslash\)x65\(\backslash\)x73\(\backslash\)x1c\(\backslash\)x6d\(\backslash\)x6a\(\backslash\)x8f\(\backslash\)x94\(\backslash\)x67\(\backslash\)x30\(\backslash\)x83\(\backslash\)x08"{}},}
+\DoxyCodeLine{00085\ \ \ \ \ \ .auth\ =\ NULL,}
+\DoxyCodeLine{00086\ \ \ \ \ \ .auth\_size\ =\ 0,}
+\DoxyCodeLine{00087\ \ \ \ \ \ .plaintext\ =\ (uint8\_t\ *)}
+\DoxyCodeLine{00088\ \ \ \ \ \ \textcolor{stringliteral}{"{}\(\backslash\)xd9\(\backslash\)x31\(\backslash\)x32\(\backslash\)x25\(\backslash\)xf8\(\backslash\)x84\(\backslash\)x06\(\backslash\)xe5\(\backslash\)xa5\(\backslash\)x59\(\backslash\)x09\(\backslash\)xc5\(\backslash\)xaf\(\backslash\)xf5\(\backslash\)x26\(\backslash\)x9a\(\backslash\)x86\(\backslash\)xa7\(\backslash\)xa9\(\backslash\)x53\(\backslash\)x15\(\backslash\)x34\(\backslash\)xf7\(\backslash\)xda\(\backslash\)x2e\(\backslash\)x4c\(\backslash\)x30\(\backslash\)x3d\(\backslash\)x8a\(\backslash\)x31\(\backslash\)x8a\(\backslash\)x72\(\backslash\)x1c\(\backslash\)x3c\(\backslash\)x0c\(\backslash\)x95\(\backslash\)x95\(\backslash\)x68\(\backslash\)x09\(\backslash\)x53\(\backslash\)x2f\(\backslash\)xcf\(\backslash\)x0e\(\backslash\)x24\(\backslash\)x49\(\backslash\)xa6\(\backslash\)xb5\(\backslash\)x25\(\backslash\)xb1\(\backslash\)x6a\(\backslash\)xed\(\backslash\)xf5\(\backslash\)xaa\(\backslash\)x0d\(\backslash\)xe6\(\backslash\)x57\(\backslash\)xba\(\backslash\)x63\(\backslash\)x7b\(\backslash\)x39\(\backslash\)x1a\(\backslash\)xaf\(\backslash\)xd2\(\backslash\)x55"{}},}
+\DoxyCodeLine{00089\ \ \ \ \ \ .plaintext\_size\ =\ 64,}
+\DoxyCodeLine{00090\ \ \ \ \ \ .ciphertext\ =\ (uint8\_t\ *)}
+\DoxyCodeLine{00091\ \ \ \ \ \ \textcolor{stringliteral}{"{}\(\backslash\)x42\(\backslash\)x83\(\backslash\)x1e\(\backslash\)xc2\(\backslash\)x21\(\backslash\)x77\(\backslash\)x74\(\backslash\)x24\(\backslash\)x4b\(\backslash\)x72\(\backslash\)x21\(\backslash\)xb7\(\backslash\)x84\(\backslash\)xd0\(\backslash\)xd4\(\backslash\)x9c\(\backslash\)xe3\(\backslash\)xaa\(\backslash\)x21\(\backslash\)x2f\(\backslash\)x2c\(\backslash\)x02\(\backslash\)xa4\(\backslash\)xe0\(\backslash\)x35\(\backslash\)xc1\(\backslash\)x7e\(\backslash\)x23\(\backslash\)x29\(\backslash\)xac\(\backslash\)xa1\(\backslash\)x2e\(\backslash\)x21\(\backslash\)xd5\(\backslash\)x14\(\backslash\)xb2\(\backslash\)x54\(\backslash\)x66\(\backslash\)x93\(\backslash\)x1c\(\backslash\)x7d\(\backslash\)x8f\(\backslash\)x6a\(\backslash\)x5a\(\backslash\)xac\(\backslash\)x84\(\backslash\)xaa\(\backslash\)x05\(\backslash\)x1b\(\backslash\)xa3\(\backslash\)x0b\(\backslash\)x39\(\backslash\)x6a\(\backslash\)x0a\(\backslash\)xac\(\backslash\)x97\(\backslash\)x3d\(\backslash\)x58\(\backslash\)xe0\(\backslash\)x91\(\backslash\)x47\(\backslash\)x3f\(\backslash\)x59\(\backslash\)x85"{}},}
+\DoxyCodeLine{00092\ \ \ \ \ \ .iv\ =\ (uint8\_t\ *)\textcolor{stringliteral}{"{}\(\backslash\)xca\(\backslash\)xfe\(\backslash\)xba\(\backslash\)xbe\(\backslash\)xfa\(\backslash\)xce\(\backslash\)xdb\(\backslash\)xad\(\backslash\)xde\(\backslash\)xca\(\backslash\)xf8\(\backslash\)x88"{}},}
+\DoxyCodeLine{00093\ \ \ \ \ \ .tag\ =\ (uint8\_t\ *)\textcolor{stringliteral}{"{}\(\backslash\)x4d\(\backslash\)x5c\(\backslash\)x2a\(\backslash\)xf3\(\backslash\)x27\(\backslash\)xcd\(\backslash\)x64\(\backslash\)xa6\(\backslash\)x2c\(\backslash\)xf3\(\backslash\)x5a\(\backslash\)xbd\(\backslash\)x2b\(\backslash\)xa6\(\backslash\)xfa\(\backslash\)xb4"{}}}
+\DoxyCodeLine{00094\ \ \ \ \ \},}
+\DoxyCodeLine{00095\ \ \ \ \ \{}
+\DoxyCodeLine{00096\ \ \ \ \ \ .key\ =\ (uint8\_t\ *)}
+\DoxyCodeLine{00097\ \ \ \ \ \ \textcolor{stringliteral}{"{}\(\backslash\)xfe\(\backslash\)xff\(\backslash\)xe9\(\backslash\)x92\(\backslash\)x86\(\backslash\)x65\(\backslash\)x73\(\backslash\)x1c\(\backslash\)x6d\(\backslash\)x6a\(\backslash\)x8f\(\backslash\)x94\(\backslash\)x67\(\backslash\)x30\(\backslash\)x83\(\backslash\)x08"{}},}
+\DoxyCodeLine{00098\ \ \ \ \ \ .auth\ =\ (uint8\_t\ *)}
+\DoxyCodeLine{00099\ \ \ \ \ \ \textcolor{stringliteral}{"{}\(\backslash\)xfe\(\backslash\)xed\(\backslash\)xfa\(\backslash\)xce\(\backslash\)xde\(\backslash\)xad\(\backslash\)xbe\(\backslash\)xef\(\backslash\)xfe\(\backslash\)xed\(\backslash\)xfa\(\backslash\)xce\(\backslash\)xde\(\backslash\)xad\(\backslash\)xbe\(\backslash\)xef\(\backslash\)xab\(\backslash\)xad\(\backslash\)xda\(\backslash\)xd2"{}},}
+\DoxyCodeLine{00100\ \ \ \ \ \ .auth\_size\ =\ 20,}
+\DoxyCodeLine{00101\ \ \ \ \ \ .plaintext\ =\ (uint8\_t\ *)}
+\DoxyCodeLine{00102\ \ \ \ \ \ \textcolor{stringliteral}{"{}\(\backslash\)xd9\(\backslash\)x31\(\backslash\)x32\(\backslash\)x25\(\backslash\)xf8\(\backslash\)x84\(\backslash\)x06\(\backslash\)xe5\(\backslash\)xa5\(\backslash\)x59\(\backslash\)x09\(\backslash\)xc5\(\backslash\)xaf\(\backslash\)xf5\(\backslash\)x26\(\backslash\)x9a\(\backslash\)x86\(\backslash\)xa7\(\backslash\)xa9\(\backslash\)x53\(\backslash\)x15\(\backslash\)x34\(\backslash\)xf7\(\backslash\)xda\(\backslash\)x2e\(\backslash\)x4c\(\backslash\)x30\(\backslash\)x3d\(\backslash\)x8a\(\backslash\)x31\(\backslash\)x8a\(\backslash\)x72\(\backslash\)x1c\(\backslash\)x3c\(\backslash\)x0c\(\backslash\)x95\(\backslash\)x95\(\backslash\)x68\(\backslash\)x09\(\backslash\)x53\(\backslash\)x2f\(\backslash\)xcf\(\backslash\)x0e\(\backslash\)x24\(\backslash\)x49\(\backslash\)xa6\(\backslash\)xb5\(\backslash\)x25\(\backslash\)xb1\(\backslash\)x6a\(\backslash\)xed\(\backslash\)xf5\(\backslash\)xaa\(\backslash\)x0d\(\backslash\)xe6\(\backslash\)x57\(\backslash\)xba\(\backslash\)x63\(\backslash\)x7b\(\backslash\)x39"{}},}
+\DoxyCodeLine{00103\ \ \ \ \ \ .plaintext\_size\ =\ 60,}
+\DoxyCodeLine{00104\ \ \ \ \ \ .ciphertext\ =\ (uint8\_t\ *)}
+\DoxyCodeLine{00105\ \ \ \ \ \ \textcolor{stringliteral}{"{}\(\backslash\)x42\(\backslash\)x83\(\backslash\)x1e\(\backslash\)xc2\(\backslash\)x21\(\backslash\)x77\(\backslash\)x74\(\backslash\)x24\(\backslash\)x4b\(\backslash\)x72\(\backslash\)x21\(\backslash\)xb7\(\backslash\)x84\(\backslash\)xd0\(\backslash\)xd4\(\backslash\)x9c\(\backslash\)xe3\(\backslash\)xaa\(\backslash\)x21\(\backslash\)x2f\(\backslash\)x2c\(\backslash\)x02\(\backslash\)xa4\(\backslash\)xe0\(\backslash\)x35\(\backslash\)xc1\(\backslash\)x7e\(\backslash\)x23\(\backslash\)x29\(\backslash\)xac\(\backslash\)xa1\(\backslash\)x2e\(\backslash\)x21\(\backslash\)xd5\(\backslash\)x14\(\backslash\)xb2\(\backslash\)x54\(\backslash\)x66\(\backslash\)x93\(\backslash\)x1c\(\backslash\)x7d\(\backslash\)x8f\(\backslash\)x6a\(\backslash\)x5a\(\backslash\)xac\(\backslash\)x84\(\backslash\)xaa\(\backslash\)x05\(\backslash\)x1b\(\backslash\)xa3\(\backslash\)x0b\(\backslash\)x39\(\backslash\)x6a\(\backslash\)x0a\(\backslash\)xac\(\backslash\)x97\(\backslash\)x3d\(\backslash\)x58\(\backslash\)xe0\(\backslash\)x91"{}},}
+\DoxyCodeLine{00106\ \ \ \ \ \ .iv\ =\ (uint8\_t\ *)\textcolor{stringliteral}{"{}\(\backslash\)xca\(\backslash\)xfe\(\backslash\)xba\(\backslash\)xbe\(\backslash\)xfa\(\backslash\)xce\(\backslash\)xdb\(\backslash\)xad\(\backslash\)xde\(\backslash\)xca\(\backslash\)xf8\(\backslash\)x88"{}},}
+\DoxyCodeLine{00107\ \ \ \ \ \ .tag\ =\ (uint8\_t\ *)}
+\DoxyCodeLine{00108\ \ \ \ \ \ \textcolor{stringliteral}{"{}\(\backslash\)x5b\(\backslash\)xc9\(\backslash\)x4f\(\backslash\)xbc\(\backslash\)x32\(\backslash\)x21\(\backslash\)xa5\(\backslash\)xdb\(\backslash\)x94\(\backslash\)xfa\(\backslash\)xe9\(\backslash\)x5a\(\backslash\)xe7\(\backslash\)x12\(\backslash\)x1a\(\backslash\)x47"{}}}
+\DoxyCodeLine{00109\ \ \ \ \ \}}
+\DoxyCodeLine{00110\ \};}
+\DoxyCodeLine{00111\ \textcolor{preprocessor}{\#endif}}
+
+\end{DoxyCode}

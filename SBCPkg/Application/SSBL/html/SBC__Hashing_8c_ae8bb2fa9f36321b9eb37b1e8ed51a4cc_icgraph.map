@@ -1,0 +1,20 @@
+<map id="SBC_HashCompute" name="SBC_HashCompute">
+<area shape="rect" id="Node000001" title=" " alt="" coords="947,98,1096,124"/>
+<area shape="rect" id="Node000002" href="$group__BaseAnswer.html#gad993c7407ff302f90f0b4bbf4a618db2" title="Validate the device authentication answer using the provided key." alt="" coords="227,24,417,49"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="993,92,950,62,925,49,898,39,831,24,762,14,693,9,625,8,499,15,398,26,397,21,498,9,625,3,693,4,763,9,832,18,899,34,927,44,953,58,996,87"/>
+<area shape="rect" id="Node000004" href="$group__BaseAnswer.html#gabc62c881d2dc4feb5a902de829dd27b4" title="Create a new device security key." alt="" coords="672,49,899,74"/>
+<area shape="poly" id="edge3_Node000001_Node000004" title=" " alt="" coords="946,98,846,77,848,72,947,93"/>
+<area shape="rect" id="Node000006" href="$group__BaseAnswer.html#gae8a785ace6ba8fb538bba6a21b694bd9" title=" " alt="" coords="713,98,857,124"/>
+<area shape="poly" id="edge6_Node000001_Node000006" title=" " alt="" coords="933,114,858,114,858,108,933,108"/>
+<area shape="rect" id="Node000007" href="$group__BaseAnswer.html#ga771842561f61acb4ca58e01f53849ce4" title=" " alt="" coords="726,148,845,173"/>
+<area shape="poly" id="edge7_Node000001_Node000007" title=" " alt="" coords="947,129,845,151,844,146,946,124"/>
+<area shape="rect" id="Node000008" href="$SBC__ProtectedSW_8c.html#a17776e78948216d2a4a9a475f66d8637" title="Re&#45;encrypt (re&#45;crypto) a protected software image using a new key set." alt="" coords="685,197,886,222"/>
+<area shape="poly" id="edge8_Node000001_Node000008" title=" " alt="" coords="994,134,951,162,900,188,864,200,862,195,898,183,948,158,991,130"/>
+<area shape="rect" id="Node000003" href="$SBC__SystemControl_8c.html#a7fb21fbb14d2c0fd55b69537f919b9e6" title="Perform secure boot integrity and authenticity verification." alt="" coords="5,24,179,49"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="213,39,179,39,179,34,213,34"/>
+<area shape="rect" id="Node000005" href="$group__BaseAnswer.html#gad75f3501899d5c6fd9f859572c7cda85" title=" " alt="" coords="466,49,623,74"/>
+<area shape="poly" id="edge4_Node000004_Node000005" title=" " alt="" coords="659,64,623,64,623,59,659,59"/>
+<area shape="poly" id="edge5_Node000005_Node000002" title=" " alt="" coords="452,54,417,50,418,45,453,49"/>
+<area shape="rect" id="Node000009" href="$SBC__ProtectedSW_8c.html#a6d40367e0a002e55377ab0859776f807" title=" " alt="" coords="465,197,624,222"/>
+<area shape="poly" id="edge9_Node000008_Node000009" title=" " alt="" coords="671,212,624,212,624,207,671,207"/>
+</map>

@@ -1,0 +1,37 @@
+<map id="SBC_BaseAnswerValidate" name="SBC_BaseAnswerValidate">
+<area shape="rect" id="Node000001" title="Validate the device authentication answer using the provided key." alt="" coords="5,232,196,257"/>
+<area shape="rect" id="Node000002" href="$SBC__Log_8c.html#a77ecccb9a45ff6e87c23dec0781ebd6f" title="Build a formatted Unicode message containing a hexadecimal representation of binary data." alt="" coords="792,181,1033,206"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="105,230,123,195,152,149,192,102,216,82,243,66,313,36,376,16,434,5,490,3,546,10,606,23,745,66,790,86,831,114,892,169,889,173,827,118,787,91,743,71,604,28,546,15,490,9,435,10,378,21,315,41,245,71,219,86,196,106,156,152,127,198,110,233"/>
+<area shape="rect" id="Node000004" href="$SBC__Log_8c.html#a4eef09d3e49bf44a244bdc81ebee42f6" title="Print binary data in hexadecimal format for debugging." alt="" coords="244,81,465,106"/>
+<area shape="poly" id="edge3_Node000001_Node000004" title=" " alt="" coords="112,230,165,179,202,149,243,123,279,108,281,113,245,128,205,153,169,183,115,234"/>
+<area shape="rect" id="Node000005" href="$SBC__FileCtrl_8c.html#a625970cd7adf01d1d72b97eb372a7f20" title="Locates all handles that support the EFI Simple File System Protocol." alt="" coords="513,81,744,106"/>
+<area shape="poly" id="edge4_Node000001_Node000005" title=" " alt="" coords="121,229,174,198,243,167,298,152,374,136,536,106,537,111,375,141,299,157,245,172,177,203,123,234"/>
+<area shape="rect" id="Node000006" href="$SBC__FileCtrl_8c.html#aa6cce7b71dc832b2dcae5709d1b801f0" title="Searches for a valid EFI handle that can access the specified file." alt="" coords="274,232,435,257"/>
+<area shape="poly" id="edge5_Node000001_Node000006" title=" " alt="" coords="196,242,260,242,260,247,196,247"/>
+<area shape="rect" id="Node000008" href="$group__BaseAnswer.html#gad75f3501899d5c6fd9f859572c7cda85" title=" " alt="" coords="276,281,433,306"/>
+<area shape="poly" id="edge7_Node000001_Node000008" title=" " alt="" coords="167,254,275,276,274,281,166,260"/>
+<area shape="rect" id="Node000010" href="$SBC__Hashing_8c.html#ae8bb2fa9f36321b9eb37b1e8ed51a4cc" title=" " alt="" coords="838,330,987,356"/>
+<area shape="poly" id="edge18_Node000001_Node000010" title=" " alt="" coords="113,255,165,314,202,347,245,374,315,405,377,428,433,442,488,448,543,448,602,442,743,415,780,405,817,391,878,360,880,365,819,396,782,410,745,420,602,447,543,453,487,454,432,447,375,433,313,410,243,379,199,351,161,318,109,259"/>
+<area shape="rect" id="Node000012" href="$SBC__FileCtrl_8c.html#ab797adf8022e6bb64ba91bf55f9ae70b" title="Read a raw data block from a physical storage device (LBA&#45;based)." alt="" coords="542,380,715,405"/>
+<area shape="poly" id="edge19_Node000001_Node000012" title=" " alt="" coords="123,255,177,286,245,317,318,339,392,356,529,379,528,384,391,361,316,344,243,322,174,291,120,260"/>
+<area shape="rect" id="Node000014" href="$SBC__FileCtrl_8c.html#a3780e2b73175c8b93f7bb5107e1737c3" title="Retrieve the size of a specified file in the UEFI file system." alt="" coords="289,182,421,208"/>
+<area shape="poly" id="edge15_Node000001_Node000014" title=" " alt="" coords="166,229,274,208,275,213,167,234"/>
+<area shape="rect" id="Node000015" href="$SBC__FileCtrl_8c.html#ac0aa9ae2f07a26de56eb5b3b0b76b06c" title="Read a file from a UEFI file system into a memory buffer." alt="" coords="297,481,412,506"/>
+<area shape="poly" id="edge20_Node000001_Node000015" title=" " alt="" coords="109,256,126,296,155,351,195,410,219,436,245,460,285,479,283,484,243,464,215,440,190,413,150,354,121,299,104,259"/>
+<area shape="rect" id="Node000003" href="$SBC__Log_8c.html#aec2665cef895254b1d095577024bdb26" title=" " alt="" coords="1081,181,1269,206"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="1033,191,1067,191,1067,196,1033,196"/>
+<area shape="rect" id="Node000007" href="$SBC__FileCtrl_8c.html#a0aa11f24c9d4caea2c159f6d571f604c" title="Checks if a specified file is accessible in the EFI file system." alt="" coords="559,130,698,156"/>
+<area shape="poly" id="edge6_Node000006_Node000007" title=" " alt="" coords="434,230,464,218,478,208,487,196,497,184,512,173,547,157,549,162,515,177,501,188,492,200,482,211,467,223,436,235"/>
+<area shape="poly" id="edge8_Node000008_Node000002" title=" " alt="" coords="432,280,464,267,478,256,487,243,496,230,512,218,582,194,656,181,729,176,796,178,796,183,729,181,657,186,584,199,515,223,500,233,491,246,482,259,467,272,434,285"/>
+<area shape="rect" id="Node000009" href="$group__BaseAnswer.html#gabc62c881d2dc4feb5a902de829dd27b4" title="Create a new device security key." alt="" coords="515,232,742,257"/>
+<area shape="poly" id="edge9_Node000008_Node000009" title=" " alt="" coords="425,278,543,257,544,262,426,284"/>
+<area shape="rect" id="Node000011" href="$SBC__Log_8c.html#a69cb7fed1bea1977ffcc81ccc1a16648" title="Print binary data in hexadecimal format for debugging." alt="" coords="549,281,708,306"/>
+<area shape="poly" id="edge12_Node000008_Node000011" title=" " alt="" coords="433,291,535,291,535,296,433,296"/>
+<area shape="poly" id="edge13_Node000008_Node000012" title=" " alt="" coords="380,304,440,335,514,366,542,374,541,379,512,371,437,340,378,309"/>
+<area shape="rect" id="Node000013" href="$SBC__X509_8c.html#a14179f61531a13d740f23bef6f903dcf" title=" " alt="" coords="550,330,707,356"/>
+<area shape="poly" id="edge14_Node000008_Node000013" title=" " alt="" coords="426,304,544,325,543,330,425,309"/>
+<area shape="poly" id="edge10_Node000009_Node000002" title=" " alt="" coords="700,229,827,206,828,211,701,234"/>
+<area shape="poly" id="edge11_Node000009_Node000010" title=" " alt="" coords="698,255,745,267,815,294,875,322,873,327,813,299,743,272,697,260"/>
+<area shape="poly" id="edge16_Node000014_Node000005" title=" " alt="" coords="417,180,464,161,478,150,487,138,497,127,512,115,528,108,530,113,515,120,500,130,491,142,482,154,467,165,419,185"/>
+<area shape="poly" id="edge17_Node000014_Node000007" title=" " alt="" coords="420,180,547,156,548,161,421,185"/>
+</map>

@@ -1,0 +1,13 @@
+<map id="SBC_RecryptoProtectedSW" name="SBC_RecryptoProtectedSW">
+<area shape="rect" id="Node000001" title="Re&#45;encrypt (re&#45;crypto) a protected software image using a new key set." alt="" coords="5,104,207,129"/>
+<area shape="rect" id="Node000002" href="$SBC__Log_8c.html#a4eef09d3e49bf44a244bdc81ebee42f6" title="Print binary data in hexadecimal format for debugging." alt="" coords="255,5,477,31"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="127,101,183,71,254,40,280,31,281,37,256,44,186,75,130,106"/>
+<area shape="rect" id="Node000003" href="$SBC__Hashing_8c.html#ae8bb2fa9f36321b9eb37b1e8ed51a4cc" title=" " alt="" coords="291,55,441,80"/>
+<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="173,101,284,80,285,85,174,107"/>
+<area shape="rect" id="Node000004" href="$SBC__Log_8c.html#a69cb7fed1bea1977ffcc81ccc1a16648" title="Print binary data in hexadecimal format for debugging." alt="" coords="287,104,445,129"/>
+<area shape="poly" id="edge3_Node000001_Node000004" title=" " alt="" coords="207,114,273,114,273,119,207,119"/>
+<area shape="rect" id="Node000005" href="$SBC__FileCtrl_8c.html#a0bffd54719b02c63355534614cdb450b" title="Read arbitrary bytes to a Block I/O device." alt="" coords="257,153,475,179"/>
+<area shape="poly" id="edge4_Node000001_Node000005" title=" " alt="" coords="174,127,285,148,284,153,173,132"/>
+<area shape="rect" id="Node000006" href="$SBC__FileCtrl_8c.html#abffb6a3e7fe13fbd929362326a36db93" title="Write arbitrary bytes to a Block I/O device." alt="" coords="255,203,477,228"/>
+<area shape="poly" id="edge5_Node000001_Node000006" title=" " alt="" coords="130,127,186,157,256,188,285,197,284,202,254,192,184,162,128,132"/>
+</map>

@@ -1,0 +1,5 @@
+<map id="SBC_ProtSWGetCnt" name="SBC_ProtSWGetCnt">
+<area shape="rect" id="Node000001" title="Retrieve the number of protected software entries." alt="" coords="5,5,156,31"/>
+<area shape="rect" id="Node000002" href="$SBC__FileCtrl_8c.html#a0bffd54719b02c63355534614cdb450b" title="Read arbitrary bytes to a Block I/O device." alt="" coords="204,5,423,31"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="156,15,190,15,190,21,156,21"/>
+</map>

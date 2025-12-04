@@ -1,0 +1,235 @@
+\doxysubsection{Running Tests}
+\hypertarget{group__cmocka__exec}{}\label{group__cmocka__exec}\index{Running Tests@{Running Tests}}
+Collaboration diagram for Running Tests\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=300pt]{group__cmocka__exec}
+\end{center}
+\end{figure}
+\doxysubsubsubsection*{Macros}
+\begin{DoxyCompactItemize}
+\item 
+\Hypertarget{group__cmocka__exec_ga3679e42b787d2f1e4649b59121a6f4a1}\label{group__cmocka__exec_ga3679e42b787d2f1e4649b59121a6f4a1} 
+\#define {\bfseries \+\_\+unit\+\_\+test\+\_\+setup}(test,  setup)~    \{ \#test "{}\+\_\+"{} \#setup, setup, UNIT\+\_\+\+TEST\+\_\+\+FUNCTION\+\_\+\+TYPE\+\_\+\+SETUP \}
+\item 
+\Hypertarget{group__cmocka__exec_gaa23195d0d5358670867aaa8ed9ba8e01}\label{group__cmocka__exec_gaa23195d0d5358670867aaa8ed9ba8e01} 
+\#define {\bfseries \+\_\+unit\+\_\+test\+\_\+teardown}(test,  teardown)~    \{ \#test "{}\+\_\+"{} \#teardown, teardown, UNIT\+\_\+\+TEST\+\_\+\+FUNCTION\+\_\+\+TYPE\+\_\+\+TEARDOWN \}
+\item 
+\Hypertarget{group__cmocka__exec_ga85cfe301d4c23b9180d36c629895a4b9}\label{group__cmocka__exec_ga85cfe301d4c23b9180d36c629895a4b9} 
+\#define {\bfseries cmocka\+\_\+run\+\_\+group\+\_\+tests}(group\+\_\+tests,  group\+\_\+setup,  group\+\_\+teardown)~        \+\_\+cmocka\+\_\+run\+\_\+group\+\_\+tests(\#group\+\_\+tests, group\+\_\+tests, sizeof(group\+\_\+tests) / sizeof((group\+\_\+tests)\mbox{[}0\mbox{]}), group\+\_\+setup, group\+\_\+teardown)
+\item 
+\Hypertarget{group__cmocka__exec_ga6ee568a92286ba90e697f6fdc246e3b4}\label{group__cmocka__exec_ga6ee568a92286ba90e697f6fdc246e3b4} 
+\#define {\bfseries cmocka\+\_\+run\+\_\+group\+\_\+tests\+\_\+name}(group\+\_\+name,  group\+\_\+tests,  group\+\_\+setup,  group\+\_\+teardown)~        \+\_\+cmocka\+\_\+run\+\_\+group\+\_\+tests(group\+\_\+name, group\+\_\+tests, sizeof(group\+\_\+tests) / sizeof((group\+\_\+tests)\mbox{[}0\mbox{]}), group\+\_\+setup, group\+\_\+teardown)
+\item 
+\#define \mbox{\hyperlink{group__cmocka__exec_ga562719c550b5ce277aab6b0371f7f34f}{cmocka\+\_\+unit\+\_\+test}}(f)~\{ \#f, f, NULL, NULL, NULL \}
+\item 
+\#define \mbox{\hyperlink{group__cmocka__exec_ga4d54508b0b7150afb27b4da38f0015c6}{cmocka\+\_\+unit\+\_\+test\+\_\+prestate}}(f,  state)~\{ \#f, f, NULL, NULL, state \}
+\item 
+\#define \mbox{\hyperlink{group__cmocka__exec_ga07ea44503d0f6c84c460b4a878cf31d5}{cmocka\+\_\+unit\+\_\+test\+\_\+prestate\+\_\+setup\+\_\+teardown}}(f,  setup,  teardown,  state)~\{ \#f, f, setup, teardown, state \}
+\item 
+\#define \mbox{\hyperlink{group__cmocka__exec_gaaccacc105038e49462888a3ededa28c5}{cmocka\+\_\+unit\+\_\+test\+\_\+setup}}(f,  setup)~\{ \#f, f, setup, NULL, NULL \}
+\item 
+\#define \mbox{\hyperlink{group__cmocka__exec_gab9e5396c9a424ccbb5d30e6d421fd066}{cmocka\+\_\+unit\+\_\+test\+\_\+setup\+\_\+teardown}}(f,  setup,  teardown)~\{ \#f, f, setup, teardown, NULL \}
+\item 
+\#define \mbox{\hyperlink{group__cmocka__exec_ga9b0d5ed78ddeba6d9aaa9a692cda426b}{cmocka\+\_\+unit\+\_\+test\+\_\+teardown}}(f,  teardown)~\{ \#f, f, NULL, teardown, NULL \}
+\item 
+\Hypertarget{group__cmocka__exec_ga73a3b169ac8c3419cbe15327e75ffcfd}\label{group__cmocka__exec_ga73a3b169ac8c3419cbe15327e75ffcfd} 
+\#define {\bfseries fail}()~\+\_\+fail(\+\_\+\+\_\+\+FILE\+\_\+\+\_\+, \+\_\+\+\_\+\+LINE\+\_\+\+\_\+)
+\item 
+\#define \mbox{\hyperlink{group__cmocka__exec_ga6da2355538bde0b4d5fe89b1fbc95899}{fail\+\_\+msg}}(msg, ...)
+\item 
+\#define \mbox{\hyperlink{group__cmocka__exec_ga246dbcbb338e4becbfef009b2bb14b78}{group\+\_\+test\+\_\+setup}}(setup)~    \{ "{}group\+\_\+"{} \#setup, setup, UNIT\+\_\+\+TEST\+\_\+\+FUNCTION\+\_\+\+TYPE\+\_\+\+GROUP\+\_\+\+SETUP \}
+\item 
+\#define \mbox{\hyperlink{group__cmocka__exec_ga03159d4169e85cb92bb0eba97cfcf18d}{group\+\_\+test\+\_\+teardown}}(teardown)~    \{ "{}group\+\_\+"{} \#teardown, teardown, UNIT\+\_\+\+TEST\+\_\+\+FUNCTION\+\_\+\+TYPE\+\_\+\+GROUP\+\_\+\+TEARDOWN \}
+\item 
+\Hypertarget{group__cmocka__exec_ga3459ccdfa6d086981173318ef8bca35d}\label{group__cmocka__exec_ga3459ccdfa6d086981173318ef8bca35d} 
+\#define {\bfseries run\+\_\+group\+\_\+tests}(tests)~\+\_\+run\+\_\+group\+\_\+tests(tests, sizeof(tests) / sizeof((tests)\mbox{[}0\mbox{]}))
+\item 
+\Hypertarget{group__cmocka__exec_gaa6b02a244522b0626447a2a97c517a88}\label{group__cmocka__exec_gaa6b02a244522b0626447a2a97c517a88} 
+\#define {\bfseries run\+\_\+test}(f)~\mbox{\hyperlink{group__cmocka_ga20702ca5c3414c1c2bf98c3b73f90a21}{\+\_\+run\+\_\+test}}(\#f, f, NULL, UNIT\+\_\+\+TEST\+\_\+\+FUNCTION\+\_\+\+TYPE\+\_\+\+TEST, NULL)
+\item 
+\Hypertarget{group__cmocka__exec_ga2c863d3ecc2d4873b355af3cb7996939}\label{group__cmocka__exec_ga2c863d3ecc2d4873b355af3cb7996939} 
+\#define {\bfseries run\+\_\+tests}(tests)~\+\_\+run\+\_\+tests(tests, sizeof(tests) / sizeof((tests)\mbox{[}0\mbox{]}))
+\item 
+\Hypertarget{group__cmocka__exec_ga16a13f6e5592bf5bf3f678e8f950f953}\label{group__cmocka__exec_ga16a13f6e5592bf5bf3f678e8f950f953} 
+\#define {\bfseries skip}()~\+\_\+skip(\+\_\+\+\_\+\+FILE\+\_\+\+\_\+, \+\_\+\+\_\+\+LINE\+\_\+\+\_\+)
+\item 
+\#define \mbox{\hyperlink{group__cmocka__exec_gaf79fe61343efe7cdeb5bbb12a5577cb3}{unit\+\_\+test}}(f)~\{ \#f, f, UNIT\+\_\+\+TEST\+\_\+\+FUNCTION\+\_\+\+TYPE\+\_\+\+TEST \}
+\item 
+\#define \mbox{\hyperlink{group__cmocka__exec_gaf005639a9b71cced47ce4708e53912d9}{unit\+\_\+test\+\_\+setup}}(test,  setup)
+\item 
+\#define \mbox{\hyperlink{group__cmocka__exec_gaee80106db018434c00df4ba235415b26}{unit\+\_\+test\+\_\+setup\+\_\+teardown}}(test,  setup,  teardown)
+\item 
+\#define \mbox{\hyperlink{group__cmocka__exec_ga3fe0f3c69fb85843701876937b7217f4}{unit\+\_\+test\+\_\+teardown}}(test,  teardown)
+\end{DoxyCompactItemize}
+\doxysubsubsubsection*{Functions}
+\begin{DoxyCompactItemize}
+\item 
+\Hypertarget{group__cmocka__exec_gafa54d85865af7c8e091378a1e22baa40}\label{group__cmocka__exec_gafa54d85865af7c8e091378a1e22baa40} 
+static void {\bfseries \+\_\+unit\+\_\+test\+\_\+dummy} (void \texorpdfstring{$\ast$}{*}\texorpdfstring{$\ast$}{*}state)
+\end{DoxyCompactItemize}
+
+
+\doxysubsubsection{Detailed Description}
+This is the way tests are executed with CMocka.
+
+The following example illustrates this macro\textquotesingle{}s use with the unit\+\_\+test macro.
+
+
+\begin{DoxyCode}{0}
+\DoxyCodeLine{\textcolor{keywordtype}{void}\ Test0(\textcolor{keywordtype}{void}\ **state);}
+\DoxyCodeLine{\textcolor{keywordtype}{void}\ Test1(\textcolor{keywordtype}{void}\ **state);}
+\DoxyCodeLine{}
+\DoxyCodeLine{\textcolor{keywordtype}{int}\ main(\textcolor{keywordtype}{void})}
+\DoxyCodeLine{\{}
+\DoxyCodeLine{\ \ \ \ \textcolor{keyword}{const}\ \textcolor{keyword}{struct\ }\mbox{\hyperlink{structCMUnitTest}{CMUnitTest}}\ tests[]\ =\ \{}
+\DoxyCodeLine{\ \ \ \ \ \ \ \ \mbox{\hyperlink{group__cmocka__exec_ga562719c550b5ce277aab6b0371f7f34f}{cmocka\_unit\_test}}(Test0),}
+\DoxyCodeLine{\ \ \ \ \ \ \ \ \mbox{\hyperlink{group__cmocka__exec_ga562719c550b5ce277aab6b0371f7f34f}{cmocka\_unit\_test}}(Test1),}
+\DoxyCodeLine{\ \ \ \ \};}
+\DoxyCodeLine{}
+\DoxyCodeLine{\ \ \ \ \textcolor{keywordflow}{return}\ cmocka\_run\_group\_tests(tests,\ NULL,\ NULL);}
+\DoxyCodeLine{\}}
+
+\end{DoxyCode}
+ 
+
+\doxysubsubsection{Macro Definition Documentation}
+\Hypertarget{group__cmocka__exec_ga562719c550b5ce277aab6b0371f7f34f}\label{group__cmocka__exec_ga562719c550b5ce277aab6b0371f7f34f} 
+\index{Running Tests@{Running Tests}!cmocka\_unit\_test@{cmocka\_unit\_test}}
+\index{cmocka\_unit\_test@{cmocka\_unit\_test}!Running Tests@{Running Tests}}
+\doxysubsubsubsection{\texorpdfstring{cmocka\_unit\_test}{cmocka\_unit\_test}}
+{\footnotesize\ttfamily \#define cmocka\+\_\+unit\+\_\+test(\begin{DoxyParamCaption}\item[{}]{f }\end{DoxyParamCaption})~\{ \#f, f, NULL, NULL, NULL \}}
+
+Initializes a \doxylink{structCMUnitTest}{CMUnit\+Test} structure. \Hypertarget{group__cmocka__exec_ga4d54508b0b7150afb27b4da38f0015c6}\label{group__cmocka__exec_ga4d54508b0b7150afb27b4da38f0015c6} 
+\index{Running Tests@{Running Tests}!cmocka\_unit\_test\_prestate@{cmocka\_unit\_test\_prestate}}
+\index{cmocka\_unit\_test\_prestate@{cmocka\_unit\_test\_prestate}!Running Tests@{Running Tests}}
+\doxysubsubsubsection{\texorpdfstring{cmocka\_unit\_test\_prestate}{cmocka\_unit\_test\_prestate}}
+{\footnotesize\ttfamily \#define cmocka\+\_\+unit\+\_\+test\+\_\+prestate(\begin{DoxyParamCaption}\item[{}]{f,  }\item[{}]{state }\end{DoxyParamCaption})~\{ \#f, f, NULL, NULL, state \}}
+
+Initialize a \doxylink{structCMUnitTest}{CMUnit\+Test} structure with given initial state. It will be passed to test function as an argument later. It can be used when test state does not need special initialization or was initialized already. \begin{DoxyNote}{Note}
+If the group setup function initialized the state already, it won\textquotesingle{}t be overridden by the initial state defined here. 
+\end{DoxyNote}
+\Hypertarget{group__cmocka__exec_ga07ea44503d0f6c84c460b4a878cf31d5}\label{group__cmocka__exec_ga07ea44503d0f6c84c460b4a878cf31d5} 
+\index{Running Tests@{Running Tests}!cmocka\_unit\_test\_prestate\_setup\_teardown@{cmocka\_unit\_test\_prestate\_setup\_teardown}}
+\index{cmocka\_unit\_test\_prestate\_setup\_teardown@{cmocka\_unit\_test\_prestate\_setup\_teardown}!Running Tests@{Running Tests}}
+\doxysubsubsubsection{\texorpdfstring{cmocka\_unit\_test\_prestate\_setup\_teardown}{cmocka\_unit\_test\_prestate\_setup\_teardown}}
+{\footnotesize\ttfamily \#define cmocka\+\_\+unit\+\_\+test\+\_\+prestate\+\_\+setup\+\_\+teardown(\begin{DoxyParamCaption}\item[{}]{f,  }\item[{}]{setup,  }\item[{}]{teardown,  }\item[{}]{state }\end{DoxyParamCaption})~\{ \#f, f, setup, teardown, state \}}
+
+Initialize a \doxylink{structCMUnitTest}{CMUnit\+Test} structure with given initial state, setup and teardown function. Any of these values can be NULL. Initial state is passed later to setup function, or directly to test if none was given. \begin{DoxyNote}{Note}
+If the group setup function initialized the state already, it won\textquotesingle{}t be overridden by the initial state defined here. 
+\end{DoxyNote}
+\Hypertarget{group__cmocka__exec_gaaccacc105038e49462888a3ededa28c5}\label{group__cmocka__exec_gaaccacc105038e49462888a3ededa28c5} 
+\index{Running Tests@{Running Tests}!cmocka\_unit\_test\_setup@{cmocka\_unit\_test\_setup}}
+\index{cmocka\_unit\_test\_setup@{cmocka\_unit\_test\_setup}!Running Tests@{Running Tests}}
+\doxysubsubsubsection{\texorpdfstring{cmocka\_unit\_test\_setup}{cmocka\_unit\_test\_setup}}
+{\footnotesize\ttfamily \#define cmocka\+\_\+unit\+\_\+test\+\_\+setup(\begin{DoxyParamCaption}\item[{}]{f,  }\item[{}]{setup }\end{DoxyParamCaption})~\{ \#f, f, setup, NULL, NULL \}}
+
+Initializes a \doxylink{structCMUnitTest}{CMUnit\+Test} structure with a setup function. \Hypertarget{group__cmocka__exec_gab9e5396c9a424ccbb5d30e6d421fd066}\label{group__cmocka__exec_gab9e5396c9a424ccbb5d30e6d421fd066} 
+\index{Running Tests@{Running Tests}!cmocka\_unit\_test\_setup\_teardown@{cmocka\_unit\_test\_setup\_teardown}}
+\index{cmocka\_unit\_test\_setup\_teardown@{cmocka\_unit\_test\_setup\_teardown}!Running Tests@{Running Tests}}
+\doxysubsubsubsection{\texorpdfstring{cmocka\_unit\_test\_setup\_teardown}{cmocka\_unit\_test\_setup\_teardown}}
+{\footnotesize\ttfamily \#define cmocka\+\_\+unit\+\_\+test\+\_\+setup\+\_\+teardown(\begin{DoxyParamCaption}\item[{}]{f,  }\item[{}]{setup,  }\item[{}]{teardown }\end{DoxyParamCaption})~\{ \#f, f, setup, teardown, NULL \}}
+
+Initialize an array of \doxylink{structCMUnitTest}{CMUnit\+Test} structures with a setup function for a test and a teardown function. Either setup or teardown can be NULL. \Hypertarget{group__cmocka__exec_ga9b0d5ed78ddeba6d9aaa9a692cda426b}\label{group__cmocka__exec_ga9b0d5ed78ddeba6d9aaa9a692cda426b} 
+\index{Running Tests@{Running Tests}!cmocka\_unit\_test\_teardown@{cmocka\_unit\_test\_teardown}}
+\index{cmocka\_unit\_test\_teardown@{cmocka\_unit\_test\_teardown}!Running Tests@{Running Tests}}
+\doxysubsubsubsection{\texorpdfstring{cmocka\_unit\_test\_teardown}{cmocka\_unit\_test\_teardown}}
+{\footnotesize\ttfamily \#define cmocka\+\_\+unit\+\_\+test\+\_\+teardown(\begin{DoxyParamCaption}\item[{}]{f,  }\item[{}]{teardown }\end{DoxyParamCaption})~\{ \#f, f, NULL, teardown, NULL \}}
+
+Initializes a \doxylink{structCMUnitTest}{CMUnit\+Test} structure with a teardown function. \Hypertarget{group__cmocka__exec_ga6da2355538bde0b4d5fe89b1fbc95899}\label{group__cmocka__exec_ga6da2355538bde0b4d5fe89b1fbc95899} 
+\index{Running Tests@{Running Tests}!fail\_msg@{fail\_msg}}
+\index{fail\_msg@{fail\_msg}!Running Tests@{Running Tests}}
+\doxysubsubsubsection{\texorpdfstring{fail\_msg}{fail\_msg}}
+{\footnotesize\ttfamily \#define fail\+\_\+msg(\begin{DoxyParamCaption}\item[{}]{msg,  }\item[{}]{... }\end{DoxyParamCaption})}
+
+{\bfseries Value\+:}
+\begin{DoxyCode}{0}
+\DoxyCodeLine{\ \ \ \ \textcolor{keywordflow}{do}\ \{\ \(\backslash\)}
+\DoxyCodeLine{\ \ \ \ print\_error(\textcolor{stringliteral}{"{}ERROR:\ "{}}\ msg\ \textcolor{stringliteral}{"{}\(\backslash\)n"{}},\ \#\#\_\_VA\_ARGS\_\_);\ \(\backslash\)}
+\DoxyCodeLine{\ \ \ \ fail();\ \(\backslash\)}
+\DoxyCodeLine{\}\ \textcolor{keywordflow}{while}\ (0)}
+
+\end{DoxyCode}
+\Hypertarget{group__cmocka__exec_ga246dbcbb338e4becbfef009b2bb14b78}\label{group__cmocka__exec_ga246dbcbb338e4becbfef009b2bb14b78} 
+\index{Running Tests@{Running Tests}!group\_test\_setup@{group\_test\_setup}}
+\index{group\_test\_setup@{group\_test\_setup}!Running Tests@{Running Tests}}
+\doxysubsubsubsection{\texorpdfstring{group\_test\_setup}{group\_test\_setup}}
+{\footnotesize\ttfamily \#define group\+\_\+test\+\_\+setup(\begin{DoxyParamCaption}\item[{}]{setup }\end{DoxyParamCaption})~    \{ "{}group\+\_\+"{} \#setup, setup, UNIT\+\_\+\+TEST\+\_\+\+FUNCTION\+\_\+\+TYPE\+\_\+\+GROUP\+\_\+\+SETUP \}}
+
+Initializes a \doxylink{structUnitTest}{Unit\+Test} structure for a group setup function.
+
+\begin{DoxyRefDesc}{Deprecated}
+\item[\mbox{\hyperlink{deprecated__deprecated000004}{Deprecated}}]This function was deprecated in favor of cmocka\+\_\+run\+\_\+group\+\_\+tests \end{DoxyRefDesc}
+\Hypertarget{group__cmocka__exec_ga03159d4169e85cb92bb0eba97cfcf18d}\label{group__cmocka__exec_ga03159d4169e85cb92bb0eba97cfcf18d} 
+\index{Running Tests@{Running Tests}!group\_test\_teardown@{group\_test\_teardown}}
+\index{group\_test\_teardown@{group\_test\_teardown}!Running Tests@{Running Tests}}
+\doxysubsubsubsection{\texorpdfstring{group\_test\_teardown}{group\_test\_teardown}}
+{\footnotesize\ttfamily \#define group\+\_\+test\+\_\+teardown(\begin{DoxyParamCaption}\item[{}]{teardown }\end{DoxyParamCaption})~    \{ "{}group\+\_\+"{} \#teardown, teardown, UNIT\+\_\+\+TEST\+\_\+\+FUNCTION\+\_\+\+TYPE\+\_\+\+GROUP\+\_\+\+TEARDOWN \}}
+
+Initializes a \doxylink{structUnitTest}{Unit\+Test} structure for a group teardown function.
+
+\begin{DoxyRefDesc}{Deprecated}
+\item[\mbox{\hyperlink{deprecated__deprecated000005}{Deprecated}}]This function was deprecated in favor of cmocka\+\_\+run\+\_\+group\+\_\+tests \end{DoxyRefDesc}
+\Hypertarget{group__cmocka__exec_gaf79fe61343efe7cdeb5bbb12a5577cb3}\label{group__cmocka__exec_gaf79fe61343efe7cdeb5bbb12a5577cb3} 
+\index{Running Tests@{Running Tests}!unit\_test@{unit\_test}}
+\index{unit\_test@{unit\_test}!Running Tests@{Running Tests}}
+\doxysubsubsubsection{\texorpdfstring{unit\_test}{unit\_test}}
+{\footnotesize\ttfamily \#define unit\+\_\+test(\begin{DoxyParamCaption}\item[{}]{f }\end{DoxyParamCaption})~\{ \#f, f, UNIT\+\_\+\+TEST\+\_\+\+FUNCTION\+\_\+\+TYPE\+\_\+\+TEST \}}
+
+Initializes a \doxylink{structUnitTest}{Unit\+Test} structure.
+
+\begin{DoxyRefDesc}{Deprecated}
+\item[\mbox{\hyperlink{deprecated__deprecated000001}{Deprecated}}]This function was deprecated in favor of cmocka\+\_\+unit\+\_\+test \end{DoxyRefDesc}
+\Hypertarget{group__cmocka__exec_gaf005639a9b71cced47ce4708e53912d9}\label{group__cmocka__exec_gaf005639a9b71cced47ce4708e53912d9} 
+\index{Running Tests@{Running Tests}!unit\_test\_setup@{unit\_test\_setup}}
+\index{unit\_test\_setup@{unit\_test\_setup}!Running Tests@{Running Tests}}
+\doxysubsubsubsection{\texorpdfstring{unit\_test\_setup}{unit\_test\_setup}}
+{\footnotesize\ttfamily \#define unit\+\_\+test\+\_\+setup(\begin{DoxyParamCaption}\item[{}]{test,  }\item[{}]{setup }\end{DoxyParamCaption})}
+
+{\bfseries Value\+:}
+\begin{DoxyCode}{0}
+\DoxyCodeLine{\ \ \ \ \_unit\_test\_setup(test,\ setup),\ \(\backslash\)}
+\DoxyCodeLine{\ \ \ \ unit\_test(test),\ \(\backslash\)}
+\DoxyCodeLine{\ \ \ \ \_unit\_test\_teardown(test,\ \_unit\_test\_dummy)}
+
+\end{DoxyCode}
+Initializes a \doxylink{structUnitTest}{Unit\+Test} structure with a setup function.
+
+\begin{DoxyRefDesc}{Deprecated}
+\item[\mbox{\hyperlink{deprecated__deprecated000002}{Deprecated}}]This function was deprecated in favor of cmocka\+\_\+unit\+\_\+test\+\_\+setup \end{DoxyRefDesc}
+\Hypertarget{group__cmocka__exec_gaee80106db018434c00df4ba235415b26}\label{group__cmocka__exec_gaee80106db018434c00df4ba235415b26} 
+\index{Running Tests@{Running Tests}!unit\_test\_setup\_teardown@{unit\_test\_setup\_teardown}}
+\index{unit\_test\_setup\_teardown@{unit\_test\_setup\_teardown}!Running Tests@{Running Tests}}
+\doxysubsubsubsection{\texorpdfstring{unit\_test\_setup\_teardown}{unit\_test\_setup\_teardown}}
+{\footnotesize\ttfamily \#define unit\+\_\+test\+\_\+setup\+\_\+teardown(\begin{DoxyParamCaption}\item[{}]{test,  }\item[{}]{setup,  }\item[{}]{teardown }\end{DoxyParamCaption})}
+
+{\bfseries Value\+:}
+\begin{DoxyCode}{0}
+\DoxyCodeLine{\ \ \ \ \_unit\_test\_setup(test,\ setup),\ \(\backslash\)}
+\DoxyCodeLine{\ \ \ \ unit\_test(test),\ \(\backslash\)}
+\DoxyCodeLine{\ \ \ \ \_unit\_test\_teardown(test,\ teardown)}
+
+\end{DoxyCode}
+Initialize an array of \doxylink{structUnitTest}{Unit\+Test} structures with a setup function for a test and a teardown function. Either setup or teardown can be NULL.
+
+\begin{DoxyRefDesc}{Deprecated}
+\item[\mbox{\hyperlink{deprecated__deprecated000006}{Deprecated}}]This function was deprecated in favor of cmocka\+\_\+unit\+\_\+test\+\_\+setup\+\_\+teardown \end{DoxyRefDesc}
+\Hypertarget{group__cmocka__exec_ga3fe0f3c69fb85843701876937b7217f4}\label{group__cmocka__exec_ga3fe0f3c69fb85843701876937b7217f4} 
+\index{Running Tests@{Running Tests}!unit\_test\_teardown@{unit\_test\_teardown}}
+\index{unit\_test\_teardown@{unit\_test\_teardown}!Running Tests@{Running Tests}}
+\doxysubsubsubsection{\texorpdfstring{unit\_test\_teardown}{unit\_test\_teardown}}
+{\footnotesize\ttfamily \#define unit\+\_\+test\+\_\+teardown(\begin{DoxyParamCaption}\item[{}]{test,  }\item[{}]{teardown }\end{DoxyParamCaption})}
+
+{\bfseries Value\+:}
+\begin{DoxyCode}{0}
+\DoxyCodeLine{\ \ \ \ \_unit\_test\_setup(test,\ \_unit\_test\_dummy),\ \(\backslash\)}
+\DoxyCodeLine{\ \ \ \ unit\_test(test),\ \(\backslash\)}
+\DoxyCodeLine{\ \ \ \ \_unit\_test\_teardown(test,\ teardown)}
+
+\end{DoxyCode}
+Initializes a \doxylink{structUnitTest}{Unit\+Test} structure with a teardown function.
+
+\begin{DoxyRefDesc}{Deprecated}
+\item[\mbox{\hyperlink{deprecated__deprecated000003}{Deprecated}}]This function was deprecated in favor of cmocka\+\_\+unit\+\_\+test\+\_\+teardown \end{DoxyRefDesc}

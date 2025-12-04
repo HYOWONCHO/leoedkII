@@ -1,0 +1,17 @@
+<map id="SBC_RawAlignedReadBlockIO" name="SBC_RawAlignedReadBlockIO">
+<area shape="rect" id="Node000001" title="Read arbitrary bytes to a Block I/O device." alt="" coords="499,104,717,129"/>
+<area shape="rect" id="Node000002" href="$SBC__ProtectedSW_8c.html#ad2abd02c58e6ce9d4f11517e7d2c3089" title="Load and decrypt a protected system file from the secure partition." alt="" coords="263,5,399,31"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="572,100,515,71,450,45,399,31,400,26,452,39,518,67,574,95"/>
+<area shape="rect" id="Node000003" href="$SBC__ProtectedSW_8c.html#ae9d0525852cfae1df12cda21bccbce6d" title="Retrieve the number of protected software entries." alt="" coords="256,55,407,80"/>
+<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="522,104,403,83,404,77,523,99"/>
+<area shape="rect" id="Node000005" href="$SBC__FileCtrl_8c.html#aea7ec89395443df013700e8fc37c71c6" title="Loads and decrypts protected software data from a raw partition." alt="" coords="240,104,423,129"/>
+<area shape="poly" id="edge4_Node000001_Node000005" title=" " alt="" coords="485,119,423,119,423,114,485,114"/>
+<area shape="rect" id="Node000006" href="$SBC__ProtectedSW_8c.html#a197c1a9743d7bd540aadbb4d88ebb487" title="Retrieve the storage offset of a specific protected software slot (SW0/SW1)." alt="" coords="212,153,451,179"/>
+<area shape="poly" id="edge5_Node000001_Node000006" title=" " alt="" coords="523,134,404,156,403,151,522,129"/>
+<area shape="rect" id="Node000007" href="$SBC__ProtectedSW_8c.html#a17776e78948216d2a4a9a475f66d8637" title="Re&#45;encrypt (re&#45;crypto) a protected software image using a new key set." alt="" coords="231,203,432,228"/>
+<area shape="poly" id="edge7_Node000001_Node000007" title=" " alt="" coords="573,138,517,166,452,193,405,205,404,200,450,187,515,161,571,134"/>
+<area shape="rect" id="Node000004" href="$SBC__ProtectedSW_8c.html#a6d40367e0a002e55377ab0859776f807" title=" " alt="" coords="5,153,164,179"/>
+<area shape="poly" id="edge3_Node000003_Node000004" title=" " alt="" coords="243,84,213,94,152,124,105,155,102,151,150,120,211,89,242,79"/>
+<area shape="poly" id="edge6_Node000006_Node000004" title=" " alt="" coords="198,169,164,169,164,163,198,163"/>
+<area shape="poly" id="edge8_Node000007_Node000004" title=" " alt="" coords="254,203,149,181,150,176,255,197"/>
+</map>

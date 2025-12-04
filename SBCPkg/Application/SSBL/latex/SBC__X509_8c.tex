@@ -1,0 +1,167 @@
+\doxysection{SBC\+\_\+\+X509.\+c File Reference}
+\hypertarget{SBC__X509_8c}{}\label{SBC__X509_8c}\index{SBC\_X509.c@{SBC\_X509.c}}
+
+
+Implementation of X.\+509 certificate handling and verification routines.  
+
+
+{\ttfamily \#include $<$Library/\+Memory\+Allocation\+Lib.\+h$>$}\newline
+{\ttfamily \#include $<$Library/\+Base\+Memory\+Lib.\+h$>$}\newline
+{\ttfamily \#include $<$Library/\+Base\+Crypt\+Lib.\+h$>$}\newline
+{\ttfamily \#include "{}SBC\+\_\+\+Util.\+h"{}}\newline
+{\ttfamily \#include "{}SBC\+\_\+\+Config.\+h"{}}\newline
+{\ttfamily \#include "{}SBC\+\_\+\+Error\+Type.\+h"{}}\newline
+{\ttfamily \#include "{}SBC\+\_\+\+Type\+Defs.\+h"{}}\newline
+Include dependency graph for SBC\+\_\+\+X509.\+c\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=350pt]{SBC__X509_8c__incl}
+\end{center}
+\end{figure}
+\doxysubsubsection*{Functions}
+\begin{DoxyCompactItemize}
+\item 
+SBCStatus \mbox{\hyperlink{SBC__X509_8c_a83b37e71b664927af296bddea1f9a29e}{SBC\+\_\+\+Ec\+Get\+Private\+Key\+From\+Pem}} (CONST UINT8 \texorpdfstring{$\ast$}{*}der, UINTN derl, CONST CHAR8 \texorpdfstring{$\ast$}{*}passwd, VOID \texorpdfstring{$\ast$}{*}\texorpdfstring{$\ast$}{*}ctx)
+\item 
+SBCStatus \mbox{\hyperlink{SBC__X509_8c_a261c7272ffb8478c00a1099885f1f2dc}{SBC\+\_\+\+Ec\+Get\+Public\+Key\+From\+Pem}} (CONST UINT8 \texorpdfstring{$\ast$}{*}der, UINTN derl, VOID \texorpdfstring{$\ast$}{*}\texorpdfstring{$\ast$}{*}ctx)
+\begin{DoxyCompactList}\small\item\em Parse a DER-\/encoded EC public key and initialize an ECC context. \end{DoxyCompactList}\item 
+SBCStatus \mbox{\hyperlink{SBC__X509_8c_a14179f61531a13d740f23bef6f903dcf}{SBC\+\_\+\+X509\+Verify\+Cert}} (CONST UINT8 \texorpdfstring{$\ast$}{*}cert, UINTN certl, CONST UINT8 \texorpdfstring{$\ast$}{*}cacert, UINTN cacertl)
+\end{DoxyCompactItemize}
+
+
+\doxysubsection{Detailed Description}
+Implementation of X.\+509 certificate handling and verification routines. 
+
+Copyright (C) 2024 by Security Platform Inc. \texorpdfstring{$\ast$}{*} This file is part of the SBC Project. \texorpdfstring{$\ast$}{*}
+\begin{DoxyItemize}
+\item This software contains confidential and proprietary information of \texorpdfstring{$\ast$}{*} Security Platform Inc. Unauthorized reproduction, distribution, or \texorpdfstring{$\ast$}{*} disclosure of this software, in whole or in part, is strictly prohibited. \texorpdfstring{$\ast$}{*}
+\end{DoxyItemize}
+
+\begin{DoxyAuthor}{Author}
+LEON 
+\end{DoxyAuthor}
+\begin{DoxyVersion}{Version}
+1.\+0 
+\end{DoxyVersion}
+\begin{DoxyDate}{Date}
+2025-\/10-\/31
+\end{DoxyDate}
+\begin{DoxyCopyright}{Copyright}
+(c) 2025 Security Platform Inc. All rights reserved.
+\end{DoxyCopyright}
+This file implements functions for handling X.\+509 certificate processing used within the SBC secure boot and protected software validation framework. ~\newline
+ 
+
+\doxysubsection{Function Documentation}
+\Hypertarget{SBC__X509_8c_a83b37e71b664927af296bddea1f9a29e}\label{SBC__X509_8c_a83b37e71b664927af296bddea1f9a29e} 
+\index{SBC\_X509.c@{SBC\_X509.c}!SBC\_EcGetPrivateKeyFromPem@{SBC\_EcGetPrivateKeyFromPem}}
+\index{SBC\_EcGetPrivateKeyFromPem@{SBC\_EcGetPrivateKeyFromPem}!SBC\_X509.c@{SBC\_X509.c}}
+\doxysubsubsection{\texorpdfstring{SBC\_EcGetPrivateKeyFromPem()}{SBC\_EcGetPrivateKeyFromPem()}}
+{\footnotesize\ttfamily SBCStatus SBC\+\_\+\+Ec\+Get\+Private\+Key\+From\+Pem (\begin{DoxyParamCaption}\item[{CONST UINT8 \texorpdfstring{$\ast$}{*}}]{der,  }\item[{UINTN}]{derl,  }\item[{CONST CHAR8 \texorpdfstring{$\ast$}{*}}]{passwd,  }\item[{VOID \texorpdfstring{$\ast$}{*}\texorpdfstring{$\ast$}{*}}]{ctx }\end{DoxyParamCaption})}
+
+Retrive the EC private key from password-\/protected PEM key data
+
+\begin{DoxyAuthor}{Author}
+leoc (5/19/25)
+\end{DoxyAuthor}
+
+\begin{DoxyParams}{Parameters}
+{\em der} & ~\newline
+ \\
+\hline
+{\em derl} & ~\newline
+ \\
+\hline
+{\em passwd} & \\
+\hline
+{\em ctx} & ~\newline
+\\
+\hline
+\end{DoxyParams}
+\begin{DoxyReturn}{Returns}
+SBCStatus 
+\end{DoxyReturn}
+\Hypertarget{SBC__X509_8c_a261c7272ffb8478c00a1099885f1f2dc}\label{SBC__X509_8c_a261c7272ffb8478c00a1099885f1f2dc} 
+\index{SBC\_X509.c@{SBC\_X509.c}!SBC\_EcGetPublicKeyFromPem@{SBC\_EcGetPublicKeyFromPem}}
+\index{SBC\_EcGetPublicKeyFromPem@{SBC\_EcGetPublicKeyFromPem}!SBC\_X509.c@{SBC\_X509.c}}
+\doxysubsubsection{\texorpdfstring{SBC\_EcGetPublicKeyFromPem()}{SBC\_EcGetPublicKeyFromPem()}}
+{\footnotesize\ttfamily SBCStatus SBC\+\_\+\+Ec\+Get\+Public\+Key\+From\+Pem (\begin{DoxyParamCaption}\item[{CONST UINT8 \texorpdfstring{$\ast$}{*}}]{der,  }\item[{UINTN}]{derl,  }\item[{VOID \texorpdfstring{$\ast$}{*}\texorpdfstring{$\ast$}{*}}]{ctx }\end{DoxyParamCaption})}
+
+
+
+Parse a DER-\/encoded EC public key and initialize an ECC context. 
+
+Copyright (C) 2024 by Security Platform Inc. \texorpdfstring{$\ast$}{*} This file is part of the SBC Project. \texorpdfstring{$\ast$}{*}
+\begin{DoxyItemize}
+\item This software contains confidential and proprietary information of \texorpdfstring{$\ast$}{*} Security Platform Inc. Unauthorized reproduction, distribution, or \texorpdfstring{$\ast$}{*} disclosure of this software, in whole or in part, is strictly prohibited. \texorpdfstring{$\ast$}{*}
+\end{DoxyItemize}
+
+
+\begin{DoxyParams}[1]{Parameters}
+\mbox{\texttt{ in}}  & {\em der} & Pointer to the DER-\/encoded public key buffer. \\
+\hline
+\mbox{\texttt{ in}}  & {\em derl} & Length of the DER-\/encoded data in bytes. \\
+\hline
+\mbox{\texttt{ out}}  & {\em ctx} & Pointer to a variable that receives the created ECC context handle. The context must be released using the corresponding cleanup function when no longer needed.\\
+\hline
+\end{DoxyParams}
+
+\begin{DoxyRetVals}{Return values}
+{\em SBCOK} & The EC public key was successfully parsed and context created. \\
+\hline
+{\em SBCFAIL} & Parsing failed due to malformed DER data or unsupported key type. \\
+\hline
+{\em SBCNULLP} & One or more input pointers are NULL. \\
+\hline
+{\em SBCINVPARAM} & Invalid parameter values or buffer length. \\
+\hline
+{\em SBCCRYPTO} & ECC library or decoding failure occurred. \\
+\hline
+\end{DoxyRetVals}
+
+\begin{DoxyParams}[1]{Parameters}
+\mbox{\texttt{ in}}  & {\em der} & DER-\/encoded EC public key buffer  \\
+\hline
+\mbox{\texttt{ in}}  & {\em derl} & Length of the DER data (bytes)  \\
+\hline
+\mbox{\texttt{ out}}  & {\em ctx} & Pointer to ECC context handle \\
+\hline
+\end{DoxyParams}
+\Hypertarget{SBC__X509_8c_a14179f61531a13d740f23bef6f903dcf}\label{SBC__X509_8c_a14179f61531a13d740f23bef6f903dcf} 
+\index{SBC\_X509.c@{SBC\_X509.c}!SBC\_X509VerifyCert@{SBC\_X509VerifyCert}}
+\index{SBC\_X509VerifyCert@{SBC\_X509VerifyCert}!SBC\_X509.c@{SBC\_X509.c}}
+\doxysubsubsection{\texorpdfstring{SBC\_X509VerifyCert()}{SBC\_X509VerifyCert()}}
+{\footnotesize\ttfamily SBCStatus SBC\+\_\+\+X509\+Verify\+Cert (\begin{DoxyParamCaption}\item[{CONST UINT8 \texorpdfstring{$\ast$}{*}}]{cert,  }\item[{UINTN}]{certl,  }\item[{CONST UINT8 \texorpdfstring{$\ast$}{*}}]{cacert,  }\item[{UINTN}]{cacertl }\end{DoxyParamCaption})}
+
+Verify X509 certificate was issued by the trusted CA
+
+\begin{DoxyAuthor}{Author}
+leoc (5/19/25)
+\end{DoxyAuthor}
+
+\begin{DoxyParams}{Parameters}
+{\em cert} & ~\newline
+ \\
+\hline
+{\em certl} & ~\newline
+ \\
+\hline
+{\em cacert} & ~\newline
+ \\
+\hline
+{\em cacertl} & \\
+\hline
+\end{DoxyParams}
+\begin{DoxyReturn}{Returns}
+SBCStatus 
+\end{DoxyReturn}
+Here is the caller graph for this function\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=350pt]{SBC__X509_8c_a14179f61531a13d740f23bef6f903dcf_icgraph}
+\end{center}
+\end{figure}

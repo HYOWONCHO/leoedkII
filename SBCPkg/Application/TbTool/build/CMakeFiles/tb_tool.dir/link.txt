@@ -1,0 +1,1 @@
+/usr/bin/cc CMakeFiles/tb_tool.dir/src/main.c.o CMakeFiles/tb_tool.dir/src/mp_process.c.o CMakeFiles/tb_tool.dir/src/opt.c.o CMakeFiles/tb_tool.dir/src/raw_device_ctrl.c.o -o tb_tool 

@@ -1,0 +1,5 @@
+<map id="SBC_FindFileBufHndl" name="SBC_FindFileBufHndl">
+<area shape="rect" id="Node000001" title="Searches for a valid EFI handle that can access the specified file." alt="" coords="5,5,167,31"/>
+<area shape="rect" id="Node000002" href="$SBC__FileCtrl_8c.html#a0aa11f24c9d4caea2c159f6d571f604c" title="Checks if a specified file is accessible in the EFI file system." alt="" coords="215,5,353,31"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="167,15,201,15,201,21,167,21"/>
+</map>

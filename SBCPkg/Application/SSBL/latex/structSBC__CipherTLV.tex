@@ -1,0 +1,51 @@
+\doxysection{SBC\+\_\+\+Cipher\+TLV Struct Reference}
+\hypertarget{structSBC__CipherTLV}{}\label{structSBC__CipherTLV}\index{SBC\_CipherTLV@{SBC\_CipherTLV}}
+
+
+Represents a generic TLV (Tag-\/\+Length-\/\+Value) structure used in cipher operations.  
+
+
+
+
+{\ttfamily \#include $<$SBC\+\_\+\+Crypt\+AES.\+h$>$}
+
+\doxysubsubsection*{Data Fields}
+\begin{DoxyCompactItemize}
+\item 
+\mbox{\hyperlink{structSBC__CipherTLV_a98d73a423a540c14f987659241edf142}{UINTN}} \mbox{\hyperlink{structSBC__CipherTLV_a5e0945f7e8dc3cf069a7f90d30edafe1}{length}}
+\item 
+\mbox{\hyperlink{structSBC__CipherTLV_a98d73a423a540c14f987659241edf142}{UINT16}} \mbox{\hyperlink{structSBC__CipherTLV_a41deccb86929d442aaa0fa400f76fd17}{tag}}
+\item 
+UINT8 \texorpdfstring{$\ast$}{*} \mbox{\hyperlink{structSBC__CipherTLV_a98d73a423a540c14f987659241edf142}{value}}
+\end{DoxyCompactItemize}
+
+
+\doxysubsection{Detailed Description}
+Represents a generic TLV (Tag-\/\+Length-\/\+Value) structure used in cipher operations. 
+
+This structure is used to encapsulate cryptographic data such as keys, input messages, or output buffers in a flexible TLV format. 
+
+\doxysubsection{Field Documentation}
+\Hypertarget{structSBC__CipherTLV_a5e0945f7e8dc3cf069a7f90d30edafe1}\label{structSBC__CipherTLV_a5e0945f7e8dc3cf069a7f90d30edafe1} 
+\index{SBC\_CipherTLV@{SBC\_CipherTLV}!length@{length}}
+\index{length@{length}!SBC\_CipherTLV@{SBC\_CipherTLV}}
+\doxysubsubsection{\texorpdfstring{length}{length}}
+{\footnotesize\ttfamily \mbox{\hyperlink{structSBC__CipherTLV_a98d73a423a540c14f987659241edf142}{UINTN}} SBC\+\_\+\+Cipher\+TLV\+::length}
+
+Length of the value in bytes. \Hypertarget{structSBC__CipherTLV_a41deccb86929d442aaa0fa400f76fd17}\label{structSBC__CipherTLV_a41deccb86929d442aaa0fa400f76fd17} 
+\index{SBC\_CipherTLV@{SBC\_CipherTLV}!tag@{tag}}
+\index{tag@{tag}!SBC\_CipherTLV@{SBC\_CipherTLV}}
+\doxysubsubsection{\texorpdfstring{tag}{tag}}
+{\footnotesize\ttfamily \mbox{\hyperlink{structSBC__CipherTLV_a98d73a423a540c14f987659241edf142}{UINT16}} SBC\+\_\+\+Cipher\+TLV\+::tag}
+
+Identifier tag for the data type. \Hypertarget{structSBC__CipherTLV_a98d73a423a540c14f987659241edf142}\label{structSBC__CipherTLV_a98d73a423a540c14f987659241edf142} 
+\index{SBC\_CipherTLV@{SBC\_CipherTLV}!value@{value}}
+\index{value@{value}!SBC\_CipherTLV@{SBC\_CipherTLV}}
+\doxysubsubsection{\texorpdfstring{value}{value}}
+{\footnotesize\ttfamily UINT8\texorpdfstring{$\ast$}{*} SBC\+\_\+\+Cipher\+TLV\+::value}
+
+Pointer to the actual data value. 
+
+The documentation for this struct was generated from the following file\+:\begin{DoxyCompactItemize}
+\item 
+SBC\+\_\+\+Crypt\+AES.\+h\end{DoxyCompactItemize}
