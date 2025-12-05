@@ -1,0 +1,10 @@
+*.bin
+*.vtg
+*.efi
+*.exe
+rawfs_*
+dump_*
+
+
+build/
+*/build/
