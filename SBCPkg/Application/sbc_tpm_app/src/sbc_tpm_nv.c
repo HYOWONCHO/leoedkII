@@ -156,7 +156,7 @@ static SBCStatus SBC_TpmInit(SBC_TPM_CTX *ctx, const char *tcti_conf)
     memset(ctx, 0, sizeof(*ctx));
 
     if (!tcti_conf)
-        tcti_conf = "device:/dev/tpm0";
+        tcti_conf = "device:/dev/tpmrm0";
 
     TSS2_RC rc;
     TSS2_ABI_VERSION abi = TSS2_ABI_VERSION_CURRENT;
@@ -215,31 +215,50 @@ static void SBC_TpmFinish(SBC_TPM_CTX *ctx)
  *
  * @return 1 = exists, 0 = not exist, <0 = error.
  */
-static int SBC_NvExists(SBC_TPM_CTX *ctx, TPMI_RH_NV_INDEX index)
+int SBC_NvExists(SBC_TPM_CTX *ctx, TPMI_RH_NV_INDEX index)
 {
     if (!ctx || !ctx->sys)
         return -1;
 
-    TPM2B_NV_PUBLIC nv_pub = {0};
+    TPM2B_NV_PUBLIC nv_public = {0};
     TPM2B_NAME nv_name = {0};
     TSS2_RC rc = Tss2_Sys_NV_ReadPublic(
         ctx->sys,
         index,
         NULL,
-        &nv_pub,
+        &nv_public,
         &nv_name,
         NULL
     );
 
-    if (rc == TSS2_RC_SUCCESS)
+    TSS2_RC base_rc = rc & 0xFFFF;  /* strip layer bits */
+
+    if (rc == TSS2_RC_SUCCESS) {
+        /* NV index exists and is readable */
         return 1;
+    }
 
-    if ((rc >> 12) == TPM2_RC_HANDLE)
+    if (base_rc == TPM2_RC_HANDLE) {
+        /* NV index not defined */
         return 0;
+    }
 
-    fprintf(stderr, C_RED "[ERROR] NV_ReadPublic(0x%08x): 0x%x\n" C_RST, index, rc);
+    if (base_rc == TPM2_RC_NV_DEFINED) {
+        /* NV index is already defined (treat as exists) */
+        fprintf(stderr,
+            "[WARN] NV_ReadPublic(0x%08x) returned NV_DEFINED (0x%x), "
+            "treating as 'exists'.\n",
+            index, rc);
+        return 1;
+    }
+
+    fprintf(stderr,
+        "[ERROR] NV_ReadPublic(0x%08x) failed with rc=0x%x\n",
+        index, rc);
     return -1;
 }
+
+
 
 /**
  * @brief Define NV index with simple owner+auth read/write attributes.
@@ -319,6 +338,7 @@ static SBCStatus SBC_NvUndefine(SBC_TPM_CTX *ctx, TPMI_RH_NV_INDEX index)
 /**
  * @brief Ensure NV index is defined with expected size.
  */
+#if 0
 static SBCStatus SBC_NvEnsureDefined(SBC_TPM_CTX *ctx,
                                      TPMI_RH_NV_INDEX index,
                                      UINT16 size)
@@ -335,6 +355,26 @@ static SBCStatus SBC_NvEnsureDefined(SBC_TPM_CTX *ctx,
     printf(C_YEL "[INFO] NV index 0x%08x not found. Defining...\n" C_RST, index);
     return SBC_NvDefine(ctx, index, size);
 }
+#else
+SBCStatus SBC_NvEnsureDefined(SBC_TPM_CTX *ctx,
+                              TPMI_RH_NV_INDEX index,
+                              uint16_t size)
+{
+    int exists = SBC_NvExists(ctx, index);
+    if (exists < 0)
+        return SBC_TPM_ERR;
+
+    if (exists == 1) {
+        /* Already defined, do not redefine */
+        return SBC_OK;
+    }
+
+    /* exists == 0 → not defined, create new NV space */
+    return SBC_NvDefine(ctx, index, size);
+}
+
+
+#endif
 
 /* ============================================================
  *  NV read / write with CRC check

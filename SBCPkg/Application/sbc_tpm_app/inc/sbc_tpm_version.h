@@ -3,7 +3,7 @@
 
 #include <tss2/tss2_esys.h>
 
-#define TPM_DEVICE "/dev/tpm0"
+#define TPM_DEVICE "/dev/tpmrm0"
 
 int tpm_print_random(void);
 int tpm_print_version(void);
