@@ -1,0 +1,3 @@
+/home/leoc/workspace_leo/leoedkII/SBCPkg/Application/sbc_tpm_app/build/CMakeFiles/sbc_tpm.dir
+/home/leoc/workspace_leo/leoedkII/SBCPkg/Application/sbc_tpm_app/build/CMakeFiles/edit_cache.dir
+/home/leoc/workspace_leo/leoedkII/SBCPkg/Application/sbc_tpm_app/build/CMakeFiles/rebuild_cache.dir
