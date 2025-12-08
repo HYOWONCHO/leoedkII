@@ -241,32 +241,36 @@ int SBC_NvExists(SBC_TPM_CTX *ctx, TPMI_RH_NV_INDEX index)
         NULL
     );
 
-    /* Extract the TPM_RC_xxx lower 16 bits.
-     * Tss2_RC_GetCode() is removed in TPM2-TSS v4.x.
+    /* Extract base TPM_RC_xxx code using macro.
+     * Tss2_RC_GetCode() does NOT exist in TPM2-TSS v4.x.
      */
-    TSS2_RC rc_code = rc & 0xFFFF;
+    TSS2_RC rc_code =  rc & 0xFF;;
 
     /* Case 1: NV index exists */
     if (rc == TSS2_RC_SUCCESS)
         return 1;
 
-    /* Case 2: NV index is not defined */
-    if (rc_code == TPM2_RC_HANDLE)
-        return 0;
-
-    /* Case 3: Some TPMs return NV_DEFINED instead of SUCCESS.
-     * Treat this as "exists".
+    /* Case 2: NV index is not defined / invalid for current use.
+     *
+     * For our usage, both TPM2_RC_HANDLE and TPM2_RC_VALUE can mean
+     * "this NV handle is not usable yet" → treat as "not exists" and
+     * let DefineSpace create it.
      */
+    if (rc_code == TPM2_RC_HANDLE || rc_code == TPM2_RC_VALUE) {
+        return 0;
+    }
+
+    /* Case 3: Some TPMs return NV_DEFINED when NV index is already defined. */
     if (rc_code == TPM2_RC_NV_DEFINED) {
         fprintf(stderr,
-            C_CYN "[WARN] NV_ReadPublic(0x%08X) returned NV_DEFINED (0x%X). Treating as exists.\n" C_RST,
+            "[WARN] NV_ReadPublic(0x%08X) returned NV_DEFINED (0x%X). Treating as exists.\n",
             index, rc);
         return 1;
     }
 
     /* Case 4: Unexpected TPM error */
     fprintf(stderr,
-        C_RED "[ERROR] NV_ReadPublic(0x%08X) failed: rc=0x%X (%s)\n" C_RST,
+        "[ERROR] NV_ReadPublic(0x%08X) failed: rc=0x%X (%s)\n",
         index,
         rc,
         Tss2_RC_Decode(rc)
