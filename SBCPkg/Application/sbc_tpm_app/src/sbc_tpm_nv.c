@@ -75,33 +75,67 @@ static uint32_t crc32_calc(const uint8_t *buf, size_t len)
     return ~crc;
 }
 
-/* ============================================================
- *  Colored hexdump
- * ============================================================ */
-
 /**
- * @brief Print buffer in colored hexdump format.
+ * @brief Print buffer in professional hex view format with header.
+ *
+ * Example:
+ *        00 01 02 03 04 05 06 07 08 09 0A 0B 0C 0D 0E 0F
+ *        ------------------------------------------------
+ * 0000 | 48 65 6C 6C 6F 20 ... |Hello...|
  */
 static void hexdump_color(const uint8_t *data, size_t size)
 {
-    for (size_t i = 0; i < size; i += 16) {
-        /* offset */
-        printf(C_CYN "%04zx  " C_RST, i);
+    const size_t bytes_per_line = 16;
 
-        /* hex part */
-        for (size_t j = 0; j < 16; j++) {
-            if (i + j < size)
-                printf(C_GRN "%02x " C_RST, data[i + j]);
+    /* Header: column indexes */
+    printf("      ");
+    for (size_t i = 0; i < bytes_per_line; i++)
+        printf("%02zx ", i);
+    printf("\n");
+
+    /* Header: separator line */
+    printf("      ");
+    for (size_t i = 0; i < bytes_per_line; i++)
+        printf("---");
+    printf("\n");
+
+    /* Hexdump contents */
+    for (size_t offset = 0; offset < size; offset += bytes_per_line) {
+
+        /* Print offset */
+        //printf(C_CYN "%04zx" C_RST " | ", offset);
+        printf(C_CYN "%04zx" C_RST "  ", offset);
+
+        /* Hex region */
+        for (size_t i = 0; i < bytes_per_line; i++) {
+            size_t idx = offset + i;
+            if (idx < size)
+                printf(C_GRN "%02x " C_RST, data[idx]);
             else
                 printf("   ");
         }
 
-        printf(" |");
-
+        printf("| ");
+#if 0
+        /* ASCII region */
+        for (size_t i = 0; i < bytes_per_line; i++) {
+            size_t idx = offset + i;
+            if (idx < size) {
+                uint8_t c = data[idx];
+                if (c >= 32 && c <= 126)
+                    printf(C_YEL "%c" C_RST, c);
+                else
+                    printf(".");
+            } else {
+                printf(" ");
+            }
+        }
+#else
         /* ASCII part */
-        for (size_t j = 0; j < 16; j++) {
-            if (i + j < size) {
-                uint8_t c = data[i + j];
+        for (size_t i = 0; i < bytes_per_line; i++) {
+            size_t idx = offset + i;
+            if (idx < size) {
+                uint8_t c = data[idx];
                 if (c >= 32 && c <= 126)
                     printf(C_YEL "%c" C_RST, c);
                 else
@@ -112,6 +146,8 @@ static void hexdump_color(const uint8_t *data, size_t size)
         }
 
         printf("|\n");
+#endif
+        printf("\n");
     }
 }
 
@@ -270,7 +306,7 @@ int SBC_NvExists(SBC_TPM_CTX *ctx, TPMI_RH_NV_INDEX index)
 
     /* Case 4: Unexpected TPM error */
     fprintf(stderr,
-        "[ERROR] NV_ReadPublic(0x%08X) failed: rc=0x%X (%s)\n",
+        C_RED "[ERROR] NV_ReadPublic(0x%08X) failed: rc=0x%X (%s)\n",
         index,
         rc,
         Tss2_RC_Decode(rc)
@@ -548,6 +584,38 @@ static void fill_example_vectors(void)
  *  Test entry
  * ============================================================ */
 
+
+static SBCStatus fill_cert_with_tpm_random(SBC_TPM_CTX *ctx)
+{
+    uint8_t *p = g_cert1;
+    size_t remaining = NV_CERT_SIZE;
+
+    while (remaining > 0) {
+
+        TPM2B_DIGEST rand = { .size = 0 };
+        TSS2_RC rc = Tss2_Sys_GetRandom(
+            ctx->sys,
+            NULL,
+            (remaining > 64 ? 64 : remaining),   /* TPM max ≈ 64 bytes per call */
+            &rand,
+            NULL
+        );
+
+        if (rc != TSS2_RC_SUCCESS) {
+            fprintf(stderr, C_RED "[ERROR] GetRandom failed: rc=0x%X (%s)\n" C_RST,
+                    rc, Tss2_RC_Decode(rc));
+            return rc;
+        }
+
+        memcpy(p, rand.buffer, rand.size);
+        p += rand.size;
+        remaining -= rand.size;
+    }
+
+    return SBC_OK;
+}
+
+
 /**
  * @brief Simple test routine for NV manager.
  *
@@ -585,8 +653,16 @@ int sbc_nv_test_main(void)
         return 1;
     }
 
-    /* Write KEY1 with CRC check (expected_crc = 0 to skip compare) */
-    st = SBC_NvWriteChecked(&ctx, slot_key1, g_key1, sizeof(g_key1), 0);
+    /* Fill CERT1 buffer with TPM Random */
+    st = fill_cert_with_tpm_random(&ctx);
+    if (st != SBC_OK) {
+        fprintf(stderr, C_RED "[ERROR] Failed to fill CERT1 with TPM random\n" C_RST);
+        SBC_TpmFinish(&ctx);
+        return 1;
+    }
+
+    /* Write CERT1 */
+    st = SBC_NvWriteChecked(&ctx, slot_cert1, g_cert1, sizeof(g_cert1), 0);
     if (st != SBC_OK) {
         if (SBC_IS_TPM_RC(st)) {
             fprintf(stderr, C_RED "[ERROR] SBC_NvWriteChecked(KEY1) TPM failed: 0x%08X (%s)\n" C_RST,
