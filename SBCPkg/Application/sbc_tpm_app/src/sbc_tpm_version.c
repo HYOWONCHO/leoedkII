@@ -1,4 +1,5 @@
 #include "sbc_tpm_version.h"
+#include "sbc_tpm_nv.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>

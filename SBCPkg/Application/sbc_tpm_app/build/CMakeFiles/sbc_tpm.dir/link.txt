@@ -1,1 +1,1 @@
-/usr/bin/cc CMakeFiles/sbc_tpm.dir/src/sbc_tpm_main.c.o CMakeFiles/sbc_tpm.dir/src/sbc_tpm_version.c.o -o sbc_tpm   -L/opt/sbc-tpm2-build/lib  -Wl,-rpath,/opt/sbc-tpm2-build/lib -ltss2-esys -ltss2-mu -ltss2-rc -ltss2-tcti-device 
+/usr/bin/cc CMakeFiles/sbc_tpm.dir/src/sbc_tpm_main.c.o CMakeFiles/sbc_tpm.dir/src/sbc_tpm_nv.c.o CMakeFiles/sbc_tpm.dir/src/sbc_tpm_version.c.o -o sbc_tpm   -L/opt/sbc-tpm2-build/lib  -Wl,-rpath,/opt/sbc-tpm2-build/lib -ltss2-sys -ltss2-esys -ltss2-mu -ltss2-tctildr -ltss2-tcti-device -ltss2-rc 

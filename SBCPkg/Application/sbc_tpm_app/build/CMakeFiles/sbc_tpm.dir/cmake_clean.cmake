@@ -1,6 +1,8 @@
 file(REMOVE_RECURSE
   "CMakeFiles/sbc_tpm.dir/src/sbc_tpm_main.c.o"
   "CMakeFiles/sbc_tpm.dir/src/sbc_tpm_main.c.o.d"
+  "CMakeFiles/sbc_tpm.dir/src/sbc_tpm_nv.c.o"
+  "CMakeFiles/sbc_tpm.dir/src/sbc_tpm_nv.c.o.d"
   "CMakeFiles/sbc_tpm.dir/src/sbc_tpm_version.c.o"
   "CMakeFiles/sbc_tpm.dir/src/sbc_tpm_version.c.o.d"
   "sbc_tpm"

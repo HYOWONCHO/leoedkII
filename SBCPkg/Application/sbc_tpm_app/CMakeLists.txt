@@ -10,46 +10,43 @@ set(TPM2_TSS_ROOT "/opt/sbc-tpm2-build")
 # ---------------------------------------------
 find_package(PkgConfig REQUIRED)
 
+# Extend PKG_CONFIG_PATH (append)
 set(ENV{PKG_CONFIG_PATH}
-    "${TPM2_TSS_ROOT}/lib/pkgconfig:${TPM2_TSS_ROOT}/lib64/pkgconfig"
+    "$ENV{PKG_CONFIG_PATH}:${TPM2_TSS_ROOT}/lib/pkgconfig:${TPM2_TSS_ROOT}/lib64/pkgconfig"
 )
 
-pkg_check_modules(TSS2_ESYS REQUIRED tss2-esys)
+# We only use SYS API + TCTI Loader + RC helpers
 pkg_check_modules(TSS2_SYS REQUIRED tss2-sys)
-pkg_check_modules(TSS2_TCTI REQUIRED tss2-tcti-device)
+pkg_check_modules(TSS2_TCTILDR REQUIRED tss2-tctildr)
 
 include_directories(
-    ${TSS2_ESYS_INCLUDE_DIRS}
     ${TSS2_SYS_INCLUDE_DIRS}
     ${CMAKE_SOURCE_DIR}/inc
 )
 
 link_directories(
-    ${TSS2_ESYS_LIBRARY_DIRS}
     ${TSS2_SYS_LIBRARY_DIRS}
-    ${TSS2_TCTI_LIBRARY_DIRS}
+    ${TSS2_TCTILDR_LIBRARY_DIRS}
 )
 
 # ---------------------------------------------
-# src files
+# source files
 # ---------------------------------------------
 file(GLOB SRC_FILES ${CMAKE_SOURCE_DIR}/src/*.c)
 
 add_executable(sbc_tpm ${SRC_FILES})
 
-#target_link_libraries(sbc_tpm
-#    ${TSS2_ESYS_LIBRARIES}
-#    ${TSS2_SYS_LIBRARIES}
-#    ${TSS2_TCTI_LIBRARIES}
-#)
-
-
+# ---------------------------------------------
+# TPM2-TSS libraries
+# ---------------------------------------------
 target_link_libraries(sbc_tpm
-    tss2-esys
     tss2-sys
+    tss2-esys
     tss2-mu
-    tss2-rc
+    tss2-tctildr
     tss2-tcti-device
-    tss2-tctildr        # ← 반드시 필요!
+    tss2-rc       # <-- 반드시 마지막 또는 거의 마지막에 위치
 )
+
+
 

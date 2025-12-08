@@ -153,6 +153,30 @@ src/sbc_tpm_main.c.s:
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/sbc_tpm.dir/build.make CMakeFiles/sbc_tpm.dir/src/sbc_tpm_main.c.s
 .PHONY : src/sbc_tpm_main.c.s
 
+src/sbc_tpm_nv.o: src/sbc_tpm_nv.c.o
+.PHONY : src/sbc_tpm_nv.o
+
+# target to build an object file
+src/sbc_tpm_nv.c.o:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/sbc_tpm.dir/build.make CMakeFiles/sbc_tpm.dir/src/sbc_tpm_nv.c.o
+.PHONY : src/sbc_tpm_nv.c.o
+
+src/sbc_tpm_nv.i: src/sbc_tpm_nv.c.i
+.PHONY : src/sbc_tpm_nv.i
+
+# target to preprocess a source file
+src/sbc_tpm_nv.c.i:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/sbc_tpm.dir/build.make CMakeFiles/sbc_tpm.dir/src/sbc_tpm_nv.c.i
+.PHONY : src/sbc_tpm_nv.c.i
+
+src/sbc_tpm_nv.s: src/sbc_tpm_nv.c.s
+.PHONY : src/sbc_tpm_nv.s
+
+# target to generate assembly for a file
+src/sbc_tpm_nv.c.s:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/sbc_tpm.dir/build.make CMakeFiles/sbc_tpm.dir/src/sbc_tpm_nv.c.s
+.PHONY : src/sbc_tpm_nv.c.s
+
 src/sbc_tpm_version.o: src/sbc_tpm_version.c.o
 .PHONY : src/sbc_tpm_version.o
 
@@ -189,6 +213,9 @@ help:
 	@echo "... src/sbc_tpm_main.o"
 	@echo "... src/sbc_tpm_main.i"
 	@echo "... src/sbc_tpm_main.s"
+	@echo "... src/sbc_tpm_nv.o"
+	@echo "... src/sbc_tpm_nv.i"
+	@echo "... src/sbc_tpm_nv.s"
 	@echo "... src/sbc_tpm_version.o"
 	@echo "... src/sbc_tpm_version.i"
 	@echo "... src/sbc_tpm_version.s"

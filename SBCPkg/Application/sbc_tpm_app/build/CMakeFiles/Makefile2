@@ -81,12 +81,12 @@ clean: CMakeFiles/sbc_tpm.dir/clean
 CMakeFiles/sbc_tpm.dir/all:
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/sbc_tpm.dir/build.make CMakeFiles/sbc_tpm.dir/depend
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/sbc_tpm.dir/build.make CMakeFiles/sbc_tpm.dir/build
-	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --progress-dir=/home/leoc/workspace_leo/leoedkII/SBCPkg/Application/sbc_tpm_app/build/CMakeFiles --progress-num=1,2,3 "Built target sbc_tpm"
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --progress-dir=/home/leoc/workspace_leo/leoedkII/SBCPkg/Application/sbc_tpm_app/build/CMakeFiles --progress-num=1,2,3,4 "Built target sbc_tpm"
 .PHONY : CMakeFiles/sbc_tpm.dir/all
 
 # Build rule for subdir invocation for target.
 CMakeFiles/sbc_tpm.dir/rule: cmake_check_build_system
-	$(CMAKE_COMMAND) -E cmake_progress_start /home/leoc/workspace_leo/leoedkII/SBCPkg/Application/sbc_tpm_app/build/CMakeFiles 3
+	$(CMAKE_COMMAND) -E cmake_progress_start /home/leoc/workspace_leo/leoedkII/SBCPkg/Application/sbc_tpm_app/build/CMakeFiles 4
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/Makefile2 CMakeFiles/sbc_tpm.dir/all
 	$(CMAKE_COMMAND) -E cmake_progress_start /home/leoc/workspace_leo/leoedkII/SBCPkg/Application/sbc_tpm_app/build/CMakeFiles 0
 .PHONY : CMakeFiles/sbc_tpm.dir/rule

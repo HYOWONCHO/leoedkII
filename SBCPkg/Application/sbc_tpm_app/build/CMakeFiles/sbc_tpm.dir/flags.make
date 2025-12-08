@@ -4,7 +4,7 @@
 # compile C with /usr/bin/cc
 C_DEFINES = 
 
-C_INCLUDES = -I/opt/sbc-tpm2-build/include -I/home/leoc/workspace_leo/leoedkII/SBCPkg/Application/sbc_tpm_app/inc
+C_INCLUDES = -I/opt/sbc-tpm2-build/include -I/opt/sbc-tpm2-build/include/tss2 -I/home/leoc/workspace_leo/leoedkII/SBCPkg/Application/sbc_tpm_app/inc
 
 C_FLAGS = -std=gnu11
 

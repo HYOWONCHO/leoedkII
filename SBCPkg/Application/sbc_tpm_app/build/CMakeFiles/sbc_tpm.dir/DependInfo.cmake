@@ -9,6 +9,7 @@ set(CMAKE_DEPENDS_LANGUAGES
 # The set of dependency files which are needed:
 set(CMAKE_DEPENDS_DEPENDENCY_FILES
   "/home/leoc/workspace_leo/leoedkII/SBCPkg/Application/sbc_tpm_app/src/sbc_tpm_main.c" "CMakeFiles/sbc_tpm.dir/src/sbc_tpm_main.c.o" "gcc" "CMakeFiles/sbc_tpm.dir/src/sbc_tpm_main.c.o.d"
+  "/home/leoc/workspace_leo/leoedkII/SBCPkg/Application/sbc_tpm_app/src/sbc_tpm_nv.c" "CMakeFiles/sbc_tpm.dir/src/sbc_tpm_nv.c.o" "gcc" "CMakeFiles/sbc_tpm.dir/src/sbc_tpm_nv.c.o.d"
   "/home/leoc/workspace_leo/leoedkII/SBCPkg/Application/sbc_tpm_app/src/sbc_tpm_version.c" "CMakeFiles/sbc_tpm.dir/src/sbc_tpm_version.c.o" "gcc" "CMakeFiles/sbc_tpm.dir/src/sbc_tpm_version.c.o.d"
   )
 

@@ -45,7 +45,7 @@ cd tpm2-tss
 #  Create install prefix directory if missing
 # =====================================================
 if [ ! -d "$PREFIX" ]; then
-    echo -e "${YELLOW}[INFO] Prefix directory not found. Creating: $PREFIX${NC}"
+    echo -e "${YELLOW}[INFO] Creating prefix directory: $PREFIX${NC}"
     if ! $SUDO mkdir -p "$PREFIX"; then
         echo -e "${RED}[ERROR] Failed to create $PREFIX. Aborting.${NC}"
         exit 1
@@ -62,11 +62,22 @@ if ! ./bootstrap 2>/dev/null && ! ./autogen.sh 2>/dev/null; then
 fi
 
 # =====================================================
-#  Configure
+#  Configure (가장 핵심 포인트)
 # =====================================================
-echo -e "${GREEN}[CONFIGURE] prefix=${PREFIX}, device=/dev/tpm0${NC}"
+echo -e "${GREEN}[CONFIGURE] prefix=${PREFIX}${NC}"
+echo -e "${GREEN}[CONFIGURE] Enabling ESAPI, SYSAPI, TCTI, RC, MU${NC}"
 
-if ! ./configure --prefix="$PREFIX" --with-device=/dev/tpm0; then
+if ! ./configure \
+    --prefix="$PREFIX" \
+    --enable-esapi \
+    --enable-sysapi \
+    --enable-tcti-all \
+    --enable-rc \
+    --enable-mu \
+    --enable-unit \
+    --with-tctidefaultmodule=device \
+    --with-udevrulesdir=/etc/udev/rules.d \
+; then
     echo -e "${RED}[ERROR] configure failed. Aborting.${NC}"
     exit 1
 fi
@@ -79,7 +90,7 @@ echo -e "${GREEN}[OK] configure success.${NC}"
 echo -e "${GREEN}[MAKE] Building tpm2-tss...${NC}"
 
 if ! make -j"$(nproc)"; then
-    echo -e "${RED}[ERROR] make build failed. Aborting.${NC}"
+    echo -e "${RED}[ERROR] make failed. Aborting.${NC}"
     exit 1
 fi
 
@@ -88,7 +99,7 @@ echo -e "${GREEN}[OK] make success.${NC}"
 # =====================================================
 #  Install
 # =====================================================
-echo -e "${GREEN}[INSTALL] Performing make install...${NC}"
+echo -e "${GREEN}[INSTALL] Installing tpm2-tss...${NC}"
 
 if ! $SUDO make install; then
     echo -e "${RED}[ERROR] make install failed. Aborting.${NC}"

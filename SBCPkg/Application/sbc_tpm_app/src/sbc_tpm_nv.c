@@ -1,6 +1,8 @@
 /**
- * @file sbc_tpm_nv_manager.c
- * @brief Simple TPM2 NV manager with NV table, CRC check and colored hexdump.
+ * @file sbc_tpm_nv.c
+ * @brief TPM2 NV manager with NV table, CRC32, and colored hexdump.
+ *
+ * This module is designed for TPM2-TSS v4.x and uses SYS API only.
  */
 
 #include <stdio.h>
@@ -10,9 +12,13 @@
 
 #include <tss2/tss2_sys.h>
 #include <tss2/tss2_tctildr.h>
+#include <tss2/tss2_rc.h>
+
+#include "sbc_tpm.h"
+#include "sbc_tpm_nv.h"
 
 /* ============================================================
- *  Color
+ *  Color escape codes
  * ============================================================ */
 #define C_RED    "\033[31m"
 #define C_GRN    "\033[32m"
@@ -22,48 +28,18 @@
 #define C_RST    "\033[0m"
 
 /* ============================================================
- *  SBCStatus
+ *  Example NV layout
  * ============================================================ */
-typedef enum {
-    SBC_OK = 0,
-    SBC_FAIL,
-    SBC_TPM_ERR,
-    SBC_ARG_ERR,
-    SBC_MEM_ERR,
-    SBC_NV_NOT_FOUND,
-    SBC_NV_ALREADY_DEFINED,
-    SBC_NV_SIZE_MISMATCH,
-    SBC_CRC_MISMATCH
-} SBCStatus;
+#define NV_KEY1     0x01500001u   /* 32 bytes */
+#define NV_KEY2     0x01500002u
+#define NV_KEY3     0x01500003u
 
-/* ============================================================
- *  TPM context
- * ============================================================ */
-typedef struct {
-    TSS2_TCTI_CONTEXT *tcti;
-    TSS2_SYS_CONTEXT  *sys;
-} SBC_TPM_CTX;
+#define NV_CERT1    0x01500101u   /* 512 bytes */
+#define NV_CERT2    0x01500102u
+#define NV_CERT3    0x01500103u
 
-/* ============================================================
- *  NV Slot table
- * ============================================================ */
-typedef struct {
-    TPMI_RH_NV_INDEX index;
-    UINT16           size;
-    const char      *name;   /* logical name (e.g. "KEY1", "CERT1") */
-} SBC_NV_SLOT;
-
-/* Example NV layout */
-#define NV_KEY1     0x01500001   /* 32 bytes */
-#define NV_KEY2     0x01500002
-#define NV_KEY3     0x01500003
-
-#define NV_CERT1    0x01500101   /* 512 bytes */
-#define NV_CERT2    0x01500102
-#define NV_CERT3    0x01500103
-
-#define NV_KEY_SIZE     32
-#define NV_CERT_SIZE    512
+#define NV_KEY_SIZE     32u
+#define NV_CERT_SIZE    512u
 
 static SBC_NV_SLOT g_nv_table[] = {
     { NV_KEY1,  NV_KEY_SIZE,  "KEY1"  },
@@ -74,7 +50,8 @@ static SBC_NV_SLOT g_nv_table[] = {
     { NV_CERT3, NV_CERT_SIZE, "CERT3" },
 };
 
-static const size_t g_nv_table_count = sizeof(g_nv_table) / sizeof(g_nv_table[0]);
+static const size_t g_nv_table_count =
+    sizeof(g_nv_table) / sizeof(g_nv_table[0]);
 
 /* ============================================================
  *  CRC32
@@ -121,7 +98,7 @@ static void hexdump_color(const uint8_t *data, size_t size)
 
         printf(" |");
 
-        /* ascii part */
+        /* ASCII part */
         for (size_t j = 0; j < 16; j++) {
             if (i + j < size) {
                 uint8_t c = data[i + j];
@@ -143,12 +120,15 @@ static void hexdump_color(const uint8_t *data, size_t size)
  * ============================================================ */
 
 /**
- * @brief Initialize TPM context using tcti loader.
+ * @brief Initialize TPM context using TCTI loader.
  *
- * @param ctx       Context pointer.
- * @param tcti_conf TCTI string, e.g. "device:/dev/tpm0". If NULL, default used.
+ * @param ctx       Pointer to SBC_TPM_CTX.
+ * @param tcti_conf TCTI config string (e.g. "device:/dev/tpm0").
+ *                  If NULL, default "device:/dev/tpmrm0" is used.
+ *
+ * @return SBC_OK on success, TPM2_RC_xxxx or SBC_xxxx on error.
  */
-static SBCStatus SBC_TpmInit(SBC_TPM_CTX *ctx, const char *tcti_conf)
+SBCStatus SBC_TpmInit(SBC_TPM_CTX *ctx, const char *tcti_conf)
 {
     if (!ctx)
         return SBC_ARG_ERR;
@@ -164,8 +144,9 @@ static SBCStatus SBC_TpmInit(SBC_TPM_CTX *ctx, const char *tcti_conf)
 
     rc = Tss2_TctiLdr_Initialize(tcti_conf, &ctx->tcti);
     if (rc != TSS2_RC_SUCCESS) {
-        fprintf(stderr, C_RED "[ERROR] TctiLdr_Initialize: 0x%x\n" C_RST, rc);
-        return SBC_TPM_ERR;
+        fprintf(stderr, C_RED "[ERROR] TctiLdr_Initialize: 0x%x (%s)\n" C_RST,
+                rc, Tss2_RC_Decode(rc));
+        return rc;  /* TPM error */
     }
 
     sys_size = Tss2_Sys_GetContextSize(0);
@@ -177,20 +158,21 @@ static SBCStatus SBC_TpmInit(SBC_TPM_CTX *ctx, const char *tcti_conf)
 
     rc = Tss2_Sys_Initialize(ctx->sys, sys_size, ctx->tcti, &abi);
     if (rc != TSS2_RC_SUCCESS) {
-        fprintf(stderr, C_RED "[ERROR] Sys_Initialize: 0x%x\n" C_RST, rc);
+        fprintf(stderr, C_RED "[ERROR] Sys_Initialize: 0x%x (%s)\n" C_RST,
+                rc, Tss2_RC_Decode(rc));
         free(ctx->sys);
         ctx->sys = NULL;
         Tss2_TctiLdr_Finalize(&ctx->tcti);
-        return SBC_TPM_ERR;
+        return rc;  /* TPM error */
     }
 
     return SBC_OK;
 }
 
 /**
- * @brief Finalize TPM context.
+ * @brief Finalize TPM context and free resources.
  */
-static void SBC_TpmFinish(SBC_TPM_CTX *ctx)
+void SBC_TpmFinish(SBC_TPM_CTX *ctx)
 {
     if (!ctx)
         return;
@@ -207,13 +189,40 @@ static void SBC_TpmFinish(SBC_TPM_CTX *ctx)
 }
 
 /* ============================================================
- *  NV helpers (exist / define / undefine)
+ *  Auth session helper
  * ============================================================ */
 
 /**
- * @brief Check if NV index exists.
+ * @brief Initialize a password session array with empty HMAC.
  *
- * @return 1 = exists, 0 = not exist, <0 = error.
+ * This is used for OWNER authorization when the authValue is empty.
+ */
+static void SBC_InitEmptyAuthSession(TSS2L_SYS_AUTH_COMMAND *sessions)
+{
+    if (!sessions)
+        return;
+
+    memset(sessions, 0, sizeof(*sessions));
+    sessions->count = 1;
+    sessions->auths[0].sessionHandle = TPM2_RS_PW;
+    sessions->auths[0].hmac.size     = 0;      /* empty password */
+    sessions->auths[0].sessionAttributes = 0;
+}
+
+/* ============================================================
+ *  NV helpers (exist / define / undefine / ensure)
+ * ============================================================ */
+
+/**
+ * @brief Check whether a TPM NV index exists.
+ *
+ * @param ctx    Pointer to initialized TPM SYS context.
+ * @param index  NV index.
+ *
+ * @return
+ *   1  = NV index exists
+ *   0  = NV index does not exist
+ *  -1  = TPM error / unexpected RC
  */
 int SBC_NvExists(SBC_TPM_CTX *ctx, TPMI_RH_NV_INDEX index)
 {
@@ -221,7 +230,8 @@ int SBC_NvExists(SBC_TPM_CTX *ctx, TPMI_RH_NV_INDEX index)
         return -1;
 
     TPM2B_NV_PUBLIC nv_public = {0};
-    TPM2B_NAME nv_name = {0};
+    TPM2B_NAME      nv_name   = {0};
+
     TSS2_RC rc = Tss2_Sys_NV_ReadPublic(
         ctx->sys,
         index,
@@ -231,46 +241,53 @@ int SBC_NvExists(SBC_TPM_CTX *ctx, TPMI_RH_NV_INDEX index)
         NULL
     );
 
-    TSS2_RC base_rc = rc & 0xFFFF;  /* strip layer bits */
+    /* Extract the TPM_RC_xxx lower 16 bits.
+     * Tss2_RC_GetCode() is removed in TPM2-TSS v4.x.
+     */
+    TSS2_RC rc_code = rc & 0xFFFF;
 
-    if (rc == TSS2_RC_SUCCESS) {
-        /* NV index exists and is readable */
+    /* Case 1: NV index exists */
+    if (rc == TSS2_RC_SUCCESS)
         return 1;
-    }
 
-    if (base_rc == TPM2_RC_HANDLE) {
-        /* NV index not defined */
+    /* Case 2: NV index is not defined */
+    if (rc_code == TPM2_RC_HANDLE)
         return 0;
-    }
 
-    if (base_rc == TPM2_RC_NV_DEFINED) {
-        /* NV index is already defined (treat as exists) */
+    /* Case 3: Some TPMs return NV_DEFINED instead of SUCCESS.
+     * Treat this as "exists".
+     */
+    if (rc_code == TPM2_RC_NV_DEFINED) {
         fprintf(stderr,
-            "[WARN] NV_ReadPublic(0x%08x) returned NV_DEFINED (0x%x), "
-            "treating as 'exists'.\n",
+            C_CYN "[WARN] NV_ReadPublic(0x%08X) returned NV_DEFINED (0x%X). Treating as exists.\n" C_RST,
             index, rc);
         return 1;
     }
 
+    /* Case 4: Unexpected TPM error */
     fprintf(stderr,
-        "[ERROR] NV_ReadPublic(0x%08x) failed with rc=0x%x\n",
-        index, rc);
+        C_RED "[ERROR] NV_ReadPublic(0x%08X) failed: rc=0x%X (%s)\n" C_RST,
+        index,
+        rc,
+        Tss2_RC_Decode(rc)
+    );
+
     return -1;
 }
 
-
-
 /**
  * @brief Define NV index with simple owner+auth read/write attributes.
+ *
+ * @return SBC_OK, TPM2_RC_xxxx, or SBC_xxxx.
  */
 static SBCStatus SBC_NvDefine(SBC_TPM_CTX *ctx,
                               TPMI_RH_NV_INDEX index,
-                              UINT16 size)
+                              uint16_t size)
 {
     if (!ctx || !ctx->sys)
         return SBC_ARG_ERR;
 
-    TPM2B_AUTH auth = { .size = 0 }; /* empty auth */
+    TPM2B_AUTH auth = { .size = 0 }; /* new NV index auth (empty) */
     TPM2B_NV_PUBLIC nv_pub = {0};
     nv_pub.size = sizeof(TPMS_NV_PUBLIC);
     nv_pub.nvPublic.nvIndex = index;
@@ -282,87 +299,81 @@ static SBCStatus SBC_NvDefine(SBC_TPM_CTX *ctx,
         | TPMA_NV_OWNERWRITE;
     nv_pub.nvPublic.dataSize = size;
 
+    TSS2L_SYS_AUTH_COMMAND sessions;
+    SBC_InitEmptyAuthSession(&sessions);
+
     TSS2_RC rc = Tss2_Sys_NV_DefineSpace(
         ctx->sys,
         TPM2_RH_OWNER,
-        NULL,
+        &sessions,
         &auth,
         &nv_pub,
         NULL
     );
 
     if (rc == TPM2_RC_NV_DEFINED) {
-        printf(C_YEL "[INFO] NV index 0x%08x already defined.\n" C_RST, index);
-        return SBC_NV_ALREADY_DEFINED;
+        printf(C_YEL "[INFO] NV index 0x%08X already defined.\n" C_RST, index);
+        return rc;  /* Return TPM2_RC_NV_DEFINED */
     }
 
     if (rc != TSS2_RC_SUCCESS) {
-        fprintf(stderr, C_RED "[ERROR] NV_DefineSpace(0x%08x): 0x%x\n" C_RST, index, rc);
-        return SBC_TPM_ERR;
+        fprintf(stderr, C_RED "[ERROR] NV_DefineSpace(0x%08X): 0x%X (%s)\n" C_RST,
+                index, rc, Tss2_RC_Decode(rc));
+        return rc;  /* TPM error */
     }
 
-    printf(C_GRN "[INFO] NV index 0x%08x defined (size=%u).\n" C_RST, index, size);
+    printf(C_GRN "[INFO] NV index 0x%08X defined (size=%u).\n" C_RST, index, size);
     return SBC_OK;
 }
 
 /**
  * @brief Undefine (delete) NV index.
+ *
+ * @return SBC_OK, SBC_NV_NOT_FOUND, TPM2_RC_xxxx, or SBC_xxxx.
  */
 static SBCStatus SBC_NvUndefine(SBC_TPM_CTX *ctx, TPMI_RH_NV_INDEX index)
 {
     if (!ctx || !ctx->sys)
         return SBC_ARG_ERR;
 
+    TSS2L_SYS_AUTH_COMMAND sessions;
+    SBC_InitEmptyAuthSession(&sessions);
+
     TSS2_RC rc = Tss2_Sys_NV_UndefineSpace(
         ctx->sys,
         TPM2_RH_OWNER,
         index,
-        NULL,
+        &sessions,
         NULL
     );
 
     if (rc == TPM2_RC_HANDLE) {
-        printf(C_YEL "[INFO] NV index 0x%08x does not exist.\n" C_RST, index);
+        printf(C_YEL "[INFO] NV index 0x%08X does not exist.\n" C_RST, index);
         return SBC_NV_NOT_FOUND;
     }
 
     if (rc != TSS2_RC_SUCCESS) {
-        fprintf(stderr, C_RED "[ERROR] NV_UndefineSpace(0x%08x): 0x%x\n" C_RST, index, rc);
-        return SBC_TPM_ERR;
+        fprintf(stderr, C_RED "[ERROR] NV_UndefineSpace(0x%08X): 0x%X (%s)\n" C_RST,
+                index, rc, Tss2_RC_Decode(rc));
+        return rc;  /* TPM error */
     }
 
-    printf(C_GRN "[INFO] NV index 0x%08x undefined.\n" C_RST, index);
+    printf(C_GRN "[INFO] NV index 0x%08X undefined.\n" C_RST, index);
     return SBC_OK;
 }
 
 /**
  * @brief Ensure NV index is defined with expected size.
+ *
+ * If the NV index does not exist, this function will define it.
  */
-#if 0
-static SBCStatus SBC_NvEnsureDefined(SBC_TPM_CTX *ctx,
-                                     TPMI_RH_NV_INDEX index,
-                                     UINT16 size)
-{
-    int exists = SBC_NvExists(ctx, index);
-    if (exists < 0)
-        return SBC_TPM_ERR;
-
-    if (exists == 1) {
-        printf(C_GRN "[INFO] NV index 0x%08x exists.\n" C_RST, index);
-        return SBC_OK;
-    }
-
-    printf(C_YEL "[INFO] NV index 0x%08x not found. Defining...\n" C_RST, index);
-    return SBC_NvDefine(ctx, index, size);
-}
-#else
 SBCStatus SBC_NvEnsureDefined(SBC_TPM_CTX *ctx,
                               TPMI_RH_NV_INDEX index,
                               uint16_t size)
 {
     int exists = SBC_NvExists(ctx, index);
     if (exists < 0)
-        return SBC_TPM_ERR;
+        return SBC_FAIL;
 
     if (exists == 1) {
         /* Already defined, do not redefine */
@@ -372,9 +383,6 @@ SBCStatus SBC_NvEnsureDefined(SBC_TPM_CTX *ctx,
     /* exists == 0 → not defined, create new NV space */
     return SBC_NvDefine(ctx, index, size);
 }
-
-
-#endif
 
 /* ============================================================
  *  NV read / write with CRC check
@@ -399,12 +407,14 @@ static const SBC_NV_SLOT* SBC_NvFindSlotByName(const char *name)
  * @brief Write data into NV after CRC check.
  *
  * @param expected_crc If non-zero, compare with computed CRC and fail on mismatch.
+ *
+ * @return SBC_OK, TPM2_RC_xxxx, or SBC_xxxx.
  */
-static SBCStatus SBC_NvWriteChecked(SBC_TPM_CTX *ctx,
-                                    const SBC_NV_SLOT *slot,
-                                    const uint8_t *data,
-                                    UINT16 size,
-                                    uint32_t expected_crc)
+SBCStatus SBC_NvWriteChecked(SBC_TPM_CTX *ctx,
+                             const SBC_NV_SLOT *slot,
+                             const uint8_t *data,
+                             uint16_t size,
+                             uint32_t expected_crc)
 {
     if (!ctx || !ctx->sys || !slot || !data)
         return SBC_ARG_ERR;
@@ -412,79 +422,88 @@ static SBCStatus SBC_NvWriteChecked(SBC_TPM_CTX *ctx,
     if (size != slot->size) {
         fprintf(stderr, C_RED "[ERROR] NV size mismatch: slot=%u, input=%u\n" C_RST,
                 slot->size, size);
-        return SBC_NV_SIZE_MISMATCH;
+        return SBC_SIZE_ERR;
     }
 
     /* Compute CRC */
     uint32_t crc = crc32_calc(data, size);
-    printf(C_CYN "[INFO] CRC32(%s) = 0x%08x\n" C_RST, slot->name, crc);
+    printf(C_CYN "[INFO] CRC32(%s) = 0x%08X\n" C_RST, slot->name, crc);
 
     if (expected_crc != 0 && crc != expected_crc) {
         fprintf(stderr,
-                C_RED "[ERROR] CRC mismatch: expected=0x%08x, calc=0x%08x\n" C_RST,
+                C_RED "[ERROR] CRC mismatch: expected=0x%08X, calc=0x%08X\n" C_RST,
                 expected_crc, crc);
-        return SBC_CRC_MISMATCH;
+        return SBC_CRC_ERR;
     }
 
     /* Ensure NV index exists */
     SBCStatus st = SBC_NvEnsureDefined(ctx, slot->index, slot->size);
-    if (st != SBC_OK && st != SBC_NV_ALREADY_DEFINED)
-        return st;
+    if (st != SBC_OK) {
+        return st;  /* Could be TPM RC or SBC_xxxx */
+    }
 
     TPM2B_MAX_NV_BUFFER nv_write = {0};
-    TPM2B_AUTH auth = { .size = 0 }; /* empty auth */
 
     if (size > sizeof(nv_write.buffer))
-        return SBC_NV_SIZE_MISMATCH;
+        return SBC_SIZE_ERR;
 
     nv_write.size = size;
     memcpy(nv_write.buffer, data, size);
 
+    TSS2L_SYS_AUTH_COMMAND sessions;
+    SBC_InitEmptyAuthSession(&sessions);
+
+    /* Use OWNER hierarchy as auth handle (OWNERWRITE attribute is set). */
     TSS2_RC rc = Tss2_Sys_NV_Write(
         ctx->sys,
-        slot->index,
-        slot->index,
-        &auth,
+        TPM2_RH_OWNER,          /* authHandle */
+        slot->index,            /* nvIndex   */
+        &sessions,              /* cmdAuths  */
         &nv_write,
         0,
         NULL
     );
 
     if (rc != TSS2_RC_SUCCESS) {
-        fprintf(stderr, C_RED "[ERROR] NV_Write(0x%08x): 0x%x\n" C_RST,
-                slot->index, rc);
-        return SBC_TPM_ERR;
+        fprintf(stderr, C_RED "[ERROR] NV_Write(%s, 0x%08X): 0x%X (%s)\n" C_RST,
+                slot->name, slot->index, rc, Tss2_RC_Decode(rc));
+        return rc;  /* TPM error */
     }
 
-    printf(C_GRN "[INFO] NV_Write %s (0x%08x) size=%u OK\n" C_RST,
+    printf(C_GRN "[INFO] NV_Write %s (0x%08X) size=%u OK\n" C_RST,
            slot->name, slot->index, size);
     return SBC_OK;
 }
 
 /**
  * @brief Read NV data and print colored hexdump.
+ *
+ * @return SBC_OK, TPM2_RC_xxxx, or SBC_xxxx.
  */
-static SBCStatus SBC_NvReadHexdump(SBC_TPM_CTX *ctx,
-                                   const SBC_NV_SLOT *slot)
+SBCStatus SBC_NvReadHexdump(SBC_TPM_CTX *ctx,
+                            const SBC_NV_SLOT *slot)
 {
     if (!ctx || !ctx->sys || !slot)
         return SBC_ARG_ERR;
 
     int exists = SBC_NvExists(ctx, slot->index);
     if (exists <= 0) {
-        fprintf(stderr, C_RED "[ERROR] NV index 0x%08x does not exist.\n" C_RST,
+        fprintf(stderr, C_RED "[ERROR] NV index 0x%08X does not exist.\n" C_RST,
                 slot->index);
         return SBC_NV_NOT_FOUND;
     }
 
     TPM2B_MAX_NV_BUFFER nv_read = {0};
-    TPM2B_AUTH auth = { .size = 0 };
 
+    TSS2L_SYS_AUTH_COMMAND sessions;
+    SBC_InitEmptyAuthSession(&sessions);
+
+    /* Use OWNER hierarchy as auth handle (OWNERREAD attribute is set). */
     TSS2_RC rc = Tss2_Sys_NV_Read(
         ctx->sys,
-        slot->index,
-        slot->index,
-        &auth,
+        TPM2_RH_OWNER,          /* authHandle */
+        slot->index,            /* nvIndex    */
+        &sessions,              /* cmdAuths   */
         slot->size,
         0,
         &nv_read,
@@ -492,18 +511,19 @@ static SBCStatus SBC_NvReadHexdump(SBC_TPM_CTX *ctx,
     );
 
     if (rc != TSS2_RC_SUCCESS) {
-        fprintf(stderr, C_RED "[ERROR] NV_Read(0x%08x): 0x%x\n" C_RST,
-                slot->index, rc);
-        return SBC_TPM_ERR;
+        fprintf(stderr, C_RED "[ERROR] NV_Read(%s, 0x%08X): 0x%X (%s)\n" C_RST,
+                slot->name, slot->index, rc, Tss2_RC_Decode(rc));
+        return rc;  /* TPM error */
     }
 
-    printf(C_BLU "\n[INFO] NV_Read %s (0x%08x) size=%u\n" C_RST,
+    printf(C_BLU "\n[INFO] NV_Read %s (0x%08X) size=%u\n" C_RST,
            slot->name, slot->index, nv_read.size);
     hexdump_color(nv_read.buffer, nv_read.size);
     return SBC_OK;
 }
+
 /* ============================================================
- *  Example vectors
+ *  Example vectors for testing
  * ============================================================ */
 
 static uint8_t g_key1[NV_KEY_SIZE] = {
@@ -521,9 +541,17 @@ static void fill_example_vectors(void)
 }
 
 /* ============================================================
- *  main()
+ *  Test entry
  * ============================================================ */
 
+/**
+ * @brief Simple test routine for NV manager.
+ *
+ * This function:
+ *   - Initializes TPM
+ *   - Writes KEY1 and CERT1 to NV with CRC check
+ *   - Reads KEY1 and CERT1 and prints hexdump
+ */
 int sbc_nv_test_main(void)
 {
     SBC_TPM_CTX ctx;
@@ -531,14 +559,20 @@ int sbc_nv_test_main(void)
 
     fill_example_vectors();
 
+    /* You can switch between /dev/tpm0 and /dev/tpmrm0 here. */
     st = SBC_TpmInit(&ctx, "device:/dev/tpm0");
     if (st != SBC_OK) {
-        fprintf(stderr, C_RED "[FATAL] SBC_TpmInit failed\n" C_RST);
+        if (SBC_IS_TPM_RC(st)) {
+            fprintf(stderr, C_RED "[FATAL] SBC_TpmInit failed: 0x%08X (%s)\n" C_RST,
+                    st, Tss2_RC_Decode(st));
+        } else {
+            fprintf(stderr, C_RED "[FATAL] SBC_TpmInit failed: 0x%08X (SBC internal)\n" C_RST,
+                    st);
+        }
         return 1;
     }
 
-    /* KEY1 write + read */
-    const SBC_NV_SLOT *slot_key1 = SBC_NvFindSlotByName("KEY1");
+    const SBC_NV_SLOT *slot_key1  = SBC_NvFindSlotByName("KEY1");
     const SBC_NV_SLOT *slot_cert1 = SBC_NvFindSlotByName("CERT1");
 
     if (!slot_key1 || !slot_cert1) {
@@ -547,39 +581,59 @@ int sbc_nv_test_main(void)
         return 1;
     }
 
-    /* Write key1 with CRC check (expected_crc = 0 to skip compare) */
+    /* Write KEY1 with CRC check (expected_crc = 0 to skip compare) */
     st = SBC_NvWriteChecked(&ctx, slot_key1, g_key1, sizeof(g_key1), 0);
     if (st != SBC_OK) {
-        fprintf(stderr, C_RED "[ERROR] SBC_NvWriteChecked(KEY1) failed (%d)\n" C_RST, st);
+        if (SBC_IS_TPM_RC(st)) {
+            fprintf(stderr, C_RED "[ERROR] SBC_NvWriteChecked(KEY1) TPM failed: 0x%08X (%s)\n" C_RST,
+                    st, Tss2_RC_Decode(st));
+        } else {
+            fprintf(stderr, C_RED "[ERROR] SBC_NvWriteChecked(KEY1) failed: 0x%08X\n" C_RST, st);
+        }
         SBC_TpmFinish(&ctx);
         return 1;
     }
 
-    /* Read key1 */
+    /* Read KEY1 */
     st = SBC_NvReadHexdump(&ctx, slot_key1);
     if (st != SBC_OK) {
-        fprintf(stderr, C_RED "[ERROR] SBC_NvReadHexdump(KEY1) failed (%d)\n" C_RST, st);
+        if (SBC_IS_TPM_RC(st)) {
+            fprintf(stderr, C_RED "[ERROR] SBC_NvReadHexdump(KEY1) TPM failed: 0x%08X (%s)\n" C_RST,
+                    st, Tss2_RC_Decode(st));
+        } else {
+            fprintf(stderr, C_RED "[ERROR] SBC_NvReadHexdump(KEY1) failed: 0x%08X\n" C_RST, st);
+        }
         SBC_TpmFinish(&ctx);
         return 1;
     }
 
-    /* Write cert1 */
+    /* Write CERT1 */
     st = SBC_NvWriteChecked(&ctx, slot_cert1, g_cert1, sizeof(g_cert1), 0);
     if (st != SBC_OK) {
-        fprintf(stderr, C_RED "[ERROR] SBC_NvWriteChecked(CERT1) failed (%d)\n" C_RST, st);
+        if (SBC_IS_TPM_RC(st)) {
+            fprintf(stderr, C_RED "[ERROR] SBC_NvWriteChecked(CERT1) TPM failed: 0x%08X (%s)\n" C_RST,
+                    st, Tss2_RC_Decode(st));
+        } else {
+            fprintf(stderr, C_RED "[ERROR] SBC_NvWriteChecked(CERT1) failed: 0x%08X\n" C_RST, st);
+        }
         SBC_TpmFinish(&ctx);
         return 1;
     }
 
-    /* Read cert1 */
+    /* Read CERT1 */
     st = SBC_NvReadHexdump(&ctx, slot_cert1);
     if (st != SBC_OK) {
-        fprintf(stderr, C_RED "[ERROR] SBC_NvReadHexdump(CERT1) failed (%d)\n" C_RST, st);
+        if (SBC_IS_TPM_RC(st)) {
+            fprintf(stderr, C_RED "[ERROR] SBC_NvReadHexdump(CERT1) TPM failed: 0x%08X (%s)\n" C_RST,
+                    st, Tss2_RC_Decode(st));
+        } else {
+            fprintf(stderr, C_RED "[ERROR] SBC_NvReadHexdump(CERT1) failed: 0x%08X\n" C_RST, st);
+        }
         SBC_TpmFinish(&ctx);
         return 1;
     }
 
-    /* 예: CERT1 NV 삭제 테스트 */
+    /* Optional: test undefine */
     // st = SBC_NvUndefine(&ctx, slot_cert1->index);
 
     SBC_TpmFinish(&ctx);
