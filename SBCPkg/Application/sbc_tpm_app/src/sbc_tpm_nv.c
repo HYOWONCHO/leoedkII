@@ -1,6 +1,6 @@
 /**
  * @file sbc_tpm_nv.c
- * @brief TPM2 NV manager with NV table, CRC32, and colored hexdump.
+ * @brief TPM2 NV manager with NV table, CRC32, colored hexdump, file I/O, and TPM random.
  *
  * This module is designed for TPM2-TSS v4.x and uses SYS API only.
  */
@@ -9,6 +9,8 @@
 #include <stdlib.h>
 #include <string.h>
 #include <inttypes.h>
+#include <errno.h>
+#include <stdbool.h>
 
 #include <tss2/tss2_sys.h>
 #include <tss2/tss2_tctildr.h>
@@ -75,6 +77,10 @@ static uint32_t crc32_calc(const uint8_t *buf, size_t len)
     return ~crc;
 }
 
+/* ============================================================
+ *  Hexdump
+ * ============================================================ */
+
 /**
  * @brief Print buffer in professional hex view format with header.
  *
@@ -103,8 +109,7 @@ static void hexdump_color(const uint8_t *data, size_t size)
     for (size_t offset = 0; offset < size; offset += bytes_per_line) {
 
         /* Print offset */
-        //printf(C_CYN "%04zx" C_RST " | ", offset);
-        printf(C_CYN "%04zx" C_RST "  ", offset);
+        printf(C_CYN "%04zx" C_RST " | ", offset);
 
         /* Hex region */
         for (size_t i = 0; i < bytes_per_line; i++) {
@@ -116,22 +121,8 @@ static void hexdump_color(const uint8_t *data, size_t size)
         }
 
         printf("| ");
-#if 0
+
         /* ASCII region */
-        for (size_t i = 0; i < bytes_per_line; i++) {
-            size_t idx = offset + i;
-            if (idx < size) {
-                uint8_t c = data[idx];
-                if (c >= 32 && c <= 126)
-                    printf(C_YEL "%c" C_RST, c);
-                else
-                    printf(".");
-            } else {
-                printf(" ");
-            }
-        }
-#else
-        /* ASCII part */
         for (size_t i = 0; i < bytes_per_line; i++) {
             size_t idx = offset + i;
             if (idx < size) {
@@ -146,8 +137,6 @@ static void hexdump_color(const uint8_t *data, size_t size)
         }
 
         printf("|\n");
-#endif
-        printf("\n");
     }
 }
 
@@ -240,8 +229,8 @@ static void SBC_InitEmptyAuthSession(TSS2L_SYS_AUTH_COMMAND *sessions)
 
     memset(sessions, 0, sizeof(*sessions));
     sessions->count = 1;
-    sessions->auths[0].sessionHandle = TPM2_RS_PW;
-    sessions->auths[0].hmac.size     = 0;      /* empty password */
+    sessions->auths[0].sessionHandle    = TPM2_RS_PW;
+    sessions->auths[0].hmac.size        = 0;      /* empty password */
     sessions->auths[0].sessionAttributes = 0;
 }
 
@@ -277,21 +266,16 @@ int SBC_NvExists(SBC_TPM_CTX *ctx, TPMI_RH_NV_INDEX index)
         NULL
     );
 
-    /* Extract base TPM_RC_xxx code using macro.
-     * Tss2_RC_GetCode() does NOT exist in TPM2-TSS v4.x.
+    /* Extract base TPM_RC_xxx code (low 8 bits).
+     * Tss2_RC_GetCode() / TSS2_RC_GET_CODE() are not available in TPM2-TSS v4.
      */
-    TSS2_RC rc_code =  rc & 0xFF;;
+    TSS2_RC rc_code = rc & 0xFF;
 
     /* Case 1: NV index exists */
     if (rc == TSS2_RC_SUCCESS)
         return 1;
 
-    /* Case 2: NV index is not defined / invalid for current use.
-     *
-     * For our usage, both TPM2_RC_HANDLE and TPM2_RC_VALUE can mean
-     * "this NV handle is not usable yet" → treat as "not exists" and
-     * let DefineSpace create it.
-     */
+    /* Case 2: NV index is not defined / invalid for current use. */
     if (rc_code == TPM2_RC_HANDLE || rc_code == TPM2_RC_VALUE) {
         return 0;
     }
@@ -306,11 +290,10 @@ int SBC_NvExists(SBC_TPM_CTX *ctx, TPMI_RH_NV_INDEX index)
 
     /* Case 4: Unexpected TPM error */
     fprintf(stderr,
-        C_RED "[ERROR] NV_ReadPublic(0x%08X) failed: rc=0x%X (%s)\n",
-        index,
-        rc,
-        Tss2_RC_Decode(rc)
-    );
+            C_RED "[ERROR] NV_ReadPublic(0x%08X) failed: rc=0x%X (%s)\n" C_RST,
+            index,
+            rc,
+            Tss2_RC_Decode(rc));
 
     return -1;
 }
@@ -515,16 +498,35 @@ SBCStatus SBC_NvWriteChecked(SBC_TPM_CTX *ctx,
     return SBC_OK;
 }
 
+/* ============================================================
+ *  NV generic buffer read
+ * ============================================================ */
+
 /**
- * @brief Read NV data and print colored hexdump.
+ * @brief Read NV data into caller-provided buffer.
+ *
+ * @param ctx           TPM context.
+ * @param slot          NV slot descriptor.
+ * @param out_buf       Output buffer.
+ * @param out_buf_size  Output buffer size in bytes.
+ * @param out_read_size Optional; actual bytes read (can be NULL).
  *
  * @return SBC_OK, TPM2_RC_xxxx, or SBC_xxxx.
  */
-SBCStatus SBC_NvReadHexdump(SBC_TPM_CTX *ctx,
-                            const SBC_NV_SLOT *slot)
+SBCStatus SBC_NvReadBuffer(SBC_TPM_CTX *ctx,
+                           const SBC_NV_SLOT *slot,
+                           uint8_t *out_buf,
+                           uint16_t out_buf_size,
+                           uint16_t *out_read_size)
 {
-    if (!ctx || !ctx->sys || !slot)
+    if (!ctx || !ctx->sys || !slot || !out_buf)
         return SBC_ARG_ERR;
+
+    if (out_buf_size < slot->size) {
+        fprintf(stderr, C_RED "[ERROR] Output buffer too small: needed=%u, got=%u\n" C_RST,
+                slot->size, out_buf_size);
+        return SBC_SIZE_ERR;
+    }
 
     int exists = SBC_NvExists(ctx, slot->index);
     if (exists <= 0) {
@@ -534,11 +536,9 @@ SBCStatus SBC_NvReadHexdump(SBC_TPM_CTX *ctx,
     }
 
     TPM2B_MAX_NV_BUFFER nv_read = {0};
-
     TSS2L_SYS_AUTH_COMMAND sessions;
     SBC_InitEmptyAuthSession(&sessions);
 
-    /* Use OWNER hierarchy as auth handle (OWNERREAD attribute is set). */
     TSS2_RC rc = Tss2_Sys_NV_Read(
         ctx->sys,
         TPM2_RH_OWNER,          /* authHandle */
@@ -556,10 +556,288 @@ SBCStatus SBC_NvReadHexdump(SBC_TPM_CTX *ctx,
         return rc;  /* TPM error */
     }
 
-    printf(C_BLU "\n[INFO] NV_Read %s (0x%08X) size=%u\n" C_RST,
-           slot->name, slot->index, nv_read.size);
-    hexdump_color(nv_read.buffer, nv_read.size);
+    memcpy(out_buf, nv_read.buffer, nv_read.size);
+    if (out_read_size)
+        *out_read_size = nv_read.size;
+
     return SBC_OK;
+}
+
+/**
+ * @brief Read NV data and print colored hexdump.
+ *
+ * @return SBC_OK, TPM2_RC_xxxx, or SBC_xxxx.
+ */
+SBCStatus SBC_NvReadHexdump(SBC_TPM_CTX *ctx,
+                            const SBC_NV_SLOT *slot)
+{
+    if (!ctx || !ctx->sys || !slot)
+        return SBC_ARG_ERR;
+
+    uint8_t *buf = (uint8_t *)malloc(slot->size);
+    if (!buf)
+        return SBC_MEM_ERR;
+
+    uint16_t read_size = 0;
+    SBCStatus st = SBC_NvReadBuffer(ctx, slot, buf, slot->size, &read_size);
+    if (st != SBC_OK) {
+        free(buf);
+        return st;
+    }
+
+    printf(C_BLU "\n[INFO] NV_Read %s (0x%08X) size=%u\n" C_RST,
+           slot->name, slot->index, read_size);
+
+    hexdump_color(buf, read_size);
+
+    free(buf);
+    return SBC_OK;
+}
+
+/* ============================================================
+ *  NV <-> file helpers
+ * ============================================================ */
+
+/**
+ * @brief Read NV data and save to a binary file.
+ *
+ * @param path Filesystem path to write (will be overwritten).
+ */
+SBCStatus SBC_NvReadToFile(SBC_TPM_CTX *ctx,
+                           const SBC_NV_SLOT *slot,
+                           const char *path)
+{
+    if (!ctx || !slot || !path)
+        return SBC_ARG_ERR;
+
+    uint8_t *buf = (uint8_t *)malloc(slot->size);
+    if (!buf)
+        return SBC_MEM_ERR;
+
+    uint16_t read_size = 0;
+    SBCStatus st = SBC_NvReadBuffer(ctx, slot, buf, slot->size, &read_size);
+    if (st != SBC_OK) {
+        free(buf);
+        return st;
+    }
+
+    FILE *fp = fopen(path, "wb");
+    if (!fp) {
+        fprintf(stderr, C_RED "[ERROR] fopen('%s'): %s\n" C_RST,
+                path, strerror(errno));
+        free(buf);
+        return SBC_FAIL;
+    }
+
+    size_t written = fwrite(buf, 1, read_size, fp);
+    if (written != read_size) {
+        fprintf(stderr, C_RED "[ERROR] fwrite('%s'): wrote=%zu, expected=%u\n" C_RST,
+                path, written, read_size);
+        fclose(fp);
+        free(buf);
+        return SBC_FAIL;
+    }
+
+    fclose(fp);
+    free(buf);
+
+    printf(C_GRN "[INFO] NV %s (0x%08X) dumped to file '%s' (%u bytes)\n" C_RST,
+           slot->name, slot->index, path, read_size);
+
+    return SBC_OK;
+}
+
+/**
+ * @brief Load binary file and write its contents to NV.
+ *
+ * File size must exactly match NV slot size.
+ */
+SBCStatus SBC_NvWriteFromFile(SBC_TPM_CTX *ctx,
+                              const SBC_NV_SLOT *slot,
+                              const char *path,
+                              uint32_t expected_crc)
+{
+    if (!ctx || !slot || !path)
+        return SBC_ARG_ERR;
+
+    FILE *fp = fopen(path, "rb");
+    if (!fp) {
+        fprintf(stderr, C_RED "[ERROR] fopen('%s'): %s\n" C_RST,
+                path, strerror(errno));
+        return SBC_FAIL;
+    }
+
+    if (fseek(fp, 0, SEEK_END) != 0) {
+        fprintf(stderr, C_RED "[ERROR] fseek('%s'): %s\n" C_RST,
+                path, strerror(errno));
+        fclose(fp);
+        return SBC_FAIL;
+    }
+
+    long fsize = ftell(fp);
+    if (fsize < 0) {
+        fprintf(stderr, C_RED "[ERROR] ftell('%s'): %s\n" C_RST,
+                path, strerror(errno));
+        fclose(fp);
+        return SBC_FAIL;
+    }
+
+    if ((uint16_t)fsize != slot->size) {
+        fprintf(stderr, C_RED "[ERROR] File size mismatch: file=%ld, NV slot=%u\n" C_RST,
+                fsize, slot->size);
+        fclose(fp);
+        return SBC_SIZE_ERR;
+    }
+
+    if (fseek(fp, 0, SEEK_SET) != 0) {
+        fprintf(stderr, C_RED "[ERROR] fseek('%s') rewind: %s\n" C_RST,
+                path, strerror(errno));
+        fclose(fp);
+        return SBC_FAIL;
+    }
+
+    uint8_t *buf = (uint8_t *)malloc(slot->size);
+    if (!buf) {
+        fclose(fp);
+        return SBC_MEM_ERR;
+    }
+
+    size_t read_bytes = fread(buf, 1, slot->size, fp);
+    fclose(fp);
+
+    if (read_bytes != slot->size) {
+        fprintf(stderr, C_RED "[ERROR] fread('%s'): read=%zu, expected=%u\n" C_RST,
+                path, read_bytes, slot->size);
+        free(buf);
+        return SBC_FAIL;
+    }
+
+    SBCStatus st = SBC_NvWriteChecked(ctx, slot, buf, slot->size, expected_crc);
+    free(buf);
+    return st;
+}
+
+/* ============================================================
+ *  NV CRC utilities
+ * ============================================================ */
+
+/**
+ * @brief Compute CRC32 of NV contents.
+ */
+SBCStatus SBC_NvComputeCrc(SBC_TPM_CTX *ctx,
+                           const SBC_NV_SLOT *slot,
+                           uint32_t *out_crc)
+{
+    if (!ctx || !slot || !out_crc)
+        return SBC_ARG_ERR;
+
+    uint8_t *buf = (uint8_t *)malloc(slot->size);
+    if (!buf)
+        return SBC_MEM_ERR;
+
+    uint16_t read_size = 0;
+    SBCStatus st = SBC_NvReadBuffer(ctx, slot, buf, slot->size, &read_size);
+    if (st != SBC_OK) {
+        free(buf);
+        return st;
+    }
+
+    *out_crc = crc32_calc(buf, read_size);
+    free(buf);
+
+    printf(C_CYN "[INFO] CRC32(%s) from NV = 0x%08X\n" C_RST,
+           slot->name, *out_crc);
+
+    return SBC_OK;
+}
+
+/**
+ * @brief Verify NV contents against expected CRC.
+ *
+ * @return SBC_OK if CRC matches, SBC_CRC_ERR if mismatch, or other SBC/TMP errors.
+ */
+SBCStatus SBC_NvVerifyCrc(SBC_TPM_CTX *ctx,
+                          const SBC_NV_SLOT *slot,
+                          uint32_t expected_crc)
+{
+    if (!expected_crc) {
+        fprintf(stderr, C_YEL "[WARN] Expected CRC is 0. Skipping verify.\n" C_RST);
+        return SBC_ARG_ERR;
+    }
+
+    uint32_t crc = 0;
+    SBCStatus st = SBC_NvComputeCrc(ctx, slot, &crc);
+    if (st != SBC_OK)
+        return st;
+
+    if (crc != expected_crc) {
+        fprintf(stderr,
+                C_RED "[ERROR] CRC mismatch for %s: expected=0x%08X, nv_crc=0x%08X\n" C_RST,
+                slot->name, expected_crc, crc);
+        return SBC_CRC_ERR;
+    }
+
+    printf(C_GRN "[INFO] CRC32(%s) matched: 0x%08X\n" C_RST,
+           slot->name, crc);
+
+    return SBC_OK;
+}
+
+/* ============================================================
+ *  NV table summary
+ * ============================================================ */
+
+/**
+ * @brief Dump summary for all NV slots in the global table.
+ *
+ * For each slot:
+ *   - Check existence
+ *   - If exists, read size and CRC and print summary
+ */
+void SBC_NvDumpTable(SBC_TPM_CTX *ctx)
+{
+    if (!ctx || !ctx->sys) {
+        fprintf(stderr, C_RED "[ERROR] SBC_NvDumpTable: invalid TPM context\n" C_RST);
+        return;
+    }
+
+    printf(C_BLU "\n[INFO] NV Table Summary\n" C_RST);
+    printf("Name    Index       Size   Exists   CRC32\n");
+    printf("------  ----------  -----  -------  ----------\n");
+
+    for (size_t i = 0; i < g_nv_table_count; ++i) {
+        const SBC_NV_SLOT *slot = &g_nv_table[i];
+        int exists = SBC_NvExists(ctx, slot->index);
+
+        if (exists <= 0) {
+            printf("%-6s  0x%08X  %5u    %s    %s\n",
+                   slot->name,
+                   slot->index,
+                   slot->size,
+                   (exists == 0) ? "NO" : "ERR",
+                   "----------");
+            continue;
+        }
+
+        uint32_t crc = 0;
+        SBCStatus st = SBC_NvComputeCrc(ctx, slot, &crc);
+        if (st != SBC_OK) {
+            printf("%-6s  0x%08X  %5u    YES      %s\n",
+                   slot->name,
+                   slot->index,
+                   slot->size,
+                   "CRC-ERR");
+            continue;
+        }
+
+        printf("%-6s  0x%08X  %5u    YES      0x%08X\n",
+               slot->name,
+               slot->index,
+               slot->size,
+               crc);
+    }
+
+    printf("\n");
 }
 
 /* ============================================================
@@ -575,16 +853,49 @@ static uint8_t g_key1[NV_KEY_SIZE] = {
 
 static uint8_t g_cert1[NV_CERT_SIZE];
 
-static void fill_example_vectors(void)
-{
-    memset(g_cert1, 0x11, sizeof(g_cert1));
-}
-
 /* ============================================================
- *  Test entry
+ *  Test helpers
  * ============================================================ */
 
+/**
+ * @brief Fill a CERT buffer using TPM2_GetRandom().
+ *        The buffer must be NV_CERT_SIZE (512 bytes).
+ */
+static bool SBC_FillRandomCert(SBC_TPM_CTX *ctx, uint8_t *out_buf)
+{
+    size_t remaining = NV_CERT_SIZE;
+    uint8_t *p = out_buf;
 
+    while (remaining > 0) {
+
+        TPM2B_DIGEST rand = { .size = 0 };
+
+        TSS2_RC rc = Tss2_Sys_GetRandom(
+            ctx->sys,
+            NULL,
+            (remaining > 64 ? 64 : remaining),
+            &rand,
+            NULL
+        );
+
+        if (rc != TSS2_RC_SUCCESS) {
+            fprintf(stderr, C_RED
+                    "[ERROR] GetRandom failed: rc=0x%X (%s)\n" C_RST,
+                    rc, Tss2_RC_Decode(rc));
+            return false;
+        }
+
+        memcpy(p, rand.buffer, rand.size);
+        p += rand.size;
+        remaining -= rand.size;
+    }
+
+    return true;
+}
+
+/**
+ * @brief Fill CERT1 buffer with TPM random bytes.
+ */
 static SBCStatus fill_cert_with_tpm_random(SBC_TPM_CTX *ctx)
 {
     uint8_t *p = g_cert1;
@@ -612,8 +923,17 @@ static SBCStatus fill_cert_with_tpm_random(SBC_TPM_CTX *ctx)
         remaining -= rand.size;
     }
 
+    printf(C_GRN "[INFO] CERT1 buffer filled with TPM random (%u bytes)\n" C_RST,
+           NV_CERT_SIZE);
+
     return SBC_OK;
 }
+
+/* ============================================================
+ *  Test entry
+ * ============================================================ */
+
+
 
 
 /**
@@ -621,102 +941,146 @@ static SBCStatus fill_cert_with_tpm_random(SBC_TPM_CTX *ctx)
  *
  * This function:
  *   - Initializes TPM
- *   - Writes KEY1 and CERT1 to NV with CRC check
+ *   - Writes KEY1 (fixed pattern) and CERT1 (TPM random) to NV with CRC check
  *   - Reads KEY1 and CERT1 and prints hexdump
+ *   - Dumps NV table summary
  */
 int sbc_nv_test_main(void)
 {
     SBC_TPM_CTX ctx;
     SBCStatus st;
 
-    fill_example_vectors();
-
-    /* You can switch between /dev/tpm0 and /dev/tpmrm0 here. */
+    /* TPM Init */
     st = SBC_TpmInit(&ctx, "device:/dev/tpm0");
     if (st != SBC_OK) {
-        if (SBC_IS_TPM_RC(st)) {
-            fprintf(stderr, C_RED "[FATAL] SBC_TpmInit failed: 0x%08X (%s)\n" C_RST,
-                    st, Tss2_RC_Decode(st));
-        } else {
-            fprintf(stderr, C_RED "[FATAL] SBC_TpmInit failed: 0x%08X (SBC internal)\n" C_RST,
-                    st);
-        }
+        fprintf(stderr, C_RED "[FATAL] TPM Init failed: 0x%08X (%s)\n" C_RST,
+                st, Tss2_RC_Decode(st));
         return 1;
     }
 
+    /* Lookup NV slots */
     const SBC_NV_SLOT *slot_key1  = SBC_NvFindSlotByName("KEY1");
+    const SBC_NV_SLOT *slot_key2  = SBC_NvFindSlotByName("KEY2");
+    const SBC_NV_SLOT *slot_key3  = SBC_NvFindSlotByName("KEY3");
+
     const SBC_NV_SLOT *slot_cert1 = SBC_NvFindSlotByName("CERT1");
+    const SBC_NV_SLOT *slot_cert2 = SBC_NvFindSlotByName("CERT2");
+    const SBC_NV_SLOT *slot_cert3 = SBC_NvFindSlotByName("CERT3");
 
-    if (!slot_key1 || !slot_cert1) {
-        fprintf(stderr, C_RED "[FATAL] NV slot not found in table\n" C_RST);
+    if (!slot_key1 || !slot_key2 || !slot_key3 ||
+        !slot_cert1 || !slot_cert2 || !slot_cert3)
+    {
+        fprintf(stderr, C_RED "[FATAL] NV slot missing in table\n" C_RST);
         SBC_TpmFinish(&ctx);
         return 1;
     }
 
-    /* Fill CERT1 buffer with TPM Random */
-    st = fill_cert_with_tpm_random(&ctx);
-    if (st != SBC_OK) {
-        fprintf(stderr, C_RED "[ERROR] Failed to fill CERT1 with TPM random\n" C_RST);
-        SBC_TpmFinish(&ctx);
-        return 1;
-    }
+    /* -----------------------------------------
+     * KEY Test Data
+     * ----------------------------------------- */
+    uint8_t key2_buf[NV_KEY_SIZE];
+    uint8_t key3_buf[NV_KEY_SIZE];
 
-    /* Write CERT1 */
-    st = SBC_NvWriteChecked(&ctx, slot_cert1, g_cert1, sizeof(g_cert1), 0);
-    if (st != SBC_OK) {
-        if (SBC_IS_TPM_RC(st)) {
-            fprintf(stderr, C_RED "[ERROR] SBC_NvWriteChecked(KEY1) TPM failed: 0x%08X (%s)\n" C_RST,
-                    st, Tss2_RC_Decode(st));
-        } else {
-            fprintf(stderr, C_RED "[ERROR] SBC_NvWriteChecked(KEY1) failed: 0x%08X\n" C_RST, st);
-        }
-        SBC_TpmFinish(&ctx);
-        return 1;
-    }
+    memcpy(key2_buf, g_key1, NV_KEY_SIZE);   /* KEY2 = KEY1 copy */
+    for (int i = 0; i < NV_KEY_SIZE; i++)
+        key3_buf[i] = 0xAA;                  /* KEY3 = 0xAA pattern */
 
-    /* Read KEY1 */
+    printf(C_BLU "\n===== TEST: KEY1~KEY3 =====\n" C_RST);
+
+    /* ---------------- KEY1 ---------------- */
+    printf(C_CYN "\n[TEST] Write KEY1\n" C_RST);
+    st = SBC_NvWriteChecked(&ctx, slot_key1, g_key1, NV_KEY_SIZE, 0);
+    if (st != SBC_OK) goto fail;
+
     st = SBC_NvReadHexdump(&ctx, slot_key1);
-    if (st != SBC_OK) {
-        if (SBC_IS_TPM_RC(st)) {
-            fprintf(stderr, C_RED "[ERROR] SBC_NvReadHexdump(KEY1) TPM failed: 0x%08X (%s)\n" C_RST,
-                    st, Tss2_RC_Decode(st));
-        } else {
-            fprintf(stderr, C_RED "[ERROR] SBC_NvReadHexdump(KEY1) failed: 0x%08X\n" C_RST, st);
-        }
-        SBC_TpmFinish(&ctx);
-        return 1;
-    }
+    if (st != SBC_OK) goto fail;
 
-    /* Write CERT1 */
-    st = SBC_NvWriteChecked(&ctx, slot_cert1, g_cert1, sizeof(g_cert1), 0);
-    if (st != SBC_OK) {
-        if (SBC_IS_TPM_RC(st)) {
-            fprintf(stderr, C_RED "[ERROR] SBC_NvWriteChecked(CERT1) TPM failed: 0x%08X (%s)\n" C_RST,
-                    st, Tss2_RC_Decode(st));
-        } else {
-            fprintf(stderr, C_RED "[ERROR] SBC_NvWriteChecked(CERT1) failed: 0x%08X\n" C_RST, st);
-        }
-        SBC_TpmFinish(&ctx);
-        return 1;
-    }
+    /* ---------------- KEY2 ---------------- */
+    printf(C_CYN "\n[TEST] Write KEY2\n" C_RST);
+    st = SBC_NvWriteChecked(&ctx, slot_key2, key2_buf, NV_KEY_SIZE, 0);
+    if (st != SBC_OK) goto fail;
 
-    /* Read CERT1 */
+    st = SBC_NvReadHexdump(&ctx, slot_key2);
+    if (st != SBC_OK) goto fail;
+
+    /* ---------------- KEY3 ---------------- */
+    printf(C_CYN "\n[TEST] Write KEY3\n" C_RST);
+    st = SBC_NvWriteChecked(&ctx, slot_key3, key3_buf, NV_KEY_SIZE, 0);
+    if (st != SBC_OK) goto fail;
+
+    st = SBC_NvReadHexdump(&ctx, slot_key3);
+    if (st != SBC_OK) goto fail;
+
+
+    /* -----------------------------------------
+     * CERT1~CERT3 테스트 (512바이트 랜덤)
+     * ----------------------------------------- */
+    printf(C_BLU "\n===== TEST: CERT1~CERT3 (TPM Random) =====\n" C_RST);
+
+    uint8_t cert_buf[NV_CERT_SIZE];
+
+    /* TPM Random 채우기 공통 코드 (Inline) */
+    #define FILL_CERT_RANDOM()                                      \
+        do {                                                        \
+            size_t remain = NV_CERT_SIZE;                           \
+            uint8_t *p = cert_buf;                                  \
+            while (remain > 0) {                                    \
+                TPM2B_DIGEST rand = { .size = 0 };                   \
+                size_t req = (remain > 64 ? 64 : remain);            \
+                TSS2_RC rc = Tss2_Sys_GetRandom(                     \
+                    ctx.sys, NULL, req, &rand, NULL);                \
+                if (rc != TSS2_RC_SUCCESS) {                         \
+                    fprintf(stderr, C_RED                            \
+                            "[ERROR] GetRandom failed: 0x%X (%s)\n", \
+                            rc, Tss2_RC_Decode(rc));                 \
+                    goto fail;                                       \
+                }                                                    \
+                memcpy(p, rand.buffer, rand.size);                   \
+                p += rand.size;                                      \
+                remain -= rand.size;                                 \
+            }                                                        \
+        } while (0)
+
+    /* ---------------- CERT1 ---------------- */
+    printf(C_CYN "\n[TEST] Write CERT1\n" C_RST);
+    FILL_CERT_RANDOM();
+    st = SBC_NvWriteChecked(&ctx, slot_cert1, cert_buf, NV_CERT_SIZE, 0);
+    if (st != SBC_OK) goto fail;
+
     st = SBC_NvReadHexdump(&ctx, slot_cert1);
-    if (st != SBC_OK) {
-        if (SBC_IS_TPM_RC(st)) {
-            fprintf(stderr, C_RED "[ERROR] SBC_NvReadHexdump(CERT1) TPM failed: 0x%08X (%s)\n" C_RST,
-                    st, Tss2_RC_Decode(st));
-        } else {
-            fprintf(stderr, C_RED "[ERROR] SBC_NvReadHexdump(CERT1) failed: 0x%08X\n" C_RST, st);
-        }
-        SBC_TpmFinish(&ctx);
-        return 1;
-    }
+    if (st != SBC_OK) goto fail;
 
-    /* Optional: test undefine */
-    // st = SBC_NvUndefine(&ctx, slot_cert1->index);
+    /* ---------------- CERT2 ---------------- */
+    printf(C_CYN "\n[TEST] Write CERT2\n" C_RST);
+    FILL_CERT_RANDOM();
+    st = SBC_NvWriteChecked(&ctx, slot_cert2, cert_buf, NV_CERT_SIZE, 0);
+    if (st != SBC_OK) goto fail;
+
+    st = SBC_NvReadHexdump(&ctx, slot_cert2);
+    if (st != SBC_OK) goto fail;
+
+    /* ---------------- CERT3 ---------------- */
+    printf(C_CYN "\n[TEST] Write CERT3\n" C_RST);
+    FILL_CERT_RANDOM();
+    st = SBC_NvWriteChecked(&ctx, slot_cert3, cert_buf, NV_CERT_SIZE, 0);
+    if (st != SBC_OK) goto fail;
+
+    st = SBC_NvReadHexdump(&ctx, slot_cert3);
+    if (st != SBC_OK) goto fail;
+
+
+    /* -----------------------------------------
+     * 전체 Summary
+     * ----------------------------------------- */
+    printf(C_BLU "\n===== NV TABLE SUMMARY =====\n" C_RST);
+    SBC_NvDumpTable(&ctx);
 
     SBC_TpmFinish(&ctx);
     return 0;
+
+fail:
+    fprintf(stderr, C_RED "\n[FATAL] NV test aborted due to error.\n" C_RST);
+    SBC_TpmFinish(&ctx);
+    return 1;
 }
 

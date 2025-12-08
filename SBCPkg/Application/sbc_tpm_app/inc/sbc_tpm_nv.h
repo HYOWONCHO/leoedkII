@@ -65,5 +65,30 @@ SBCStatus SBC_NvReadHexdump(SBC_TPM_CTX *ctx,
  */
 int sbc_nv_test_main(void);
 
+SBCStatus SBC_NvReadBuffer(SBC_TPM_CTX *ctx,
+                           const SBC_NV_SLOT *slot,
+                           uint8_t *out_buf,
+                           uint16_t out_buf_size,
+                           uint16_t *out_read_size);
+
+SBCStatus SBC_NvReadToFile(SBC_TPM_CTX *ctx,
+                           const SBC_NV_SLOT *slot,
+                           const char *path);
+
+SBCStatus SBC_NvWriteFromFile(SBC_TPM_CTX *ctx,
+                              const SBC_NV_SLOT *slot,
+                              const char *path,
+                              uint32_t expected_crc);
+
+SBCStatus SBC_NvComputeCrc(SBC_TPM_CTX *ctx,
+                           const SBC_NV_SLOT *slot,
+                           uint32_t *out_crc);
+
+SBCStatus SBC_NvVerifyCrc(SBC_TPM_CTX *ctx,
+                          const SBC_NV_SLOT *slot,
+                          uint32_t expected_crc);
+
+void SBC_NvDumpTable(SBC_TPM_CTX *ctx);
+
 #endif /* SBC_TPM_NV_H */
 
