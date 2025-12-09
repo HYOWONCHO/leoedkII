@@ -142,22 +142,22 @@ function package_build()
 
 }
 
-
 function post_copy_fsbl()
 {
     echo -e "${YELLO}"
     pushd ./Build/SBC/DEBUG_GCC5/X64
 
-    #printf "%-16s" ${sat_baseanswr} | tr ' ' '\0' >> FSBL.efi 
-    #printf "%-16s" ${fw_version} | tr ' ' '\0' >> FSBL.efi 
+    ts=$(date +"%Y%m%d_%H%M%S")
+    copyname="FSBL_${fw_version}_${ts}.efi"
 
-    copyname="FSBL_$fw_version.efi"
-    
     cp -i ./FSBL.efi ../../../../FwSignPy/.
     cp -i ./FSBL.efi ../../../../FwSignPy/$copyname
+
     popd
     echo -e "${NC}"
 }
+
+
 
 function post_copy_ssbl()
 {
@@ -167,7 +167,8 @@ function post_copy_ssbl()
     #printf "%-16s" ${sat_baseanswr} | tr ' ' '\0' >> SSBL.efi 
     #printf "%-16s" ${fw_version} | tr ' ' '\0' >> SSBL.efi 
 
-    copyname="SSBL_$fw_version.efi"
+    ts=$(date +"%Y%m%d_%H%M%S")
+    copyname="SSBL_${fw_version}_${ts}.efi"
 
     cp -i ./SSBL.efi ../../../../FwSignPy/.
     cp -i ./SSBL.efi ../../../../FwSignPy/$copyname
