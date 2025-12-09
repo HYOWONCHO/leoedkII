@@ -336,7 +336,7 @@ SBCStatus SBC_BootModeNormalAndpUdate(VOID *blkhnd, VOID *ImageHandle, UINTN nro
   UINTN   bsofs = 0; // Boot Sector Offset
   
 
-  EFI_HANDLE  *ssbl_img_hndl;
+  [[gnu::unused]] EFI_HANDLE  *ssbl_img_hndl;
   [[maybe_unused]]UINTN endlba = 0;
   [[maybe_unused]]INTN       hndlcnt = 0;
   __attribute__((unused))EFI_STATUS retval;
@@ -347,7 +347,7 @@ SBCStatus SBC_BootModeNormalAndpUdate(VOID *blkhnd, VOID *ImageHandle, UINTN nro
 
 
 
-  LV_t wrlv;
+  [[gnu::unused]] LV_t wrlv;
   //UINT8 *imgssbl = NULL;
 #ifdef _ALL_PASS_
   SBC_BootModeFactory(blkhnd, ImageHandle);
@@ -385,21 +385,32 @@ SBCStatus SBC_BootModeNormalAndpUdate(VOID *blkhnd, VOID *ImageHandle, UINTN nro
     goto errdone;
   }
 
-  ret = SBC_RawPrtReadBlock(blkhnd, (void *)loadimg, &imglen, startlba);
-  if (ret != SBCOK) {
-    //Print(L"SSBL Factory Block Read Fail \n");
+  retval = SBC_CopyBlockDeviceToFile(blkhnd,
+                                     (bsofs | BOOT_SSBL_OFS) + 4,
+                                     imglen,
+                                     fname,
+                                     NULL);
+  if (EFI_ERROR(retval)) {
+    eprint("Factory SSBL File Create Fail");
+    ret = SBCNOTFND;
     goto errdone;
   }
 
-  if ((hndlcnt = SBC_FindEfiFileSystemProtocol(&ssbl_img_hndl)) <= 0) {
-    //Print(L"File SYstem Handle Found fail \n");
-    ret = SBCIO;
-    goto errdone;
-  }
-
-  ////Print(L"File System Handle Found (Handle Count : %d) \n", hndlcnt);
-
-  _lv_set_data(&wrlv,&loadimg[4], imglen - 4);
+//ret = SBC_RawPrtReadBlock(blkhnd, (void *)loadimg, &imglen, startlba);
+//if (ret != SBCOK) {
+//  //Print(L"SSBL Factory Block Read Fail \n");
+//  goto errdone;
+//}
+//
+//if ((hndlcnt = SBC_FindEfiFileSystemProtocol(&ssbl_img_hndl)) <= 0) {
+//  //Print(L"File SYstem Handle Found fail \n");
+//  ret = SBCIO;
+//  goto errdone;
+//}
+//
+//////Print(L"File System Handle Found (Handle Count : %d) \n", hndlcnt);
+//
+//_lv_set_data(&wrlv,&loadimg[4], imglen - 4);
 
   //SBC_mem_print_bin("SSBL Load Image", wrlv.value, 512);
 #ifndef _ALL_PASS_
@@ -426,31 +437,31 @@ SBCStatus SBC_BootModeNormalAndpUdate(VOID *blkhnd, VOID *ImageHandle, UINTN nro
   //  }
 
 
-  for (int idx = 0; idx < hndlcnt; idx++) {
-    retval = SBC_WriteFile(ssbl_img_hndl[idx], fname, &wrlv);
-    if (EFI_ERROR(retval)) {
-        continue;
-        //goto errdone;
-    }
-
-    retval = SBC_WriteFile(ssbl_img_hndl[idx], fname1, &wrlv);
-    if (EFI_ERROR(retval)) {
-        continue;
-        //goto errdone;
-    }
-
-    break;
-  }
-
-  if (EFI_ERROR(retval)) {
-    ret = SBCNOTFND;
-    //continue;
-    goto errdone;
-  }
-  dprint("idx : %d , hndlecount : %d", idx, hndlcnt);
-  //Print(L"SSBL Write is Done \n");
-  //SBC_mem_print_bin("SSBL Header", imghdr, imglen);
-  
+//for (int idx = 0; idx < hndlcnt; idx++) {
+//  retval = SBC_WriteFile(ssbl_img_hndl[idx], fname, &wrlv);
+//  if (EFI_ERROR(retval)) {
+//      continue;
+//      //goto errdone;
+//  }
+//
+//  retval = SBC_WriteFile(ssbl_img_hndl[idx], fname1, &wrlv);
+//  if (EFI_ERROR(retval)) {
+//      continue;
+//      //goto errdone;
+//  }
+//
+//  break;
+//}
+//
+//if (EFI_ERROR(retval)) {
+//  ret = SBCNOTFND;
+//  //continue;
+//  goto errdone;
+//}
+//dprint("idx : %d , hndlecount : %d", idx, hndlcnt);
+////Print(L"SSBL Write is Done \n");
+////SBC_mem_print_bin("SSBL Header", imghdr, imglen);
+//
   sys_end_time = SBC_PerfNowTicks();
   //dprint("sys_end_time : %ld (%ld)", sys_end_time, sys_end_time - sys_start_time);
   sys_ns_var  = SBC_PerfTicksTons(_PerfDeltaTicks(sys_start_time, sys_end_time));
