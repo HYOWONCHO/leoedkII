@@ -148,6 +148,8 @@
             Filters=""
             GUID="{146F5182-8CA2-4950-89CE-3FA5ED1B2135}"></Folder>
     </CustomFolders>
+    <List Name="RTE">
+    </List>
     <Files AutoFolders="DirectoryView">
         <Folder Name="../..">
             <F N="../../SBCPkg.dec"/>
@@ -14604,6 +14606,8 @@
         <F N="SBC_SystemControl.h"/>
         <F N="SBC_Timer.c"/>
         <F N="SBC_Timer.h"/>
+        <F N="SBC_Tpm.c"/>
+        <F N="SBC_Tpm.h"/>
         <F N="SBC_TypeDefs.h"/>
         <F N="SBC_UnitTest.c"/>
         <F N="SBC_UnitTest.h"/>
@@ -14611,6 +14615,4 @@
         <F N="SBC_X509.c"/>
         <F N="SBC_X509.h"/>
     </Files>
-    <List Name="RTE">
-    </List>
 </Project>

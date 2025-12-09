@@ -69,6 +69,17 @@
    #ShellCommandLib|ShellPkg/Library/UefiShellCommandLib/UefiShellCommandLib.inf
    HandleParsingLib|ShellPkg/Library/UefiHandleParsingLib/UefiHandleParsingLib.inf
 
+   #
+   # TPM2 Libraries (from SecurityPkg)
+   #
+   TpmCommLib|SecurityPkg/Library/TpmCommLib/TpmCommLib.inf
+   TpmMeasurementLib|SecurityPkg/Library/DxeTpmMeasurementLib/DxeTpmMeasurementLib.inf
+   Tpm12CommandLib|SecurityPkg/Library/Tpm12CommandLib/Tpm12CommandLib.inf
+   Tpm2CommandLib|SecurityPkg/Library/Tpm2CommandLib/Tpm2CommandLib.inf
+   Tpm12DeviceLib|SecurityPkg/Library/Tpm12DeviceLibTcg/Tpm12DeviceLibTcg.inf
+   Tpm2DeviceLib|SecurityPkg/Library/Tpm2DeviceLibTcg2/Tpm2DeviceLibTcg2.inf
+
+
 [PcdsFixedAtBuild]
   gEfiMdePkgTokenSpaceGuid.PcdDebugPropertyMask|0x1F
   gEfiMdePkgTokenSpaceGuid.PcdDebugPrintErrorLevel|0x80000045
@@ -80,8 +91,14 @@
   #gEfiMdeModulePkgTokenSpaceGuid.PcdSerialBaudRate|115200         # Or your desired baud rate
   #gEfiMdeModulePkgTokenSpaceGuid.PcdSerialClockRate|1843200        # Common for 16550 UARTs
 
+  #
+  # TPM2 PCD 
+  #
 
-#Added by Leon
+
+  #Added by Leon
+  #gEfiSecurityPkgTokenSpaceGuid.PcdTpm2HashMask|0x00000002
+  #gEfiSecurityPkgTokenSpaceGuid.PcdTpm2InterfaceType|0x02   # CRB or TIS depending your HW
 
   # Base address of the UART controller (e.g., COM1)
   #gEfiMdeModulePkgTokenSpaceGuid.PcdSerialPortBaseAddress|0x3F8

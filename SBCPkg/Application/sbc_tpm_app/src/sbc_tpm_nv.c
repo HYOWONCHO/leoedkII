@@ -16,6 +16,9 @@
 #include <tss2/tss2_tctildr.h>
 #include <tss2/tss2_rc.h>
 
+#include <time.h>   /* for srand/time */
+
+
 #include "sbc_tpm.h"
 #include "sbc_tpm_nv.h"
 
@@ -54,6 +57,70 @@ static SBC_NV_SLOT g_nv_table[] = {
 
 static const size_t g_nv_table_count =
     sizeof(g_nv_table) / sizeof(g_nv_table[0]);
+
+
+/**
+ * @brief Load certificate file, then store only random-length bytes.
+ *
+ * Random length range:
+ *      64 ~ NV_CERT_SIZE
+ *
+ * Behavior:
+ *   - If file is smaller than random length → pad with 0x00
+ *   - If file is larger than random length → truncate
+ *   - Output buffer is ALWAYS NV_CERT_SIZE bytes (padded with 0x00)
+ *
+ * @return 1 = success, 0 = fail
+ */
+static int SBC_LoadCertRandomSize(
+    const char *path,
+    uint8_t *out_buf,
+    size_t *used_len
+)
+{
+    /* Choose random size between 64 and NV_CERT_SIZE */
+    size_t rand_size = (size_t)(rand() % (NV_CERT_SIZE - 64 + 1)) + 64;
+
+    uint8_t temp[4096];
+
+    FILE *fp = fopen(path, "rb");
+    if (!fp) {
+        fprintf(stderr, C_RED "[ERROR] Cannot open cert file: %s\n" C_RST, path);
+        return 0;
+    }
+
+    size_t read_size = fread(temp, 1, sizeof(temp), fp);
+    fclose(fp);
+
+    if (read_size == 0) {
+        fprintf(stderr, C_RED "[ERROR] Empty cert file: %s\n" C_RST, path);
+        return 0;
+    }
+
+    /* Determine how many bytes to copy into NV buffer */
+    size_t copy = (read_size > rand_size ? rand_size : read_size);
+
+    /* Copy certificate bytes */
+    memcpy(out_buf, temp, copy);
+
+    /* If file is shorter than chosen random length → pad the rest */
+    if (copy < rand_size) {
+        memset(out_buf + copy, 0x00, rand_size - copy);
+    }
+
+    /* Fill the remaining NV slot with zeros up to NV_CERT_SIZE */
+    if (rand_size < NV_CERT_SIZE) {
+        memset(out_buf + rand_size, 0x00, NV_CERT_SIZE - rand_size);
+    }
+
+    *used_len = rand_size;
+
+    printf(C_GRN "[INFO] Loaded cert %s (file=%zu, used=%zu, padded=%zu)\n" C_RST,
+           path, read_size, rand_size, NV_CERT_SIZE - rand_size);
+
+    return 1;
+}
+
 
 /* ============================================================
  *  CRC32
@@ -933,9 +1000,166 @@ static SBCStatus fill_cert_with_tpm_random(SBC_TPM_CTX *ctx)
  *  Test entry
  * ============================================================ */
 
+/**
+ * @brief Simple test routine for NV manager.
+ *
+ * This function:
+ *   - Initializes TPM
+ *   - Writes KEY1~KEY3 (test patterns) to NV
+ *   - Writes CERT1~CERT3 from real cert files with random sizes
+ *   - Reads all and prints hexdump
+ *   - Prints NV table summary
+ */
+int sbc_nv_test_main(void)
+{
+    SBC_TPM_CTX ctx;
+    SBCStatus st;
+
+    /* Seed RNG for random cert sizes */
+    srand((unsigned)time(NULL));
+
+    /* TPM Init */
+    st = SBC_TpmInit(&ctx, "device:/dev/tpm0");
+    if (st != SBC_OK) {
+        if (SBC_IS_TPM_RC(st)) {
+            fprintf(stderr, C_RED "[FATAL] SBC_TpmInit failed: 0x%08X (%s)\n" C_RST,
+                    st, Tss2_RC_Decode(st));
+        } else {
+            fprintf(stderr, C_RED "[FATAL] SBC_TpmInit failed: 0x%08X (SBC internal)\n" C_RST,
+                    st);
+        }
+        return 1;
+    }
+
+    /* Lookup NV slots */
+    const SBC_NV_SLOT *slot_key1  = SBC_NvFindSlotByName("KEY1");
+    const SBC_NV_SLOT *slot_key2  = SBC_NvFindSlotByName("KEY2");
+    const SBC_NV_SLOT *slot_key3  = SBC_NvFindSlotByName("KEY3");
+
+    const SBC_NV_SLOT *slot_cert1 = SBC_NvFindSlotByName("CERT1");
+    const SBC_NV_SLOT *slot_cert2 = SBC_NvFindSlotByName("CERT2");
+    const SBC_NV_SLOT *slot_cert3 = SBC_NvFindSlotByName("CERT3");
+
+    if (!slot_key1 || !slot_key2 || !slot_key3 ||
+        !slot_cert1 || !slot_cert2 || !slot_cert3)
+    {
+        fprintf(stderr, C_RED "[FATAL] NV slot not found in table\n" C_RST);
+        SBC_TpmFinish(&ctx);
+        return 1;
+    }
+
+    /* -----------------------------------------
+     * KEY test patterns (KEY1~KEY3)
+     * ----------------------------------------- */
+
+    /* KEY1: use global g_key1 */
+    uint8_t key2_buf[NV_KEY_SIZE];
+    uint8_t key3_buf[NV_KEY_SIZE];
+
+    /* KEY2: incremental pattern */
+    for (int i = 0; i < NV_KEY_SIZE; i++) {
+        key2_buf[i] = (uint8_t)(i + 1);
+    }
+
+    /* KEY3: 0xAA pattern */
+    memset(key3_buf, 0xAA, sizeof(key3_buf));
+
+    printf(C_BLU "\n===== TEST: KEY1~KEY3 =====\n" C_RST);
+
+    /* ---------------- KEY1 ---------------- */
+    printf(C_CYN "\n[TEST] Write KEY1\n" C_RST);
+    st = SBC_NvWriteChecked(&ctx, slot_key1, g_key1, NV_KEY_SIZE, 0);
+    if (st != SBC_OK) goto fail;
+
+    st = SBC_NvReadHexdump(&ctx, slot_key1);
+    if (st != SBC_OK) goto fail;
+
+    /* ---------------- KEY2 ---------------- */
+    printf(C_CYN "\n[TEST] Write KEY2\n" C_RST);
+    st = SBC_NvWriteChecked(&ctx, slot_key2, key2_buf, NV_KEY_SIZE, 0);
+    if (st != SBC_OK) goto fail;
+
+    st = SBC_NvReadHexdump(&ctx, slot_key2);
+    if (st != SBC_OK) goto fail;
+
+    /* ---------------- KEY3 ---------------- */
+    printf(C_CYN "\n[TEST] Write KEY3\n" C_RST);
+    st = SBC_NvWriteChecked(&ctx, slot_key3, key3_buf, NV_KEY_SIZE, 0);
+    if (st != SBC_OK) goto fail;
+
+    st = SBC_NvReadHexdump(&ctx, slot_key3);
+    if (st != SBC_OK) goto fail;
 
 
+    /* -----------------------------------------
+     * CERT1~CERT3: real certificate files
+     *   - cert1.pem → CERT1
+     *   - cert2.pem → CERT2
+     *   - cert3.pem → CERT3
+     *   Each with random used length (64~NV_CERT_SIZE)
+     * ----------------------------------------- */
 
+    printf(C_BLU "\n===== TEST: CERT1~CERT3 (real certs, random size) =====\n" C_RST);
+
+    uint8_t cert_buf[NV_CERT_SIZE];
+    size_t  cert_len = 0;
+
+    /* ----------- CERT1 ----------- */
+    printf(C_CYN "\n[TEST] Write CERT1 from cert1.pem\n" C_RST);
+
+    if (!SBC_LoadCertRandomSize("cert1.pem", cert_buf, &cert_len))
+        goto fail;
+
+    st = SBC_NvWriteChecked(&ctx, slot_cert1, cert_buf, NV_CERT_SIZE, 0);
+    if (st != SBC_OK) goto fail;
+
+    st = SBC_NvReadHexdump(&ctx, slot_cert1);
+    if (st != SBC_OK) goto fail;
+
+
+    /* ----------- CERT2 ----------- */
+    printf(C_CYN "\n[TEST] Write CERT2 from cert2.pem\n" C_RST);
+
+    if (!SBC_LoadCertRandomSize("cert2.pem", cert_buf, &cert_len))
+        goto fail;
+
+    st = SBC_NvWriteChecked(&ctx, slot_cert2, cert_buf, NV_CERT_SIZE, 0);
+    if (st != SBC_OK) goto fail;
+
+    st = SBC_NvReadHexdump(&ctx, slot_cert2);
+    if (st != SBC_OK) goto fail;
+
+
+    /* ----------- CERT3 ----------- */
+    printf(C_CYN "\n[TEST] Write CERT3 from cert3.pem\n" C_RST);
+
+    if (!SBC_LoadCertRandomSize("cert3.pem", cert_buf, &cert_len))
+        goto fail;
+
+    st = SBC_NvWriteChecked(&ctx, slot_cert3, cert_buf, NV_CERT_SIZE, 0);
+    if (st != SBC_OK) goto fail;
+
+    st = SBC_NvReadHexdump(&ctx, slot_cert3);
+    if (st != SBC_OK) goto fail;
+
+
+    /* -----------------------------------------
+     * NV table summary
+     * ----------------------------------------- */
+    printf(C_BLU "\n===== NV TABLE SUMMARY =====\n" C_RST);
+    SBC_NvDumpTable(&ctx);
+
+    SBC_TpmFinish(&ctx);
+    return 0;
+
+fail:
+    fprintf(stderr, C_RED "\n[FATAL] NV test aborted due to error.\n" C_RST);
+    SBC_TpmFinish(&ctx);
+    return 1;
+}
+
+
+#if 0
 /**
  * @brief Simple test routine for NV manager.
  *
@@ -1083,4 +1307,4 @@ fail:
     SBC_TpmFinish(&ctx);
     return 1;
 }
-
+#endif

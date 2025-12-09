@@ -34,6 +34,7 @@
   SBC_LoadKernelImage.c 
   SBC_Nvram.c
   SBC_UnitTest.c
+  SBC_Tpm.c
   SBC_Timer.c
  
 [Packages]
@@ -66,13 +67,9 @@
   HiiLib
   SortLib
   UefiHiiServicesLib
+  Tpm2CommandLib
+  Tpm2DeviceLib
 
-  #
-  # TPM2 Related Library 
-  #
-
-  #Tpm2CommandLib
-  #Tpm2DeviceLib
 
   #ShellLib
   #ShellCommandLib
@@ -107,6 +104,8 @@
 [Pcd]
   gEfiMdeModulePkgTokenSpaceGuid.PcdSerialRegisterBase
   gEfiMdePkgTokenSpaceGuid.PcdUefiLibMaxPrintBufferSize
+  #gEfiSecurityPkgTokenSpaceGuid.PcdTpm2InterfaceType
+  #gEfiSecurityPkgTokenSpaceGuid.PcdTpm2DebugLevel
 	
 
 [FixedPcd]
@@ -120,10 +119,11 @@
   leo_test_extra.uni
 
 [BuildOptions.X64]
-  GCC:DEBUG_GCC5_X64_CC_FLAGS = -flto=2  -Werror=cpp 
+  GCC:DEBUG_GCC5_X64_CC_FLAGS = -flto=4  -Werror=cpp 
   *_*_*_CC_FLAGS = -D_SBC_DEVID_VERIFY_
   *_*_*_CC_FLAGS = -D_SBC_DRIVER_LOAD_
   *_*_*_CC_FLAGS = -D_DEBUG_PRINT_ON_
+  *_*_*_CC_FLAGS = -D_SBC_TPM_
 
   #*_*_*_CC_FLAGS = -D_ALL_PASS_
 

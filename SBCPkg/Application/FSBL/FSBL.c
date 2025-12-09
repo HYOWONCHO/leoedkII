@@ -69,7 +69,9 @@
 #include "SBC_Nvram.h"
 #include "SBC_SystemControl.h"
 #include "SBC_Timer.h"
-
+#ifdef _SBC_TPM_
+#include "SBC_Tpm.h"
+#endif
 
 
 extern VOID SBC_ShutdownSystem(VOID);
@@ -1125,6 +1127,7 @@ EFI_STATUS ParseShellOptions(VOID *hndl)
 extern EFI_STATUS SBC_LogFileInit( EFI_HANDLE        logHandle);
 extern EFI_STATUS MapRebuild(VOID);
 extern VOID PrintMappingTable();
+
 EFI_STATUS
 EFIAPI
 UefiMain (
@@ -1240,6 +1243,29 @@ UefiMain (
 
     ZeroMem(&btproc, sizeof btproc);
     ZeroMem(&h_rawprtheader, sizeof h_rawprtheader);
+
+#ifdef _SBC_TPM_
+    retval = SBC_PrintTpmVersionInfo();
+    if (EFI_ERROR(retval)) {
+        sbc_err_sysprn(SBC_LOG_CMN_PRIO_INFO, 2,
+                     SYS_LOG_HOST_BOOT,
+                     SYS_LOG_APP_NAME,
+                     SYS_LOG_CSC_NAME,
+                     0,
+                     L"Detetion",
+                     L"SBC_VENDOR_SP TPM device can not found \n");
+
+        goto errdone;
+    }
+
+    sbc_err_sysprn(SBC_LOG_CMN_PRIO_INFO, 2,
+                     SYS_LOG_HOST_BOOT,
+                     SYS_LOG_APP_NAME,
+                     SYS_LOG_CSC_NAME,
+                     0,
+                     L"Detetion",
+                     L"SBC_VENDOR_SP TPM device found \n");
+#endif
 
     btproc.bootst = SB_PROC_ST_NRMA;
     // Get the NVMe SSD Raw Partiton handle and Header information
