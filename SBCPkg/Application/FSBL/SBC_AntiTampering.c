@@ -1873,7 +1873,7 @@ SBCStatus  SBC_SSBL_Verify(VOID *blkhnd, VOID *ansr,  UINTN nrombank, UINTN bm, 
     // Read the Boot FW BLOB
     //
     ret = SBC_RawPrtReadBlock(blkhnd, (void *)loadimg, &imglen, startlba);
-    SBC_RET_VALIDATE_ERRCODEMSG((ret == SBCOK), ret, "SSBL Factory Block Read Fail ");
+    SBC_RET_VALIDATE_ERRCODEMSG((ret == SBCOK), ret, "SSBL  Block Read Fail ");
 
     //
     //Reference to SSBL FW addres

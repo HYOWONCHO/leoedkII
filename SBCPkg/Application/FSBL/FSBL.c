@@ -341,6 +341,8 @@ SBCStatus SBC_BootModeNormalAndpUdate(VOID *blkhnd, VOID *ImageHandle, UINTN nro
   [[maybe_unused]]INTN       hndlcnt = 0;
   __attribute__((unused))EFI_STATUS retval;
   [[gnu::unused]]CHAR16 *fname = L"\\EFI\\BOOT\\SSBL.efi";
+
+  [[gnu::unused]]CHAR16 *fname1 = L"\\EFI\\BOOT\\SSBL.efi.bkp";
   [[maybe_unused]] int idx;
 
 
@@ -351,7 +353,7 @@ SBCStatus SBC_BootModeNormalAndpUdate(VOID *blkhnd, VOID *ImageHandle, UINTN nro
   SBC_BootModeFactory(blkhnd, ImageHandle);
   return SBCOK;
 #endif
-  dprint("----- Normal and Update Boot SSBL running ( Bank Id : 0x%x ) -----", nrombank);
+  dprint("*** ----- Normal and Update Boot SSBL running ( Bank Id : 0x%x ) -----", nrombank);
 
   SBC_RET_VALIDATE_ERRCODEMSG((nrombank > 0 && nrombank < 3), SBCINVPARAM, "Invalid Parameter for SSBL bank");
   SBC_RET_VALIDATE_ERRCODEMSG((blkhnd != NULL), SBCNULLP, "Block I/O Handle Nill");
@@ -369,9 +371,12 @@ SBCStatus SBC_BootModeNormalAndpUdate(VOID *blkhnd, VOID *ImageHandle, UINTN nro
 
   CopyMem((void *)&imglen, &imghdr[0], sizeof imglen);
 
-  dprint("Running SSBL addr : 0x%lx, Image Len : %ld ", (bsofs | BOOT_SSBL_OFS), imglen);
+  dprint("***** Running SSBL addr : 0x%lx, Image Len : %ld (0x%lx) **** ", 
+         (bsofs | BOOT_SSBL_OFS), 
+         imglen,
+         imglen);
  
-  imglen = ALIGN_VALUE(imglen, SBC_RAWPRT_DFLT_BLK_SZ);
+  //imglen = ALIGN_VALUE(imglen, SBC_RAWPRT_DFLT_BLK_SZ);
   //dprint("Boot Service Allocate ");
   retval = gBS->AllocatePool(EfiBootServicesData, imglen, (VOID **)&loadimg);
   if (EFI_ERROR(retval)) {
@@ -423,6 +428,12 @@ SBCStatus SBC_BootModeNormalAndpUdate(VOID *blkhnd, VOID *ImageHandle, UINTN nro
 
   for (int idx = 0; idx < hndlcnt; idx++) {
     retval = SBC_WriteFile(ssbl_img_hndl[idx], fname, &wrlv);
+    if (EFI_ERROR(retval)) {
+        continue;
+        //goto errdone;
+    }
+
+    retval = SBC_WriteFile(ssbl_img_hndl[idx], fname1, &wrlv);
     if (EFI_ERROR(retval)) {
         continue;
         //goto errdone;
@@ -1245,7 +1256,8 @@ UefiMain (
     ZeroMem(&h_rawprtheader, sizeof h_rawprtheader);
 
 #ifdef _SBC_TPM_
-    retval = SBC_PrintTpmVersionInfo();
+
+    retval = SBC_TpmInit();
     if (EFI_ERROR(retval)) {
         sbc_err_sysprn(SBC_LOG_CMN_PRIO_INFO, 2,
                      SYS_LOG_HOST_BOOT,
@@ -1253,7 +1265,7 @@ UefiMain (
                      SYS_LOG_CSC_NAME,
                      0,
                      L"Detetion",
-                     L"SBC_VENDOR_SP TPM device can not found \n");
+                     L"SBC_VENDOR_SP TPM Init not OK \n");
 
         goto errdone;
     }
@@ -1264,7 +1276,28 @@ UefiMain (
                      SYS_LOG_CSC_NAME,
                      0,
                      L"Detetion",
-                     L"SBC_VENDOR_SP TPM device found \n");
+                     L"SBC_VENDOR_SP TPM Init OK \n");
+
+    retval = SBC_PrintTpmVersionInfo();
+    if (EFI_ERROR(retval)) {
+        sbc_err_sysprn(SBC_LOG_CMN_PRIO_INFO, 2,
+                     SYS_LOG_HOST_BOOT,
+                     SYS_LOG_APP_NAME,
+                     SYS_LOG_CSC_NAME,
+                     0,
+                     L"Detetion",
+                     L"SBC_VENDOR_SP TPM Version found \n");
+
+        goto errdone;
+    }
+
+    sbc_err_sysprn(SBC_LOG_CMN_PRIO_INFO, 2,
+                     SYS_LOG_HOST_BOOT,
+                     SYS_LOG_APP_NAME,
+                     SYS_LOG_CSC_NAME,
+                     0,
+                     L"Detetion",
+                     L"SBC_VENDOR_SP TPM Version found \n");
 #endif
 
     btproc.bootst = SB_PROC_ST_NRMA;
