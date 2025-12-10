@@ -935,6 +935,8 @@ uc_errdone:
                  1,
                  L"Detectoin",
                  mrgmsg);
+
+            btproc.bootst = SB_PROC_ST_NRMA;
         }
         ret = SBC_SecureBootCheck((VOID *)&btproc);
         break;
@@ -996,6 +998,10 @@ errdone:
 
         //SBC_ShutdownSystem();
     }
+
+    dprint("Genereally return from SSBL with Boot Mode %u and Key Mode %u",
+           btproc.bm,  btproc.km );
+
     return retval;
 }
 

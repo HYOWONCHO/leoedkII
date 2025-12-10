@@ -1100,6 +1100,35 @@ SBC_CopyBlockReadAndBlockWrite(
     IN OUT UINT32 *Size OPTIONAL
 );
 
+/**
+ * @fn EFI_STATUS SBC_BlkReadArbitrary(
+ *       IN  EFI_BLOCK_IO_PROTOCOL *Blk,
+ *       IN  UINT64                 ByteOffset,
+ *       OUT VOID                  *Buffer,
+ *       IN  UINTN                  Length)
+ * @brief Read an arbitrary byte range from a block device, handling
+ *        unaligned offsets and partial-block boundaries.
+ *
+ * @param[in]  Blk         Pointer to the target block device implementing
+ *                         EFI_BLOCK_IO_PROTOCOL.
+ * @param[in]  ByteOffset  Byte-granular offset from which data is read.
+ * @param[out] Buffer      Caller-provided output buffer that receives the data.
+ * @param[in]  Length      Number of bytes to read into @p Buffer.
+ *
+ * @retval EFI_SUCCESS            The requested region was read successfully.
+ * @retval EFI_INVALID_PARAMETER  One or more parameters are NULL or invalid.
+ * @retval EFI_BAD_BUFFER_SIZE    Underlying device cannot support the read
+ *                                because of alignment or geometry constraints.
+ * @retval EFI_DEVICE_ERROR       A block device I/O error occurred.
+ *
+ */
+EFI_STATUS
+SBC_BlkReadArbitrary(
+    IN  EFI_BLOCK_IO_PROTOCOL *Blk,   /**< [in] Block I/O device handle */
+    IN  UINT64                 ByteOffset, /**< [in] Arbitrary read offset */
+    OUT VOID                  *Buffer,  /**< [out] Output buffer for data */
+    IN  UINTN                  Length   /**< [in] Number of bytes to read */
+);
 
 
 

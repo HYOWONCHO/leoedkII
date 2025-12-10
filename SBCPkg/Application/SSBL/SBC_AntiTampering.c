@@ -1860,6 +1860,9 @@ SBCStatus SBC_BaseAnswerEncryptStore(VOID *blkhnd, UINT8* msg, UINT32 msgl, UINT
 
     RandomBytes((void *)ansid.iv, BASE_ANS_IV_KEY_STR); // Initial Vector 
 
+    dprint("B-Ansr Message Len : %d", msgl);
+    SBC_external_mem_print_bin("Plain B-Ansr Message", msg, msgl);
+
 
     // A. Encrypt the Message 
 
@@ -1902,7 +1905,7 @@ SBCStatus SBC_BaseAnswerEncryptStore(VOID *blkhnd, UINT8* msg, UINT32 msgl, UINT
 
     ansid.msglen = ctx.out.length;
     
-    dprint("B-Ansr Message Len : %d", ansid.msglen);
+    //dprint("B-Ansr Message Len : %d", ansid.msglen);
     SBC_external_mem_print_bin("B-Ansr Message", ansid.encmsg, ansid.msglen);
     SBC_external_mem_print_bin("B-Ansr IV", ansid.iv, BASE_ANS_IV_KEY_STR);
     SBC_external_mem_print_bin("B-Ansr Tag", ansid.tag, BASE_ANS_TAG_LEN);
@@ -2933,6 +2936,11 @@ SBCStatus SBC_GenMigrationKey(void *priv, void *outmsg)
 
     dprint("FSBL len : %d , SSBL Length : %d \n", fwinf->mbr.fsbln, fwinf->mbr.ssbln);
 
+
+    if ((fwinf->mbr.fsbln == 0) && (fwinf->mbr.ssbln == 0)) {
+        dprint("A. It's load from FACTORY bank because previously firmware is not existense");
+        p->is_factory = TRUE;
+    }
     //
     // If previoulsy firmwrae not existense, it's compute using FACTORY image 
     //
@@ -2942,7 +2950,7 @@ SBCStatus SBC_GenMigrationKey(void *priv, void *outmsg)
         startlba = (startaddr >> SBC_RAWPRT_DFLT_SHIFT);
         imglen = ALIGN_VALUE(sizeof *fwinf, SBC_RAWPRT_DFLT_BLK_SZ);
 
-        dprint("It's load from FACTORY bank because previously firmware is not existense");
+        dprint("B. It's load from FACTORY bank because previously firmware is not existense");
         ret = SBC_RawPrtReadBlock(p->blkhnd, (void *)fwinf->value, (UINT32 *)&imglen, startlba);
         SBC_RET_VALIDATE_ERRCODEMSG((ret == SBCOK), ret, "Raw Partition read fail");
 
@@ -2965,6 +2973,19 @@ SBCStatus SBC_GenMigrationKey(void *priv, void *outmsg)
     cpyofs += info.nvmesnl;
 
     //
+    // Un-used FSBL  ( into the Raw-partiiont) - Currenrtly 
+    //
+    ret = SBC_HashCompute(NULL, fwinf->mbr.fsblimg, fwinf->mbr.fsbln, (void *)&msg[cpyofs]);
+    SBC_mem_print_bin("Currently FSBL File Hash", (UINT8 *)&msg[cpyofs], ATP_IDENT_KEY_STG);
+    SBC_RET_VALIDATE_ERRCODEMSG((ret == SBCOK), SBCNULLP, "Raw Partition FSBL HASH Fail");
+    cpyofs += ATP_IDENT_KEY_STG;
+
+    ret = SBC_HashCompute(NULL, fwinf->mbr.ssblimg, fwinf->mbr.ssbln, (void *)&msg[cpyofs]);
+    SBC_mem_print_bin("Currently SSBL File Hash", (UINT8 *)&msg[cpyofs], ATP_IDENT_KEY_STG);
+    SBC_RET_VALIDATE_ERRCODEMSG((ret == SBCOK), SBCNULLP, "Raw Partition SSBL File HASH Fail");
+    cpyofs += ATP_IDENT_KEY_STG;
+
+    //
     // Read the FSBL file 
     //
 
@@ -2980,7 +3001,7 @@ SBCStatus SBC_GenMigrationKey(void *priv, void *outmsg)
     ret = SBC_HashCompute(NULL, lv.value, lv.length, temp_hash);
     SBC_RET_VALIDATE_ERRCODEMSG((ret == SBCOK), SBCNULLP, "FSBL File HASH Fail");
 
-    SBC_mem_print_bin("FSBL File Hash", (UINT8 *)temp_hash, ATP_IDENT_KEY_STG);
+    SBC_mem_print_bin("New FSBL File Hash", (UINT8 *)temp_hash, ATP_IDENT_KEY_STG);
     CopyMem((void *)&msg[cpyofs], temp_hash, ATP_IDENT_KEY_STG);
     cpyofs += ATP_IDENT_KEY_STG;
 
@@ -3002,7 +3023,7 @@ SBCStatus SBC_GenMigrationKey(void *priv, void *outmsg)
     ZeroMem((void *)temp_hash, 32);
     ret = SBC_HashCompute(NULL, lv.value, lv.length, temp_hash);
     SBC_RET_VALIDATE_ERRCODEMSG((ret == SBCOK), SBCNULLP, "SSBL File HASH Fail");
-    SBC_mem_print_bin("SSBL File Hash", (UINT8 *)temp_hash, ATP_IDENT_KEY_STG);
+    SBC_mem_print_bin("New SSBL File Hash", (UINT8 *)temp_hash, ATP_IDENT_KEY_STG);
     CopyMem((void *)&msg[cpyofs], temp_hash, ATP_IDENT_KEY_STG);
     cpyofs += ATP_IDENT_KEY_STG;
 
@@ -3012,22 +3033,6 @@ SBCStatus SBC_GenMigrationKey(void *priv, void *outmsg)
         dprint();
     }
     //dprint();
-
-
-    //
-    // Un-used FSBL  ( into the Raw-partiiont)
-    //
-    ret = SBC_HashCompute(NULL, fwinf->mbr.fsblimg, fwinf->mbr.fsbln, (void *)&msg[cpyofs]);
-    SBC_mem_print_bin("Previously FSBL File Hash", (UINT8 *)&msg[cpyofs], ATP_IDENT_KEY_STG);
-    SBC_RET_VALIDATE_ERRCODEMSG((ret == SBCOK), SBCNULLP, "Raw Partition FSBL HASH Fail");
-    cpyofs += ATP_IDENT_KEY_STG;
-
-    ret = SBC_HashCompute(NULL, fwinf->mbr.ssblimg, fwinf->mbr.ssbln, (void *)&msg[cpyofs]);
-    SBC_mem_print_bin("Previously SSBL File Hash", (UINT8 *)&msg[cpyofs], ATP_IDENT_KEY_STG);
-    SBC_RET_VALIDATE_ERRCODEMSG((ret == SBCOK), SBCNULLP, "Raw Partition SSBL File HASH Fail");
-    cpyofs += ATP_IDENT_KEY_STG;
-
-
 
     //
     // Final message digest 

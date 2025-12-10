@@ -15,7 +15,7 @@
 
 #ifndef _SSBL_TEST_
 #   define OSID_KERNEL_PATH            L"\\vmlinuz"         
-#   define EFI_BOOT_FSBL_PATH          L"\\EFI\\BOOT\\FSBL.efi"
+#   define EFI_BOOT_FSBL_PATH          L"\\EFI\\BOOT\\bootx64.efi"
 #   define EFI_BOOT_SSBL_PATH          L"\\EFI\\BOOT\\SSBL.efi"
 #else
 #   define OSID_KERNEL_PATH            L"\\vmlinuz"         
@@ -237,7 +237,7 @@ typedef struct _fhnd_img_t {
 #define BASE_ANS_BLK_LEN            512
 
 
-#pragma pack(1)
+#pragma pack(push, 1)
 /*!
  * \struct base_ansid_t is used to identify the Base Answer 
 
@@ -251,7 +251,7 @@ typedef struct _base_ansid_t {
     UINT8   tag[BASE_ANS_TAG_LEN];              //! Base Answer decrypt TAG which used in the AES GCM Mode
 }base_ansid_t;
 
-#pragma pack()
+#pragma pack(pop)
 /*! } */
 
 /*!

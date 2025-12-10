@@ -899,15 +899,15 @@ void  SBC_RecoveryBootProcessing(VOID *priv)
     // Than, Key mode is Boot
     if(bt_proc->bootst == SB_PROC_ST_ABNRAM) {
         SBC_BootKeyModeChange(BOOT_MODE_FACTORY, bt_proc->km, priv);
-        if(bt_proc->bootst == SB_PROC_ST_ABNRAM) {
-            sbc_err_sysprn(SBC_LOG_CMN_PRIO_INFO, 2,
-                 SYS_LOG_HOST_BOOT,
-                 SYS_LOG_APP_NAME,
-                 SYS_LOG_CSC_NAME,
-                 1,
-                 L"Detectoin",
-                 L"SBC_VENDOR_SP System Reset - Boot State Ab-normal");
-        }
+
+        sbc_err_sysprn(SBC_LOG_CMN_PRIO_INFO, 2,
+             SYS_LOG_HOST_BOOT,
+             SYS_LOG_APP_NAME,
+             SYS_LOG_CSC_NAME,
+             1,
+             L"Detectoin",
+             L"SBC_VENDOR_SP System Reset - Recovery Boot State Ab-normal");
+     
 #ifndef _ALL_PASS_
         SBC_RebootSystem();
         return;

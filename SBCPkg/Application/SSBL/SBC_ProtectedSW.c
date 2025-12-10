@@ -279,6 +279,8 @@ SBCStatus SBC_FindProtectedSw(VOID *handle, CHAR8 name[256], CHAR8 *ver, UINTN *
     sw_path_t *path = (sw_path_t *)data;
     [[maybe_unused]] UINTN len = sizeof(sw_path_t);
     UINTN cnt, line;
+    sw_node_t node;
+    EFI_STATUS retval = EFI_SUCCESS;
 
     ret = SBC_DeviceSecuirtyKeyCreate(dec_key);
     if( ret != SBCOK ) {
@@ -296,10 +298,15 @@ SBCStatus SBC_FindProtectedSw(VOID *handle, CHAR8 name[256], CHAR8 *ver, UINTN *
     SBC_RET_VALIDATE_ERRCODEMSG(!(ret != SBCOK), ret, "System Configuration Partition Read fail");
 
     line = readn/len;
-    dprint("line : %d", line);
+    dprint("protected line : %d", line);
 
     for(cnt = 0; cnt < line; cnt++) {
-        dprint("name :%a , path->name :%a node : %lx" , name, path->name, path->sw_node_off);
+        dprint("name :%a,  path->name :%a  slot1_ver=%a, node : %lx" , 
+               name, 
+               path->ver,
+               path->name, 
+               path->sw_node_off);
+
         if( AsciiStrCmp(name, path->name) == 0 ) {
             ret = SBCOK;
             if( sw_node_off != NULL ) {
@@ -308,8 +315,27 @@ SBCStatus SBC_FindProtectedSw(VOID *handle, CHAR8 name[256], CHAR8 *ver, UINTN *
             }
 
             if( ver != NULL ) {
-                CopyMem(ver, &path->ver, 256);
+                //CopyMem(ver, &path->ver, 256);
+                retval = SBC_BlkReadArbitrary((EFI_BLOCK_IO_PROTOCOL *)handle, 
+                                              path->sw_node_off,
+                                              &node,
+                                              sizeof(sw_node_t));
+                if(EFI_ERROR(retval)) {
+                    eprint("Failed to protected sw reading from 0x%lx offset", path->sw_node_off);
+                    ret = SBCIO;
+                    goto errdone;
+                }
+
+                if(node.pos == 1 && node.sw1 == 1) {
+                    CopyMem(ver, &path->ver2, SW_PATH_STR_LEN);
+                }
+                else {
+                    CopyMem(ver, &path->ver, SW_PATH_STR_LEN);
+                }
+
             }
+
+            break;
         }
 
         path++;
@@ -359,6 +385,9 @@ SBCStatus SBC_UpdateProtectedSWListVersion(VOID *handle, CHAR8 *sw_name, CHAR8 *
     UINTN len = sizeof(sw_path_t);
     UINTN cnt, line;
 
+    sw_node_t node;
+    EFI_STATUS retval = EFI_SUCCESS;
+
     ret = SBC_DeviceSecuirtyKeyCreate(dec_key);
     if( ret != SBCOK ) {
         sbc_err_sysprn(SBC_LOG_CMN_PRIO_ERR, 1,
@@ -376,16 +405,38 @@ SBCStatus SBC_UpdateProtectedSWListVersion(VOID *handle, CHAR8 *sw_name, CHAR8 *
 
     line = readn / len;
 
-    for(cnt= 0; cnt < line; cnt++) {
-        dprint("name=%a, ver=%a, sw_node_off=%lx\n",path->name, path->ver, path->sw_node_off);
+    for(cnt = 0; cnt < line; cnt++) {
+        dprint("sw_name : %a, path->name :%a  slot1_ver=%a, node : %lx" , 
+               sw_name,
+               path->ver,
+               path->name, 
+               path->sw_node_off);
+
         if( AsciiStrCmp(sw_name, path->name) == 0 ) {
-            CopyMem(path->ver, sw_ver, 256);
             ret = SBCOK;
+;
+            retval = SBC_BlkReadArbitrary((EFI_BLOCK_IO_PROTOCOL *)handle, 
+                                          path->sw_node_off,
+                                          &node,
+                                          sizeof(sw_node_t));
+            if(EFI_ERROR(retval)) {
+                eprint("Failed to protected sw reading from 0x%lx offset", path->sw_node_off);
+                ret = SBCIO;
+                goto errdone;
+            }
+
+            if(node.pos == 1 && node.sw1 == 1) {
+                CopyMem(&path->ver2, sw_ver, SW_PATH_STR_LEN);
+            }
+            else {
+                CopyMem(&path->ver, sw_ver, SW_PATH_STR_LEN);
+            }
+
+            break;
         }
 
         path++;
     }
-
 
 
 

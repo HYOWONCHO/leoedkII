@@ -23,6 +23,8 @@
  */
 #define SW_PATH_STR_LEN     256
 
+
+#pragma pack(push, 1)
 /**
  * @struct sw_path_t
  * @brief Software path and metadata descriptor.
@@ -48,9 +50,11 @@
  *  Indicates the relative position or memory offset of the software image
  *  within a larger data structure or storage block.
  */
+
 typedef struct {
     CHAR8 name[SW_PATH_STR_LEN];        /**< Software name (ASCII string). */
     CHAR8 ver[SW_PATH_STR_LEN];         /**< Software version (ASCII string). */
+    CHAR8 ver2[SW_PATH_STR_LEN];         /**< Software2 version (ASCII string). */
     UINTN sw_node_off;                  /**< Software node offset or index. */
 } sw_path_t;
 
@@ -113,7 +117,7 @@ typedef struct {
     UINTN  sw0_off;       /**< Offset of primary (SW0) image. */
     UINTN  sw1_off;       /**< Offset of secondary (SW1) image. */
 } sw_node_t;
-
+#pragma pack(pop)
 /**
  * @enum AT_RP_SW_NODE_SLOT_T
  * @brief Enumeration for software node slot identifiers.
