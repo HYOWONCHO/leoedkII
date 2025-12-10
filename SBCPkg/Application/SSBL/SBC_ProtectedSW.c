@@ -43,7 +43,7 @@
 #include "SBC_Nvram.h"
 
 extern CHAR16 mrgmsg[8192];
-
+CHAR8 gstr_sw_name[SBC_AT_RP_SW_NAME_MAX] = {0, };
 #define SBC_PROT_SYS_DATA_LEN           4
 
 
@@ -549,6 +549,31 @@ SBCStatus SBC_RecryptoProtectedSW(VOID *handle, UINTN ofs,  UINT8* sw_secret_key
                                     buf);
     SBC_RET_VALIDATE_ERRCODEMSG(!(ret != SBCOK), ret, "Failed to read the Protected SW");
 
+//  {
+//      UINTN node_off;
+//      sw_node_t node;
+//      //UINTN check = 0;
+//
+//      ret = SBC_FindProtectedSw(p, gstr_sw_name, NULL, &node_off);
+//
+//      dprint("============= Before decrypt Node Info =============");
+//      dprint(" Node Off : 0x%lu", node_off);
+//      ret = SBC_RawAlignedReadBlockIO(p->blkhnd,
+//                                  node_off,
+//                                  sizeof(sw_node_t),
+//                                  &node);
+//
+//      dprint("[%a sw_node_t]\n", gstr_sw_name);
+//      dprint("status=%c\n", node.status);
+//      dprint("pos=%u\n", node.pos);
+//      dprint("sw0=%u\n", node.sw0);
+//      dprint("sw1=%u\n", node.sw1);
+//      dprint("sw0_off=%lx\n", node.sw0_off);
+//      dprint("sw1_off=%lx\n", node.sw1_off);
+//
+//      dprint("=========================================");
+//  }
+
     aesbuf.buf = &buf[mvofs];
     mvofs += length;
 
@@ -699,6 +724,32 @@ SBCStatus SBC_RecryptoProtectedSW(VOID *handle, UINTN ofs,  UINT8* sw_secret_key
         goto errdone;
     }
 #endif    
+
+//  {
+//      UINTN node_off;
+//      sw_node_t node;
+//      //UINTN check = 0;
+//
+//      ret = SBC_FindProtectedSw(p, gstr_sw_name, NULL, &node_off);
+//
+//      dprint("============= Before Write Node Info =============");
+//      dprint(" Node Off : 0x%lu", node_off);
+//      ret = SBC_RawAlignedReadBlockIO(p->blkhnd,
+//                                  node_off,
+//                                  sizeof(sw_node_t),
+//                                  &node);
+//
+//      dprint("[%a sw_node_t]\n", gstr_sw_name);
+//      dprint("status=%c\n", node.status);
+//      dprint("pos=%u\n", node.pos);
+//      dprint("sw0=%u\n", node.sw0);
+//      dprint("sw1=%u\n", node.sw1);
+//      dprint("sw0_off=%lx\n", node.sw0_off);
+//      dprint("sw1_off=%lx\n", node.sw1_off);
+//
+//      dprint("=========================================");
+//  }
+
     ret = SBC_RawAlignedWriteBlockIO(p->blkhnd, 
                                      ofs + SBC_RAW_PRTHDR_LEN_OFS,
                                      encctx.out.length,
@@ -724,6 +775,32 @@ SBCStatus SBC_RecryptoProtectedSW(VOID *handle, UINTN ofs,  UINT8* sw_secret_key
 
     SBC_RET_VALIDATE_ERRCODEMSG(!(ret != SBCOK), ret, "Failed to write"
                                 "the Prot SW TAG");
+
+//  {
+//      UINTN node_off;
+//      sw_node_t node;
+//      //UINTN check = 0;
+//
+//      ret = SBC_FindProtectedSw(p, gstr_sw_name, NULL, &node_off);
+//
+//      dprint("============= New Node Info =============");
+//      dprint(" Node Off : 0x%lu", node_off);
+//      ret = SBC_RawAlignedReadBlockIO(p->blkhnd,
+//                                  node_off,
+//                                  sizeof(sw_node_t),
+//                                  &node);
+//
+//      dprint("[%a sw_node_t]\n", gstr_sw_name);
+//      dprint("status=%c\n", node.status);
+//      dprint("pos=%u\n", node.pos);
+//      dprint("sw0=%u\n", node.sw0);
+//      dprint("sw1=%u\n", node.sw1);
+//      dprint("sw0_off=%lx\n", node.sw0_off);
+//      dprint("sw1_off=%lx\n", node.sw1_off);
+//
+//      dprint("=========================================");
+//  }
+
 errdone:
 
     if( buf != NULL ) {
@@ -754,7 +831,7 @@ SBCStatus SBC_ProtSWDecrypt(VOID *handle, UINT8 *key, UINT8 *migkey, UINT8 *decb
     UINTN sw_off;
 
 
-    CHAR8 sw_name[SBC_AT_RP_SW_NAME_MAX] = {0, };
+    
 
 
     SBC_RET_VALIDATE_ERRCODEMSG((p != NULL), SBCNULLP, "Invalid Handle Object");
@@ -763,14 +840,14 @@ SBCStatus SBC_ProtSWDecrypt(VOID *handle, UINT8 *key, UINT8 *migkey, UINT8 *decb
     SBC_RET_VALIDATE_ERRCODEMSG((ret == SBCOK), ret, "Protected SW Count read fail");
 
     for( x = 0; x < sw_list_line; x++) {
-        ret = SBC_GetProtectedSwName(handle, x, sw_name,  sizeof(sw_name));
+        ret = SBC_GetProtectedSwName(handle, x, gstr_sw_name,  sizeof(gstr_sw_name));
         SBC_RET_VALIDATE_ERRCODEMSG(!(ret != SBCOK), ret, "Protected SW Name obtain fail");
 
         // Software Slot 0
         dprint("Read Protected Sw Slot 0 Offset ");
         ret = SBC_ReadProtectedSwSlotOffset(handle,
                                             &check,
-                                            sw_name,
+                                            gstr_sw_name,
                                             AT_RP_SW_NODE_SLOT0,
                                             &sw_off);
         if( ret == SBCOK  && check) {
@@ -789,7 +866,7 @@ SBCStatus SBC_ProtSWDecrypt(VOID *handle, UINT8 *key, UINT8 *migkey, UINT8 *decb
         dprint("Read Protected Sw Slot 1 Offset ");
         ret = SBC_ReadProtectedSwSlotOffset(handle,
                                             &check,
-                                            sw_name,
+                                            gstr_sw_name,
                                             AT_RP_SW_NODE_SLOT1,
                                             &sw_off);
         if( ret == SBCOK  && check ) {

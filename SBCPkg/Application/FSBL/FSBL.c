@@ -69,6 +69,7 @@
 #include "SBC_Nvram.h"
 #include "SBC_SystemControl.h"
 #include "SBC_Timer.h"
+
 #ifdef _SBC_TPM_
 #include "SBC_Tpm.h"
 #endif
@@ -1309,6 +1310,8 @@ UefiMain (
                      0,
                      L"Detetion",
                      L"SBC_VENDOR_SP TPM Version found \n");
+
+    return EFI_SUCCESS;
 #endif
 
     btproc.bootst = SB_PROC_ST_NRMA;

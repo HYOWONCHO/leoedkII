@@ -14,7 +14,8 @@
 #ifndef __SBC_TPM_H__
 #define __SBC_TPM_H__
 
-
+#include <Library/Tpm2CommandLib.h>
+#include <IndustryStandard/Tpm20.h>
 
 //
 // Public APIs
