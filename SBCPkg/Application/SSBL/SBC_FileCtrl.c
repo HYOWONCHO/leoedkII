@@ -2344,7 +2344,110 @@ errdone:
 
 }
 
+#if 0
+EFI_STATUS SBC_BlkWriteArbitrary(
+    IN EFI_BLOCK_IO_PROTOCOL *Blk,
+    IN UINT64                 ByteOffset,
+    IN CONST VOID            *Buffer,
+    IN UINTN                  Length
+)
+{
+    if (!Blk || !Buffer || Length == 0)
+        return EFI_INVALID_PARAMETER;
 
+    EFI_STATUS Status;
+    EFI_BLOCK_IO_MEDIA *m = Blk->Media;
+
+    if (!m || !m->MediaPresent)
+        return EFI_NO_MEDIA;
+
+    UINT32 BlockSize = m->BlockSize;
+    UINT64 TotalBytes = (m->LastBlock + 1ULL) * (UINT64)BlockSize;
+
+    //
+    // Range check
+    //
+    if (ByteOffset >= TotalBytes ||
+        ByteOffset + Length > TotalBytes)
+        return EFI_INVALID_PARAMETER;
+
+    //
+    // ByteOffset → LBA
+    //
+    UINT64 StartLba    = ByteOffset / BlockSize;
+    UINTN  InnerOffset = (UINTN)(ByteOffset % BlockSize);
+
+    UINTN EndOffset = InnerOffset + Length;
+    UINTN BlockCount = (EndOffset + BlockSize - 1) / BlockSize;
+    UINTN WriteSize   = BlockCount * BlockSize;
+
+    //
+    // Temp buffer (aligned to block)
+    //
+    EFI_PHYSICAL_ADDRESS Phys;
+    Status = gBS->AllocatePages(
+                    AllocateAnyPages,
+                    EfiBootServicesData,
+                    EFI_SIZE_TO_PAGES(WriteSize),
+                    &Phys
+                );
+    if (EFI_ERROR(Status))
+        return Status;
+
+    VOID *Tmp = (VOID*)(UINTN)Phys;
+
+    //
+    // Read existing blocks if partial overwrite
+    //
+    if (InnerOffset != 0 || (Length % BlockSize) != 0) {
+        Status = Blk->ReadBlocks(
+                        Blk,
+                        m->MediaId,
+                        StartLba,
+                        WriteSize,
+                        Tmp
+                    );
+        if (EFI_ERROR(Status)) {
+            gBS->FreePages(Phys, EFI_SIZE_TO_PAGES(WriteSize));
+            return Status;
+        }
+    } else {
+        // fully aligned, no need to pre-read
+        SetMem(Tmp, WriteSize, 0xFF);
+    }
+
+    //
+    // Copy user data into aligned buffer
+    //
+    CopyMem((UINT8*)Tmp + InnerOffset, Buffer, Length);
+
+    //
+    // Block I/O write
+    //
+    Status = Blk->WriteBlocks(
+                    Blk,
+                    m->MediaId,
+                    StartLba,
+                    WriteSize,
+                    Tmp
+                );
+
+    if (EFI_ERROR(Status)) {
+        gBS->FreePages(Phys, EFI_SIZE_TO_PAGES(WriteSize));
+        return Status;
+    }
+
+    //
+    // Flush (if available)
+    //
+    if (Blk->FlushBlocks)
+        Blk->FlushBlocks(Blk);
+
+    gBS->FreePages(Phys, EFI_SIZE_TO_PAGES(WriteSize));
+
+    return EFI_SUCCESS;
+}
+#endif
 EFI_STATUS
 SBC_BlkReadArbitrary(
     IN  EFI_BLOCK_IO_PROTOCOL *Blk,

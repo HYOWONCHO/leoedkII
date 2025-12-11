@@ -94,42 +94,7 @@ void SBC_mem_print_bin(
         )
 {
 #ifdef _DEBUG_PRINT_ON_
-    UINT32 i, sz;
-
-    if(title) {
-        Print(L"%a (length of buffer: %d) \r\r\n", title, length) ;
-    }
-
-    if (!buffer) {
-        Print(L"\tNULL\r\n");
-        return;
-    }
-
-    while (length > 0) {
-        sz = length;
-        if (sz > LINE_LEN)
-            sz = LINE_LEN;
-
-        Print(L"\t");
-        for (i = 0; i < LINE_LEN; i++) {
-            if (i < length)
-                Print(L"%02x ", buffer[i]);
-            else
-                Print(L"   ");
-        }
-        Print(L"| ");
-        for (i = 0; i < sz; i++) {
-            if (buffer[i] > 31 && buffer[i] < 127)
-                Print(L"%c", buffer[i]);
-            else
-                Print(L".");
-        }
-        Print(L"\r\r\n");
-
-
-        buffer += sz;
-        length -= sz;
-    }
+    SBC_external_mem_print_bin(title,buffer,length);
 #else
     (VOID)title;
     (VOID)buffer;
@@ -145,9 +110,9 @@ void SBC_external_mem_print_bin(
         UINT32 length /**< [in] length of buffer */
         )
 {
-#ifdef _DEBUG_PRINT_ON_
-    UINT32 i, sz;
-    UINT32 offset = 0;
+#if defined(_DEBUG_PRINT_ON_) || defined(_SHELL_CMD_LINE_)
+    UINT32 i, j; //, sz;
+    //UINT32 offset = 0;
 
     if(title) {
         DEBUG((DEBUG_INFO,"%a (length of buffer: %d) \r\r\n", title, length)) ;
@@ -157,32 +122,44 @@ void SBC_external_mem_print_bin(
         return;
     }
 
-    while (length > 0) {
-        sz = length;
-        if (sz > LINE_LEN)
-            sz = LINE_LEN;
+    for (i = 0 ; i < length; i+= 16) {
+        Print(L"%08x ", i);
 
-        DEBUG((DEBUG_INFO," [0x%08X] :  ", offset));
-        for (i = 0; i < LINE_LEN; i++) {
-            if (i < length)
-                DEBUG((DEBUG_INFO,"%02x ", buffer[i]));
-            else
-                DEBUG((DEBUG_INFO,"   "));
+        // Print the hex bytes 
+        for (j = 0; j < 16; j++) {
+            if (i + j < length) {
+                Print(L"%02x ", buffer[i + j]);
+            }
+            else {
+                Print(L"   ");
+            }
+
+            if ( j == 7 ) {
+                Print(L" ");
+            }
         }
-        DEBUG((DEBUG_INFO," | "));
-        for (i = 0; i < sz; i++) {
-            if (buffer[i] > 31 && buffer[i] < 127)
-                DEBUG((DEBUG_INFO,"%c", buffer[i]));
-            else
-                DEBUG((DEBUG_INFO,"."));
+
+        // Ascii separator
+        Print(L" |");
+
+        // Ascii character 
+        for (j = 0; j < 16 && (i+j) < length; j++) {
+            CHAR16  c = (CHAR16)buffer[i + j];
+            if ( c >= 0x20 && c <= 0x7E ) {
+                Print(L"%c",c);
+            }
+            else {
+                Print(L".");
+            }
         }
-        offset += LINE_LEN;
-        DEBUG((DEBUG_INFO,"\r\n"));
+
+        Print(L"|\n");
 
 
-        buffer += sz;
-        length -= sz;
     }
+
+
+
 #else
     (VOID)title;
     (VOID)buffer;

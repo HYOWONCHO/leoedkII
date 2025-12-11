@@ -72,42 +72,7 @@ void SBC_mem_print_bin(
         )
 {
 #ifdef _DEBUG_PRINT_ON_
-    UINT32 i, sz;
-
-    if(title) {
-        Print(L"%a (length of buffer: %d) \r\r\n", title, length) ;
-    }
-
-    if (!buffer) {
-        Print(L"\tNULL\r\n");
-        return;
-    }
-
-    while (length > 0) {
-        sz = length;
-        if (sz > LINE_LEN)
-            sz = LINE_LEN;
-
-        Print(L"\t");
-        for (i = 0; i < LINE_LEN; i++) {
-            if (i < length)
-                Print(L"%02x ", buffer[i]);
-            else
-                Print(L"   ");
-        }
-        Print(L"| ");
-        for (i = 0; i < sz; i++) {
-            if (buffer[i] > 31 && buffer[i] < 127)
-                Print(L"%c", buffer[i]);
-            else
-                Print(L".");
-        }
-        Print(L"\r\r\n");
-
-
-        buffer += sz;
-        length -= sz;
-    }
+    SBC_external_mem_print_bin(title,buffer,length);
 #else
     (VOID)title;
     (VOID)buffer;

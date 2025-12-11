@@ -1268,7 +1268,7 @@ UefiMain (
     ZeroMem(&h_rawprtheader, sizeof h_rawprtheader);
 
 #ifdef _SBC_TPM_
-
+    UINT8      RandBuf[32];
     retval = SBC_TpmInit();
     if (EFI_ERROR(retval)) {
         sbc_err_sysprn(SBC_LOG_CMN_PRIO_INFO, 2,
@@ -1290,6 +1290,7 @@ UefiMain (
                      L"Detetion",
                      L"SBC_VENDOR_SP TPM Init OK \n");
 
+    //retval= SBC_DumpTpmFixedProperties();
     retval = SBC_PrintTpmVersionInfo();
     if (EFI_ERROR(retval)) {
         sbc_err_sysprn(SBC_LOG_CMN_PRIO_INFO, 2,
@@ -1310,6 +1311,11 @@ UefiMain (
                      0,
                      L"Detetion",
                      L"SBC_VENDOR_SP TPM Version found \n");
+
+    for (int rndlp = 0; rndlp < 10; rndlp++) {
+        retval = SBC_TpmGetRandom(RandBuf, sizeof(RandBuf));
+        SBC_external_mem_print_bin("TPM Random", RandBuf, sizeof(RandBuf));
+    }
 
     return EFI_SUCCESS;
 #endif

@@ -96,5 +96,28 @@ SBC_PrintTpmVersionInfo (
     VOID
     );
 
+
+EFI_STATUS
+SBC_DumpTpmFixedProperties (
+    VOID
+    );
+
+
+/**
+  @brief
+  Generate random bytes using TPM2_GetRandom.
+
+  @param[out] Buffer   Output buffer for random bytes
+  @param[in]  Length   Number of random bytes to generate
+
+  @retval EFI_SUCCESS          Success
+  @retval EFI_INVALID_PARAMETER Buffer is NULL or Length == 0
+  @retval EFI_DEVICE_ERROR     TPM returned an error
+**/
+EFI_STATUS
+SBC_TpmGetRandom (
+    OUT UINT8  *Buffer,
+    IN  UINT32  Length
+    );
 #endif // __SBC_TPM_H__
 

@@ -1129,7 +1129,28 @@ SBC_BlkReadArbitrary(
     OUT VOID                  *Buffer,  /**< [out] Output buffer for data */
     IN  UINTN                  Length   /**< [in] Number of bytes to read */
 );
-
-
-
+#if 0
+/**
+ * @brief Write arbitrary bytes to a raw partition (Block I/O device).
+ *
+ * Performs partial-block read-modify-write if ByteOffset or Length
+ * are not block aligned.
+ *
+ * @param[in]  Blk         Target EFI_BLOCK_IO_PROTOCOL
+ * @param[in]  ByteOffset  Byte offset from start of device
+ * @param[in]  Buffer      Data buffer to write
+ * @param[in]  Length      Number of bytes to write
+ *
+ * @retval EFI_SUCCESS             Write succeeded.
+ * @retval EFI_INVALID_PARAMETER   Bad argument or out of range.
+ * @retval EFI_NO_MEDIA            No media present.
+ * @retval EFI_DEVICE_ERROR        Write failure.
+ */
+EFI_STATUS SBC_BlkWriteArbitrary(
+    IN EFI_BLOCK_IO_PROTOCOL *Blk,
+    IN UINT64                 ByteOffset,
+    IN CONST VOID            *Buffer,
+    IN UINTN                  Length
+);
+#endif
 #endif

@@ -1,231 +1,117 @@
 /** @file
   @brief
-  SBC TPM2 Utility Library Implementation.
-
-  This module provides helper functions to:
-    - Initialize and de-initialize TPM2
-    - Retrieve basic TPM properties (firmware version, manufacturer ID)
-    - Print human readable TPM version information
+  SBC TPM2 Utility - Vendor Aware Full Implementation (IFX/SLB supported)
 **/
 
 #include <Uefi.h>
 #include <Library/UefiLib.h>
-#include <Library/DebugLib.h>
 #include <Library/BaseLib.h>
 #include <Library/BaseMemoryLib.h>
-
+#include <Library/DebugLib.h>
 #include <IndustryStandard/Tpm20.h>
 #include <Library/Tpm2CommandLib.h>
+#include <Library/Tpm2DeviceLib.h>
 
 #include "SBC_Log.h"
 #include "SBC_Tpm.h"
 
-//
-// Optional: adjust these if you want stricter logging classification
-//
-#define SBC_TPM_LOG_TAG_INIT      L"SBC_TPM_INIT"
-#define SBC_TPM_LOG_TAG_CAP       L"SBC_TPM_CAP"
+#define SBC_MAX_TPM_PROPERTIES 64
 
-//
-// Internal helper to decode firmware version format:
-// Many TPMs encode firmware version as:
-//   - Major : upper 16 bits
-//   - Minor : lower 16 bits
-//
+#ifndef TPM_PT_FIXED
+#define TPM_PT_FIXED 0x00000100
+#endif
+
+#define SBC_MODEL_UNKNOWN "UNKNOWN"
+#pragma pack(push, 1)
+// Vendor-info structure
+typedef struct {
+    BOOLEAN IsStandard;
+    BOOLEAN IsInfineon;
+
+    CHAR8 Manufacturer[8];
+    CHAR8 Model[16];
+
+    CHAR8 AsciiFW[8];      // e.g., "2.0.3"
+    UINT32 FwMajor;
+    UINT32 FwMinor;
+
+} SBC_TPM_VENDOR_INFO;
+
+
+// Capability buffer
+typedef struct {
+    TPM_CAP Capability;
+    struct {
+        UINT32 Count;
+        TPMS_TAGGED_PROPERTY Property[SBC_MAX_TPM_PROPERTIES];
+    } Data;
+} SBC_TPM_CAP_DATA;
+
+typedef struct {
+    TPM_ST   Tag;
+    UINT32   ParamSize;
+    TPM_CC   CommandCode;
+    UINT16   BytesRequested;
+} TPM2_GET_RANDOM_CMD;
+
+typedef struct {
+    TPM_ST   Tag;
+    UINT32   ParamSize;
+    TPM_RC   ResponseCode;
+    UINT16   BytesSize;
+    UINT8    Data[1];   // flexible array
+} TPM2_GET_RANDOM_RSP;
+#pragma pack(pop)
+
 STATIC
 VOID
-SBC_DecodeFirmwareVersion (
-  IN  UINT32  Raw,
-  OUT UINT16 *Major,
-  OUT UINT16 *Minor
-  )
+SBC_ResetVendorInfo (
+    OUT SBC_TPM_VENDOR_INFO *Info
+    )
 {
-  if (Major != NULL) {
-    *Major = (UINT16)(Raw >> 16);
-  }
-
-  if (Minor != NULL) {
-    *Minor = (UINT16)(Raw & 0xFFFF);
-  }
+    ZeroMem(Info, sizeof(*Info));
+    AsciiStrCpyS(Info->Manufacturer, sizeof(Info->Manufacturer), SBC_MODEL_UNKNOWN);
+    AsciiStrCpyS(Info->Model, sizeof(Info->Model), SBC_MODEL_UNKNOWN);
+    AsciiStrCpyS(Info->AsciiFW, sizeof(Info->AsciiFW), "0.0");
 }
 
+
 /**
-  @brief
-  Initialize TPM2.
-
-  This function performs the minimal TPM2 initialization sequence required
-  before querying capability values:
-
-    1. TPM2_Startup (TPM_SU_CLEAR)
-    2. TPM2_SelfTest (NO)
-
-  Some platforms may already have executed TPM2_Startup in an earlier boot
-  phase. In such a case the TPM can respond with TPM_RC_INITIALIZE which
-  is treated as a successful condition here.
+  TPM Init
 **/
 EFI_STATUS
-SBC_TpmInit (
-  VOID
-  )
+SBC_TpmInit (VOID)
 {
-  EFI_STATUS Status;
+    EFI_STATUS Status = Tpm2Startup(TPM_SU_CLEAR);
 
-  //
-  // TPM Startup
-  //
-  Status = Tpm2Startup (TPM_SU_CLEAR);
+    if (Status == TPM_RC_INITIALIZE)
+        Status = EFI_SUCCESS;
 
-  //
-  // Many firmware stacks return TPM_RC_INITIALIZE directly if TPM has
-  // already been started in a previous phase. Treat this as success.
-  //
-  if (Status == TPM_RC_INITIALIZE) {
-    sbc_err_sysprn (
-      SBC_LOG_CMN_PRIO_INFO,
-      2,
-      SYS_LOG_HOST_BOOT,
-      SYS_LOG_APP_NAME,
-      SYS_LOG_CSC_NAME,
-      0,
-      L"Detection",
-      L"SBC_TPM: TPM already initialized. Treat as success.\n"
-      );
+    if (EFI_ERROR(Status)) {
+        DEBUG((DEBUG_ERROR, "[TPM] Startup failed (%r)\n", Status));
+        return Status;
+    }
 
-    Status = EFI_SUCCESS;
-  } else if (EFI_ERROR (Status)) {
-    sbc_err_sysprn (
-      SBC_LOG_CMN_PRIO_ERR,
-      2,
-      SYS_LOG_HOST_BOOT,
-      SYS_LOG_APP_NAME,
-      SYS_LOG_CSC_NAME,
-      0,
-      L"Detection",
-      L"SBC_TPM: TPM Startup failed.\n"
-      );
-    DEBUG ((DEBUG_ERROR, "[TPM] Startup failed (%r)\n", Status));
-    return Status;
-  }
+    Status = Tpm2SelfTest(NO);
+    if (EFI_ERROR(Status)) {
+        DEBUG((DEBUG_ERROR, "[TPM] SelfTest failed (%r)\n", Status));
+        return Status;
+    }
 
-  sbc_err_sysprn (
-    SBC_LOG_CMN_PRIO_INFO,
-    2,
-    SYS_LOG_HOST_BOOT,
-    SYS_LOG_APP_NAME,
-    SYS_LOG_CSC_NAME,
-    0,
-    L"Detection",
-    L"SBC_TPM: TPM Startup / Initialize success.\n"
-    );
-
-  //
-  // TPM SelfTest
-  //
-  Status = Tpm2SelfTest (NO);
-  if (EFI_ERROR (Status)) {
-    sbc_err_sysprn (
-      SBC_LOG_CMN_PRIO_ERR,
-      2,
-      SYS_LOG_HOST_BOOT,
-      SYS_LOG_APP_NAME,
-      SYS_LOG_CSC_NAME,
-      0,
-      L"Detection",
-      L"SBC_TPM: TPM2 Self-Test failed.\n"
-      );
-    DEBUG ((DEBUG_ERROR, "[TPM] SelfTest failed (%r)\n", Status));
-    return Status;
-  }
-
-  sbc_err_sysprn (
-    SBC_LOG_CMN_PRIO_INFO,
-    2,
-    SYS_LOG_HOST_BOOT,
-    SYS_LOG_APP_NAME,
-    SYS_LOG_CSC_NAME,
-    0,
-    L"Detection",
-    L"SBC_TPM: TPM2 Self-Test success.\n"
-    );
-
-  DEBUG ((DEBUG_INFO, "[TPM] Init OK\n"));
-
-  //
-  // Optional: overall “Init OK” log
-  //
-  sbc_err_sysprn (
-    SBC_LOG_CMN_PRIO_INFO,
-    2,
-    SYS_LOG_HOST_BOOT,
-    SYS_LOG_APP_NAME,
-    SYS_LOG_CSC_NAME,
-    0,
-    L"Detection",
-    L"SBC_TPM: TPM Init OK.\n"
-    );
-
-  return EFI_SUCCESS;
+    DEBUG((DEBUG_INFO, "[TPM] Init OK\n"));
+    return EFI_SUCCESS;
 }
 
-/**
-  @brief
-  Deinitialize TPM2 using TPM2_Shutdown().
 
-  TPM is shut down with TPM_SU_CLEAR which resets volatile state.
-**/
 EFI_STATUS
-SBC_TpmDeinit (
-  VOID
-  )
+SBC_TpmDeinit (VOID)
 {
-  EFI_STATUS Status;
-
-  Status = Tpm2Shutdown (TPM_SU_CLEAR);
-  if (EFI_ERROR (Status)) {
-    DEBUG ((DEBUG_ERROR, "[TPM] Shutdown failed (%r)\n", Status));
-    sbc_err_sysprn (
-      SBC_LOG_CMN_PRIO_ERR,
-      2,
-      SYS_LOG_HOST_BOOT,
-      SYS_LOG_APP_NAME,
-      SYS_LOG_CSC_NAME,
-      0,
-      L"Detection",
-      L"SBC_TPM: TPM Shutdown failed.\n"
-      );
-    return Status;
-  }
-
-  DEBUG ((DEBUG_INFO, "[TPM] Deinit OK\n"));
-  sbc_err_sysprn (
-    SBC_LOG_CMN_PRIO_INFO,
-    2,
-    SYS_LOG_HOST_BOOT,
-    SYS_LOG_APP_NAME,
-    SYS_LOG_CSC_NAME,
-    0,
-    L"Detection",
-    L"SBC_TPM: TPM Deinit OK.\n"
-    );
-
-  return EFI_SUCCESS;
+    return Tpm2Shutdown(TPM_SU_CLEAR);
 }
 
+
 /**
-  @brief
-  Retrieve a TPM_PT property.
-
-  This function wraps TPM2_GetCapability with TPM_CAP_TPM_PROPERTIES and
-  extracts a single 32-bit TPM_PT_* property value.
-
-  @param[in]  Property   TPM_PT_* property selector.
-  @param[out] Value      Pointer to a caller-allocated UINT32 that receives
-                         the property value.
-
-  @retval EFI_SUCCESS           Property was found and value is returned.
-  @retval EFI_INVALID_PARAMETER Value is NULL.
-  @retval EFI_NOT_FOUND         Property was not present in the response.
-  @retval Others                Error from Tpm2GetCapability().
+  Read a TPM_PT property safely
 **/
 EFI_STATUS
 SBC_GetTpmProperty (
@@ -233,56 +119,29 @@ SBC_GetTpmProperty (
     OUT UINT32  *Value
     )
 {
-    EFI_STATUS  Status;
+    EFI_STATUS Status;
     TPMI_YES_NO MoreData;
+    SBC_TPM_CAP_DATA CapBuf;
 
-    //
-    // Define maximum number of TPM properties to scan.
-    // Adjust this value if you want to read even more.
-    //
-    #define SBC_MAX_TPM_PROPERTIES 64
+    ZeroMem(&CapBuf, sizeof(CapBuf));
 
-    //
-    // Create a sufficiently large buffer to prevent overflow.
-    //
-    typedef struct {
-        TPM_CAP Capability;
-        struct {
-            UINT32 Count;
-            TPMS_TAGGED_PROPERTY Property[SBC_MAX_TPM_PROPERTIES];
-        } Data;
-    } SBC_TPM_CAP_DATA;
-
-    SBC_TPM_CAP_DATA      CapBuf;
-    TPMS_CAPABILITY_DATA *CapData = (TPMS_CAPABILITY_DATA *)&CapBuf;
-
-    ZeroMem (&CapBuf, sizeof(CapBuf));
-
-    //
-    // Retrieve a wide range of TPM properties starting from the given Property.
-    //
     Status = Tpm2GetCapability(
                  TPM_CAP_TPM_PROPERTIES,
-                 Property,                 // Starting property code
-                 SBC_MAX_TPM_PROPERTIES,   // Maximum number of entries
+                 Property,
+                 SBC_MAX_TPM_PROPERTIES,
                  &MoreData,
-                 CapData
+                 (TPMS_CAPABILITY_DATA *)&CapBuf
              );
-
-    if (EFI_ERROR(Status)) {
+    if (EFI_ERROR(Status))
         return Status;
-    }
 
-    UINT32 Count = CapData->data.tpmProperties.count;
+    UINT32 Count = CapBuf.Data.Count;
     if (Count > SBC_MAX_TPM_PROPERTIES)
         Count = SBC_MAX_TPM_PROPERTIES;
 
-    //
-    // Find the requested property in returned list.
-    //
     for (UINT32 i = 0; i < Count; i++) {
-        if (CapData->data.tpmProperties.tpmProperty[i].property == Property) {
-            *Value = CapData->data.tpmProperties.tpmProperty[i].value;
+        if (CapBuf.Data.Property[i].property == Property) {
+            *Value = CapBuf.Data.Property[i].value;
             return EFI_SUCCESS;
         }
     }
@@ -290,146 +149,301 @@ SBC_GetTpmProperty (
     return EFI_NOT_FOUND;
 }
 
-/**
-  @brief
-  Retrieve TPM Firmware Version.
-
-  This function reads both TPM_PT_FIRMWARE_VERSION_1 and
-  TPM_PT_FIRMWARE_VERSION_2.
-
-  Raw values are returned as 32-bit integers. Callers may interpret them
-  as vendor-specific or split into Major/Minor using helper logic.
-
-  @param[out] Fw1   TPM_PT_FIRMWARE_VERSION_1 value.
-  @param[out] Fw2   TPM_PT_FIRMWARE_VERSION_2 value.
-
-  @retval EFI_SUCCESS    Firmware versions retrieved.
-  @retval Others         Failed to read from TPM.
-**/
-EFI_STATUS
-SBC_GetFirmwareVersion (
-  OUT UINT32 *Fw1,
-  OUT UINT32 *Fw2
-  )
-{
-  EFI_STATUS Status;
-
-  if ((Fw1 == NULL) || (Fw2 == NULL)) {
-    return EFI_INVALID_PARAMETER;
-  }
-
-  Status = SBC_GetTpmProperty (TPM_PT_FIRMWARE_VERSION_1, Fw1);
-  if (EFI_ERROR (Status)) {
-    return Status;
-  }
-
-  Status = SBC_GetTpmProperty (TPM_PT_FIRMWARE_VERSION_2, Fw2);
-  if (EFI_ERROR (Status)) {
-    return Status;
-  }
-
-  return EFI_SUCCESS;
-}
 
 /**
-  @brief
-  Retrieve TPM Manufacturer ID.
-
-  The manufacturer ID is a 32-bit value, commonly interpreted as a
-  4-character ASCII vendor string (for example 'IFX', 'INTC', etc).
-
-  @param[out] MfgId   Manufacturer ID raw value.
-
-  @retval EFI_SUCCESS Manufacturer ID retrieved.
-  @retval Others      Failed to read from TPM.
+  Dump TPM Fixed Properties
 **/
 EFI_STATUS
-SBC_GetManufacturerID (
-  OUT UINT32 *MfgId
-  )
+SBC_DumpTpmFixedProperties (VOID)
 {
-  if (MfgId == NULL) {
-    return EFI_INVALID_PARAMETER;
-  }
+    EFI_STATUS Status;
+    TPMI_YES_NO MoreData;
+    SBC_TPM_CAP_DATA CapBuf;
 
-  return SBC_GetTpmProperty (TPM_PT_MANUFACTURER, MfgId);
+    ZeroMem(&CapBuf, sizeof(CapBuf));
+
+    Status = Tpm2GetCapability(
+                 TPM_CAP_TPM_PROPERTIES,
+                 TPM_PT_FIXED,
+                 SBC_MAX_TPM_PROPERTIES,
+                 &MoreData,
+                 (TPMS_CAPABILITY_DATA *)&CapBuf
+             );
+
+    if (EFI_ERROR(Status)) {
+        DEBUG((DEBUG_ERROR, "[TPM] DumpProps failed (%r)\n", Status));
+        return Status;
+    }
+
+    UINT32 Count = CapBuf.Data.Count;
+    if (Count > SBC_MAX_TPM_PROPERTIES)
+        Count = SBC_MAX_TPM_PROPERTIES;
+
+    DEBUG((DEBUG_INFO, "===== TPM Fixed Properties (%u entries) =====\n", Count));
+
+    for (UINT32 i = 0; i < Count; i++) {
+        DEBUG((DEBUG_INFO, "  PT 0x%08x = 0x%08x\n",
+               CapBuf.Data.Property[i].property,
+               CapBuf.Data.Property[i].value));
+    }
+
+    DEBUG((DEBUG_INFO, "=============================================\n"));
+    return EFI_SUCCESS;
 }
+
+
+/**
+  Detect Infineon / SLB Vendor patterns
+  (Endian-corrected ASCII extraction)
+**/
+STATIC
+VOID
+SBC_DetectVendor (
+    OUT SBC_TPM_VENDOR_INFO *Info
+    )
+{
+    EFI_STATUS Status;
+    TPMI_YES_NO MoreData;
+    SBC_TPM_CAP_DATA CapBuf;
+
+    SBC_ResetVendorInfo(Info);
+    ZeroMem(&CapBuf, sizeof(CapBuf));
+
+    Status = Tpm2GetCapability(
+                 TPM_CAP_TPM_PROPERTIES,
+                 TPM_PT_FIXED,
+                 SBC_MAX_TPM_PROPERTIES,
+                 &MoreData,
+                 (TPMS_CAPABILITY_DATA *)&CapBuf
+             );
+
+    if (EFI_ERROR(Status))
+        return;
+
+    UINT32 Count = CapBuf.Data.Count;
+    if (Count > SBC_MAX_TPM_PROPERTIES)
+        Count = SBC_MAX_TPM_PROPERTIES;
+
+    for (UINT32 i = 0; i < Count; i++) {
+
+        UINT32 Pt  = CapBuf.Data.Property[i].property;
+        UINT32 Val = CapBuf.Data.Property[i].value;
+
+        //
+        // Extract ASCII (Little Endian Correct)
+        //
+        CHAR8 A[5];
+        A[0] = (CHAR8)( Val        & 0xFF );
+        A[1] = (CHAR8)((Val >>  8) & 0xFF );
+        A[2] = (CHAR8)((Val >> 16) & 0xFF );
+        A[3] = (CHAR8)((Val >> 24) & 0xFF );
+        A[4] = '\0';
+
+        //
+        // Vendor: IFX (Infineon)
+        //
+        if (AsciiStrnCmp(A, "IFX", 3) == 0) {
+            Info->IsInfineon = TRUE;
+            AsciiStrCpyS(Info->Manufacturer, sizeof(Info->Manufacturer), "IFX");
+        }
+
+        //
+        // Model: SLB9, SLB6, etc.
+        //
+        if (AsciiStrnCmp(A, "SLB", 3) == 0) {
+            Info->IsInfineon = TRUE;
+            AsciiStrCpyS(Info->Model, sizeof(Info->Model), A);
+        }
+
+        //
+        // Firmware Version: PT 0x00010000 (Vendor-specific ASCII)
+        // Example: 0x00302E32 → "2.0.3"
+        //
+        if (Pt == 0x00010000) {
+            CHAR8 FW[5];
+            FW[0] = (CHAR8)( Val        & 0xFF );
+            FW[1] = (CHAR8)((Val >>  8) & 0xFF );
+            FW[2] = (CHAR8)((Val >> 16) & 0xFF );
+            FW[3] = (CHAR8)((Val >> 24) & 0xFF );
+            FW[4] = '\0';
+
+            AsciiStrCpyS(Info->AsciiFW, sizeof(Info->AsciiFW), FW);
+        }
+    }
+
+    Info->IsStandard = !Info->IsInfineon;
+}
+
+
+/**
+  Print TPM info
+**/
+EFI_STATUS
+SBC_PrintTpmVersionInfo (VOID)
+{
+    EFI_STATUS Status;
+    SBC_TPM_VENDOR_INFO Info;
+    UINT32 StdMfg = 0;
+
+    SBC_DetectVendor(&Info);
+
+    DEBUG((DEBUG_INFO, "===== TPM Version / Vendor Information =====\n"));
+
+    //
+    // Attempt Standard Manufacturer (TPM_PT_MANUFACTURER)
+    //
+    Status = SBC_GetTpmProperty(TPM_PT_MANUFACTURER, &StdMfg);
+    if (!EFI_ERROR(Status)) {
+        CHAR8 Mfg[5];
+        Mfg[0] = (StdMfg >> 24) & 0xFF;
+        Mfg[1] = (StdMfg >> 16) & 0xFF;
+        Mfg[2] = (StdMfg >>  8) & 0xFF;
+        Mfg[3] = (StdMfg      ) & 0xFF;
+        Mfg[4] = '\0';
+
+        DEBUG((DEBUG_INFO, "Standard Manufacturer : %a\n", Mfg));
+    } else {
+        DEBUG((DEBUG_INFO, "Standard Manufacturer : (not reported)\n"));
+    }
+
+    //
+    // Vendor-specific detection
+    //
+    if (Info.IsInfineon) {
+        DEBUG((DEBUG_INFO, "Vendor Detected       : Infineon (IFX)\n"));
+        DEBUG((DEBUG_INFO, "Model                 : %a\n", Info.Model));
+        DEBUG((DEBUG_INFO, "FW (ASCII Vendor FW)  : %a\n", Info.AsciiFW));
+    } else {
+        DEBUG((DEBUG_INFO, "Vendor Detected       : Standard / Unknown\n"));
+    }
+
+    DEBUG((DEBUG_INFO, "============================================\n"));
+    return EFI_SUCCESS;
+}
+
+
+STATIC
+EFI_STATUS
+SBC_TpmGetRandomOnce (
+    IN  UINT16  RequestBytes,
+    OUT UINT8  *OutBuffer,
+    OUT UINT16 *OutLen
+    )
+{
+    //
+    // Command/response structures must be byte-packed.
+    //
+
+
+    EFI_STATUS            Status;
+    TPM2_GET_RANDOM_CMD   Cmd;
+    UINT8                 RspBuf[sizeof (TPM2_GET_RANDOM_RSP) + 64]; // up to 64 bytes
+    UINT32                RspSize;
+    TPM2_GET_RANDOM_RSP  *Rsp;
+    UINT16                RandomSize;
+
+    if (OutBuffer == NULL || OutLen == NULL) {
+        return EFI_INVALID_PARAMETER;
+    }
+
+    if (RequestBytes == 0) {
+        *OutLen = 0;
+        return EFI_SUCCESS;
+    }
+
+    //
+    // Build command header (TPM wire format is big-endian → use SwapBytesXX)
+    //
+    Cmd.Tag           = SwapBytes16 (TPM_ST_NO_SESSIONS);
+    Cmd.ParamSize     = SwapBytes32 (sizeof (Cmd));
+    Cmd.CommandCode   = SwapBytes32 (TPM_CC_GetRandom);
+    Cmd.BytesRequested= SwapBytes16 (RequestBytes);
+
+    RspSize = sizeof (RspBuf);
+    Status  = Tpm2SubmitCommand (
+                  sizeof (Cmd),
+                  (UINT8 *)&Cmd,
+                  &RspSize,
+                  RspBuf
+              );
+
+    if (EFI_ERROR (Status)) {
+        return EFI_DEVICE_ERROR;
+    }
+
+    if (RspSize < sizeof (TPM2_GET_RANDOM_RSP)) {
+        return EFI_DEVICE_ERROR;
+    }
+
+    Rsp = (TPM2_GET_RANDOM_RSP *)RspBuf;
+
+    //
+    // Check response code
+    //
+    if (SwapBytes32 (Rsp->ResponseCode) != TPM_RC_SUCCESS) {
+        return EFI_DEVICE_ERROR;
+    }
+
+    RandomSize = SwapBytes16 (Rsp->BytesSize);
+    if (RandomSize > RequestBytes) {
+        // Should not happen, but clamp just in case
+        RandomSize = RequestBytes;
+    }
+
+    //
+    // Ensure buffer is large enough
+    //
+    if (sizeof (TPM2_GET_RANDOM_RSP) + RandomSize - 1 > RspSize) {
+        return EFI_DEVICE_ERROR;
+    }
+
+    CopyMem (OutBuffer, Rsp->Data, RandomSize);
+    *OutLen = RandomSize;
+
+    return EFI_SUCCESS;
+}
+
 
 /**
   @brief
-  Print TPM Version information.
+  Generate random bytes using TPM2_GetRandom.
 
-  This function prints:
-    - Raw firmware version values
-    - Decoded Major/Minor if they look reasonable
-    - Manufacturer ID as 4-character ASCII string
+  @param[out] Buffer   Output buffer for random bytes
+  @param[in]  Length   Number of random bytes to generate
 
-  All output is done via DEBUG() macros so that it is visible on the
-  serial debug console.
+  @retval EFI_SUCCESS          Success
+  @retval EFI_INVALID_PARAMETER Buffer is NULL or Length == 0
+  @retval EFI_DEVICE_ERROR     TPM returned an error
 **/
 EFI_STATUS
-SBC_PrintTpmVersionInfo (
-  VOID
-  )
+SBC_TpmGetRandom (
+    OUT UINT8  *Buffer,
+    IN  UINT32  Length
+    )
 {
-  EFI_STATUS Status;
-  UINT32     Fw1Raw;
-  UINT32     Fw2Raw;
-  UINT16     Fw1Major;
-  UINT16     Fw1Minor;
-  UINT16     Fw2Major;
-  UINT16     Fw2Minor;
-  UINT32     Mfg;
-  CHAR8      Vendor[5];
+    EFI_STATUS Status;
+    UINT16     Chunk;
+    UINT16     Got;
 
-  DEBUG ((DEBUG_INFO, "===== TPM Version Information =====\n"));
+    if (Buffer == NULL || Length == 0) {
+        return EFI_INVALID_PARAMETER;
+    }
 
-  //
-  // Firmware version
-  //
-  Status = SBC_GetFirmwareVersion (&Fw1Raw, &Fw2Raw);
-  if (EFI_ERROR (Status)) {
-    DEBUG ((DEBUG_ERROR, "[TPM] Firmware version read failed (%r)\n", Status));
-    return Status;
-  }
+    while (Length > 0) {
+        //
+        // Request at most 64 bytes per call (보수적으로 제한)
+        //
+        Chunk = (Length > 64) ? 64 : (UINT16)Length;
 
-  SBC_DecodeFirmwareVersion (Fw1Raw, &Fw1Major, &Fw1Minor);
-  SBC_DecodeFirmwareVersion (Fw2Raw, &Fw2Major, &Fw2Minor);
+        Status = SBC_TpmGetRandomOnce (Chunk, Buffer, &Got);
+        if (EFI_ERROR (Status) || Got == 0) {
+            DEBUG ((DEBUG_ERROR, "[TPM] GetRandom failed (Status=%r Got=%u)\n", Status, Got));
+            return EFI_DEVICE_ERROR;
+        }
 
-  DEBUG ((
-    DEBUG_INFO,
-    "Firmware Version (raw)   : 0x%08x, 0x%08x\n",
-    Fw1Raw,
-    Fw2Raw
-    ));
-  DEBUG ((
-    DEBUG_INFO,
-    "Firmware Version (dec)   : %u.%u  /  %u.%u\n",
-    Fw1Major,
-    Fw1Minor,
-    Fw2Major,
-    Fw2Minor
-    ));
+        Buffer += Got;
+        Length -= Got;
+    }
 
-  //
-  // Manufacturer ID
-  //
-  Status = SBC_GetManufacturerID (&Mfg);
-  if (EFI_ERROR (Status)) {
-    DEBUG ((DEBUG_ERROR, "[TPM] Manufacturer read failed (%r)\n", Status));
-    return Status;
-  }
-
-  Vendor[0] = (CHAR8)((Mfg >> 24) & 0xFF);
-  Vendor[1] = (CHAR8)((Mfg >> 16) & 0xFF);
-  Vendor[2] = (CHAR8)((Mfg >>  8) & 0xFF);
-  Vendor[3] = (CHAR8)( Mfg        & 0xFF);
-  Vendor[4] = '\0';
-
-  DEBUG ((DEBUG_INFO, "Manufacturer (raw)       : 0x%08x\n", Mfg));
-  DEBUG ((DEBUG_INFO, "Manufacturer (string)    : %a\n", Vendor));
-  DEBUG ((DEBUG_INFO, "===================================\n"));
-
-  return EFI_SUCCESS;
+    return EFI_SUCCESS;
 }
-
