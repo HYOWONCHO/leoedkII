@@ -661,9 +661,9 @@ SBCStatus SBC_RecryptoProtectedSW(VOID *handle, UINTN ofs,  UINT8* sw_secret_key
 
 
 
-    SBC_external_mem_print_bin("Protected SW Dec Buf", 
-                               (UINT8 *)decctx.out.value,
-                               SBC_AT_HASH_LEN);
+//  SBC_external_mem_print_bin("Protected SW Dec Buf",
+//                             (UINT8 *)decctx.out.value,
+//                             SBC_AT_HASH_LEN);
 
     //
     // TODO : Re-encrypt
@@ -750,6 +750,10 @@ SBCStatus SBC_RecryptoProtectedSW(VOID *handle, UINTN ofs,  UINT8* sw_secret_key
 //      dprint("=========================================");
 //  }
 
+    dprint("*** After encrypt, IV and Tag Information ***");
+    SBC_mem_print_bin("protected sw write iv=", (UINT8 *)aesbuf.iv, SBC_AT_RP_IV_LEN);
+    SBC_mem_print_bin("protected sw write tag=", (UINT8 *)aesbuf.tag, SBC_AT_RP_TAG_LEN);
+
     ret = SBC_RawAlignedWriteBlockIO(p->blkhnd, 
                                      ofs + SBC_RAW_PRTHDR_LEN_OFS,
                                      encctx.out.length,
@@ -760,7 +764,7 @@ SBCStatus SBC_RecryptoProtectedSW(VOID *handle, UINTN ofs,  UINT8* sw_secret_key
 
     // Write the IV Data
     ret = SBC_RawAlignedWriteBlockIO(p->blkhnd, 
-                                     ofs + SBC_RAW_PRTHDR_LEN_OFS + SBC_AT_RP_IV_LEN,
+                                     ofs + SBC_RAW_PRTHDR_LEN_OFS + encctx.out.length ,
                                      SBC_AT_RP_IV_LEN,
                                      aesbuf.iv);
 
@@ -769,12 +773,46 @@ SBCStatus SBC_RecryptoProtectedSW(VOID *handle, UINTN ofs,  UINT8* sw_secret_key
 
     // Write the Tag Data
     ret = SBC_RawAlignedWriteBlockIO(p->blkhnd, 
-                                     ofs + SBC_RAW_PRTHDR_LEN_OFS + SBC_AT_RP_IV_LEN + SBC_AT_RP_TAG_LEN,
+                                     ofs + SBC_RAW_PRTHDR_LEN_OFS + encctx.out.length + SBC_AT_RP_IV_LEN ,
                                      SBC_AT_RP_TAG_LEN,
                                      aesbuf.tag);
 
     SBC_RET_VALIDATE_ERRCODEMSG(!(ret != SBCOK), ret, "Failed to write"
                                 "the Prot SW TAG");
+
+    {
+        EFI_STATUS retx = EFI_SUCCESS;
+        UINT8  xbuf[128] = {0, };
+        retx = SBC_BlkReadArbitrary(p->blkhnd,
+                                          ofs + SBC_RAW_PRTHDR_LEN_OFS + encctx.out.length ,
+                                          xbuf,
+                                          SBC_AT_RP_IV_LEN);
+
+        dprint("--> Read IV Address  : 0x%lx", ofs + SBC_RAW_PRTHDR_LEN_OFS + encctx.out.length );
+        if(!EFI_ERROR(retx)) {
+
+            SBC_mem_print_bin("-->IV", xbuf, SBC_AT_RP_IV_LEN);
+        }
+        else {
+            eprint("Block IO read error(%r)", retx);
+        }
+        ZeroMem(xbuf, 128);
+
+        retx = SBC_BlkReadArbitrary(p->blkhnd,
+                                          ofs + SBC_RAW_PRTHDR_LEN_OFS + encctx.out.length + SBC_AT_RP_IV_LEN ,
+                                          xbuf,
+                                          SBC_AT_RP_TAG_LEN);
+
+        dprint("--> Read TAG Address  : 0x%lx", ofs + SBC_RAW_PRTHDR_LEN_OFS + encctx.out.length + SBC_AT_RP_IV_LEN );
+        if(!EFI_ERROR(retx)) {
+  
+            SBC_mem_print_bin("-->IV", xbuf, SBC_AT_RP_TAG_LEN);
+        }
+        else {
+            eprint("Block IO read error(%r)", retx);
+        }
+
+    }
 
 //  {
 //      UINTN node_off;
