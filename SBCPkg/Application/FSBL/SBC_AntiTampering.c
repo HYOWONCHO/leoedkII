@@ -2333,7 +2333,7 @@ SBCStatus  SBC_FSBL_Verify(VOID *blkhnd, VOID *ansr, UINTN normbank, UINTN bm, U
 
     ////SBC_external_mem_print_bin("BSINFO", (UINT8 *)&bsinfo, sizeof bsinfo);
 
-    dprint("----------- FSBL Boot Service Informmtion ------------");
+    dprint("----------- %s FSBL Boot Service Informmtion ------------", fblpath);
     dprint("Signature Len     : %d", bsinfo.m.siglen );
     dprint("Firmware Info Len : %d", bsinfo.m.fwinfolen );
     dprint("Certificate Len   : %d", bsinfo.m.certlen );
@@ -2392,11 +2392,30 @@ SBCStatus  SBC_FSBL_Verify(VOID *blkhnd, VOID *ansr, UINTN normbank, UINTN bm, U
     //dprint("Verify the FSBL certificate using RootCA certificate is done");
 
     BOOLEAN retbool = TRUE;
-    retbool = EcGetPublicKeyFromX509((CONST UINT8  *)info.certi, (UINTN)bsinfo.m.certlen,  &EcPubKey);
+    retbool = EcGetPublicKeyFromX509((CONST UINT8  *)info.certi, 
+                                     (UINTN)bsinfo.m.certlen,  
+                                     &EcPubKey);
     if (retbool != TRUE) {
       eprint("EcGetPublicKeyFromX509 fail");
       ret = SBCFAIL;
       goto errdone;
+    }
+
+    {
+        UINTN pubkey_len = 0UL;
+        UINT8 pubkey[64] = {0, };
+        pubkey_len = ATP_IDENT_KEY_STG * 2;
+
+        retval = EcGetPubKey(EcPubKey, pubkey, &pubkey_len);
+        if (EFI_ERROR(retval)) {
+            dprint("Failed to FSBL verify test public key extract");
+        }
+        else {
+            SBC_mem_print_bin("Certificate Public Key",
+                              (UINT8 *)pubkey,
+                              pubkey_len);
+        }
+
     }
 
     //dprint("FSBL image len : %d", fsbl_len);
@@ -2409,7 +2428,12 @@ SBCStatus  SBC_FSBL_Verify(VOID *blkhnd, VOID *ansr, UINTN normbank, UINTN bm, U
                       ) ; 
 
 
+
+
     HashSize = 32;
+    SBC_mem_print_bin("FSBL File Hash",
+                  (UINT8 *)HashValue,
+                  HashSize);
 
     retbool = EcDsaVerify(
         EcPubKey,

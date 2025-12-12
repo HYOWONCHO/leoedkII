@@ -1371,8 +1371,8 @@ SBCStatus SBC_FileReadUnicodeSimple(
     UINT8                            *AsciiBuf = NULL;
     CHAR16                          *UniBuf = NULL;
 
-    dprint("==== SBC_FileReadUnicode() ====");
-    dprint("  Target File : %s", FileName);
+    //dprint("==== SBC_FileReadUnicode() ====");
+    //dprint("  Target File : %s", FileName);
 
     //
     // Locate all available filesystem handles
@@ -1389,14 +1389,14 @@ SBCStatus SBC_FileReadUnicodeSimple(
         return SBCNOTFND;
     }
 
-    dprint("  Found FS handles: %d", HandleCount);
+    //dprint("  Found FS handles: %d", HandleCount);
 
     //
     // Iterate through all filesystem handles
     //
     for (UINTN i = 0; i < HandleCount; i++) {
 
-        dprint("  -> Trying FS Handle[%d] = %p", i, Handles[i]);
+        //dprint("  -> Trying FS Handle[%d] = %p", i, Handles[i]);
 
         //
         // Obtain SimpleFileSystem protocol
@@ -1431,11 +1431,11 @@ SBCStatus SBC_FileReadUnicodeSimple(
                         0
                      );
         if (EFI_ERROR(Status)) {
-            dprint("     File not present in this filesystem");
+            //dprint("     File not present in this filesystem");
             continue;
         }
 
-        dprint("     File opened");
+        //dprint("     File opened");
 
         //
         // Get EFI_FILE_INFO size
@@ -1476,7 +1476,7 @@ SBCStatus SBC_FileReadUnicodeSimple(
             continue;
         }
 
-        dprint("     FileSize = %ld bytes", FileInfo->FileSize);
+        //dprint("     FileSize = %ld bytes", FileInfo->FileSize);
 
         //
         // Allocate ASCII buffer and read file content
@@ -1523,14 +1523,14 @@ SBCStatus SBC_FileReadUnicodeSimple(
         *OutBuffer = UniBuf;
         *OutLength = ReadSize;
 
-        dprint("     UTF-16 read OK (%ld chars)", *OutLength);
+        //dprint("     UTF-16 read OK (%ld chars)", *OutLength);
 
         FreePool(AsciiBuf);
         FreePool(FileInfo);
         File->Close(File);
         FreePool(Handles);
 
-        dprint("==== SBC_FileReadUnicode() OK ====");
+        //dprint("==== SBC_FileReadUnicode() OK ====");
         return SBCOK;
     }
 

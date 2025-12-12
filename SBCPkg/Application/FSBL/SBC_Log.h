@@ -55,12 +55,12 @@ typedef enum {
 #define UNC_BLU  L"\033[34m"
 #define UNC_CYN  L"\033[36m"
 
-#define C_RST  "\033[0m"
-#define C_RED  "\033[31m"
-#define C_GRN  "\033[32m"
-#define C_YEL  "\033[33m"
-#define C_BLU  "\033[34m"
-#define C_CYN  "\033[36m"
+#define C_RST  //"\033[0m"
+#define C_RED  //"\033[31m"
+#define C_GRN  //"\033[32m"
+#define C_YEL  //"\033[33m"
+#define C_BLU  //"\033[34m"
+#define C_CYN  //"\033[36m"
 
 #define BYTES_PER_LINE 16
 //#define LINE_LEN 16

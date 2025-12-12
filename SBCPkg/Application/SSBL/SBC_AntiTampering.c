@@ -2944,6 +2944,11 @@ SBCStatus SBC_GenMigrationKey(void *priv, void *outmsg)
 //  }
 
     // Added by Leon at 20251212
+
+    dprint("===== Migration Key information ======");
+    dprint("p->prevmode : \t %d", p->prevmode);
+    dprint("p->bootst : \t %d", p->bootst);
+    dprint("p->bm : \t %d", p->bm);
     if (p->prevmode == 0 &&
         ((p->bootst == SB_PROC_ST_ABNRAM && p->bm == BOOT_MODE_NORMAL) ||
          (p->bm == BOOT_MODE_UPDATE)))  {
