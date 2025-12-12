@@ -351,7 +351,7 @@ SBC_DumpFsHandleContents(
     EFI_FILE_INFO *Info;
     UINTN InfoSize;
 
-    dprint("    ---- Dumping FS Handle Contents ----");
+    //dprint("    ---- Dumping FS Handle Contents ----");
 
     //
     // Root 열기
@@ -398,7 +398,7 @@ SBC_DumpFsHandleContents(
         }
 
         if (Info->FileName[0] != L'\0') {
-            dprint("      • %s (%ld bytes)", Info->FileName, Info->FileSize);
+            //dprint("      • %s (%ld bytes)", Info->FileName, Info->FileSize);
         }
 
         FreePool(Info);
@@ -406,7 +406,7 @@ SBC_DumpFsHandleContents(
 
     Dir->Close(Dir);
 
-    dprint("    ---- End Of FS Handle Contents ----");
+    //dprint("    ---- End Of FS Handle Contents ----");
 }
 
 
@@ -428,8 +428,8 @@ SBC_GetFileSize(
     UINTN                             HandleCount = 0;
     UINTN                             InfoSize = 0;
 
-    dprint("==== SBC_GetFileSizeSimple() called ====");
-    dprint("  Target File : %s", FileName);
+    //dprint("==== SBC_GetFileSizeSimple() called ====");
+    //dprint("  Target File : %s", FileName);
 
     //
     // 1) FS Handle 전체 획득
@@ -447,14 +447,14 @@ SBC_GetFileSize(
         return SBCNOTFND;
     }
 
-    dprint("  Found FS handles: %d", HandleCount);
+    //dprint("  Found FS handles: %d", HandleCount);
 
     //
     // 2) Handle 순회
     //
     for (UINTN i = 0; i < HandleCount; i++) {
 
-        dprint("  -> Checking FS Handle[%d]: %p", i, Handles[i]);
+        //dprint("  -> Checking FS Handle[%d]: %p", i, Handles[i]);
 
         Status = gBS->HandleProtocol(
                         Handles[i],
@@ -483,7 +483,7 @@ SBC_GetFileSize(
         //
         // 3) 파일 오픈 시도
         //
-        dprint("    Trying to open target file...");
+        //dprint("    Trying to open target file...");
 
         Status = Root->Open(
                         Root,
@@ -498,7 +498,7 @@ SBC_GetFileSize(
             continue;
         }
 
-        dprint("    File opened!");
+        //dprint("    File opened!");
 
         //
         // 파일 Info 크기 확보
@@ -529,24 +529,24 @@ SBC_GetFileSize(
         }
 
         if (FileInfo->Attribute & EFI_FILE_DIRECTORY) {
-            dprint("UEFI thinks '%s' is DIRECTORY (XFS driver limitation).", FileName);
+            //dprint("UEFI thinks '%s' is DIRECTORY (XFS driver limitation).", FileName);
         }
         else {
-            dprint("UEFI thinks '%s' is FILES (XFS driver limitation).", FileName);
+            //dprint("UEFI thinks '%s' is FILES (XFS driver limitation).", FileName);
         }
 
 
         *FileSize = FileInfo->FileSize;
 
-        dprint("File Attribute = 0x%x", FileInfo->Attribute);
-        dprint("File PhysicalSize = %ld", FileInfo->PhysicalSize);
-        dprint("    SUCCESS! FileSize = %ld bytes", *FileSize);
+        //dprint("File Attribute = 0x%x", FileInfo->Attribute);
+        //dprint("File PhysicalSize = %ld", FileInfo->PhysicalSize);
+        //dprint("    SUCCESS! FileSize = %ld bytes", *FileSize);
 
         FreePool(FileInfo);
         File->Close(File);
         FreePool(Handles);
 
-        dprint("==== SBC_GetFileSizeSimple() OK ====");
+        //dprint("==== SBC_GetFileSizeSimple() OK ====");
         return SBCOK;
     }
 
@@ -2715,3 +2715,7 @@ VOID SBC_FileCtrlTestMain(VOID)
 
 
 }
+
+
+
+

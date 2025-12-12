@@ -78,6 +78,7 @@ typedef struct _boot_proc_t {
     UINTN   rcvmode;            /**< Indicates if firmware booted from recovery mode. */
     UINTN   use_retore_fw;      /**< In Update Boot Mode, Decide whether to restore the firmware */
     BOOLEAN is_factory;
+    UINT16  prevmode;
 } boot_proc_t;
 #pragma pack()
 

@@ -400,7 +400,7 @@ static BOOLEAN _get_fw_bankid(UINT32 val, UINT32 *cur, UINT32 *prev)
 }
 
 extern EFI_STATUS SBC_LogFileInit( EFI_HANDLE        logHandle);
-
+SBCStatus SBC_RawPrtHdrChange(VOID *handle, UINT32 cur, UINT32 prev, UINT32 prevmode, UINT32 bm, UINT32 km);
 EFI_STATUS
 EFIAPI
 UefiMain (
@@ -494,6 +494,19 @@ UefiMain (
     btproc.keyinfo = (VOID *)&diceid;
     btproc.rawprt_hdr = &h_rawptrheader;
     btproc.baseansr = (void *)&baseansr;
+    // Added by Leo at 20251211
+    btproc.prevmode = h_rawptrheader.prevmode;
+
+    dprint("Prev. Mode is %d", btproc.prevmode);
+    
+//  SBC_RawPrtHdrChange((void *)&btproc,btproc.pvs_sw_bnk , btproc.curr_sw_bnk, 1, BOOT_MODE_UNKNOWN, KEY_MODE_UNKNOWN);
+//  SBC_RawPrtHdrChange((void *)&btproc,btproc.curr_sw_bnk , btproc.pvs_sw_bnk, 1, 3 ,2);
+//  SBC_RawPrtHdrChange((void *)&btproc,btproc.pvs_sw_bnk , btproc.curr_sw_bnk, 1, 1 , 1);
+//  SBC_RawPrtHdrChange((void *)&btproc,btproc.curr_sw_bnk , btproc.pvs_sw_bnk, 1, 2 , 3);
+//  SBC_RawPrtHdrChange((void *)&btproc,btproc.pvs_sw_bnk , btproc.curr_sw_bnk, 1, 4, 3);
+//  SBC_RawPrtHdrChange((void *)&btproc, 0, 0, 1, BOOT_MODE_UNKNOWN, KEY_MODE_UNKNOWN);
+//
+//  return EFI_SUCCESS;
 
     //
     // Added by Leon

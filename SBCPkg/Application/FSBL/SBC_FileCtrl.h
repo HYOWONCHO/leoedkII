@@ -63,7 +63,7 @@ typedef struct _t_bm_lookup_table {
 #define SBC_PRTNIFO_LEN                     64
 
 /*! Raw Partition Header skip bytes*/
-#define SBC_HDR_SKIP_LEN                    46
+#define SBC_HDR_SKIP_LEN                    44
 
 /*! Boot pres length */
 #define SBC_BOOT_PRES_LEN                   8
@@ -82,6 +82,7 @@ typedef struct _rawprt_hdr_t {
     UINT32      magicid;                                /**< Identifier for SBC Raw-Partition */
     UINT8       prtinfo[SBC_PRTNIFO_LEN];               /**< Partition information */
     UINT8       reserv[SBC_HDR_SKIP_LEN];
+    UINT16      prevmode;
     UINT16      bootmode;                               /**< Boot Mode */   
     UINT16      keymode;                                /*! Key Mode*/
     UINT16      rcvmode;                                /*! Recover mode */     
@@ -480,4 +481,12 @@ EFI_STATUS SBC_CopyFileToBlockDevice(IN CHAR16 *SrcPath,
                       IN VOID *_Blk,
                       IN UINT64 ByteOffset,
                       OUT UINT64 *BytesWritten OPTIONAL);
+
+
+SBCStatus SBC_RawPrtHdrChange(
+    VOID *handle,
+    UINT32 cur, UINT32 prev, 
+    UINT32 prevmode, 
+    UINT32 bm, 
+    UINT32 km);
 #endif

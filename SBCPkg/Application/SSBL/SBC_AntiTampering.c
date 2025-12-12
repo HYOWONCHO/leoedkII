@@ -2936,10 +2936,32 @@ SBCStatus SBC_GenMigrationKey(void *priv, void *outmsg)
 
     dprint("FSBL len : %d , SSBL Length : %d \n", fwinf->mbr.fsbln, fwinf->mbr.ssbln);
 
+// Commented by Leon at 20251212
+// From now on, use the prevmode in Raw-partition 
+//  if (((fwinf->mbr.fsbln == 0) && (fwinf->mbr.ssbln == 0))) {
+//      dprint("A. It's load from FACTORY bank because previously firmware is not existense");
+//      p->is_factory = TRUE;
+//  }
 
-    if ((fwinf->mbr.fsbln == 0) && (fwinf->mbr.ssbln == 0)) {
-        dprint("A. It's load from FACTORY bank because previously firmware is not existense");
+    // Added by Leon at 20251212
+    if (p->prevmode == 0 &&
+        ((p->bootst == SB_PROC_ST_ABNRAM && p->bm == BOOT_MODE_NORMAL) ||
+         (p->bm == BOOT_MODE_UPDATE)))  {
+        dprint("Read the image from Factory Bank because prev mode is 0");
         p->is_factory = TRUE;
+    }
+
+    if (p->prevmode == 0 && p->bm == BOOT_MODE_RECOVERY) {
+        startaddr = (BOOT_SECTOR1_OFS | (BOOT_FW_IMGMAX *  (p->curr_sw_bnk - 1)));
+        startlba = (startaddr >> SBC_RAWPRT_DFLT_SHIFT);
+        imglen = ALIGN_VALUE(sizeof *fwinf, SBC_RAWPRT_DFLT_BLK_SZ);
+
+        dprint("Start Address : 0x%04x", startaddr);
+
+        ret = SBC_RawPrtReadBlock(p->blkhnd, (void *)fwinf->value, (UINT32 *)&imglen, startlba);
+        SBC_RET_VALIDATE_ERRCODEMSG((ret == SBCOK), ret, "Raw Partition read fail");
+
+        p->is_factory = FALSE;
     }
     //
     // If previoulsy firmwrae not existense, it's compute using FACTORY image 

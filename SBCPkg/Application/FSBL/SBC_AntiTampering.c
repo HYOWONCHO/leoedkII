@@ -2997,6 +2997,7 @@ SBCStatus SBC_GenMigrationKey(void *priv, void *outmsg)
 
     EFI_HANDLE *f_hndl;
     UINT8 temp_hash[ATP_IDENT_KEY_STG] = {0, };
+    [[gnu::unused]]UINTN   img_bank = 0UL;
     
 
     SBC_RET_VALIDATE_ERRCODEMSG((p != NULL),
@@ -3037,7 +3038,7 @@ SBCStatus SBC_GenMigrationKey(void *priv, void *outmsg)
     dprint("Previously Bank ID : %d", p->pvs_sw_bnk - 1);
     //Step 2. Read Current Image and Hash compute
     //pvs_sw_bank means that "Previously Firware location"
-    
+
     startaddr = (BOOT_SECTOR1_OFS | (BOOT_FW_IMGMAX *  (p->pvs_sw_bnk - 1)));
     startlba = (startaddr >> SBC_RAWPRT_DFLT_SHIFT);
     imglen = ALIGN_VALUE(sizeof *fwinf, SBC_RAWPRT_DFLT_BLK_SZ);
@@ -3048,6 +3049,15 @@ SBCStatus SBC_GenMigrationKey(void *priv, void *outmsg)
     SBC_RET_VALIDATE_ERRCODEMSG((ret == SBCOK), ret, "Raw Partition read fail");
 
     dprint("FSBL len : %d , SSBL Length : %d \n", fwinf->mbr.fsbln, fwinf->mbr.ssbln);
+
+    // Added by Leon at 20251212
+    if (p->prevmode == 0 &&
+        p->bootst   == SB_PROC_ST_ABNRAM &&
+        p->bm       == BOOT_MODE_NORMAL)
+    {
+        dprint("Read the image from Factory Bank because prev mode is 0");
+        p->is_factory = TRUE;
+    }
 
     //
     // If previoulsy firmwrae not existense, it's compute using FACTORY image 

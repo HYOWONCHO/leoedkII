@@ -89,41 +89,9 @@ VOID *h_blkio;               // Block I/O handle
 static rawprt_hdr_t *tmp_prtheader;    // Raw Partition Header handle
 
 #endif
-static BOOLEAN        is_boot_status; 
+//static BOOLEAN        is_boot_status; 
 const unit_proc_t *tmp_btproc;
 extern SBCStatus SBC_SSBL_LoadAndStart(EFI_HANDLE ImageHandle);
-
-
-#ifdef LEO_EMUPKG
-RETURN_STATUS EFIAPI SerialPortInitialize(VOID)
-{
-  RETURN_STATUS ret = RETURN_SUCCESS;
-
-  UINT64              BaudRate;
-  UINT32              ReceiveFifoDepth;
-  EFI_PARITY_TYPE     Parity;
-  UINT8               DataBits;
-  EFI_STOP_BITS_TYPE  StopBits;
-
-  BaudRate         = FixedPcdGet64 (PcdUartDefaultBaudRate);
-  ReceiveFifoDepth = 0;         // Use default FIFO depth
-  Parity           = (EFI_PARITY_TYPE)FixedPcdGet8 (PcdUartDefaultParity);
-  DataBits         = FixedPcdGet8 (PcdUartDefaultDataBits);
-  StopBits         = (EFI_STOP_BITS_TYPE)FixedPcdGet8 (PcdUartDefaultStopBits);
-
-
-  dprint("----- SerialProtInitialize -----");
-  dprint("Baud Rate : %d", BaudRate);
-  dprint("ReceiveFifoDepth : %d", ReceiveFifoDepth);
-  dprint("Parity : %d", (UINT32)Parity);
-  dprint("DataBits : %d", (UINT32)DataBits);
-  dprint("StopBits : %d", (UINT32)StopBits);
-
-  return ret;
-}
-#endif
-
-
 
 SBCStatus  SBC_DiceKeysGen(EFI_HANDLE ImageHandle, VOID *p,UINTN normbank, UINTN bm)
 {
@@ -1262,7 +1230,7 @@ UefiMain (
                  L"Detetion",
                  L"SBC_VENDOR_SP FSBL Statring");
 
-    is_boot_status = TRUE;
+    btproc.bootst = TRUE;
 
     ZeroMem(&btproc, sizeof btproc);
     ZeroMem(&h_rawprtheader, sizeof h_rawprtheader);
@@ -1359,6 +1327,9 @@ UefiMain (
     btproc.rawprt_hdr = &h_rawprtheader;
     btproc.baseansr = (void *)&baseansr;
     btproc.imghndl = ImageHandle;
+    btproc.prevmode = h_rawprtheader.prevmode;
+
+    dprint("Prev. Mode is %d", btproc.prevmode);
 
 
     
@@ -1386,7 +1357,11 @@ UefiMain (
     dprint("Boot Mode : %d , Key Mode : %d, Recovery Mode : %d",
            btproc.bm, btproc.km, h_rawprtheader.rcvmode);
 
-
+#ifdef _SHELL_CMD_LINE_
+    dprint("Shell Execute");
+    ParseShellOptions((VOID *)&btproc);
+    return EFI_SUCCESS;
+#endif
    // Step 1-1 )  FSBL, self sign and verify
     SBC_AntiTamperingInit(NULL);
 
@@ -1518,11 +1493,7 @@ UefiMain (
     }
 
     btproc.dice = (VOID *)&diceid;
-#ifdef _SHELL_CMD_LINE_
-    dprint("Shell Execute");
-    ParseShellOptions((VOID *)&btproc);
-    return EFI_SUCCESS;
-#endif
+
 
 
 #ifdef _FSBL_FACTORY_TEST_
@@ -1578,7 +1549,7 @@ UefiMain (
                      L"EVT",
                      L"SBC_SP_FW SSBL self-verify Fail");
 
-          is_boot_status = FALSE;
+          btproc.bootst = FALSE;
           retval = EFI_INVALID_PARAMETER;
 #ifndef _ALL_PASS_
           goto errdone;
@@ -1603,7 +1574,7 @@ UefiMain (
                      L"EVT",
                      L"SBC_Dice_Verify Failed to Device ID verify");
           retval = EFI_INVALID_PARAMETER;
-          is_boot_status = FALSE;
+          btproc.bootst = FALSE;
 #ifndef _ALL_PASS_
           goto errdone;
 #endif
@@ -1624,7 +1595,7 @@ UefiMain (
       if (ret != SBCOK) {
           eprint("BOOT_MODE_NORMAL Boot Fail");
           retval = EFI_INVALID_PARAMETER;
-          is_boot_status = FALSE;
+          btproc.bootst = FALSE;
 #ifndef _ALL_PASS_
           goto errdone;
 #endif
@@ -1644,7 +1615,7 @@ UefiMain (
                  8,
                  L"Detection",
                  L"SBC_SP_FW SSBL self-verify Fail");
-            is_boot_status = FALSE;
+            btproc.bootst = FALSE;
             retval = EFI_INVALID_PARAMETER;
             factory_md_abnormal_boot_state(&btproc);
 #ifndef _ALL_PASS_
@@ -1673,7 +1644,7 @@ UefiMain (
 
           factory_md_abnormal_boot_state(&btproc);
           retval = EFI_INVALID_PARAMETER;
-          is_boot_status = FALSE;
+          btproc.bootst = FALSE;
 #ifndef _ALL_PASS_
           goto errdone;
 #endif
@@ -1694,12 +1665,12 @@ UefiMain (
           eprint("BOOT_MODE_FACTORY Boot Fail");
           factory_md_abnormal_boot_state(&btproc);
           retval = EFI_INVALID_PARAMETER;
-          is_boot_status = FALSE;
+          btproc.bootst = FALSE;
 #ifndef _ALL_PASS_
           goto errdone;
 #endif
       }
-//    if (is_boot_status != TRUE) {
+//    if (btproc.bootst != TRUE) {
 //      goto errdone;
 //    }
 //      // Change the key mode to normal based on key mode behavior scenario.
@@ -1728,7 +1699,7 @@ UefiMain (
                  8,
                  L"Detection",
                  L"SBC_SP_FW SSBL self-verify Fail");
-            is_boot_status = FALSE;
+            btproc.bootst = FALSE;
             retval = EFI_INVALID_PARAMETER;
 #ifndef _ALL_PASS_
           goto errdone;
@@ -1753,7 +1724,7 @@ UefiMain (
                      L"Detection",
                      L"SBC_Dice_Verify Failed to Device ID verify");
           retval = EFI_INVALID_PARAMETER;
-          is_boot_status = FALSE;
+          btproc.bootst = FALSE;
 #ifndef _ALL_PASS_
           goto errdone;
 #endif
@@ -1774,7 +1745,7 @@ UefiMain (
       if (ret != SBCOK) {
           eprint("BOOT_MODE_UPDATE Boot Fail");
           retval = EFI_INVALID_PARAMETER;
-          is_boot_status = FALSE;
+          btproc.bootst = FALSE;
 #ifndef _ALL_PASS_
           goto errdone;
 #endif
@@ -1794,7 +1765,7 @@ UefiMain (
                  8,
                  L"Validation",
                  L"SBC_SP_FW SSBL self-verify fail");
-            is_boot_status = FALSE;
+            btproc.bootst = FALSE;
             retval = EFI_INVALID_PARAMETER;
 #ifndef _ALL_PASS_
           goto errdone;
@@ -1819,7 +1790,7 @@ UefiMain (
                      L"EVT",
                      L"SBC_Dice_Verify Failed to Device ID verify");
              retval = EFI_INVALID_PARAMETER;
-             is_boot_status = FALSE;
+             btproc.bootst = FALSE;
 #ifndef _ALL_PASS_
           goto errdone;
 #endif
@@ -1839,7 +1810,7 @@ UefiMain (
       if (ret != SBCOK) {
           eprint("BOOT_MODE_RECOVERY Boot Fail");
           retval = EFI_INVALID_PARAMETER;
-          is_boot_status = FALSE;
+          btproc.bootst = FALSE;
 #ifndef _ALL_PASS_
           goto errdone;
 #endif
@@ -1847,7 +1818,7 @@ UefiMain (
       break;
     default:
       //Print(L"Unknown (%d)  Boot Mode ... SHOULD go to Abort\n",h_rawprtheader.bootmode);
-      is_boot_status = FALSE;
+      btproc.bootst = FALSE;
       break;
     }
 
@@ -1863,24 +1834,6 @@ UefiMain (
 
 errdone:
 
-#ifndef _FSBL_TEST_ 
-  // In terms of the Abnormal behavior on Factory Mode 
-    if ((h_rawprtheader.bootmode == BOOT_MODE_FACTORY) && (is_boot_status != TRUE)) {
-      // Change the key mode to normal based on key mode behavior scenario.
-      if (tmp_prtheader->keymode != KEY_MODE_NORMAL) {
-        tmp_prtheader->keymode = KEY_MODE_NORMAL;
-
-        SBC_RawPrtBlockWrite(h_blkio, (UINT8 *)&tmp_prtheader, sizeof(rawprt_hdr_t), 0);
-      }
-
-
-      // Log write
-     
-
-
-    }
-
-#endif
     sys_end_time = SBC_PerfNowTicks();
     //dprint("sys_end_time : %ld (%ld)", sys_end_time, sys_end_time - sys_start_time);
     sys_ns_var  = SBC_PerfTicksTons(_PerfDeltaTicks(sys_start_time, sys_end_time));
@@ -1888,6 +1841,28 @@ errdone:
 
     SBC_LogElapsedTime(L"x FSBL Boot Time", sys_ns_var);
 #ifndef _ALL_PASS_
+    switch(h_rawprtheader.bootmode) {
+    case BOOT_MODE_NORMAL:
+    case BOOT_MODE_UPDATE:
+        if (btproc.bootst  == SB_PROC_ST_NRMA) {
+            SBC_SecureBootUpdateScenario(&btproc);
+        }
+        
+        break;
+    case BOOT_MODE_FACTORY:
+        // In terms of the Abnormal behavior on Factory Mode
+        if ((btproc.bootst != TRUE)) {
+                  // Change the key mode to normal based on key mode behavior scenario.
+                if (tmp_prtheader->keymode != KEY_MODE_NORMAL) {
+                tmp_prtheader->keymode = KEY_MODE_NORMAL;
+
+                SBC_RawPrtBlockWrite(h_blkio, (UINT8 *)&tmp_prtheader, sizeof(rawprt_hdr_t), 0);
+            }
+        }
+        
+    default:
+        break;
+    }
     SBC_ShutdownSystem();
 #else 
     SBC_BootModeFactory(h_blkio, ImageHandle);

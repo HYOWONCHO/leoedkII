@@ -96,4 +96,12 @@ VOID SBC_RebootSystem(VOID);
  */
 SBCStatus SBC_SecureBootCheck(VOID *priv);
 
+
+SBCStatus SBC_RawPrtHdrChange(
+    VOID *handle, 
+    UINT32 cur, 
+    UINT32 prev, 
+    UINT32 prevmode, 
+    UINT32 bm, 
+    UINT32 km);
 #endif

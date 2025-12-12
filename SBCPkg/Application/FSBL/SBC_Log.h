@@ -44,6 +44,25 @@ typedef enum {
 
 #define SBC_LOG_HOSTNAME                            L"N/A"
 
+
+//
+// ANSI Color Codes for UEFI console
+//
+#define UNC_RST  L"\033[0m"
+#define UNC_RED  L"\033[31m"
+#define UNC_GRN  L"\033[32m"
+#define UNC_YEL  L"\033[33m"
+#define UNC_BLU  L"\033[34m"
+#define UNC_CYN  L"\033[36m"
+
+#define C_RST  "\033[0m"
+#define C_RED  "\033[31m"
+#define C_GRN  "\033[32m"
+#define C_YEL  "\033[33m"
+#define C_BLU  "\033[34m"
+#define C_CYN  "\033[36m"
+
+#define BYTES_PER_LINE 16
 //#define LINE_LEN 16
 
 void SBC_mem_print_bin(
@@ -71,11 +90,50 @@ VOID SBC_LogMsg(CHAR8* logmsg, CONST CHAR8 *funcname, UINTN linenumber,
 #define SBCLOGMSG(logmsg) \
   SBC_LogMsg(#logmsg, __func__, __LINE__ , __FILE__)
 
-#define dprint(fmt,...) \
-    DEBUG((DEBUG_INFO, "(%a:%d) : "fmt"\n",__FUNCTION__, __LINE__,##__VA_ARGS__))
 
-#define eprint(fmt,...) \
-    DEBUG((DEBUG_ERROR, "(ERROR %a:%a:%d) : "fmt"\n",__FILE__,__FUNCTION__, __LINE__,##__VA_ARGS__))
+/* INFO (Blue) */
+#define iprint(fmt, ...) \
+    DEBUG(( \
+        DEBUG_INFO, \
+        " " C_BLU "[Info]" C_RST "  (%a:%d) : " fmt "\n", \
+        __FUNCTION__, \
+        __LINE__, \
+        ##__VA_ARGS__ \
+    ))
+
+
+/* WARN (Yellow) */
+#define wprint(fmt, ...) \
+    DEBUG(( \
+        DEBUG_WARN, \
+        " " C_YEL "[Warn]" C_RST "  (%a:%d) : " fmt "\n", \
+        __FUNCTION__, \
+        __LINE__, \
+        ##__VA_ARGS__ \
+    ))
+
+
+/* ERROR (Red) */
+#define eprint(fmt, ...) \
+    DEBUG(( \
+        DEBUG_ERROR, \
+        " " C_RED "[Error]" C_RST " (%a:%d) : " fmt "\n", \
+        __FUNCTION__, \
+        __LINE__, \
+        ##__VA_ARGS__ \
+    ))
+
+
+/* DEBUG (Green) */
+#define dprint(fmt, ...) \
+    DEBUG(( \
+        DEBUG_INFO, \
+        " " C_GRN "[Debug]" C_RST " (%a:%d) : " fmt "\n", \
+        __FUNCTION__, \
+        __LINE__, \
+        ##__VA_ARGS__ \
+    ))
+
 
 
 #define intgreen_dprint(fmt,...) \

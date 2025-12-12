@@ -17,6 +17,25 @@
 #include <Library/Tpm2CommandLib.h>
 #include <IndustryStandard/Tpm20.h>
 
+
+#ifndef TPMA_NV_AUTHREAD
+#define TPMA_NV_AUTHREAD     (1U << 18)
+#endif
+
+#ifndef TPMA_NV_AUTHWRITE
+#define TPMA_NV_AUTHWRITE    (1U << 19)
+#endif
+
+#ifndef TPMA_NV_OWNERREAD
+#define TPMA_NV_OWNERREAD    (1U << 16)
+#endif
+
+#ifndef TPMA_NV_OWNERWRITE
+#define TPMA_NV_OWNERWRITE   (1U << 17)
+#endif
+
+
+
 //
 // Public APIs
 //

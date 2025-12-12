@@ -150,7 +150,7 @@ typedef struct _t_bm_lookup_table {
  * @def SBC_HDR_SKIP_LEN
  * @brief Number of bytes to skip before the partition header data begins.
  */
-#define SBC_HDR_SKIP_LEN                    46
+#define SBC_HDR_SKIP_LEN                    44
 
 /**
  * @def SBC_BOOT_PRES_LEN
@@ -186,6 +186,7 @@ typedef struct _rawprt_hdr_t {
     UINT32      magicid;                                /**< Identifier for SBC Raw-Partition */
     UINT8       prtinfo[SBC_PRTNIFO_LEN];               /**< Partition information */
     UINT8       reserv[SBC_HDR_SKIP_LEN];
+    UINT16      prevmode;
     UINT16      bootmode;                               /**< Boot Mode */   
     UINT16      keymode;                                /*! Key Mode*/
     UINT16      rcvmode;                                /*! Recover mode */     
@@ -1129,6 +1130,9 @@ SBC_BlkReadArbitrary(
     OUT VOID                  *Buffer,  /**< [out] Output buffer for data */
     IN  UINTN                  Length   /**< [in] Number of bytes to read */
 );
+
+
+
 #if 0
 /**
  * @brief Write arbitrary bytes to a raw partition (Block I/O device).

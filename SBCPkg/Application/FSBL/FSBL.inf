@@ -34,8 +34,8 @@
   SBC_LoadKernelImage.c 
   SBC_Nvram.c
   SBC_UnitTest.c
-  SBC_Tpm.c
   SBC_Timer.c
+  #SBC_Tpm.c
  
 [Packages]
   MdePkg/MdePkg.dec
@@ -123,7 +123,8 @@
   *_*_*_CC_FLAGS = -D_SBC_DEVID_VERIFY_
   *_*_*_CC_FLAGS = -D_SBC_DRIVER_LOAD_
   *_*_*_CC_FLAGS = -D_DEBUG_PRINT_ON_
-  *_*_*_CC_FLAGS = -D_SBC_TPM_
+  #*_*_*_CC_FLAGS = -D_SBC_TPM_
+  #*_*_*_CC_FLAGS = -D_SHELL_CMD_LINE_
 
   #*_*_*_CC_FLAGS = -D_ALL_PASS_
 

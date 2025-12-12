@@ -82,7 +82,7 @@ SBCStatus SBC_BootKeyModeChange(UINT32 newbm, UINT32 newkey, VOID *priv)
 
     //dprint();
     CopyMem(wrbuf, (void *)hdr, sizeof *hdr);
-    SBC_mem_print_bin("Mode Change", wrbuf, 128);
+    
     // Boot Mode write
     ret = SBC_RawPrtBlockWrite(bp->blkhnd,(UINT8 *)wrbuf, 512,0);
     SBC_RET_VALIDATE_ERRCODEMSG((ret == SBCOK), ret, "Boot and Key mode write fail");
@@ -96,6 +96,8 @@ SBCStatus SBC_BootKeyModeChange(UINT32 newbm, UINT32 newkey, VOID *priv)
                  L"SFR-Vendor-SP Success to change the Boot and Key Mode \n");
 
         //goto errdone;
+
+    SBC_mem_print_bin("Boot Mode Change", wrbuf, 128);
 errdone:
 
     if(ret != SBCOK) {
@@ -898,8 +900,8 @@ void  SBC_RecoveryBootProcessing(VOID *priv)
     // Boot Mode is change from Recovery to Factory
     // Than, Key mode is Boot
     if(bt_proc->bootst == SB_PROC_ST_ABNRAM) {
-        SBC_BootKeyModeChange(BOOT_MODE_FACTORY, bt_proc->km, priv);
-
+        //SBC_BootKeyModeChange(BOOT_MODE_FACTORY, bt_proc->km, priv);
+        SBC_BootKeyModeChange(BOOT_MODE_FACTORY, KEY_MODE_NORMAL, priv);
         sbc_err_sysprn(SBC_LOG_CMN_PRIO_INFO, 2,
              SYS_LOG_HOST_BOOT,
              SYS_LOG_APP_NAME,
@@ -1021,11 +1023,26 @@ void  SBC_RecoveryBootProcessing(VOID *priv)
                 goto errdone;
             }
 
+            ret = SBC_RawPrtHdrChange(priv,
+                                      bt_proc->pvs_sw_bnk,
+                                      bt_proc->curr_sw_bnk,
+                                      0,
+                                      BOOT_MODE_NORMAL,
+                                      KEY_MODE_NORMAL);
 
-            ret = SBC_BootKeyModeChange(BOOT_MODE_NORMAL, KEY_MODE_NORMAL, priv);
+            //((boot_proc_t *)priv)->prevmode = 0;
+            //ret = SBC_BootKeyModeChange(BOOT_MODE_NORMAL, KEY_MODE_NORMAL, priv);
             break;
         default:
             eprint("Not support this key mode in Recovery Boot");
+            ret = SBCINVPARAM;
+            sbc_err_sysprn(SBC_LOG_CMN_PRIO_INFO, 2,
+                         SYS_LOG_HOST_BOOT,
+                         SYS_LOG_APP_NAME,
+                         SYS_LOG_CSC_NAME,
+                         1,
+                         L"Detectoin",
+                         L"SBC_VENDOR_SP RECOVERY BOOT STATUS - UNKNOWN KEY MODE");
             goto errdone;
         }
 
@@ -1041,11 +1058,21 @@ void  SBC_RecoveryBootProcessing(VOID *priv)
         break;
     default:
         eprint("Unknown Secure Boot status");
+        ret = SBCINVPARAM;
+        sbc_err_sysprn(SBC_LOG_CMN_PRIO_INFO, 2,
+                         SYS_LOG_HOST_BOOT,
+                         SYS_LOG_APP_NAME,
+                         SYS_LOG_CSC_NAME,
+                         1,
+                         L"Detectoin",
+                         L"SBC_VENDOR_SP RECOVERY BOOT STATUS - UNKNOWN");
+
         goto errdone;
     }
 
     if(ret != SBCOK) {
         eprint("Boot and Key mode change fail");
+        bt_proc->bootst = SB_PROC_ST_ABNRAM;
         goto errdone;
     }
 
@@ -1353,6 +1380,7 @@ SBCStatus  SBC_SecureBootCheck(VOID *priv)
         ret = SBC_UpdateBootPorcsesing(priv);
 
         if(ret != SBCOK) {
+//prevwr_err:
             sbc_err_sysprn(SBC_LOG_CMN_PRIO_INFO, 2,
                            SYS_LOG_HOST_BOOT,
                            SYS_LOG_APP_NAME,
@@ -1362,6 +1390,29 @@ SBCStatus  SBC_SecureBootCheck(VOID *priv)
                              L"SBC_VENDOR_SP System Reset - Update Boot State Ab-Normal");     
         }
         else {
+
+//          rawprt_hdr_t raw_hdr;
+//          ZeroMem(&raw_hdr, sizeof raw_hdr);
+//
+//          ret = SBC_RawAlignedReadBlockIO(bp->blkhnd,
+//                                     0x00000000,
+//                                     sizeof(raw_hdr),
+//                                     (VOID *)&raw_hdr);
+//          if(ret != SBCOK) {
+//              eprint("On Update, Raw-partition header read fail");
+//              goto errdone;
+//          }
+//
+//          raw_hdr.prevmode = 1;
+//          ret = SBC_RawAlignedWriteBlockIO(bp->blkhnd,
+//                                           0x00000000,
+//                                           sizeof(raw_hdr),
+//                                           (VOID *)&raw_hdr);
+//          if(ret != SBCOK) {
+//              eprint("On Update, Raw-partition header write fail");
+//              goto errdone;
+//          }
+
             sbc_err_sysprn(SBC_LOG_CMN_PRIO_INFO, 2,
                            SYS_LOG_HOST_BOOT,
                            SYS_LOG_APP_NAME,
@@ -1463,3 +1514,136 @@ VOID SBC_ShutdownSystem(VOID)
     gRT->ResetSystem(EfiResetShutdown, EFI_SUCCESS, 0, NULL);
     while(TRUE) { };
 }
+
+void SBC_UpdateBootPres(UINT8 *pres_buf, UINT32 cur, UINT32 prev)
+{
+    if (!pres_buf)
+        return;
+
+    /* cur / prev has ans non value  */
+    if (cur == 0 || prev == 0)
+        return;
+
+    /*
+     * pres_buf structure:
+     * [0] value slot     ← determined by pres_buf[1]
+     * [1] tag ('C' or 'P')
+     *
+     * [2] value slot     ← determined by pres_buf[3]
+     * [3] tag ('C' or 'P')
+     */
+    for (UINT32 i = 0; i < 2; i++) {
+        UINT32 v = i * 2;
+        UINT32 t = v + 1;
+        CHAR8 tag = pres_buf[t];
+
+        if (tag == 'C') {
+            pres_buf[v] = cur;
+        } else if (tag == 'P') {
+            pres_buf[v] = prev;
+        }
+    }
+}
+
+SBCStatus SBC_RawPrtHdrChange(
+    VOID *handle, 
+    UINT32 cur, 
+    UINT32 prev, 
+    UINT32 prevmode, 
+    UINT32 bm, 
+    UINT32 km)
+{
+    SBCStatus ret = SBCOK;
+    [[maybe_unused]]EFI_STATUS retval = EFI_SUCCESS;
+    boot_proc_t *b_proc = (boot_proc_t *)handle;
+    rawprt_hdr_t rawhdr;
+    UINT8 *pres_buf;
+
+
+    ZeroMem(&rawhdr, sizeof(rawhdr));;
+
+    ret = SBC_RawAlignedReadBlockIO(b_proc->blkhnd,
+                                    0x0,
+                                    sizeof rawhdr,
+                                    (void *)&rawhdr);
+    if (ret != SBCOK) {
+        eprint("SBC_RawAlignedReadBlockIO 0x%lu read fail", 0x0);
+        goto errdone;
+    }
+
+    dprint("Boot Header Read ===>");
+    SBC_mem_print_bin("Raw Partition Header ", (UINT8 *)&rawhdr, sizeof rawhdr);
+
+    rawhdr.prevmode = prevmode;
+    pres_buf = rawhdr.bootpres;
+    dprint("%d:%02x %d:%c %d:%02x %d:%c \n",
+            0, pres_buf[0], 
+            1, pres_buf[1], 
+            2, pres_buf[2], 
+            3, pres_buf[3]);
+
+
+    /* pres_buf mapping:
+     * [0] - current or previous value slot
+     * [1] - prev for slot 0 ('C' or 'P')
+     * [2] - current or previous value slot
+     * [3] - prev for slot 2 ('C' or 'P')
+     */
+
+//  if (cur != 0 && prev != 0) {
+//      if (pres_buf[1] == 'C' || pres_buf[1] == 'P') {
+//          pres_buf[0] = (pres_buf[1] == 'C') ? cur : prev;
+//      }
+//
+//      if (pres_buf[3] == 'C' || pres_buf[3] == 'P') {
+//          pres_buf[2] = (pres_buf[3] == 'C') ? cur : prev;
+//      }
+//  }
+
+
+    SBC_UpdateBootPres(pres_buf, cur, prev);
+
+    SBC_mem_print_bin("---> Raw Partition Boot Pres ", (UINT8 *)rawhdr.bootpres, sizeof rawhdr.bootpres);
+
+    if (bm != BOOT_MODE_UNKNOWN) {
+        rawhdr.bootmode = bm;
+    }
+    
+    if (km != KEY_MODE_UNKNOWN) {
+        rawhdr.keymode = km;
+    }
+
+    ret = SBC_RawAlignedWriteBlockIO(b_proc->blkhnd,
+                                    0x0,
+                                    sizeof rawhdr,
+                                    (void *)&rawhdr);
+    if (ret != SBCOK) {
+        eprint("SBC_RawAlignedWriteBlockIO 0x%lu read fail", 0x0);
+        goto errdone;
+    }
+
+    sbc_err_sysprn(SBC_LOG_CMN_PRIO_ERR, 2,
+                 SYS_LOG_HOST_BOOT,
+                 SYS_LOG_APP_NAME,
+                 SYS_LOG_CSC_NAME,
+                 0,
+                 L"Detectoin",
+                 L"SFR-Vendor-SP Success to change the "
+                 L"Header informaiton of Raw-partition \n");
+errdone:
+
+
+    if (ret != SBCOK) {
+        sbc_err_sysprn(SBC_LOG_CMN_PRIO_ERR, 2,
+                 SYS_LOG_HOST_BOOT,
+                 SYS_LOG_APP_NAME,
+                 SYS_LOG_CSC_NAME,
+                 0,
+                 L"Detectoin",
+                 L"SFR-Vendor-SP Failed to change the "
+                 L"Header informaiton of Raw-partition \n");
+    }
+
+    return ret;
+}
+
