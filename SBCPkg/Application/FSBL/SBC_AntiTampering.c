@@ -164,6 +164,7 @@ SBCStatus _ssbl_image_load(VOID *blkhnd, LV_t *lv,  UINTN normbank, UINTN bm)
     UINTN               bsofs = 0; // Boot Sector Offset
     UINTN               startlba = 0;
 
+    UINT32          real_imglen =0UL;
     UINT32          imglen = SBC_RAWPRT_DFLT_BLK_SZ;
     UINT8           imghdr[SBC_RAWPRT_DFLT_BLK_SZ] = {0, };
 
@@ -193,6 +194,7 @@ SBCStatus _ssbl_image_load(VOID *blkhnd, LV_t *lv,  UINTN normbank, UINTN bm)
       goto errdone;
     }
     //dprint("SSBL image len : %ld", imglen);
+    real_imglen = imglen;
     imglen = ALIGN_VALUE(imglen, SBC_RAWPRT_DFLT_BLK_SZ);
 
 
@@ -209,7 +211,7 @@ SBCStatus _ssbl_image_load(VOID *blkhnd, LV_t *lv,  UINTN normbank, UINTN bm)
     SBC_RET_VALIDATE_ERRCODEMSG((ret == SBCOK), ret, "SSBL image read fail");
 
 
-    lv->length = imglen - FSBL_BNIFO_SIZE;
+    lv->length = real_imglen; //imglen - FSBL_BNIFO_SIZE;
     // skip the image header ( for Length )
     lv->value += 4;
 
@@ -1127,7 +1129,7 @@ SBCStatus SBC_DeviceSecuirtyKeyCreate(VOID *key)
     cnt += info.nvmesnl;
 
     dprint("Security Key Message : %a", computebuf);
-    SBC_external_mem_print_bin("Security Key", computebuf, cnt);
+    //SBC_external_mem_print_bin("Security Key", computebuf, cnt);
 
     ret = SBC_HashCompute(NULL,
                           computebuf, 
@@ -1251,7 +1253,7 @@ SBCStatus  SBC_DeviceIdKyeVerify(VOID *blkio, UINT8 *fwid, UINT8 *deckey)
     offset += 4;
     // Decrypt 
 
-    SBC_mem_print_bin("Device ID cert", (UINT8 *)&loadbuf[offset], calen);
+    //SBC_mem_print_bin("Device ID cert", (UINT8 *)&loadbuf[offset], calen);
 
     decctx.msg.value = &loadbuf[offset];
     decctx.msg.length = calen;
@@ -1259,13 +1261,13 @@ SBCStatus  SBC_DeviceIdKyeVerify(VOID *blkio, UINT8 *fwid, UINT8 *deckey)
     offset += calen;
     decctx.iv.value = &loadbuf[offset];
     decctx.iv.length = BASE_ANS_IV_KEY_STR;
-    SBC_mem_print_bin("Device ID IV", (UINT8 *)&loadbuf[offset], BASE_ANS_IV_KEY_STR);
+    //SBC_mem_print_bin("Device ID IV", (UINT8 *)&loadbuf[offset], BASE_ANS_IV_KEY_STR);
 
     
     offset += BASE_ANS_IV_KEY_STR;
     decctx.tag.value = &loadbuf[offset];
     decctx.tag.length = BASE_ANS_TAG_LEN;
-    SBC_mem_print_bin("Device ID TAG", (UINT8 *)&loadbuf[offset], BASE_ANS_TAG_LEN);
+    //SBC_mem_print_bin("Device ID TAG", (UINT8 *)&loadbuf[offset], BASE_ANS_TAG_LEN);
 
 #ifdef _FSBL_TEST_
     UINTN idx = 0;
@@ -1300,7 +1302,7 @@ SBCStatus  SBC_DeviceIdKyeVerify(VOID *blkio, UINT8 *fwid, UINT8 *deckey)
         goto errdone;
     }
 
-    SBC_mem_print_bin("Decrypt Device ID cert", (UINT8 *)decbuf, calen);
+    //SBC_mem_print_bin("Decrypt Device ID cert", (UINT8 *)decbuf, calen);
 
     // Get Public Key
     ret = SBC_EcGetPublicKeyFromPem((CONST UINT8 *)decbuf, calen, &ctx);
@@ -1969,8 +1971,8 @@ SBCStatus  SBC_SSBL_Verify(VOID *blkhnd, VOID *ansr,  UINTN nrombank, UINTN bm, 
         goto errdone;
     }
 
-    SBC_mem_print_bin("SSBL Certi", (UINT8  *)info.certi, (UINTN)bsinfo.m.certlen);
-    SBC_mem_print_bin("SSBL Signature", (UINT8  *)info.signature, (UINTN)bsinfo.m.siglen);
+    //SBC_mem_print_bin("SSBL Certi", (UINT8  *)info.certi, (UINTN)bsinfo.m.certlen);
+    //SBC_mem_print_bin("SSBL Signature", (UINT8  *)info.signature, (UINTN)bsinfo.m.siglen);
 
     //dprint("SSBL image len : %d", fsbl_len);
     fsbl_len += (bsinfo.m.fwinfolen + bsinfo.m.certlen  + bsinfo.m.banswlen);
@@ -3283,9 +3285,9 @@ SBCStatus  SBC_FSBLIntgCheck([[gnu::unused]]EFI_HANDLE *h_image , VOID *blkio, V
                                 SBCENCFAIL, 
                                 "CA decrypt fail");    
 
-    SBC_mem_print_bin("RawFS RootCA", decbuf, calen);
+    //SBC_mem_print_bin("RawFS RootCA", decbuf, calen);
 
-    SBC_mem_print_bin("Firmware RootCA", cert, certlen);
+    //SBC_mem_print_bin("Firmware RootCA", cert, certlen);
 #else
     calen = rootca_certi_lv.length;
     cabuf = (UINT8 *)rootca_certi_lv.value;

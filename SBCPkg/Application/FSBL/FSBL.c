@@ -116,7 +116,7 @@ SBCStatus  SBC_DiceKeysGen(EFI_HANDLE ImageHandle, VOID *p,UINTN normbank, UINTN
         goto errdone;
     }
 
-    SBC_mem_print_bin("Firmware ID", h->fwid, sizeof h->fwid);
+    //SBC_mem_print_bin("Firmware ID", h->fwid, sizeof h->fwid);
 
     ret = SBC_GenOSID(ImageHandle,  h->fwid, h->osid);
     if (ret != SBCOK) {
@@ -124,7 +124,7 @@ SBCStatus  SBC_DiceKeysGen(EFI_HANDLE ImageHandle, VOID *p,UINTN normbank, UINTN
         goto errdone;
     }
 
-    SBC_mem_print_bin("OSID", h->osid, sizeof h->osid);
+    //SBC_mem_print_bin("OSID", h->osid, sizeof h->osid);
     ret = SBCOK;
 
 errdone:

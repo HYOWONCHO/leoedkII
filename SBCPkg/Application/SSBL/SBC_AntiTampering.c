@@ -99,12 +99,11 @@ SBCStatus _find_kernel_path(CHAR16 **buf, UINTN *len_of_kernel)
 {
     SBCStatus ret = SBCOK;
 
-    
     ret = SBC_FileReadUnicodeSimple(KERNEL_DIR_FILE, buf, len_of_kernel);
 
     //SBC_mem_print_bin("Kernel path" , buf, *len_of_kernel);
 
-    dprint("kernel path : %s (count : %d )", (CHAR16 *)*buf, *len_of_kernel);
+    //dprint("kernel path : %s (count : %d )", (CHAR16 *)*buf, *len_of_kernel);
 
     return ret;
 
@@ -783,7 +782,7 @@ SBCStatus _nvme_get_serial(hw_uniqueinfo_t *p)
                 break;
         }
 
-       dprint("NVMe Device %u Serial Number: %a\n", Index, Serial);
+       //dprint("NVMe Device %u Serial Number: %a\n", Index, Serial);
         //SBC_mem_print_bin("NVME DEV SN", (UINT8 *)Serial, 32);
         p->nvmesnl = strlen(Serial);
         CopyMem(p->nvmesn, Serial, p->nvmesnl);
@@ -861,7 +860,7 @@ static SBCStatus _baseboard_sn(hw_uniqueinfo_t *p)
                 }
 #endif
                 p->mbsnl = strlen(SerialNumberString);
-                SBC_external_mem_print_bin("_baseboard_sn", (UINT8 *)SerialNumberString, p->mbsnl);
+                //SBC_external_mem_print_bin("_baseboard_sn", (UINT8 *)SerialNumberString, p->mbsnl);
                 CopyMem(p->mbsn, SerialNumberString, p->mbsnl);
 
 
@@ -1355,7 +1354,7 @@ SBCStatus  SBC_FirmwareIdKyeVerify(VOID *priv)
                                 "Firmware ID Key-pair gen fail");
 
 #endif
-    SBC_mem_print_bin("FW Secert Key", secret_key, BASE_ANS_KEY_STR);
+    //SBC_mem_print_bin("FW Secert Key", secret_key, BASE_ANS_KEY_STR);
     decctx.key.value = secret_key;
     decctx.key.length = BASE_ANS_KEY_STR;
     //SBC_mem_print_bin("Dec Key", (UINT8 *)deckey, BASE_ANS_KEY_STR);
@@ -2548,15 +2547,17 @@ SBCStatus _ssbl_image_load_blk(VOID *blkhnd, LV_t *lv,  UINTN normbank, UINTN bm
                bm, normbank);
         
       bsofs = (BOOT_SECTOR1_OFS | ((normbank - 1) << SBC_BOOTFW_BKN_OFS));
+      bsofs += BOOT_SSBL_OFS;
       //startlba = ((bsofs | BOOT_SSBL_OFS) >> SBC_RAWPRT_DFLT_SHIFT);
     }
     else {
         dprint("Find the Old SSBL in the Factory with Image banke %ld", normbank);
       bsofs = BOOT_SECTOR3_OFS;
+      bsofs += BOOT_SSBL_OFS;
       //startlba = ((bsofs | BOOT_SSBL_OFS) >> SBC_RAWPRT_DFLT_SHIFT);
     }
 
-    //dprint("BSOFS:  0x%lx, StartLBA: %lu", bsofs, startlba);
+    dprint("BSOFS:  0x%lx, StartLBA: %lu", bsofs, 0);
 
     ret = SBC_RawAlignedReadBlockIO(blkhnd, 
                                     bsofs,
@@ -2764,8 +2765,8 @@ SBCStatus SBC_GenFWIDOld(EFI_HANDLE *h_image, UINT8 *devid, UINT8 *fwid, UINTN n
                          hash_ssbl );
   SBC_RET_VALIDATE_ERRCODEMSG((ret == SBCOK), ret, "SSBL hash compute failed");
 
-  dprint("ssbl image load len : %ld", lv.length);
-  SBC_mem_print_bin("SSBL image", (UINT8 *)lv.value, lv.length);
+  //dprint("ssbl image load len : %ld", lv.length);
+  //SBC_mem_print_bin("SSBL image", (UINT8 *)lv.value, lv.length);
   SBC_mem_print_bin("ssbl hash", (UINT8 *)hash_ssbl, 32);
 
 

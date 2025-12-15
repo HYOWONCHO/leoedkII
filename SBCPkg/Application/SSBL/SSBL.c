@@ -472,7 +472,8 @@ UefiMain (
     CopyMem((void *)&pres_low, (void *)&h_rawptrheader.bootpres[0], 4);
 
     btproc.is_factory = _get_fw_bankid(pres_low, &currbank_id, &prevbank_id);
-    dprint("Pres Low : 0x%04x Cur. Bank ID : %d , Prev. Bank ID : %d ", pres_low, currbank_id, prevbank_id);
+    dprint("Pres Low : 0x%04x Cur. Bank ID : %d , Prev. Bank ID : %d ", 
+           pres_low, currbank_id, prevbank_id);
     //prevbank_id = FindPreviouslyBank(currbank_id);
 
 
@@ -702,52 +703,53 @@ uc_errdone:
 //      return EFI_SUCCESS;
 //  }
 
-    {
-        extern SBCStatus  SBC_DiceKeysGenOld(EFI_HANDLE ImageHandle, 
-                                             VOID *p,
-                                             UINTN normbank, 
-                                             UINTN bm);
-        atp_ident_t key1;
-        atp_ident_t key2;
-        UINT64 wrbytes;
-        UINT32 rdbytes =0;
-
-        SBC_CopyFileToBlockDevice(L"\\EFI\\BOOT\\SSBL.efi",
-                                  btproc.blkhnd,
-                                  0x400200,
-                                  &wrbytes);
-
-        dprint("SSBL write byte at 0x400200 %lu", wrbytes);
-
-        ret = SBC_RawPrtHdrChange((void *)&btproc, 
-                                      1,
-                                      2,
-                                      0,
-                                      BOOT_MODE_UNKNOWN,
-                                      KEY_MODE_UNKNOWN);
-        btproc.curr_sw_bnk = 1;
-        btproc.pvs_sw_bnk = 2;
-        SBC_DiceKeysGenOld(ImageHandle, &key1, btproc.curr_sw_bnk, btproc.bm);
-        
-        SBC_mem_print_bin("Curr OSID", (UINT8 *)key1.osid, 32);
-
-        SBC_CopyBlockReadAndBlockWrite(btproc.blkhnd,
-                                       0x400200,
-                                       0x8400200,
-                                       &rdbytes);
-
-        ret = SBC_RawPrtHdrChange((void *)&btproc, 
-                                      2,
-                                      1,
-                                      0,
-                                      BOOT_MODE_UNKNOWN,
-                                      KEY_MODE_UNKNOWN);
-
-        btproc.curr_sw_bnk = 2;
-         btproc.pvs_sw_bnk = 1;
-        SBC_DiceKeysGenOld(ImageHandle, &key2, btproc.curr_sw_bnk, btproc.bm);
-        
-        SBC_mem_print_bin("Prev OSID", (UINT8 *)key2.osid, 32);
+//  {
+//      extern SBCStatus  SBC_DiceKeysGenOld(EFI_HANDLE ImageHandle,
+//                                           VOID *p,
+//                                           UINTN normbank,
+//                                           UINTN bm);
+//      atp_ident_t key1;
+//      atp_ident_t key2;
+//      UINT64 wrbytes;
+//      UINT32 rdbytes =0;
+//
+//      SBC_CopyFileToBlockDevice(L"\\EFI\\BOOT\\SSBL.efi",
+//                                btproc.blkhnd,
+//                                0x400200,
+//                                &wrbytes);
+//
+//      dprint("SSBL write byte at 0x400200 %lu", wrbytes);
+//
+//      ret = SBC_RawPrtHdrChange((void *)&btproc,
+//                                    1,
+//                                    2,
+//                                    0,
+//                                    BOOT_MODE_UNKNOWN,
+//                                    KEY_MODE_UNKNOWN);
+//      btproc.curr_sw_bnk = 1;
+//      btproc.pvs_sw_bnk = 2;
+//      SBC_DiceKeysGenOld(ImageHandle, &key1, btproc.curr_sw_bnk, btproc.bm);
+//
+//      SBC_mem_print_bin("Curr OSID", (UINT8 *)key1.osid, 32);
+//
+//      SBC_CopyBlockReadAndBlockWrite(btproc.blkhnd,
+//                                     0x400200,
+//                                     0x8400200,
+//                                     &rdbytes);
+//
+//      ret = SBC_RawPrtHdrChange((void *)&btproc,
+//                                    2,
+//                                    1,
+//                                    0,
+//                                    BOOT_MODE_UNKNOWN,
+//                                    KEY_MODE_UNKNOWN);
+//
+//      btproc.curr_sw_bnk = 2;
+//       btproc.pvs_sw_bnk = 1;
+//      SBC_DiceKeysGenOld(ImageHandle, &key2, btproc.curr_sw_bnk, btproc.bm);
+//
+//      SBC_mem_print_bin("Prev OSID", (UINT8 *)key2.osid, 32);
+//        return EFI_SUCCESS;
 
 //
 //      SBC_CopyBlockReadAndBlockWrite(btproc.blkhnd,
@@ -755,9 +757,9 @@ uc_errdone:
 //                                     0x400200,
 //                                     &rdbytes);
 
-        return EFI_SUCCESS;
+
         
-    }
+//    }
 
 #if 0
     ret = SBC_GenMigrationKey((void *)&btproc, diceid.migid);

@@ -323,10 +323,10 @@ static SBCStatus _compute_previously_osid(VOID *handle, VOID *old)
 
     boot_proc_t *bp = (boot_proc_t *)handle;
 
-#if 1
+#if 0
     atp_ident_t atpid;
 
-    dprint("Compute the OLD OSID !!!!---");
+    dprint("Compute the OLD OSID ---");
     ZeroMem((void *)&atpid, sizeof atpid);
     ret = SBC_DiceKeysGenOld(bp->ldhndl, &atpid, bp->curr_sw_bnk, bp->bm);
     if (ret != SBCOK) {
@@ -344,7 +344,7 @@ static SBCStatus _compute_previously_osid(VOID *handle, VOID *old)
 
     CopyMem((void *)old, (const void *)atpid.osid, SBC_AT_RP_KEY_LEN);
 #else
-    dprint("Compute the OLD OSID from Raw Prt!!!!---");
+    dprint("Compute the OLD OSID !!!!---");
     ret = SBC_GetOSIDFromRawPrt((VOID *)bp, old);
     if (ret != SBCOK) {
         sbc_err_sysprn(SBC_LOG_CMN_PRIO_ERR, 2,
@@ -1162,6 +1162,9 @@ void  SBC_RecoveryBootProcessing(VOID *priv)
                 goto errdone;
             }
 
+            SBC_mem_print_bin("Recovery Base Answer Encrypt Key",
+                              new_dice_id.osid, BASE_ANS_KEY_STR);
+
             ret = _store_fw_os_keypair_store(priv,
                                new_dice_id.fwid,
                                new_dice_id.osid);
@@ -1190,10 +1193,10 @@ void  SBC_RecoveryBootProcessing(VOID *priv)
 //                                    BOOT_MODE_NORMAL,
 //                                    KEY_MODE_NORMAL);
 
-            ret = SBC_RawPrtHdrChange(priv,
-                                      bt_proc->curr_sw_bnk,
+            ret = SBC_RawPrtHdrChangeWithRecovery(priv,
                                       bt_proc->pvs_sw_bnk,
-                                      1,
+                                      bt_proc->curr_sw_bnk,
+                                      0,
                                       BOOT_MODE_NORMAL,
                                       KEY_MODE_NORMAL);
             break;
@@ -1514,6 +1517,12 @@ SBCStatus  SBC_SecureBootCheck(VOID *priv)
     ZeroMem((VOID *)&blob, sizeof blob);
     ZeroMem((VOID *)&srp, sizeof srp);
 
+    //boot_proc_t backup_bp;
+    //atp_ident_t newid;
+    //atp_ident_t oldid;
+
+    //ZeroMem(&backup_bp, sizeof(backup_bp));
+
 #ifdef SAT_PROT_SW_ENABLE
 #error "x1"
     ret = SBC_LoadSystemSetting(bp->blkhnd, (VOID *)&blob);
@@ -1533,8 +1542,33 @@ SBCStatus  SBC_SecureBootCheck(VOID *priv)
 
     switch(bp->bm) {
     case BOOT_MODE_NORMAL:
+
+        if(((rawprt_hdr_t *)bp->rawprt_hdr)->rcvmode) {
+            //CopyMem(&oldid,  bp->keyinfo, sizeof(atp_ident_t));
+
+            //SBC_mem_print_bin("OLD OSID Key", oldid.osid, 32);
+            dprint("Old F/W Firwmare ID and OSID gens");
+            //bp->keyinfo = (void *)&newid;
+            ret = SBC_DiceKeysGenOld(bp->ldhndl,
+                                     bp->keyinfo,
+                                     bp->curr_sw_bnk,
+                                     bp->bm);
+
+            //SBC_mem_print_bin("Regen OSID",
+            //                  ((atp_ident_t *)bp->keyinfo)->osid,
+            //                  32);
+
+        }
         ret = SBC_DiceIDKeyVerify((VOID *)bp);
         SBC_RET_VALIDATE_ERRCODEMSG((ret == SBCOK), ret, "Certificate ID Verify Fail");
+
+//      if(((rawprt_hdr_t *)bp->rawprt_hdr)->rcvmode) {
+//          CopyMem(bp->keyinfo, (void *)&oldid, sizeof(atp_ident_t));
+//          SBC_mem_print_bin("Recover OSID",
+//                            ((atp_ident_t *)bp->keyinfo)->osid,
+//                            32);
+//      }
+
 
         if(!((rawprt_hdr_t *)bp->rawprt_hdr)->rcvmode) {
             //
@@ -1546,6 +1580,11 @@ SBCStatus  SBC_SecureBootCheck(VOID *priv)
         else {
 
             dec_key = ((atp_ident_t *)bp->keyinfo)->migid;
+        }
+
+        if(((rawprt_hdr_t *)bp->rawprt_hdr)->rcvmode) {
+            dprint("Because recovery mode, decrypot using old osid");
+            dec_key = ((atp_ident_t *)bp->keyinfo)->osid;
         }
 
         // TODO : Baseanswer verify
@@ -1836,11 +1875,13 @@ SBCStatus SBC_RawPrtHdrChange(
     SBC_mem_print_bin("---> Raw Partition Boot Pres ", (UINT8 *)rawhdr.bootpres, sizeof rawhdr.bootpres);
 
     if (bm != BOOT_MODE_UNKNOWN) {
-        rawhdr.bootmode = bm;
-        if(bm == BOOT_MODE_RECOVERY) {
+        if(rawhdr.bootmode == BOOT_MODE_RECOVERY) {
             dprint("---> Next Firmware Start, SHOULD be power-on from Recovery Mode");
             rawhdr.rcvmode = 1;
         }
+        
+        rawhdr.bootmode = bm;
+
     }
     
     if (km != KEY_MODE_UNKNOWN) {
@@ -1870,8 +1911,9 @@ SBCStatus SBC_RawPrtHdrChange(
                                     sizeof rawhdr,
                                     (void *)&rawhdr);
 
-    dprint("---> boot mode : %d, key mode :%d, cur bank : %lu , previously bnk : %lu",
-           b_proc->bm, b_proc->km, b_proc->curr_sw_bnk, b_proc->pvs_sw_bnk);
+//  dprint("---> boot mode : %d, key mode :%d, cur bank : %lu , previously bnk : %lu",
+//         rawhdr.bootmode, rawhdr.keymode,
+//         rawhdr., b_proc->pvs_sw_bnk);
 
     SBC_mem_print_bin("After write SBC_RawPrtHdrChange",
                       (UINT8 *)&rawhdr,
@@ -1954,11 +1996,13 @@ SBCStatus SBC_RawPrtHdrChangeWithRecovery(
     SBC_mem_print_bin("---> Raw Partition Boot Pres ", (UINT8 *)rawhdr.bootpres, sizeof rawhdr.bootpres);
 
     if (bm != BOOT_MODE_UNKNOWN) {
-        rawhdr.bootmode = bm;
-        if(bm == BOOT_MODE_RECOVERY) {
+        
+        if(rawhdr.bootmode == BOOT_MODE_RECOVERY) {
             dprint("---> Next Firmware Start, SHOULD be power-on from Recovery Mode");
             rawhdr.rcvmode = 1;
         }
+
+        rawhdr.bootmode = bm;
     }
     
     if (km != KEY_MODE_UNKNOWN) {
@@ -1984,6 +2028,19 @@ SBCStatus SBC_RawPrtHdrChangeWithRecovery(
                  L"Detectoin",
                  L"SFR-Vendor-SP Success to change the "
                  L"Header informaiton of Raw-partition \n");
+
+    ret = SBC_RawAlignedReadBlockIO(b_proc->blkhnd,
+                                    0x0,
+                                    sizeof rawhdr,
+                                    (void *)&rawhdr);
+
+//  dprint("---> boot mode : %d, key mode :%d, cur bank : %lu , previously bnk : %lu",
+//         rawhdr.bootmode, rawhdr.keymode,
+//         rawhdr., b_proc->pvs_sw_bnk);
+
+    SBC_mem_print_bin("After write SBC_RawPrtHdrChange",
+                      (UINT8 *)&rawhdr,
+                      sizeof(rawhdr));
 errdone:
 
 
