@@ -150,6 +150,8 @@ function post_copy_fsbl()
     ts=$(date +"%Y%m%d_%H%M%S")
     copyname="FSBL_${fw_version}_${ts}.efi"
 
+    echo $copyname
+
     cp -i ./FSBL.efi ../../../../FwSignPy/.
     cp -i ./FSBL.efi ../../../../FwSignPy/$copyname
 
@@ -169,6 +171,7 @@ function post_copy_ssbl()
 
     ts=$(date +"%Y%m%d_%H%M%S")
     copyname="SSBL_${fw_version}_${ts}.efi"
+    echo $copyname
 
     cp -i ./SSBL.efi ../../../../FwSignPy/.
     cp -i ./SSBL.efi ../../../../FwSignPy/$copyname
@@ -243,6 +246,32 @@ function module_build()
 
 }
 
+bump_patch_var() {
+    local version_file="${1:-sbc_v.txt}"
+    local patch
+    local new_patch
+
+    if [[ ! -f "$version_file" ]]; then
+        echo "[ERROR] Version file not found: $version_file"
+        return 1
+    fi
+
+    patch=$(grep '^PATCH_VAR=' "$version_file" | sed -E 's/[^0-9]*([0-9]+).*/\1/')
+
+    if [[ -z "$patch" ]]; then
+        echo "[ERROR] PATCH_VAR not found in $version_file"
+        return 1
+    fi
+
+    new_patch=$((patch + 1))
+
+    sed -i -E "s/^(PATCH_VAR=\")${patch}(\")/\1${new_patch}\2/" "$version_file"
+
+    echo "[OK] PATCH_VAR bumped: ${patch} → ${new_patch}"
+}
+
+
+bump_patch_var
 
 declare -A long=([env-setup]=: \
                   [build-pkgX64]=: \

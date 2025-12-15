@@ -50,6 +50,8 @@
 
 #include "SBC_Config.h"
 
+static UINT32 stay_recovery_flag = 0;
+
 //EFI_GUID g_sbc_guid  = {0x1F3F7E80, 0xDB6B, 0x93FA, {0x9E, 0x61, 0x4C, 0x31, 0x3D, 0x3A}};
 #ifdef _ALL_PASS_
 extern SBCStatus SBC_GRUB_LoadAndStart(EFI_HANDLE ImageHandle);
@@ -78,7 +80,7 @@ SBCStatus SBC_BootKeyModeChange(UINT32 newbm, UINT32 newkey, VOID *priv)
     hdr->bootmode = newbm;
     hdr->keymode = newkey;
 
-    if(bp->bm == BOOT_MODE_RECOVERY) {
+    if(bp->bm == BOOT_MODE_RECOVERY || hdr->rcvmode == 1) {
         hdr->rcvmode = 1;
     }
     else {
@@ -1426,7 +1428,11 @@ static VOID _handling_sb_process_for_bm_normal(VOID *priv)
 
     switch(p->bootst) {
     case SB_PROC_ST_NRMA:
-        SBC_BootKeyModeChange(BOOT_MODE_NORMAL, KEY_MODE_NORMAL, priv);
+        if(stay_recovery_flag != 1) {
+            SBC_BootKeyModeChange(BOOT_MODE_NORMAL, KEY_MODE_NORMAL, priv);
+        }
+
+        stay_recovery_flag = 0;
         break;
     case SB_PROC_ST_ABNRAM:
         if(p->pvs_sw_bnk) {
@@ -1610,13 +1616,16 @@ SBCStatus  SBC_SecureBootCheck(VOID *priv)
 
         }
 
-        if ( bp->rcvmode == 1 && bp->prevmode == 1 ) {
+        dprint("Check recovery in the Normal ( Recovery Mode : %d ) \n", bp->rcvmode);
+
+        if ( bp->rcvmode == 1 /* && bp->prevmode == 1 */) {
             dprint(" ***** In normal, rcv mode 1 and prevmode 1, so prevmode set to 0");
             SBC_RawPrtHdrChangeWithRecovery(bp,
                                 0, 0,
                                 0, // prevmode is 0
                                 BOOT_MODE_UNKNOWN,
                                 KEY_MODE_UNKNOWN);
+            stay_recovery_flag = 1;
         }
 
 
