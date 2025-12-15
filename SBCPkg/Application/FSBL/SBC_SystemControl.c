@@ -24,6 +24,9 @@
 #include "SBC_UnitTest.h"
 
 
+
+
+
 SBCStatus SBC_BootKeyModeChange(UINT32 newbm, UINT32 newkey, VOID *priv)
 {
     SBCStatus ret = SBCOK;
@@ -346,6 +349,11 @@ SBCStatus SBC_RawPrtHdrChange(
 
     if (bm != BOOT_MODE_UNKNOWN) {
         rawhdr.bootmode = bm;
+        // Comment by Leon - Do not need 
+//      if(bm == BOOT_MODE_RECOVERY) {
+//          dprint("---> Next Firmware Start, SHOULD be power-on from Recovery Mode");
+//          rawhdr.rcvmode = 1;
+//      }
     }
     
     if (km != KEY_MODE_UNKNOWN) {
@@ -384,6 +392,7 @@ SBCStatus SBC_SecureBootUpdateScenario(VOID *priv)
     boot_proc_t *p       = (boot_proc_t *)priv;
     UINT32      key_mode = KEY_MODE_UNKNOWN;
     UINT32      next_bm  = BOOT_MODE_UNKNOWN;
+    //UINT32      stay_prev_mode = 0;
 
     if (p == NULL) {
         return SBCNULLP;
@@ -424,7 +433,7 @@ SBCStatus SBC_SecureBootUpdateScenario(VOID *priv)
               p,
               0,
               0,
-              0,
+              p->prevmode,
               next_bm,
               key_mode   /* ← 여기서 이제 실제로 key_mode 사용 */
           );

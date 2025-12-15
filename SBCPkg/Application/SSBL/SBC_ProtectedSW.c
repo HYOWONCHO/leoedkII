@@ -577,7 +577,7 @@ SBCStatus SBC_RecryptoProtectedSW(VOID *handle, UINTN ofs,  UINT8* sw_secret_key
     aesbuf.buf = &buf[mvofs];
     mvofs += length;
 
-    SBC_mem_print_bin("aes encrypt buf", (UINT8 *)aesbuf.buf, 512);
+    //SBC_mem_print_bin("aes encrypt buf", (UINT8 *)aesbuf.buf, 512);
     aesbuf.iv = &buf[mvofs];
     mvofs += SBC_AT_RP_IV_LEN;
 

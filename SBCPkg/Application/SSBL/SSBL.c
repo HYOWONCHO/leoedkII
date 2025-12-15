@@ -399,6 +399,7 @@ static BOOLEAN _get_fw_bankid(UINT32 val, UINT32 *cur, UINT32 *prev)
 
 }
 
+extern SBCStatus SBC_GetOSIDFromRawPrt(VOID *priv, UINT8 *decbuf);
 extern EFI_STATUS SBC_LogFileInit( EFI_HANDLE        logHandle);
 SBCStatus SBC_RawPrtHdrChange(VOID *handle, UINT32 cur, UINT32 prev, UINT32 prevmode, UINT32 bm, UINT32 km);
 EFI_STATUS
@@ -514,8 +515,8 @@ UefiMain (
     //
     btproc.rcvmode = h_rawptrheader.rcvmode;
 
-    _ucprint("Boot Mode : %d , Key Mode : %d, Recovery Mode : %d",
-           btproc.bm, btproc.km, h_rawptrheader.rcvmode);
+    dprint("Boot Mode : %d , Key Mode : %d, Recovery Mode : %d, Prev Mode : %d",
+           btproc.bm, btproc.km, h_rawptrheader.rcvmode, h_rawptrheader.prevmode);
 
     //dprint("Chaeck Boot Mode read from BlkIO is %d", h_rawptrheader.bootmode);
 
@@ -683,6 +684,80 @@ uc_errdone:
     goto errdone;
 #endif
     dprint("Currently Valid FW Bank ID : %d , Previously Bank ID : %d \n", currbank_id, prevbank_id);
+
+
+//  {
+//      UINT8 old_osid[32] = {0, };
+//      ret = SBC_GetOSIDFromRawPrt((VOID *)&btproc, old_osid);
+//      if (ret != SBCOK) {
+//          eprint("Get Old OSID getting fail");
+//          dprint("xxxxxxxxxxxxxxxxx22222xxxxxxxxxxxx");
+//          goto errdone;
+//      }
+//      else {
+//          dprint("xxxxxxxxxxxxxxxxxxxxxxxxxxxxx");
+//          dprint("Get Old osid getting success");
+//      }
+//      SBC_mem_print_bin("OLD OSID", old_osid, sizeof old_osid);
+//      return EFI_SUCCESS;
+//  }
+
+    {
+        extern SBCStatus  SBC_DiceKeysGenOld(EFI_HANDLE ImageHandle, 
+                                             VOID *p,
+                                             UINTN normbank, 
+                                             UINTN bm);
+        atp_ident_t key1;
+        atp_ident_t key2;
+        UINT64 wrbytes;
+        UINT32 rdbytes =0;
+
+        SBC_CopyFileToBlockDevice(L"\\EFI\\BOOT\\SSBL.efi",
+                                  btproc.blkhnd,
+                                  0x400200,
+                                  &wrbytes);
+
+        dprint("SSBL write byte at 0x400200 %lu", wrbytes);
+
+        ret = SBC_RawPrtHdrChange((void *)&btproc, 
+                                      1,
+                                      2,
+                                      0,
+                                      BOOT_MODE_UNKNOWN,
+                                      KEY_MODE_UNKNOWN);
+        btproc.curr_sw_bnk = 1;
+        btproc.pvs_sw_bnk = 2;
+        SBC_DiceKeysGenOld(ImageHandle, &key1, btproc.curr_sw_bnk, btproc.bm);
+        
+        SBC_mem_print_bin("Curr OSID", (UINT8 *)key1.osid, 32);
+
+        SBC_CopyBlockReadAndBlockWrite(btproc.blkhnd,
+                                       0x400200,
+                                       0x8400200,
+                                       &rdbytes);
+
+        ret = SBC_RawPrtHdrChange((void *)&btproc, 
+                                      2,
+                                      1,
+                                      0,
+                                      BOOT_MODE_UNKNOWN,
+                                      KEY_MODE_UNKNOWN);
+
+        btproc.curr_sw_bnk = 2;
+         btproc.pvs_sw_bnk = 1;
+        SBC_DiceKeysGenOld(ImageHandle, &key2, btproc.curr_sw_bnk, btproc.bm);
+        
+        SBC_mem_print_bin("Prev OSID", (UINT8 *)key2.osid, 32);
+
+//
+//      SBC_CopyBlockReadAndBlockWrite(btproc.blkhnd,
+//                                     0x8400200,
+//                                     0x400200,
+//                                     &rdbytes);
+
+        return EFI_SUCCESS;
+        
+    }
 
 #if 0
     ret = SBC_GenMigrationKey((void *)&btproc, diceid.migid);

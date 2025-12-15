@@ -3043,12 +3043,12 @@ SBCStatus SBC_GenMigrationKey(void *priv, void *outmsg)
     ret = SBC_GetFileSize(EFI_BOOT_FSBL_PATH, &len_fsbl);
     SBC_RET_VALIDATE_ERRCODEMSG((ret == SBCOK),
                                ret,
-                               "Not Found the FSBL");
+                               "FSBL Not Found the FSBL");
 
     ret = SBC_GetFileSize(EFI_BOOT_SSBL_PATH, &len_ssbl);
     SBC_RET_VALIDATE_ERRCODEMSG((ret == SBCOK),
                                ret,
-                               "Not Found the SSBL");
+                               "SSBL Not Found the SSBL");
 
     dprint("Existing FSBL (%d) & SSBL (%d) Length", len_fsbl, len_ssbl);
 

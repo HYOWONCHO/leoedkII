@@ -31,6 +31,7 @@
 #include <Library/ResetSystemLib.h>
 #include <Library/BaseMemoryLib.h>
 #include <Library/MemoryAllocationLib.h>
+#include <Library/PrintLib.h>
 
 #include "SBC_SystemControl.h"
 #include "SBC_AntiTampering.h"
@@ -43,7 +44,11 @@
 #include "SBC_Kdf.h"
 #include "SBC_ProtectedSW.h"
 
+#ifdef _SBC_TPM_
 #include "SBC_Nvram.h"
+#endif
+
+#include "SBC_Config.h"
 
 //EFI_GUID g_sbc_guid  = {0x1F3F7E80, 0xDB6B, 0x93FA, {0x9E, 0x61, 0x4C, 0x31, 0x3D, 0x3A}};
 #ifdef _ALL_PASS_
@@ -75,6 +80,9 @@ SBCStatus SBC_BootKeyModeChange(UINT32 newbm, UINT32 newkey, VOID *priv)
 
     if(bp->bm == BOOT_MODE_RECOVERY) {
         hdr->rcvmode = 1;
+    }
+    else {
+        hdr->rcvmode = 0;
     }
 
     //dprint();
@@ -213,20 +221,114 @@ errdone:
 //
 //    return offset;
 //}
+extern SBCStatus  SBC_DiceKeysGenOld(EFI_HANDLE ImageHandle, VOID *p,UINTN normbank, UINTN bm);
 
-
+extern SBCStatus SBC_GenFWIDOld(EFI_HANDLE *h_image, UINT8 *devid, UINT8 *fwid, UINTN normbank, UINTN bm)
+;
 extern SBCStatus  SBC_DiceKeysGen(EFI_HANDLE ImageHandle, VOID *p,UINTN normbank, UINTN bm);
+
+
+SBCStatus SBC_GetOSIDFromRawPrt(VOID *priv, UINT8 *decbuf)
+{
+    SBCStatus ret = SBCOK;
+    boot_proc_t *p = (boot_proc_t *)priv;
+    UINTN ofs = 0;
+    UINTN enclen = 0;
+    UINT8 iv[12] = {0,};
+    UINT8 tag[16] = {0,};
+    UINT8 encbuf[64] = {0, };
+    UINT8 shared_secret[SBC_AT_RP_KEY_LEN] = {0, };
+    CHAR16 err_out_key_val[128] = {0, };
+
+    SBC_AESContext aesctx;
+    SBC_AESGcmCtx  ctx;
+
+    ret = SBC_DeviceSecuirtyKeyCreate(shared_secret);
+    if( ret != SBCOK ) {
+        sbc_err_sysprn(SBC_LOG_CMN_PRIO_ERR, 1,
+                     SYS_LOG_HOST_BOOT,
+                     SYS_LOG_APP_NAME,
+                     SYS_LOG_CSC_NAME,
+                     8,
+                     SYS_LOG_EVT_VALDIATION,
+                     L"SBC_RawFS_Key Creation Fail");
+        goto errdone;
+    }
+
+    ofs = SYS_CONF_START_OFS | SYS_CONF_OSID_OFS;
+    ret = SBC_RawAlignedReadBlockIO(p->blkhnd, 
+                               ofs,
+                                SBC_RAW_PRTHDR_LEN_OFS,
+                               &enclen
+                               );
+
+    if(ret != SBCOK) {
+        eprint("Get OSID Len read fail");
+        goto errdone;
+    }
+
+    ofs += SBC_RAW_PRTHDR_LEN_OFS;
+    ret = SBC_RawAlignedReadBlockIO(p->blkhnd,
+                                    ofs,
+                                    enclen,
+                                    encbuf);
+    ofs += enclen;
+    ret  = SBC_RawAlignedReadBlockIO(p->blkhnd, 
+                                 ofs,
+                                 SBC_AT_RP_IV_LEN,
+                                 iv);
+
+    ofs += SBC_AT_RP_IV_LEN;
+    ret  = SBC_RawAlignedReadBlockIO(p->blkhnd, 
+                                 ofs,
+                                 SBC_AT_RP_TAG_LEN,
+                                 tag);
+
+    ctx.msg.value = (void *)encbuf;
+    ctx.out.value = (void *)decbuf;
+    ctx.msg.length = ctx.out.length = enclen;
+
+    aesctx.gcm = &ctx;
+    aesctx.algoid = SBC_CIPHER_AES_GCM;
+
+    //dprint("");
+    SBC_AESGcmSetContext((void *)aesctx.gcm, 
+                     (void *)shared_secret, 
+                     (void *)iv, 
+                     (void *)tag);
+
+    if (SBC_AESGcmDecrypt(&aesctx) != SBCOK) {
+        SBC_LogHexToStrChar16(shared_secret, 32, err_out_key_val, sizeof(err_out_key_val)/sizeof(err_out_key_val[0]),  FALSE, 0);
+        UnicodeSPrint(mrgmsg,  sizeof mrgmsg, L"SBC_VENDOR_SP Failed to decrypt (%s) \n", err_out_key_val);
+        sbc_err_sysprn(SBC_LOG_CMN_PRIO_ERR, 2,
+                 SYS_LOG_HOST_BOOT,
+                 SYS_LOG_APP_NAME,
+                 SYS_LOG_CSC_NAME,
+                 5,
+                 SYS_LOG_EVT_DETECTION,
+                 mrgmsg);
+        ret = SBCENCFAIL;
+        goto errdone;
+    }
+    ret = SBCOK;
+
+errdone:
+
+    return ret;
+}
 static SBCStatus _compute_previously_osid(VOID *handle, VOID *old)
 {
     SBCStatus ret = SBCOK;
     //UINTN fw_ofs = 0ULL;
 
     boot_proc_t *bp = (boot_proc_t *)handle;
+
+#if 1
     atp_ident_t atpid;
 
     dprint("Compute the OLD OSID !!!!---");
     ZeroMem((void *)&atpid, sizeof atpid);
-    ret = SBC_DiceKeysGen(bp->ldhndl, &atpid, bp->pvs_sw_bnk, bp->bm);
+    ret = SBC_DiceKeysGenOld(bp->ldhndl, &atpid, bp->curr_sw_bnk, bp->bm);
     if (ret != SBCOK) {
         sbc_err_sysprn(SBC_LOG_CMN_PRIO_ERR, 2,
              SYS_LOG_HOST_BOOT,
@@ -234,13 +336,32 @@ static SBCStatus _compute_previously_osid(VOID *handle, VOID *old)
              SYS_LOG_CSC_NAME,
              1,
              SYS_LOG_EVT_VALDIATION,
-             L"SBC_Dice_Key HW&SW Base Old Key Creation Fail");
+             L"SBC_Dice_Key HW&SW Base Old OSID Key Creation Fail");
        
         bp->bootst = SB_PROC_ST_ABNRAM;
         goto errdone;
     }
 
     CopyMem((void *)old, (const void *)atpid.osid, SBC_AT_RP_KEY_LEN);
+#else
+    dprint("Compute the OLD OSID from Raw Prt!!!!---");
+    ret = SBC_GetOSIDFromRawPrt((VOID *)bp, old);
+    if (ret != SBCOK) {
+        sbc_err_sysprn(SBC_LOG_CMN_PRIO_ERR, 2,
+             SYS_LOG_HOST_BOOT,
+             SYS_LOG_APP_NAME,
+             SYS_LOG_CSC_NAME,
+             1,
+             SYS_LOG_EVT_VALDIATION,
+             L"SBC_Dice_Key HW&SW Base Old OSID Key Creation Fail");
+       
+        bp->bootst = SB_PROC_ST_ABNRAM;
+        goto errdone;
+    }
+#endif
+
+    
+    SBC_mem_print_bin("OLD OSID", old, 32);
 errdone:
 
     return ret;
@@ -281,6 +402,7 @@ static SBCStatus _proetcted_sw_re_enc_dec(VOID *handle)
 
 
 
+    SBC_mem_print_bin("decrypt key", (UINT8 *)decrypt_key, SBC_AT_RP_KEY_LEN);
     ret = SBC_HashCompute(NULL, 
                           decrypt_key,
                           SBC_AT_RP_KEY_LEN,
@@ -288,6 +410,9 @@ static SBCStatus _proetcted_sw_re_enc_dec(VOID *handle)
     SBC_RET_VALIDATE_ERRCODEMSG(!(ret != SBCOK), ret, 
                                 "Failed to Dec secret key Screation");
 
+    SBC_mem_print_bin("hash decrypt key", (UINT8 *)deckey, SBC_AT_RP_KEY_LEN);
+
+    SBC_mem_print_bin("encrypt key", (UINT8 *)encrypt_key, SBC_AT_RP_KEY_LEN);
     ret = SBC_HashCompute(NULL, 
                           encrypt_key,
                           SBC_AT_RP_KEY_LEN,
@@ -296,6 +421,8 @@ static SBCStatus _proetcted_sw_re_enc_dec(VOID *handle)
                                 "Failed to Enc secret key creation");
 
 
+
+    SBC_mem_print_bin("hash encrypt key", (UINT8 *)enckey, SBC_AT_RP_KEY_LEN);
 
     ret = SBC_ProtSWDecrypt((VOID *)bp, 
                             enckey,
@@ -884,15 +1011,59 @@ errdone:
 
 }
 
+SBCStatus  SBC_DiceKeysReGen(EFI_HANDLE ImageHandle, VOID *p,UINTN normbank, UINTN bm)
+{
+    SBCStatus ret = SBCOK;
+    atp_ident_t *h = NULL;
+
+    h = (atp_ident_t *)p;
+
+    ret = SBC_GenDeviceID(h->devid);
+    if (ret != SBCOK) {
+        dprint("Device ID generate fail \n");
+        goto errdone;
+    }
+
+    //SBC_mem_print_bin("Device ID", h->devid, sizeof h->devid);SBC_mem_print_bin("Device ID", h->devid, sizeof h->devid);
+
+
+
+
+    ret = SBC_GenFWID(ImageHandle, h->devid, h->fwid, normbank, bm);
+    if (ret != SBCOK) {
+        dprint("FW ID generate fail \n");
+        goto errdone;
+    }
+
+    //SBC_mem_print_bin("Firmware ID", h->fwid, sizeof h->fwid);
+
+    ret = SBC_GenOSID(ImageHandle,  h->fwid, h->osid);
+    if (ret != SBCOK) {
+        dprint("FW ID generate fail \n");
+        goto errdone;
+    }
+
+    //SBC_mem_print_bin("Firmware ID", h->fwid, sizeof h->fwid);
+    ret = SBCOK;
+
+errdone:
+    return ret;
+
+}
+
+
 void  SBC_RecoveryBootProcessing(VOID *priv)
 {
     SBCStatus ret = SBCOK;
     //sb_rcv_proc_t *p = NULL;
     boot_proc_t   *bt_proc = NULL; // BOot process
+    atp_ident_t new_dice_id;
 
     // bug -->
     //p = (sb_rcv_proc_t *)priv;
     bt_proc = (boot_proc_t *)priv;
+
+    dprint("---> Enter the Recovery Mode");
 
     //p->baseans  = bt_porc
 
@@ -937,6 +1108,34 @@ void  SBC_RecoveryBootProcessing(VOID *priv)
     // C. Re-encrypt the decrypted baseanswer using OSID
     // D. Re-write the baseanswer in System Setting block of Block IO
 
+    ZeroMem(&new_dice_id, sizeof new_dice_id);
+
+    dprint("---> New Dice Key Create ~~~");
+    sbc_err_sysprn(SBC_LOG_CMN_PRIO_INFO, 2,
+             SYS_LOG_HOST_BOOT,
+             SYS_LOG_APP_NAME,
+             SYS_LOG_CSC_NAME,
+             1,
+             SYS_LOG_EVT_VALDIATION,
+             L"SBC_Dice_Key New Create");
+
+    ret = SBC_DiceKeysReGen(bt_proc->ldhndl, 
+                      &new_dice_id, 
+                      bt_proc->curr_sw_bnk, 
+                      bt_proc->bm);
+
+    if(ret != SBCOK) {
+        eprint("On Recovery Mode, New Dice Key fail !!!");
+        sbc_err_sysprn(SBC_LOG_CMN_PRIO_ERR, 2,
+             SYS_LOG_HOST_BOOT,
+             SYS_LOG_APP_NAME,
+             SYS_LOG_CSC_NAME,
+             1,
+             SYS_LOG_EVT_VALDIATION,
+             L"SBC_Dice_Key HW&SW Base New Dice Key Creation Fail");
+        bt_proc->bootst = SB_PROC_ST_ABNRAM;
+    }
+
     switch(bt_proc->bootst) {
     case SB_PROC_ST_NRMA:
         // later need to create the New API
@@ -949,7 +1148,7 @@ void  SBC_RecoveryBootProcessing(VOID *priv)
                             bt_proc->blkhnd,
                             ((LV_t *)bt_proc->baseansr)->value,
                             ((LV_t *)bt_proc->baseansr)->length,
-                            ((atp_ident_t *)bt_proc->keyinfo)->osid,
+                            new_dice_id.osid,
                             BASE_ANS_KEY_STR
             );
 
@@ -964,8 +1163,8 @@ void  SBC_RecoveryBootProcessing(VOID *priv)
             }
 
             ret = _store_fw_os_keypair_store(priv,
-                               ((atp_ident_t *)bt_proc->keyinfo)->fwid,
-                               ((atp_ident_t *)bt_proc->keyinfo)->osid);
+                               new_dice_id.fwid,
+                               new_dice_id.osid);
 
             if(ret != SBCOK) {
                 eprint("_store_fw_os_keypair_store fail, that is, Abnormal");
@@ -978,11 +1177,25 @@ void  SBC_RecoveryBootProcessing(VOID *priv)
                 // Abnromal state added at 20251021
                 //
                 bt_proc->bootst = SB_PROC_ST_ABNRAM;
-                SBC_BootKeyModeChange(BOOT_MODE_FACTORY, KEY_MODE_UPDATE, priv);
+                SBC_BootKeyModeChange(BOOT_MODE_FACTORY, KEY_MODE_BOOT, priv);
                 goto errdone;
             }
 
-            ret = SBC_BootKeyModeChange(BOOT_MODE_NORMAL, KEY_MODE_NORMAL, priv);
+            //ret = SBC_BootKeyModeChange(BOOT_MODE_NORMAL, KEY_MODE_NORMAL, priv);
+
+//          ret = SBC_RawPrtHdrChange(priv,
+//                                    bt_proc->pvs_sw_bnk,
+//                                    bt_proc->curr_sw_bnk,
+//                                    0,
+//                                    BOOT_MODE_NORMAL,
+//                                    KEY_MODE_NORMAL);
+
+            ret = SBC_RawPrtHdrChange(priv,
+                                      bt_proc->curr_sw_bnk,
+                                      bt_proc->pvs_sw_bnk,
+                                      1,
+                                      BOOT_MODE_NORMAL,
+                                      KEY_MODE_NORMAL);
             break;
         case KEY_MODE_UPDATE:
             dprint("KEY_MODE_UPDATE");
@@ -1005,8 +1218,8 @@ void  SBC_RecoveryBootProcessing(VOID *priv)
             }
 
             ret = _store_fw_os_keypair_store(priv,
-                               ((atp_ident_t *)bt_proc->keyinfo)->fwid,
-                               ((atp_ident_t *)bt_proc->keyinfo)->osid);
+                               new_dice_id.fwid,
+                               new_dice_id.osid);
 
             if(ret != SBCOK) {
                 eprint("_store_fw_os_keypair_store fail, that is, Abnormal");
@@ -1023,10 +1236,17 @@ void  SBC_RecoveryBootProcessing(VOID *priv)
                 goto errdone;
             }
 
+//          ret = SBC_RawPrtHdrChange(priv,
+//                                    bt_proc->pvs_sw_bnk,
+//                                    bt_proc->curr_sw_bnk,
+//                                    0,
+//                                    BOOT_MODE_NORMAL,
+//                                    KEY_MODE_NORMAL);
+
             ret = SBC_RawPrtHdrChange(priv,
-                                      bt_proc->pvs_sw_bnk,
                                       bt_proc->curr_sw_bnk,
-                                      0,
+                                      bt_proc->pvs_sw_bnk,
+                                      1,
                                       BOOT_MODE_NORMAL,
                                       KEY_MODE_NORMAL);
 
@@ -1351,6 +1571,16 @@ SBCStatus  SBC_SecureBootCheck(VOID *priv)
 
         }
 
+        if ( bp->rcvmode == 1 && bp->prevmode == 1 ) {
+            dprint(" ***** In normal, rcv mode 1 and prevmode 1, so prevmode set to 0");
+            SBC_RawPrtHdrChangeWithRecovery(bp,
+                                0, 0,
+                                0, // prevmode is 0
+                                BOOT_MODE_UNKNOWN,
+                                KEY_MODE_UNKNOWN);
+        }
+
+
 //      if(bp->bootst == SB_PROC_ST_ABNRAM) {
 //
 //          // In case of the Boot Mode is Normal and Boot State is Abnormal.
@@ -1607,11 +1837,135 @@ SBCStatus SBC_RawPrtHdrChange(
 
     if (bm != BOOT_MODE_UNKNOWN) {
         rawhdr.bootmode = bm;
+        if(bm == BOOT_MODE_RECOVERY) {
+            dprint("---> Next Firmware Start, SHOULD be power-on from Recovery Mode");
+            rawhdr.rcvmode = 1;
+        }
     }
     
     if (km != KEY_MODE_UNKNOWN) {
         rawhdr.keymode = km;
     }
+
+    ret = SBC_RawAlignedWriteBlockIO(b_proc->blkhnd,
+                                    0x0,
+                                    sizeof rawhdr,
+                                    (void *)&rawhdr);
+    if (ret != SBCOK) {
+        eprint("SBC_RawAlignedWriteBlockIO 0x%lu read fail", 0x0);
+        goto errdone;
+    }
+
+    sbc_err_sysprn(SBC_LOG_CMN_PRIO_ERR, 2,
+                 SYS_LOG_HOST_BOOT,
+                 SYS_LOG_APP_NAME,
+                 SYS_LOG_CSC_NAME,
+                 0,
+                 L"Detectoin",
+                 L"SFR-Vendor-SP Success to change the "
+                 L"Header informaiton of Raw-partition \n");
+
+    ret = SBC_RawAlignedReadBlockIO(b_proc->blkhnd,
+                                    0x0,
+                                    sizeof rawhdr,
+                                    (void *)&rawhdr);
+
+    dprint("---> boot mode : %d, key mode :%d, cur bank : %lu , previously bnk : %lu",
+           b_proc->bm, b_proc->km, b_proc->curr_sw_bnk, b_proc->pvs_sw_bnk);
+
+    SBC_mem_print_bin("After write SBC_RawPrtHdrChange",
+                      (UINT8 *)&rawhdr,
+                      sizeof(rawhdr));
+errdone:
+
+
+    if (ret != SBCOK) {
+        sbc_err_sysprn(SBC_LOG_CMN_PRIO_ERR, 2,
+                 SYS_LOG_HOST_BOOT,
+                 SYS_LOG_APP_NAME,
+                 SYS_LOG_CSC_NAME,
+                 0,
+                 L"Detectoin",
+                 L"SFR-Vendor-SP Failed to change the "
+                 L"Header informaiton of Raw-partition \n");
+    }
+
+    return ret;
+}
+
+SBCStatus SBC_RawPrtHdrChangeWithRecovery(
+    VOID *handle, 
+    UINT32 cur, 
+    UINT32 prev, 
+    UINT32 prevmode, 
+    UINT32 bm, 
+    UINT32 km)
+{
+    SBCStatus ret = SBCOK;
+    [[maybe_unused]]EFI_STATUS retval = EFI_SUCCESS;
+    boot_proc_t *b_proc = (boot_proc_t *)handle;
+    rawprt_hdr_t rawhdr;
+    UINT8 *pres_buf;
+
+
+    ZeroMem(&rawhdr, sizeof(rawhdr));;
+
+    ret = SBC_RawAlignedReadBlockIO(b_proc->blkhnd,
+                                    0x0,
+                                    sizeof rawhdr,
+                                    (void *)&rawhdr);
+    if (ret != SBCOK) {
+        eprint("SBC_RawAlignedReadBlockIO 0x%lu read fail", 0x0);
+        goto errdone;
+    }
+
+    dprint("Boot Header Read ===>");
+    SBC_mem_print_bin("Raw Partition Header ", (UINT8 *)&rawhdr, sizeof rawhdr);
+
+    rawhdr.prevmode = prevmode;
+    pres_buf = rawhdr.bootpres;
+    dprint("%d:%02x %d:%c %d:%02x %d:%c \n",
+            0, pres_buf[0], 
+            1, pres_buf[1], 
+            2, pres_buf[2], 
+            3, pres_buf[3]);
+
+
+    /* pres_buf mapping:
+     * [0] - current or previous value slot
+     * [1] - prev for slot 0 ('C' or 'P')
+     * [2] - current or previous value slot
+     * [3] - prev for slot 2 ('C' or 'P')
+     */
+
+//  if (cur != 0 && prev != 0) {
+//      if (pres_buf[1] == 'C' || pres_buf[1] == 'P') {
+//          pres_buf[0] = (pres_buf[1] == 'C') ? cur : prev;
+//      }
+//
+//      if (pres_buf[3] == 'C' || pres_buf[3] == 'P') {
+//          pres_buf[2] = (pres_buf[3] == 'C') ? cur : prev;
+//      }
+//  }
+
+
+    SBC_UpdateBootPres(pres_buf, cur, prev);
+
+    SBC_mem_print_bin("---> Raw Partition Boot Pres ", (UINT8 *)rawhdr.bootpres, sizeof rawhdr.bootpres);
+
+    if (bm != BOOT_MODE_UNKNOWN) {
+        rawhdr.bootmode = bm;
+        if(bm == BOOT_MODE_RECOVERY) {
+            dprint("---> Next Firmware Start, SHOULD be power-on from Recovery Mode");
+            rawhdr.rcvmode = 1;
+        }
+    }
+    
+    if (km != KEY_MODE_UNKNOWN) {
+        rawhdr.keymode = km;
+    }
+
+    rawhdr.rcvmode = 1;
 
     ret = SBC_RawAlignedWriteBlockIO(b_proc->blkhnd,
                                     0x0,
@@ -1646,4 +2000,5 @@ errdone:
 
     return ret;
 }
+
 

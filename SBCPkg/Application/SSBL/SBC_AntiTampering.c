@@ -65,6 +65,10 @@
 extern CHAR16 mrgmsg[8192];
 CHAR16 print_out_key[128];
 
+
+
+
+extern VOID *h_blkio;
 static boot_proc_t *btctx = NULL;
 
 #pragma pack(1)
@@ -85,84 +89,103 @@ VOID SBC_AntiTamperDeinit(VOID *priv)
 {
 
 }
+extern SBCStatus SBC_FileReadUnicodeSimple(
+    IN  CHAR16    *FileName,
+    OUT CHAR16  **OutBuffer,
+    OUT UINTN     *OutLength
+);
 
-
-SBCStatus _find_kernel_path(CHAR16 *fname)
+SBCStatus _find_kernel_path(CHAR16 **buf, UINTN *len_of_kernel)
 {
-
-    //UINT8 errmsg[512] = {0, };
     SBCStatus ret = SBCOK;
-    UINTN               len_of_kernel = 0;
-    UINTN               hndlcnt;
-    EFI_HANDLE          *hndl;
-    UINTN               idx;
-    LV_t lv;
-    EFI_STATUS          Status;
-    CHAR8   *ascii_str;
-    UINTN x;
 
-    SBC_RET_VALIDATE_ERRCODEMSG((fname != NULL), SBCNULLP, "Object point to NILL");
+    
+    ret = SBC_FileReadUnicodeSimple(KERNEL_DIR_FILE, buf, len_of_kernel);
 
-    ret = SBC_GetFileSize( KERNEL_DIR_FILE, &len_of_kernel);
-    SBC_RET_VALIDATE_ERRCODEMSG((ret == SBCOK), ret, "File Not Found");
+    //SBC_mem_print_bin("Kernel path" , buf, *len_of_kernel);
 
-    hndlcnt = SBC_FindEfiFileSystemProtocol(&hndl);
-    if (hndlcnt <= 0) {
-        eprint("File System Handle find fail : %d", hndlcnt);
-        return SBCFAIL;
-    }
-
-    for (idx = 0; idx < hndlcnt; idx++) {
-        Status = SBC_IsFlieAccess(hndl[idx], KERNEL_DIR_FILE);
-        if (EFI_ERROR(Status)) {
-            continue;
-        }
-
-        break;
-    }
-
-    if (EFI_ERROR(Status)) {
-        eprint("%s  : %r", KERNEL_DIR_FILE, Status);
-        return SBCFAIL;
-    }
-
-    lv.value = AllocateZeroPool(len_of_kernel);
-    lv.length = len_of_kernel;
-    dprint("%s size %d", KERNEL_DIR_FILE, lv.length);
-    SBC_RET_VALIDATE_ERRCODEMSG((lv.value != NULL), SBCNULLP, "Out of Memory");
-
-    Status = SBC_ReadFile(hndl[idx], KERNEL_DIR_FILE, &lv);
-    if (EFI_ERROR(Status)) {
-        eprint("%s file read fail with %r", KERNEL_DIR_FILE, Status);
-        ret = SBCNOTFND;
-        goto errdone;
-    }
-
-    //AsciiStrToUnicodeStr(lv.value, fname);
-    //CopyMem((void *)fname, (const void *)lv.value, lv.length);
-    //fname[lv.length] = '\0';
-
-    // File name convert from Ascii to Unicode string 
-    ascii_str = (CHAR8 *)lv.value;
-    SBC_mem_print_bin("Kernel Path", (UINT8 *)lv.value, lv.length );
-    dprint("kernel name : %a", lv.value);
-    //ascii_str[lv.length] = '\0';
-    for ( x = 0;x < lv.length /* ascii_str[x] != '\0' */; x++) {
-        fname[x] = (CHAR16)ascii_str[x];
-    }
-
-    fname[x] = L'\0';
-
-errdone:
-
-    if (lv.value != NULL) {
-        FreePool(lv.value);
-        lv.value = NULL;
-    }
+    dprint("kernel path : %s (count : %d )", (CHAR16 *)*buf, *len_of_kernel);
 
     return ret;
 
 }
+
+//SBCStatus _find_kernel_path(CHAR16 *fname)
+//{
+//
+//    //UINT8 errmsg[512] = {0, };
+//    SBCStatus ret = SBCOK;
+//    UINTN               len_of_kernel = 0;
+//    UINTN               hndlcnt;
+//    EFI_HANDLE          *hndl;
+//    UINTN               idx;
+//    LV_t lv;
+//    EFI_STATUS          Status;
+//    CHAR8   *ascii_str;
+//    UINTN x;
+//
+//    SBC_RET_VALIDATE_ERRCODEMSG((fname != NULL), SBCNULLP, "Object point to NILL");
+//
+//    ret = SBC_GetFileSize( KERNEL_DIR_FILE, &len_of_kernel);
+//    SBC_RET_VALIDATE_ERRCODEMSG((ret == SBCOK), ret, "File Not Found");
+//
+//    hndlcnt = SBC_FindEfiFileSystemProtocol(&hndl);
+//    if (hndlcnt <= 0) {
+//        eprint("File System Handle find fail : %d", hndlcnt);
+//        return SBCFAIL;
+//    }
+//
+//    for (idx = 0; idx < hndlcnt; idx++) {
+//        Status = SBC_IsFlieAccess(hndl[idx], KERNEL_DIR_FILE);
+//        if (EFI_ERROR(Status)) {
+//            continue;
+//        }
+//
+//        break;
+//    }
+//
+//    if (EFI_ERROR(Status)) {
+//        eprint("%s  : %r", KERNEL_DIR_FILE, Status);
+//        return SBCFAIL;
+//    }
+//
+//    lv.value = AllocateZeroPool(len_of_kernel);
+//    lv.length = len_of_kernel;
+//    dprint("%s size %d", KERNEL_DIR_FILE, lv.length);
+//    SBC_RET_VALIDATE_ERRCODEMSG((lv.value != NULL), SBCNULLP, "Out of Memory");
+//
+//    Status = SBC_ReadFile(hndl[idx], KERNEL_DIR_FILE, &lv);
+//    if (EFI_ERROR(Status)) {
+//        eprint("%s file read fail with %r", KERNEL_DIR_FILE, Status);
+//        ret = SBCNOTFND;
+//        goto errdone;
+//    }
+//
+//    //AsciiStrToUnicodeStr(lv.value, fname);
+//    //CopyMem((void *)fname, (const void *)lv.value, lv.length);
+//    //fname[lv.length] = '\0';
+//
+//    // File name convert from Ascii to Unicode string
+//    ascii_str = (CHAR8 *)lv.value;
+//    SBC_mem_print_bin("Kernel Path", (UINT8 *)lv.value, lv.length );
+//    //dprint("kernel name : %a", lv.value);
+//    //ascii_str[lv.length] = '\0';
+//    for ( x = 0;x < lv.length /* ascii_str[x] != '\0' */; x++) {
+//        fname[x] = (CHAR16)ascii_str[x];
+//    }
+//
+//    fname[x] = L'\0';
+//
+//errdone:
+//
+//    if (lv.value != NULL) {
+//        FreePool(lv.value);
+//        lv.value = NULL;
+//    }
+//
+//    return ret;
+//
+//}
 
 SBCStatus _kernel_image_load(EFI_HANDLE ImageHandle, LV_t *lv)
 {
@@ -172,13 +195,16 @@ SBCStatus _kernel_image_load(EFI_HANDLE ImageHandle, LV_t *lv)
     UINTN               hndlcnt;
     UINTN               idx;
     EFI_HANDLE          *hndl;
-    CHAR16 kernel_name[512] = {
-        [0 ... 511] = 0
-    };
+//  CHAR16 kernel_name[512] = {
+//      [0 ... 511] = 0
+//  };
+
+    CHAR16 *kernel_name = NULL;
 
 
-    _find_kernel_path(kernel_name);
-    //dprint();
+    _find_kernel_path((CHAR16 **)&kernel_name, &len_of_kernel);
+    dprint("kernel name : %s (len :%ld) ", kernel_name, len_of_kernel);
+
     ret = SBC_GetFileSize( kernel_name, &len_of_kernel);
     SBC_RET_VALIDATE_ERRCODEMSG((ret == SBCOK), ret, "File Not Found");
     //dprint();
@@ -327,7 +353,7 @@ SBCStatus _prev_ssbl_image_load(VOID *blkhnd, LV_t *lv,  UINTN normbank, UINTN b
       goto errdone;
     }
     //dprint("SSBL image len : %ld", imglen);
-    imglen = ALIGN_VALUE(imglen, SBC_RAWPRT_DFLT_BLK_SZ);
+    //imglen = ALIGN_VALUE(imglen, SBC_RAWPRT_DFLT_BLK_SZ);
 
     lv->value = AllocatePool(imglen);
     SBC_RET_VALIDATE_ERRCODEMSG((lv->value != NULL), SBCNULLP, "Allocate Memory Fail");
@@ -1351,10 +1377,10 @@ SBCStatus  SBC_FirmwareIdKyeVerify(VOID *priv)
 
     SBC_mem_print_bin("Decrypt FW ID cert", (UINT8 *)decbuf, calen);
 
-    if (((rawprt_hdr_t *)bp->rawprt_hdr)->rcvmode && (bp->bm == BOOT_MODE_NORMAL)) {
+    if (((rawprt_hdr_t *)bp->rawprt_hdr)->rcvmode/* && (bp->bm == BOOT_MODE_NORMAL) */) {
         
         // Key Pair compare 
-        dprint("Boot Mode is NORMAL and it's run from Recovery Mode");
+        dprint("Firmware ID verify, Boot Mode is NORMAL and it's run from Recovery Mode");
 
         //TODO 
         //A. Private and Public Key extract from Buffer.
@@ -1590,7 +1616,7 @@ SBCStatus  SBC_OSIdKyeVerify(VOID *priv)
 
     SBC_mem_print_bin("Decrypt OS ID cert", (UINT8 *)decbuf, calen);
 
-    if (((rawprt_hdr_t *)bp->rawprt_hdr)->rcvmode && (bp->bm == BOOT_MODE_NORMAL)) {
+    if (((rawprt_hdr_t *)bp->rawprt_hdr)->rcvmode /*&& (bp->bm == BOOT_MODE_NORMAL)*/) {
         // Key Pair compare 
 //      dprint("Boot Mode is NORMAL and it's run from Recovery Mode");
 //
@@ -2505,6 +2531,85 @@ errdone:
 
 }
 
+
+SBCStatus _ssbl_image_load_blk(VOID *blkhnd, LV_t *lv,  UINTN normbank, UINTN bm)
+{
+
+    SBCStatus           ret = SBCOK;
+
+    UINTN               bsofs = 0; // Boot Sector Offset
+    //UINTN               startlba = 0;
+
+    UINT32          imglen = SBC_RAWPRT_DFLT_BLK_SZ;
+    //UINT8           imghdr[SBC_RAWPRT_DFLT_BLK_SZ] = {0, };
+
+    if (bm != BOOT_MODE_FACTORY) {
+        dprint("Find the Old SSBL in the %d boot mode with Image banke %ld", 
+               bm, normbank);
+        
+      bsofs = (BOOT_SECTOR1_OFS | ((normbank - 1) << SBC_BOOTFW_BKN_OFS));
+      //startlba = ((bsofs | BOOT_SSBL_OFS) >> SBC_RAWPRT_DFLT_SHIFT);
+    }
+    else {
+        dprint("Find the Old SSBL in the Factory with Image banke %ld", normbank);
+      bsofs = BOOT_SECTOR3_OFS;
+      //startlba = ((bsofs | BOOT_SSBL_OFS) >> SBC_RAWPRT_DFLT_SHIFT);
+    }
+
+    //dprint("BSOFS:  0x%lx, StartLBA: %lu", bsofs, startlba);
+
+    ret = SBC_RawAlignedReadBlockIO(blkhnd, 
+                                    bsofs,
+                                    4,
+                                    &imglen);
+                                    //(void *)imghdr, &imglen, startlba);
+    if (ret != SBCOK) {
+        eprint("SSBL Factory Block Read Fail (%r)\n",ret);
+        goto errdone;
+    }
+
+    dprint("Read image length : %ld", imglen);
+    //CopyMem((void *)&imglen, &imghdr[0], sizeof imglen);
+
+    // If imglen is zero, assumed that image not existense in Raw partition
+    if (imglen <= 0) {
+      eprint("Boot Mode (%d) Image not existense", bm);
+      ret = SBCZEROL;
+      goto errdone;
+    }
+    //dprint("SSBL image len : %ld", imglen);
+    //imglen = ALIGN_VALUE(imglen, SBC_RAWPRT_DFLT_BLK_SZ);
+
+
+
+
+
+    //dprint("Align SSBL image len : %ld", imglen);
+
+
+    lv->value = AllocatePool(imglen);
+    SBC_RET_VALIDATE_ERRCODEMSG((lv->value != NULL), SBCNULLP, "Allocate Memory Fail");
+
+    ret = SBC_RawAlignedReadBlockIO(blkhnd,
+                                    bsofs + 4,
+                                    imglen,
+                                    lv->value);
+    SBC_RET_VALIDATE_ERRCODEMSG((ret == SBCOK), ret, "SSBL image read fail");
+
+
+    //lv->length = imglen - FSBL_BNIFO_SIZE;
+    // skip the image header ( for Length )
+    //lv->value += 4;
+
+    lv->length = imglen;
+
+
+errdone:
+
+    return ret;
+
+}
+
 SBCStatus SBC_GenDeviceID(UINT8 *devid)
 {
     SBCStatus ret = SBCOK;
@@ -2632,7 +2737,147 @@ errdone:
 
 }
 
-extern VOID *h_blkio;
+SBCStatus SBC_GenFWIDOld(EFI_HANDLE *h_image, UINT8 *devid, UINT8 *fwid, UINTN normbank, UINTN bm)
+{
+
+  SBCStatus ret       = SBCOK;
+  UINT8 *temp = NULL;
+  //UINT8 *rdbuf = NULL;
+  LV_t lv;
+  UINT8 hash_ssbl[SBC_AT_HASH_LEN] = {0, };
+
+
+  lv.value = NULL;
+  lv.length = 0;
+
+  ret = _ssbl_image_load_blk(h_blkio, &lv, normbank, bm);
+  SBC_RET_VALIDATE_ERRCODEMSG((ret == SBCOK), ret, "SSB Image load fail");
+  SBC_RET_VALIDATE_ERRCODEMSG((lv.length > 0), SBCZEROL, "SSB Image length 0");
+
+//lv.value = hash_ssbl;
+//lv.length = SBC_AT_HASH_LEN;
+
+  // Added the Hash for SSBL
+  ret = SBC_HashCompute( NULL, 
+                         lv.value,
+                         lv.length,
+                         hash_ssbl );
+  SBC_RET_VALIDATE_ERRCODEMSG((ret == SBCOK), ret, "SSBL hash compute failed");
+
+  dprint("ssbl image load len : %ld", lv.length);
+  SBC_mem_print_bin("SSBL image", (UINT8 *)lv.value, lv.length);
+  SBC_mem_print_bin("ssbl hash", (UINT8 *)hash_ssbl, 32);
+
+
+
+  temp = AllocateZeroPool(SBC_AT_HASH_LEN << 1);
+  if (temp == NULL) {
+    sbc_err_sysprn(SBC_LOG_CMN_PRIO_ERR, 2,
+          SYS_LOG_HOST_BOOT, 
+          SYS_LOG_APP_NAME, 
+          SYS_LOG_CSC_NAME, 
+          0, 
+          L"Detection ", 
+          L"SBC_Vendor Not enough resource \n");
+    goto errdone;
+  }
+
+  CopyMem((void *)&temp[0], devid, SBC_AT_HASH_LEN);
+  CopyMem((void *)&temp[SBC_AT_HASH_LEN], hash_ssbl, SBC_AT_HASH_LEN);
+
+  ret = SBC_HashCompute(
+                             NULL, /* Not yet used */
+                             temp,
+                             SBC_AT_HASH_LEN << 1,
+                             fwid
+                          ) ;
+
+  ZeroMem(print_out_key, 32);
+  ZeroMem(mrgmsg, sizeof mrgmsg);
+  SBC_LogHexToStrChar16(fwid, 32, print_out_key, sizeof(print_out_key)/sizeof(print_out_key[0]),  FALSE, 0);
+
+  //SBC_mem_print_bin("Print out key", (UINT8 *)print_out_key, sizeof print_out_key);
+
+  UnicodeSPrint(mrgmsg,  sizeof mrgmsg, L"SBC_Dice_FWID Old Creation Succeess (%s) \n", print_out_key);
+
+  //SBC_LogHexKeyConvToChar16(mrgmsg, (VOID *)print_msg, fwid);
+
+
+  sbc_err_sysprn(SBC_LOG_CMN_PRIO_INFO, 2, 
+          SYS_LOG_HOST_BOOT, 
+          SYS_LOG_APP_NAME, 
+          SYS_LOG_CSC_NAME, 
+          1, 
+          L"Validation ", 
+          mrgmsg);
+errdone:
+
+    if (ret != SBCOK) {
+        sbc_err_sysprn(SBC_LOG_CMN_PRIO_ERR, 2, 
+              SYS_LOG_HOST_BOOT, 
+              SYS_LOG_APP_NAME, 
+              SYS_LOG_CSC_NAME, 
+              1, 
+              L"Validation ", 
+              L"SBC_Dice_FWID Creation Fail");
+    }
+
+
+
+  if (temp != NULL) {
+    FreePool(temp);
+  }
+
+  if (lv.value != NULL) {
+    //FreePool(lv.value);
+  }
+  return ret;
+
+
+}
+
+
+SBCStatus  SBC_DiceKeysGenOld(EFI_HANDLE ImageHandle, VOID *p,UINTN normbank, UINTN bm)
+{
+    SBCStatus ret = SBCOK;
+    atp_ident_t *h = NULL;
+
+    h = (atp_ident_t *)p;
+
+    dprint("Old OSID Key Gen");
+    ret = SBC_GenDeviceID(h->devid);
+    if (ret != SBCOK) {
+        dprint("Device ID generate fail \n");
+        goto errdone;
+    }
+
+    //SBC_mem_print_bin("Device ID", h->devid, sizeof h->devid);SBC_mem_print_bin("Device ID", h->devid, sizeof h->devid);
+
+
+
+
+    ret = SBC_GenFWIDOld(ImageHandle, h->devid, h->fwid, normbank, bm);
+    if (ret != SBCOK) {
+        dprint("FW ID generate fail \n");
+        goto errdone;
+    }
+
+    //SBC_mem_print_bin("Firmware ID", h->fwid, sizeof h->fwid);
+
+    ret = SBC_GenOSID(ImageHandle,  h->fwid, h->osid);
+    if (ret != SBCOK) {
+        dprint("FW ID generate fail \n");
+        goto errdone;
+    }
+
+    //SBC_mem_print_bin("Firmware ID", h->fwid, sizeof h->fwid);
+    ret = SBCOK;
+
+errdone:
+    return ret;
+
+}
+
 SBCStatus SBC_GenFWID(VOID  *priv, UINT8 *devid, UINT8 *fwid, UINTN normbank, UINTN bm)
 {
 
@@ -2947,7 +3192,7 @@ SBCStatus SBC_GenMigrationKey(void *priv, void *outmsg)
 
     dprint("===== Migration Key information ======");
     dprint("p->prevmode : \t %d", p->prevmode);
-    dprint("p->bootst : \t %d", p->bootst);
+    dprint("p->bootst : \t %lu", p->bootst);
     dprint("p->bm : \t %d", p->bm);
     if (p->prevmode == 0 &&
         ((p->bootst == SB_PROC_ST_ABNRAM && p->bm == BOOT_MODE_NORMAL) ||
@@ -3306,9 +3551,9 @@ SBCStatus  SBC_FSBLIntgCheck([[gnu::unused]]EFI_HANDLE *h_image , VOID *blkio, V
                      mrgmsg);
     }
 
-    SBC_mem_print_bin("RootCA", decbuf, calen);
+    //SBC_mem_print_bin("RootCA", decbuf, calen);
 
-    SBC_mem_print_bin("RootCA", cert, certlen);
+    //SBC_mem_print_bin("RootCA", cert, certlen);
 #else
     calen = rootca_certi_lv.length;
     cabuf = (UINT8 *)rootca_certi_lv.value;

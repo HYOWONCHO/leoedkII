@@ -186,7 +186,7 @@ SBCStatus SBC_BootModeFactory(VOID *blkhnd, VOID *ImageHandle)
   CopyMem((void *)&imglen, &imghdr[0], sizeof imglen);
 
   dprint("Write SSBL Image  (Addr : 0x%lx) Start LBA : 0x%lx, Len : %ld (0x%lx)",
-       (0 | BOOT_SSBL_OFS), 
+       (BOOT_SECTOR3_OFS | BOOT_SSBL_OFS), 
        startlba,
        imglen,
        imglen);
@@ -1354,8 +1354,8 @@ UefiMain (
                      L"Information",
                      mrgmsg);
 
-    dprint("Boot Mode : %d , Key Mode : %d, Recovery Mode : %d",
-           btproc.bm, btproc.km, h_rawprtheader.rcvmode);
+    dprint("Boot Mode : %d , Key Mode : %d, Recovery Mode : %d, Prev : %d",
+           btproc.bm, btproc.km, h_rawprtheader.rcvmode,h_rawprtheader.prevmode);
 
 #ifdef _SHELL_CMD_LINE_
     dprint("Shell Execute");
@@ -1509,37 +1509,50 @@ UefiMain (
       dprint("Boot Mode is BOOT_MODE_NORMAL");
 #ifdef _SBC_DEVID_VERIFY_
 
-      if (h_rawprtheader.rcvmode) {
-          sbc_err_sysprn(SBC_LOG_CMN_PRIO_INFO, 
-                         2, 
-                         SYS_LOG_HOST_BOOT, 
-                         SYS_LOG_APP_NAME,SYS_LOG_CSC_NAME, 
-                         0, 
-                         SYS_LOG_EVT_DETECTION, 
-                         L"SBC_BootFW The System has booted from recovery mode \n");
+//      if (h_rawprtheader.rcvmode) {
+//          sbc_err_sysprn(SBC_LOG_CMN_PRIO_INFO,
+//                         2,
+//                         SYS_LOG_HOST_BOOT,
+//                         SYS_LOG_APP_NAME,SYS_LOG_CSC_NAME,
+//                         0,
+//                         SYS_LOG_EVT_DETECTION,
+//                         L"SBC_BootFW The System has booted from recovery mode \n");
+//
+//          ret = SBC_GenMigrationKey((void *)&btproc, diceid.migid);
+//          if (ret != SBCOK) {
+//              sbc_err_sysprn(SBC_LOG_CMN_PRIO_ERR,
+//                           2,
+//                           SYS_LOG_HOST_BOOT,
+//                           SYS_LOG_APP_NAME,SYS_LOG_CSC_NAME,
+//                           4,
+//                           SYS_LOG_EVT_DETECTION,
+//                           L"SBC_BootFW_Update Fail to MigrationKey Creation \n");
+//              retval = EFI_INVALID_PARAMETER;
+//              btproc.bootst = SB_PROC_ST_ABNRAM;
+//#ifndef _ALL_PASS_
+//              goto errdone;
+//#endif
+//          }
+//
+//          //
+//          // No need to return because change the boot mode and reset the system.
+//          //
+//      }
 
-          ret = SBC_GenMigrationKey((void *)&btproc, diceid.migid);
-          if (ret != SBCOK) {
-              sbc_err_sysprn(SBC_LOG_CMN_PRIO_ERR, 
-                           2, 
-                           SYS_LOG_HOST_BOOT, 
-                           SYS_LOG_APP_NAME,SYS_LOG_CSC_NAME, 
-                           4, 
-                           SYS_LOG_EVT_DETECTION, 
-                           L"SBC_BootFW_Update Fail to MigrationKey Creation \n");
-              retval = EFI_INVALID_PARAMETER;
-              btproc.bootst = SB_PROC_ST_ABNRAM;
-#ifndef _ALL_PASS_
-              goto errdone;
-#endif
-          }
-
-          // 
-          // No need to return because change the boot mode and reset the system.
-          //
+      if ( btproc.rcvmode == 1 && btproc.prevmode == 1 ) {
+          dprint(" Normal mode verify running on Previously bank");
+          ret = SBC_SSBL_Verify(h_blkio, NULL, prevbank_id, BOOT_MODE_NORMAL, STR_SSBL_F_NAME);
+      }
+      else if ( btproc.rcvmode == 1 && btproc.prevmode == 0 ){
+          // factory bank
+          dprint(" Normal mode verify running on factory bank");
+          ret = SBC_SSBL_Verify(h_blkio, NULL, currbank_id, BOOT_MODE_FACTORY, STR_SSBL_F_NAME);
+      }
+      else {
+          dprint(" Normal mode verify running on currently bank");
+          ret = SBC_SSBL_Verify(h_blkio, NULL, currbank_id, BOOT_MODE_NORMAL, STR_SSBL_F_NAME);
       }
 
-      ret = SBC_SSBL_Verify(h_blkio, NULL, currbank_id, BOOT_MODE_NORMAL, STR_SSBL_F_NAME);
       if (ret != SBCOK) {
           sbc_err_sysprn(SBC_LOG_CMN_PRIO_ERR, 2,
                      SYS_LOG_HOST_BOOT,
@@ -1549,7 +1562,7 @@ UefiMain (
                      L"EVT",
                      L"SBC_SP_FW SSBL self-verify Fail");
 
-          btproc.bootst = FALSE;
+          btproc.bootst = SB_PROC_ST_ABNRAM;
           retval = EFI_INVALID_PARAMETER;
 #ifndef _ALL_PASS_
           goto errdone;
@@ -1574,7 +1587,7 @@ UefiMain (
                      L"EVT",
                      L"SBC_Dice_Verify Failed to Device ID verify");
           retval = EFI_INVALID_PARAMETER;
-          btproc.bootst = FALSE;
+          btproc.bootst = SB_PROC_ST_ABNRAM;
 #ifndef _ALL_PASS_
           goto errdone;
 #endif
@@ -1590,16 +1603,44 @@ UefiMain (
 #endif
          
       //SBC_GRUB_LoadAndStart(NULL);         
-
-      ret = SBC_BootModeNormalAndpUdate(h_blkio, ImageHandle, currbank_id);
-      if (ret != SBCOK) {
-          eprint("BOOT_MODE_NORMAL Boot Fail");
-          retval = EFI_INVALID_PARAMETER;
-          btproc.bootst = FALSE;
-#ifndef _ALL_PASS_
-          goto errdone;
-#endif
+      if ( btproc.rcvmode == 1 && btproc.prevmode == 1 ) {
+          dprint(" Normal mode SSBL running on Previously bank");
+        ret = SBC_BootModeNormalAndpUdate(h_blkio, ImageHandle, prevbank_id);
+        if (ret != SBCOK) {
+            eprint("BOOT_MODE_NORMAL Boot Fail");
+            retval = EFI_INVALID_PARAMETER;
+            btproc.bootst = SB_PROC_ST_ABNRAM;
+            #ifndef _ALL_PASS_
+            goto errdone;
+            #endif
+        }          
       }
+      else if ( btproc.rcvmode == 1 && btproc.prevmode == 0 ){
+          dprint(" Normal mode SSBL running on Factory bank");
+        ret = SBC_BootModeFactory(h_blkio, ImageHandle);
+        if (ret != SBCOK) {
+              eprint("BOOT_MODE_FACTORY Boot Fail");
+              //factory_md_abnormal_boot_state(&btproc);
+              retval = EFI_INVALID_PARAMETER;
+              btproc.bootst = SB_PROC_ST_ABNRAM;
+            #ifndef _ALL_PASS_
+              goto errdone;
+            #endif
+        }
+      }
+      else {
+           dprint(" Normal mode SSBL running on Currently bank");
+        ret = SBC_BootModeNormalAndpUdate(h_blkio, ImageHandle, currbank_id);
+        if (ret != SBCOK) {
+            eprint("BOOT_MODE_NORMAL Boot Fail");
+            retval = EFI_INVALID_PARAMETER;
+            btproc.bootst = SB_PROC_ST_ABNRAM;
+            #ifndef _ALL_PASS_
+            goto errdone;
+            #endif
+        }
+      }
+
       break;
     case BOOT_MODE_FACTORY:
       //Print(L"Factory Boot Mode !!! \n");
@@ -1615,7 +1656,7 @@ UefiMain (
                  8,
                  L"Detection",
                  L"SBC_SP_FW SSBL self-verify Fail");
-            btproc.bootst = FALSE;
+            btproc.bootst = SB_PROC_ST_ABNRAM;
             retval = EFI_INVALID_PARAMETER;
             factory_md_abnormal_boot_state(&btproc);
 #ifndef _ALL_PASS_
@@ -1644,7 +1685,7 @@ UefiMain (
 
           factory_md_abnormal_boot_state(&btproc);
           retval = EFI_INVALID_PARAMETER;
-          btproc.bootst = FALSE;
+          btproc.bootst = SB_PROC_ST_ABNRAM;
 #ifndef _ALL_PASS_
           goto errdone;
 #endif
@@ -1665,7 +1706,7 @@ UefiMain (
           eprint("BOOT_MODE_FACTORY Boot Fail");
           factory_md_abnormal_boot_state(&btproc);
           retval = EFI_INVALID_PARAMETER;
-          btproc.bootst = FALSE;
+          btproc.bootst = SB_PROC_ST_ABNRAM;
 #ifndef _ALL_PASS_
           goto errdone;
 #endif
@@ -1699,7 +1740,7 @@ UefiMain (
                  8,
                  L"Detection",
                  L"SBC_SP_FW SSBL self-verify Fail");
-            btproc.bootst = FALSE;
+            btproc.bootst = SB_PROC_ST_ABNRAM;
             retval = EFI_INVALID_PARAMETER;
 #ifndef _ALL_PASS_
           goto errdone;
@@ -1724,7 +1765,7 @@ UefiMain (
                      L"Detection",
                      L"SBC_Dice_Verify Failed to Device ID verify");
           retval = EFI_INVALID_PARAMETER;
-          btproc.bootst = FALSE;
+          btproc.bootst = SB_PROC_ST_ABNRAM;
 #ifndef _ALL_PASS_
           goto errdone;
 #endif
@@ -1745,7 +1786,7 @@ UefiMain (
       if (ret != SBCOK) {
           eprint("BOOT_MODE_UPDATE Boot Fail");
           retval = EFI_INVALID_PARAMETER;
-          btproc.bootst = FALSE;
+          btproc.bootst = SB_PROC_ST_ABNRAM;
 #ifndef _ALL_PASS_
           goto errdone;
 #endif
@@ -1765,7 +1806,7 @@ UefiMain (
                  8,
                  L"Validation",
                  L"SBC_SP_FW SSBL self-verify fail");
-            btproc.bootst = FALSE;
+            btproc.bootst = SB_PROC_ST_ABNRAM;
             retval = EFI_INVALID_PARAMETER;
 #ifndef _ALL_PASS_
           goto errdone;
@@ -1790,7 +1831,7 @@ UefiMain (
                      L"EVT",
                      L"SBC_Dice_Verify Failed to Device ID verify");
              retval = EFI_INVALID_PARAMETER;
-             btproc.bootst = FALSE;
+             btproc.bootst = SB_PROC_ST_ABNRAM;
 #ifndef _ALL_PASS_
           goto errdone;
 #endif
@@ -1810,7 +1851,7 @@ UefiMain (
       if (ret != SBCOK) {
           eprint("BOOT_MODE_RECOVERY Boot Fail");
           retval = EFI_INVALID_PARAMETER;
-          btproc.bootst = FALSE;
+          btproc.bootst = SB_PROC_ST_ABNRAM;
 #ifndef _ALL_PASS_
           goto errdone;
 #endif
@@ -1818,7 +1859,7 @@ UefiMain (
       break;
     default:
       //Print(L"Unknown (%d)  Boot Mode ... SHOULD go to Abort\n",h_rawprtheader.bootmode);
-      btproc.bootst = FALSE;
+      btproc.bootst = SB_PROC_ST_ABNRAM;
       break;
     }
 
@@ -1844,7 +1885,9 @@ errdone:
     switch(h_rawprtheader.bootmode) {
     case BOOT_MODE_NORMAL:
     case BOOT_MODE_UPDATE:
-        if (btproc.bootst  == SB_PROC_ST_NRMA) {
+
+        dprint("On FSBL, Normal and Update Mode processing~~~");
+        if (btproc.bootst  == SB_PROC_ST_ABNRAM) {
             SBC_SecureBootUpdateScenario(&btproc);
         }
         
