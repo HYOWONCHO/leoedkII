@@ -500,20 +500,7 @@ UefiMain (
     btproc.prevmode = h_rawptrheader.prevmode;
 
     dprint("Prev. Mode is %d", btproc.prevmode);
-    
-//  SBC_RawPrtHdrChange((void *)&btproc,btproc.pvs_sw_bnk , btproc.curr_sw_bnk, 1, BOOT_MODE_UNKNOWN, KEY_MODE_UNKNOWN);
-//  SBC_RawPrtHdrChange((void *)&btproc,btproc.curr_sw_bnk , btproc.pvs_sw_bnk, 1, 3 ,2);
-//  SBC_RawPrtHdrChange((void *)&btproc,btproc.pvs_sw_bnk , btproc.curr_sw_bnk, 1, 1 , 1);
-//  SBC_RawPrtHdrChange((void *)&btproc,btproc.curr_sw_bnk , btproc.pvs_sw_bnk, 1, 2 , 3);
-//  SBC_RawPrtHdrChange((void *)&btproc,btproc.pvs_sw_bnk , btproc.curr_sw_bnk, 1, 4, 3);
-//  SBC_RawPrtHdrChange((void *)&btproc, 0, 0, 1, BOOT_MODE_UNKNOWN, KEY_MODE_UNKNOWN);
-//
-//  return EFI_SUCCESS;
 
-    //
-    // Added by Leon
-    // Run from Recovry Mode 
-    //
     btproc.rcvmode = h_rawptrheader.rcvmode;
 
     dprint("Boot Mode : %d , Key Mode : %d, Recovery Mode : %d, Prev Mode : %d",
@@ -776,6 +763,11 @@ uc_errdone:
 
 #ifdef _USECASE_TEST_
     _ucprint("*** SSBL Boot FW Self-validation \n");
+#endif
+
+#ifdef _KERNEL_VERIFY_
+    SBC_Kernel_Verify((void *)&btproc);
+    return EFI_SUCCESS;
 #endif
 
     ret = SBC_SSBL_Verify(h_blkio, &baseansr, btproc.curr_sw_bnk, btproc.bm );

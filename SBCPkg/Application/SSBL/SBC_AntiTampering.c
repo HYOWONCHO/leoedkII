@@ -2531,12 +2531,12 @@ errdone:
 }
 
 #ifdef _KERNEL_VERIFY_
-SBCStatus  SBC_Kernel_Verify(VOID *blkhnd)
+SBCStatus  SBC_Kernel_Verify(VOID *handle)
 {
     SBCStatus       ret = SBCOK;
-    EFI_STATUS      retval = EFI_SUCCESS;
-    EFI_HANDLE      *hndl = NULL;
-    UINT16          *fblpath = EFI_BOOT_SSBL_PATH;
+    //EFI_STATUS      retval = EFI_SUCCESS;
+    //EFI_HANDLE      *hndl = NULL;
+    //UINT16          *fblpath = EFI_BOOT_SSBL_PATH;
     //UINT16          *fblpath = L"\\boot\\vmlinuz-5.14.0-284.11.1.el9_2.x86_64" ;
     UINT8           *infostart = NULL;
     UINT32          last_of_fsbl = 0;
@@ -2547,14 +2547,27 @@ SBCStatus  SBC_Kernel_Verify(VOID *blkhnd)
     UINT32          HashSize =0;
     UINT32          fsbl_len =0;
     VOID            *EcPubKey = NULL;
-    UINTN           HandleCount;
+    //UINTN           HandleCount;
+
+    boot_proc_t     *ctx = (boot_proc_t *)handle;
 
     LV_t            rdlv = {
             .length = 0,
             .value = NULL
       };
 
-    ret = _kernel_image_load()
+    ret = _kernel_image_load(ctx->ldhndl, &rdlv);
+    if (ret != SBCOK) {
+      sbc_err_sysprn(SBC_LOG_CMN_PRIO_ERR, 2,
+           SYS_LOG_HOST_BOOT,
+           SYS_LOG_APP_NAME,
+           SYS_LOG_CSC_NAME,
+           8,
+           SYS_LOG_EVT_DETECTION,
+           L"SBC_VENDOR_SP Failed to the Kernel image load");
+
+      goto errdone;
+    }
 
     last_of_fsbl = rdlv.length - FSBL_BNIFO_SIZE;
     infostart = &((UINT8 *)rdlv.value)[last_of_fsbl];
@@ -2565,7 +2578,7 @@ SBCStatus  SBC_Kernel_Verify(VOID *blkhnd)
 
     //SBC_external_mem_print_bin("BSINFO", (UINT8 *)&bsinfo, sizeof bsinfo);
 
-    dprint("----------- SSBL Boot Service Informmtion ------------");
+    dprint("----------- Kernel Boot Service Informmtion ------------");
     dprint("Signature Len     : %d", bsinfo.m.siglen );
     dprint("Firmware Info Len : %d", bsinfo.m.fwinfolen );
     dprint("Certificate Len   : %d", bsinfo.m.certlen );
@@ -2608,14 +2621,14 @@ SBCStatus  SBC_Kernel_Verify(VOID *blkhnd)
 
     // Verify the SSBL certificate using RootCA certificate
     // Later not comment 
-    ret = SBC_FSBLIntgCheck(NULL , 
-                            blkhnd, 
-                            info.certi, 
-                            bsinfo.m.certlen, 
-                            normbank, 
-                            bm);
-    SBC_RET_VALIDATE_ERRCODEMSG((ret == SBCOK), ret, "SSBL certificate validation fail");
-
+//  ret = SBC_FSBLIntgCheck(NULL ,
+//                          ctx->blkhnd,
+//                          info.certi,
+//                          bsinfo.m.certlen,
+//                          ctx->curr_sw_bnk,
+//                          ctx->bm);
+//  SBC_RET_VALIDATE_ERRCODEMSG((ret == SBCOK), ret, "SSBL certificate validation fail");
+//
 
     BOOLEAN retbool = TRUE;
     //SBC_external_mem_print_bin("SSBL Certi.", (UINT8  *)info.certi, (UINTN)bsinfo.m.certlen);
@@ -2640,10 +2653,7 @@ SBCStatus  SBC_Kernel_Verify(VOID *blkhnd)
                          HashValue
                       ) ; 
 
-
-    //SBC_external_mem_print_bin("SSBL Image Hash", (UINT8 *)HashValue,   HashSize);
-
-   
+    SBC_external_mem_print_bin("Kernel Hash", (UINT8 *)HashValue,   HashSize);
 
     retbool = EcDsaVerify(
         EcPubKey,
@@ -2656,62 +2666,23 @@ SBCStatus  SBC_Kernel_Verify(VOID *blkhnd)
 
     if (retbool != TRUE) {
       sbc_err_sysprn(SBC_LOG_CMN_PRIO_ERR, 2,
-           L"SBC",
+           SYS_LOG_HOST_BOOT,
            SYS_LOG_APP_NAME,
            SYS_LOG_CSC_NAME,
            8,
            SYS_LOG_EVT_DETECTION,
-           L"SBC_tamper_SSBL signature verification faied");
+           L"SBC_tamper_SSBL Failed to the OS signagure verify");
       ret = SBCFAIL;
       goto errdone;
     }
 
-    //sbc_err_sysprn(SBC_LOG_CMN_PRIO_INFO, 2, L"SBC", L"FSBL", L"CSC-01", 23, L"VERIFY", L"FSBL Integrate check is Done\n");
-    //Print(L"FSBL Verify Success !!!\n");
-
-    ((LV_t *)ansr)->value = AllocateZeroPool(bsinfo.m.banswlen);
-    if (((LV_t *)ansr)->value == NULL) {
-      //sbc_err_sysprn(SBC_LOG_CMN_PRIO_INFO, 2, L"SBC", L"FSBL", L"CSC-01", 23, L"VERIFY", L"FSBL Integrate check is Done\n");
-      eprint("Base Answer buffer allocate fail");
-      ret = SBCNULLP;
-      goto errdone;
-    }
-
-    ((LV_t *)ansr)->length = bsinfo.m.banswlen;
-    CopyMem(((LV_t *)ansr)->value, info.baseansw, bsinfo.m.banswlen);
-
-//    switch (bootmode) {
-//    case BOOT_MODE_FACTORY:
-//      break;
-//    default:
-//      // Base Answer Validate
-//      ret = SBC_BaseAnswerValidate(blkhnd, (UINT8 *)info.baseansw, bsinfo.m.banswlen );
-////    switch (ret) {
-////    case SBCBSANSWNOTFND:
-////      ((LV_t *)ansr)->value = AllocateZeroPool(bsinfo.m.banswlen);
-////      if (((LV_t *)ansr)->value == NULL) {
-////        ret = SBCNULLP;
-////       dprint("Base Answer object create fail \n");
-////        goto errdone;
-////      }
-////      CopyMem(((LV_t *)ansr)->value, info.baseansw, bsinfo.m.banswlen);
-////      //goto errdone;
-////      break;
-////    case SBCOK:
-////      break;
-////    default:
-////      goto errdone;
-////      break;
-////    }
-//      break;
-//    }
-
-
-
-
-
-
-    //ret = SBCOK;
+    sbc_err_sysprn(SBC_LOG_CMN_PRIO_INFO, 2,
+           SYS_LOG_HOST_BOOT,
+           SYS_LOG_APP_NAME,
+           SYS_LOG_CSC_NAME,
+           8,
+           SYS_LOG_EVT_DETECTION,
+           L"SBC_tamper_SSBL Successed the OS Signature verify");
 
 errdone:
 
@@ -3659,7 +3630,9 @@ errdone:
 }
 #endif
 // FSBL Integrity check 
-SBCStatus  SBC_FSBLIntgCheck([[gnu::unused]]EFI_HANDLE *h_image , VOID *blkio, VOID *cert, UINTN certlen, UINTN nrombank, UINTN mode)
+SBCStatus  SBC_FSBLIntgCheck([[gnu::unused]]EFI_HANDLE *h_image , 
+                             VOID *blkio, VOID *cert, UINTN certlen, 
+                             UINTN nrombank, UINTN mode)
 {
     SBCStatus ret = SBCOK;
 
@@ -3751,6 +3724,7 @@ SBCStatus  SBC_FSBLIntgCheck([[gnu::unused]]EFI_HANDLE *h_image , VOID *blkio, V
                      0,
                      L"Detectoin",
                      mrgmsg);
+        goto errdone;
     }
 
     //SBC_mem_print_bin("RootCA", decbuf, calen);

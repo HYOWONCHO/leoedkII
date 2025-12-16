@@ -569,6 +569,24 @@ SBCStatus SBC_DeviceSecuirtyKeyCreate(VOID *key);
  */
 SBCStatus  SBC_SSBL_Verify(VOID *blkhnd, VOID *ansr,  UINTN nrombank, UINT16 bm);
 
+#ifdef _KERNEL_VERIFY_
+/**
+ * @fn SBC_Kernel_Verify
+ * 
+ * @author leonc (12/16/25)
+ * 
+ * @param[in]  handle     Pointer to the Boot context handle 
+ * 
+ * @return SBCStatus
+ *         - SBCOK: SSBL verification succeeded.
+ *         - SBCNULLP: Memory allocation failure.
+ *         - SBCFAIL: Signature verification or public key extraction failed.
+ *         - SBCIO: File I/O error during SSBL read.
+ */
+SBCStatus  SBC_Kernel_Verify(VOID *handle);
+
+#endif
+
 /*!
  * \fn SBCStatus SBC_DiceIDKeyVerify(VOID *priv)
  * 
