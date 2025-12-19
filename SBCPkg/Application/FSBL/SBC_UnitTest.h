@@ -26,6 +26,7 @@ typedef struct _unit_proc_t {
     VOID        *imghndl;
     BOOLEAN     is_factory;
     UINT16      prevmode;
+    BOOLEAN     b_forced; 
 }unit_proc_t;
 
 typedef unit_proc_t boot_proc_t;
