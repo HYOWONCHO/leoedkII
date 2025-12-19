@@ -765,10 +765,7 @@ uc_errdone:
     _ucprint("*** SSBL Boot FW Self-validation \n");
 #endif
 
-#ifdef _KERNEL_VERIFY_
-    SBC_Kernel_Verify((void *)&btproc);
-    return EFI_SUCCESS;
-#endif
+
 
     ret = SBC_SSBL_Verify(h_blkio, &baseansr, btproc.curr_sw_bnk, btproc.bm );
     if (ret != SBCOK) {
@@ -783,6 +780,23 @@ uc_errdone:
           btproc.bootst = SB_PROC_ST_ABNRAM;
           goto errdone;
     }
+
+#ifdef _KERNEL_VERIFY_
+    ret = SBC_Kernel_Verify((void *)&btproc);
+    if (ret != SBCOK) {
+          sbc_err_sysprn(SBC_LOG_CMN_PRIO_ERR, 2,
+                 SYS_LOG_HOST_BOOT,
+                 SYS_LOG_APP_NAME,
+                 SYS_LOG_CSC_NAME,
+                 8,
+                 L"Detectoin",
+                 L"SBC_SP_FW OS tampering check fail \n");
+          retval = EFI_INVALID_PARAMETER;
+          btproc.bootst = SB_PROC_ST_ABNRAM;
+          goto errdone;
+    }
+    //return EFI_SUCCESS;
+#endif
 
     ret = SBC_DiceKeysGen(ImageHandle, &diceid,  currbank_id, btproc.bm);
     if (ret != SBCOK) {

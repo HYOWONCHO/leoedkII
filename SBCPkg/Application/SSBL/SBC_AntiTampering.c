@@ -2554,7 +2554,7 @@ SBCStatus  SBC_Kernel_Verify(VOID *handle)
     LV_t            rdlv = {
             .length = 0,
             .value = NULL
-      };
+    };
 
     ret = _kernel_image_load(ctx->ldhndl, &rdlv);
     if (ret != SBCOK) {

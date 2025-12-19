@@ -1,4 +1,4 @@
 MAJOR_VAR="v6"
-MINOR_VAR="2"
-PATCH_VAR="5"
+MINOR_VAR="3"
+PATCH_VAR="0"
 PRERES_VAR="build-atsw"
