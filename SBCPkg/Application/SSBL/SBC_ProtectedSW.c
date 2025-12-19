@@ -647,7 +647,7 @@ SBCStatus SBC_RecryptoProtectedSW(VOID *handle, UINTN ofs,  UINT8* sw_secret_key
                  SYS_LOG_APP_NAME,
                  SYS_LOG_CSC_NAME,
                  1,
-                 L"Detectoin",
+                 SYS_LOG_EVT_DETECTION,
                  mrgmsg);
 
         ret = SBCFAIL;
@@ -680,8 +680,27 @@ SBCStatus SBC_RecryptoProtectedSW(VOID *handle, UINTN ofs,  UINT8* sw_secret_key
 
     SBC_AESGcmSetContext(aesctx.gcm, sw_secret_key, aesbuf.iv, aesbuf.tag);
     ret = SBC_AESGcmEncrypt(&aesctx);
-    SBC_RET_VALIDATE_ERRCODEMSG(!(ret != SBCOK), ret, "Failed to encrypt"
-                                "the Prot SW using Security Key");
+
+    if(ret != SBCOK) {
+        sbc_err_sysprn(SBC_LOG_CMN_PRIO_ERR, 2,
+                     SYS_LOG_HOST_BOOT,
+                     SYS_LOG_APP_NAME,
+                     SYS_LOG_CSC_NAME,
+                     4,
+                     SYS_LOG_EVT_DETECTION,
+                     L"SBC_Integrity_Boot mode is NORMAL mode and Reboot");
+        goto errdone;
+    }
+    else {
+        sbc_err_sysprn(SBC_LOG_CMN_PRIO_INFO, 2,
+                     SYS_LOG_HOST_BOOT,
+                     SYS_LOG_APP_NAME,
+                     SYS_LOG_CSC_NAME,
+                     4,
+                     SYS_LOG_EVT_VALDIATION,
+                     L"SBC_Integrity_ Protected SW is encrypted using the migration key");
+    }
+
 
 #ifdef _TEST_ERROR_SET_    
     if (NvramErr_IsTrue(ERR_PROTSW_ENC)) {
@@ -695,7 +714,7 @@ SBCStatus SBC_RecryptoProtectedSW(VOID *handle, UINTN ofs,  UINT8* sw_secret_key
                  SYS_LOG_APP_NAME,
                  SYS_LOG_CSC_NAME,
                  1,
-                 L"Detectoin",
+                 SYS_LOG_EVT_DETECTION,
                  mrgmsg);
 
         ret = SBCFAIL;
@@ -718,7 +737,7 @@ SBCStatus SBC_RecryptoProtectedSW(VOID *handle, UINTN ofs,  UINT8* sw_secret_key
                  SYS_LOG_APP_NAME,
                  SYS_LOG_CSC_NAME,
                  1,
-                 L"Detectoin",
+                 SYS_LOG_EVT_DETECTION,
                  L"SBC_SP_ProtSW Store Fail \n");
         ret = SBCFAIL;
         goto errdone;

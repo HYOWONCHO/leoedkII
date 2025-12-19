@@ -429,6 +429,7 @@ UefiMain (
 
     
     btproc.ldhndl = ImageHandle;
+    btproc.b_forced = FALSE;
 
 
     SBC_LogFileInit(ImageHandle);
@@ -438,7 +439,7 @@ UefiMain (
                  SYS_LOG_APP_NAME,
                  SYS_LOG_CSC_NAME,
                  0,
-                 L"Detetion",
+                 SYS_LOG_EVT_DETECTION,
                  L"SBC_VENDOR_SP *** SSBL Statring ***");
 
     sys_start_time = SBC_PerfNowTicks();
@@ -456,7 +457,7 @@ UefiMain (
                      SYS_LOG_APP_NAME,
                      SYS_LOG_CSC_NAME,
                      0,
-                     L"Detetion",
+                     SYS_LOG_EVT_DETECTION,
                      L"SBC_SP_BlkIO Raw-Partition Not Detected");
           goto errdone;
     }
@@ -689,7 +690,6 @@ uc_errdone:
 //      SBC_mem_print_bin("OLD OSID", old_osid, sizeof old_osid);
 //      return EFI_SUCCESS;
 //  }
-
 //  {
 //      extern SBCStatus  SBC_DiceKeysGenOld(EFI_HANDLE ImageHandle,
 //                                           VOID *p,
@@ -737,15 +737,11 @@ uc_errdone:
 //
 //      SBC_mem_print_bin("Prev OSID", (UINT8 *)key2.osid, 32);
 //        return EFI_SUCCESS;
-
 //
 //      SBC_CopyBlockReadAndBlockWrite(btproc.blkhnd,
 //                                     0x8400200,
 //                                     0x400200,
 //                                     &rdbytes);
-
-
-        
 //    }
 
 #if 0
@@ -773,11 +769,12 @@ uc_errdone:
                  SYS_LOG_HOST_BOOT,
                  SYS_LOG_APP_NAME,
                  SYS_LOG_CSC_NAME,
-                 8,
-                 L"Detectoin",
-                 L"SBC_SP_FW SSBL tampering check fail \n");
+                 5,
+                 SYS_LOG_EVT_DETECTION,
+                 L"SBC_tamper_SSBL signature verification faied\n");
           retval = EFI_INVALID_PARAMETER;
           btproc.bootst = SB_PROC_ST_ABNRAM;
+          btproc.b_forced = TRUE;
           goto errdone;
     }
 
@@ -788,11 +785,12 @@ uc_errdone:
                  SYS_LOG_HOST_BOOT,
                  SYS_LOG_APP_NAME,
                  SYS_LOG_CSC_NAME,
-                 8,
-                 L"Detectoin",
-                 L"SBC_SP_FW OS tampering check fail \n");
+                 5,
+                 SYS_LOG_EVT_DETECTION,
+                 L"SBC_tamper_OS image signature verification faied\n");
           retval = EFI_INVALID_PARAMETER;
           btproc.bootst = SB_PROC_ST_ABNRAM;
+          btproc.b_forced = TRUE;
           goto errdone;
     }
     //return EFI_SUCCESS;
@@ -888,7 +886,7 @@ uc_errdone:
                      SYS_LOG_APP_NAME,
                      SYS_LOG_CSC_NAME,
                      1,
-                     L"Detectoin",
+                     SYS_LOG_EVT_DETECTION,
                      mrgmsg);
             }
        }
@@ -987,7 +985,7 @@ uc_errdone:
                  SYS_LOG_APP_NAME,
                  SYS_LOG_CSC_NAME,
                  1,
-                 L"Detectoin",
+                 SYS_LOG_EVT_DETECTION,
                  mrgmsg);
       }
 
@@ -1029,7 +1027,7 @@ uc_errdone:
                  SYS_LOG_APP_NAME,
                  SYS_LOG_CSC_NAME,
                  1,
-                 L"Detectoin",
+                 SYS_LOG_EVT_DETECTION,
                  mrgmsg);
 
             btproc.bootst = SB_PROC_ST_NRMA;
@@ -1089,7 +1087,11 @@ errdone:
         //
         // Not existense the shutd-down scenario
         //
-        
+#ifdef _FORCED_SHUTDOWN_
+        if (btproc.b_forced == TRUE) {
+            SBC_ShutdownSystem();
+        }
+#endif
         ret = SBC_SecureBootCheck((VOID *)&btproc);
 
         //SBC_ShutdownSystem();

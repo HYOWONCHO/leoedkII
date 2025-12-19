@@ -88,7 +88,7 @@ SBCStatus UC_BootFWTamperingCheck(VOID *handle)
                  SYS_LOG_APP_NAME,
                  SYS_LOG_CSC_NAME,
                  8,
-                 L"Detectoin",
+                 SYS_LOG_EVT_DETECTION,
                  L"SSBL tampering check fail");
 
         p->bootst = SB_PROC_ST_ABNRAM;
@@ -100,7 +100,7 @@ SBCStatus UC_BootFWTamperingCheck(VOID *handle)
                      SYS_LOG_APP_NAME,
                      SYS_LOG_CSC_NAME,
                      0,
-                     L"Detectoin",
+                     SYS_LOG_EVT_DETECTION,
                      L"SBC Boot Mode Change from Update to Recovery");
             SBC_BootKeyModeChange(BOOT_MODE_RECOVERY, KEY_MODE_UPDATE, (VOID *)p);
             set_order = SBC_UC_MODE_RECOVERY;
@@ -115,7 +115,7 @@ SBCStatus UC_BootFWTamperingCheck(VOID *handle)
                      SYS_LOG_APP_NAME,
                      SYS_LOG_CSC_NAME,
                      0,
-                     L"Detectoin",
+                     SYS_LOG_EVT_DETECTION,
                      L"SBC Boot Mode Change from Update to Factory");
 
             SBC_BootKeyModeChange(BOOT_MODE_FACTORY, KEY_MODE_UPDATE, (VOID *)p);
@@ -131,7 +131,7 @@ SBCStatus UC_BootFWTamperingCheck(VOID *handle)
                  SYS_LOG_APP_NAME,
                  SYS_LOG_CSC_NAME,
                  0,
-                 L"Detectoin",
+                 SYS_LOG_EVT_DETECTION,
                  L"SBC Key Mode Change from Normal to Update");
         SBC_RawAlignedReadBlockIO(p->blkhnd, 0x0, 128, buf);
         _uc_mem_print_bin("Boot Mode Buf", buf, 128);
@@ -175,7 +175,7 @@ SBCStatus UC_RecoveryAbnormalAndNormal(VOID *handle)
                  SYS_LOG_APP_NAME,
                  SYS_LOG_CSC_NAME,
                  8,
-                 L"Detectoin",
+                 SYS_LOG_EVT_DETECTION,
                  L"SSBL tampering check fail");
 
         p->bootst = SB_PROC_ST_ABNRAM;
@@ -201,7 +201,7 @@ SBCStatus UC_RecoveryAbnormalAndNormal(VOID *handle)
                  SYS_LOG_APP_NAME,
                  SYS_LOG_CSC_NAME,
                  1,
-                 L"Detectoin",
+                 SYS_LOG_EVT_DETECTION,
                  mrgmsg);
 
     SBC_BuildHexFormattedMessage(
@@ -215,7 +215,7 @@ SBCStatus UC_RecoveryAbnormalAndNormal(VOID *handle)
                  SYS_LOG_APP_NAME,
                  SYS_LOG_CSC_NAME,
                  1,
-                 L"Detectoin",
+                 SYS_LOG_EVT_DETECTION,
                  mrgmsg);
 
     ret = SBC_RawAlignedWriteBlockIO(p->blkhnd,
@@ -239,7 +239,7 @@ SBCStatus UC_RecoveryAbnormalAndNormal(VOID *handle)
                  SYS_LOG_APP_NAME,
                  SYS_LOG_CSC_NAME,
                  1,
-                 L"Detectoin",
+                 SYS_LOG_EVT_DETECTION,
                  mrgmsg);
 errdone:
 
@@ -250,7 +250,7 @@ errdone:
                  SYS_LOG_APP_NAME,
                  SYS_LOG_CSC_NAME,
                  0,
-                 L"Detectoin",
+                 SYS_LOG_EVT_DETECTION,
                  L"SBC Boot Mode Change from Recovery to Factory");
         SBC_BootKeyModeChange(BOOT_MODE_FACTORY, KEY_MODE_UPDATE, (VOID *)p);
         SBC_RawAlignedReadBlockIO(p->blkhnd, 0x0, 128, buf);
@@ -263,7 +263,7 @@ errdone:
                  SYS_LOG_APP_NAME,
                  SYS_LOG_CSC_NAME,
                  0,
-                 L"Detectoin",
+                 SYS_LOG_EVT_DETECTION,
                  L"SBC Boot Mode Change from Recovery to NOrmal");
         SBC_BootKeyModeChange(BOOT_MODE_NORMAL, KEY_MODE_NORMAL, (VOID *)p);
         SBC_RawAlignedReadBlockIO(p->blkhnd, 0x0, 128, buf);

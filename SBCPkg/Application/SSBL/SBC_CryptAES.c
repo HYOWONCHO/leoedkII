@@ -143,7 +143,7 @@ SBCStatus SBC_AESGcmEncrypt(SBC_AESContext *ctx)
                  SYS_LOG_APP_NAME,
                  SYS_LOG_CSC_NAME,
                  1,
-                 L"Detectoin",
+                 SYS_LOG_EVT_DETECTION,
                  mrgmsg);
     DEBUG((DEBUG_ERROR,"%a:%d GCM Encrypt fail \r\n",__FUNCTION__,__LINE__));
     return SBCENCFAIL;
@@ -204,7 +204,7 @@ SBCStatus SBC_AESGcmDecrypt(SBC_AESContext *ctx)
                  SYS_LOG_APP_NAME,
                  SYS_LOG_CSC_NAME,
                  1,
-                 L"Detectoin",
+                 SYS_LOG_EVT_DETECTION,
                  mrgmsg);
     return SBCENCFAIL;
   }

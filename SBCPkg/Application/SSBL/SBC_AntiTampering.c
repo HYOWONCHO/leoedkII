@@ -61,6 +61,7 @@
 #include "SBC_Log.h"
 
 #include "SBC_Nvram.h"
+#include "SBC_SystemControl.h"
   
 extern CHAR16 mrgmsg[8192];
 CHAR16 print_out_key[128];
@@ -966,7 +967,7 @@ SBCStatus  _baseanswer_store(VOID *blkio, VOID *p)
                  SYS_LOG_APP_NAME,
                  SYS_LOG_CSC_NAME,
                  0,
-                 L"Detetion",
+                 SYS_LOG_EVT_DETECTION,
                  L"SBC_VENDOR_SP Fail to the Base answer storing");
         ret = SBCFAIL;
         goto errdone;
@@ -1051,7 +1052,7 @@ static SBCStatus _baseanswer_extract_from_disk(VOID *blkio, base_ansid_t *p)
                  SYS_LOG_APP_NAME,
                  SYS_LOG_CSC_NAME,
                  0,
-                 L"Detetion",
+                 SYS_LOG_EVT_DETECTION,
                  L"SBC_VENDOR_SP Fail to the Base answer read");
         ret = SBCFAIL;
         goto errdone;
@@ -1133,7 +1134,7 @@ SBCStatus SBC_DeviceSecuirtyKeyCreate(VOID *key)
                      SYS_LOG_APP_NAME,
                      SYS_LOG_CSC_NAME,
                      0,
-                     L"Detetion",
+                     SYS_LOG_EVT_DETECTION,
                      L"SBC_VENDOR_SP Fail to Genearte the Device Security Key ");
         ret = SBCFAIL;
 
@@ -1184,7 +1185,7 @@ SBCStatus SBC_DeviceSecuirtyKeyCreate(VOID *key)
                      SYS_LOG_APP_NAME,
                      SYS_LOG_CSC_NAME,
                      1,
-                     L"Detectoin",
+                     SYS_LOG_EVT_DETECTION,
                      L"SBC_RawFS_Key Failed the security key create \n"
                     );
 
@@ -1423,7 +1424,7 @@ SBCStatus  SBC_FirmwareIdKyeVerify(VOID *priv)
                  SYS_LOG_APP_NAME,
                  SYS_LOG_CSC_NAME,
                  1,
-                 L"Detectoin",
+                 SYS_LOG_EVT_DETECTION,
                  mrgmsg);
         ret = SBCINVPARAM;
         goto errdone;
@@ -1671,7 +1672,7 @@ SBCStatus  SBC_OSIdKyeVerify(VOID *priv)
                  SYS_LOG_APP_NAME,
                  SYS_LOG_CSC_NAME,
                  1,
-                 L"Detectoin",
+                 SYS_LOG_EVT_DETECTION,
                  mrgmsg);
         ret = SBCINVPARAM;
         goto errdone;
@@ -1736,7 +1737,11 @@ SBCStatus SBC_DiceIDKeyVerify(VOID *priv)
  
 
 errdone:
-
+#ifdef _FORCED_SHUTDOWN_
+    if (ret != SBCOK) {
+        SBC_ShutdownSystem();
+    }
+#endif
     return ret;
 
 
@@ -1923,7 +1928,7 @@ SBCStatus SBC_BaseAnswerEncryptStore(VOID *blkhnd, UINT8* msg, UINT32 msgl, UINT
                      SYS_LOG_APP_NAME,
                      SYS_LOG_CSC_NAME,
                      0,
-                     L"Detectoin",
+                     SYS_LOG_EVT_DETECTION,
                      mrgmsg);
       goto errdone;
     }
@@ -1951,7 +1956,7 @@ SBCStatus SBC_BaseAnswerEncryptStore(VOID *blkhnd, UINT8* msg, UINT32 msgl, UINT
                      SYS_LOG_APP_NAME,
                      SYS_LOG_CSC_NAME,
                      0,
-                     L"Detectoin",
+                     SYS_LOG_EVT_DETECTION,
                      mrgmsg);
       goto errdone;
     }
@@ -2001,7 +2006,7 @@ SBCStatus  SBC_BaseAnswerValidate(VOID *blkhnd, UINT8 *answer, UINTN answerl, UI
                  SYS_LOG_APP_NAME,
                  SYS_LOG_CSC_NAME,
                  0,
-                 L"Detetion",
+                 SYS_LOG_EVT_DETECTION,
                  L"SBC_VENDOR_SP Fail to Base Answer Decrypt");
         ret = SBCFAIL;
         goto errdone;
@@ -2013,7 +2018,7 @@ SBCStatus  SBC_BaseAnswerValidate(VOID *blkhnd, UINT8 *answer, UINTN answerl, UI
                  SYS_LOG_APP_NAME,
                  SYS_LOG_CSC_NAME,
                  0,
-                 L"Detetion",
+                 SYS_LOG_EVT_DETECTION,
                  L"SBC_VENDOR_SP Fail to Base Answer Encrypt");
         ret = SBCFAIL;
         goto errdone;
@@ -2069,7 +2074,7 @@ SBCStatus  SBC_BaseAnswerValidate(VOID *blkhnd, UINT8 *answer, UINTN answerl, UI
                      SYS_LOG_APP_NAME,
                      SYS_LOG_CSC_NAME,
                      0,
-                     L"Detectoin",
+                     SYS_LOG_EVT_DETECTION,
                      mrgmsg);
         ret = SBCFAIL;
         goto errdone;
@@ -2105,7 +2110,7 @@ SBCStatus  SBC_BaseAnswerValidate(VOID *blkhnd, UINT8 *answer, UINTN answerl, UI
                          SYS_LOG_APP_NAME,
                          SYS_LOG_CSC_NAME,
                          0,
-                         L"Detectoin",
+                         SYS_LOG_EVT_DETECTION,
                          mrgmsg);
 
             ret = SBCFAIL;
@@ -3152,7 +3157,7 @@ SBCStatus SBC_GenOSID(EFI_HANDLE *h_image, UINT8 *fwid, UINT8 *osid)
                  SYS_LOG_APP_NAME,
                  SYS_LOG_CSC_NAME,
                  0,
-                 L"Detetion",
+                 SYS_LOG_EVT_DETECTION,
                  L"SBC_VENDOR_SP Fail to create the OSID");
         ret = SBCFAIL;
         goto errdone;
@@ -3722,7 +3727,7 @@ SBCStatus  SBC_FSBLIntgCheck([[gnu::unused]]EFI_HANDLE *h_image ,
                      SYS_LOG_APP_NAME,
                      SYS_LOG_CSC_NAME,
                      0,
-                     L"Detectoin",
+                     SYS_LOG_EVT_DETECTION,
                      mrgmsg);
         goto errdone;
     }
@@ -3758,7 +3763,7 @@ SBCStatus  SBC_FSBLIntgCheck([[gnu::unused]]EFI_HANDLE *h_image ,
                      SYS_LOG_APP_NAME,
                      SYS_LOG_CSC_NAME,
                      0,
-                     L"Detectoin",
+                     SYS_LOG_EVT_DETECTION,
                      L"SFR-Vendor-SP RootCA Verify Fail \n");
       goto errdone;
     }

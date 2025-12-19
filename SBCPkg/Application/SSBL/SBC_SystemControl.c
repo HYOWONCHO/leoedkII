@@ -102,7 +102,7 @@ SBCStatus SBC_BootKeyModeChange(UINT32 newbm, UINT32 newkey, VOID *priv)
                  SYS_LOG_APP_NAME,
                  SYS_LOG_CSC_NAME,
                  0,
-                 L"Detectoin",
+                 SYS_LOG_EVT_DETECTION,
                  L"SFR-Vendor-SP Success to change the Boot and Key Mode \n");
 
         //goto errdone;
@@ -117,7 +117,7 @@ errdone:
                      SYS_LOG_APP_NAME,
                      SYS_LOG_CSC_NAME,
                      0,
-                     L"Detectoin",
+                     SYS_LOG_EVT_DETECTION,
                      L"SFR-Vendor-SP Failed to change the Boot and Key Mode \n");
 
         //goto errdone;
@@ -431,18 +431,25 @@ static SBCStatus _proetcted_sw_re_enc_dec(VOID *handle)
                             deckey,
                             NULL, NULL);
 
-    SBC_RET_VALIDATE_ERRCODEMSG(!(ret != SBCOK),
-                                ret,
-                                "Failed to Re-crypto");
+    if(ret != SBCOK) {
+        sbc_err_sysprn(SBC_LOG_CMN_PRIO_INFO, 2,
+               SYS_LOG_HOST_BOOT,
+               SYS_LOG_APP_NAME,
+               SYS_LOG_CSC_NAME,
+               3,
+               SYS_LOG_EVT_DETECTION,
+               L"SBC_Integrity_Protected SW integrity check failed");
 
+        goto errdone;
+    }
 
     sbc_err_sysprn(SBC_LOG_CMN_PRIO_INFO, 2,
                SYS_LOG_HOST_BOOT,
                SYS_LOG_APP_NAME,
                SYS_LOG_CSC_NAME,
-               1,
+               3,
                SYS_LOG_EVT_VALDIATION,
-               L"SBC_ProtSW_Update Protected Software update success");
+               L"SBC_Integrity_Protected SW successfully decryped using OSID-derived key");
 
 
 errdone:
@@ -807,7 +814,7 @@ static SBCStatus _store_fw_os_keypair_store(VOID *priv, VOID *fwid, VOID *osid)
                  SYS_LOG_APP_NAME,
                  SYS_LOG_CSC_NAME,
                  1,
-                 L"Detectoin",
+                 SYS_LOG_EVT_DETECTION,
                  mrgmsg);
         goto errdone;
     }
@@ -825,7 +832,7 @@ static SBCStatus _store_fw_os_keypair_store(VOID *priv, VOID *fwid, VOID *osid)
                  SYS_LOG_APP_NAME,
                  SYS_LOG_CSC_NAME,
                  1,
-                 L"Detectoin",
+                 SYS_LOG_EVT_DETECTION,
                  mrgmsg);
         goto errdone;
     }
@@ -1080,7 +1087,7 @@ void  SBC_RecoveryBootProcessing(VOID *priv)
              SYS_LOG_APP_NAME,
              SYS_LOG_CSC_NAME,
              1,
-             L"Detectoin",
+             SYS_LOG_EVT_DETECTION,
              L"SBC_VENDOR_SP System Reset - Recovery Boot State Ab-normal");
      
 #ifndef _ALL_PASS_
@@ -1266,7 +1273,7 @@ void  SBC_RecoveryBootProcessing(VOID *priv)
                          SYS_LOG_APP_NAME,
                          SYS_LOG_CSC_NAME,
                          1,
-                         L"Detectoin",
+                         SYS_LOG_EVT_DETECTION,
                          L"SBC_VENDOR_SP RECOVERY BOOT STATUS - UNKNOWN KEY MODE");
             goto errdone;
         }
@@ -1289,7 +1296,7 @@ void  SBC_RecoveryBootProcessing(VOID *priv)
                          SYS_LOG_APP_NAME,
                          SYS_LOG_CSC_NAME,
                          1,
-                         L"Detectoin",
+                         SYS_LOG_EVT_DETECTION,
                          L"SBC_VENDOR_SP RECOVERY BOOT STATUS - UNKNOWN");
 
         goto errdone;
@@ -1311,7 +1318,7 @@ errdone:
                          SYS_LOG_APP_NAME,
                          SYS_LOG_CSC_NAME,
                          1,
-                         L"Detectoin",
+                         SYS_LOG_EVT_DETECTION,
                          L"SBC_VENDOR_SP System Reset - Recovery Boot State Ab-normal");
     }
     else {
@@ -1320,7 +1327,7 @@ errdone:
                     SYS_LOG_APP_NAME,
                          SYS_LOG_CSC_NAME,
                          1,
-                         L"Detectoin",
+                         SYS_LOG_EVT_DETECTION,
                          L"SBC_VENDOR_SP System Reset - Recovery Boot State Normal");     
 
     }
@@ -1400,7 +1407,7 @@ static void _update_reset_check_and_behavior(VOID *priv)
                  SYS_LOG_APP_NAME,
                  SYS_LOG_CSC_NAME,
                  1,
-                 L"Detectoin",
+                 SYS_LOG_EVT_DETECTION,
                  L"SBC_VENDOR_SP System Reset - Boot State Ab-normal");
         }
 
@@ -1451,10 +1458,19 @@ static VOID _handling_sb_process_for_bm_normal(VOID *priv)
                  SYS_LOG_APP_NAME,
                  SYS_LOG_CSC_NAME,
                  1,
-                 L"Detectoin",
+                 SYS_LOG_EVT_DETECTION,
                  L"SBC_VENDOR_SP System Reset - Boot State Ab-normal");
         }
 #ifndef _ALL_PASS_
+
+        sbc_err_sysprn(SBC_LOG_CMN_PRIO_INFO, 2,
+                     SYS_LOG_HOST_BOOT,
+                     SYS_LOG_APP_NAME,
+                     SYS_LOG_CSC_NAME,
+                     4,
+                     SYS_LOG_EVT_DETECTION,
+                     L"SBC_Integrity_Boot mode is NORMAL mode and Reboot");
+
         SBC_RebootSystem();
         return;
 #else
@@ -1664,7 +1680,7 @@ SBCStatus  SBC_SecureBootCheck(VOID *priv)
                            SYS_LOG_APP_NAME,
                            SYS_LOG_CSC_NAME,
                              1,
-                             L"Detectoin",
+                             SYS_LOG_EVT_DETECTION,
                              L"SBC_VENDOR_SP System Reset - Update Boot State Ab-Normal");     
         }
         else {
@@ -1696,7 +1712,7 @@ SBCStatus  SBC_SecureBootCheck(VOID *priv)
                            SYS_LOG_APP_NAME,
                            SYS_LOG_CSC_NAME,
                              1,
-                             L"Detectoin",
+                             SYS_LOG_EVT_DETECTION,
                              L"SBC_VENDOR_SP System Reset - Update Boot State Normal");
         }
 
@@ -1771,7 +1787,7 @@ VOID SBC_RebootSystem(VOID)
          SYS_LOG_APP_NAME,
          SYS_LOG_CSC_NAME,
          1,
-         L"Detectoin",
+         SYS_LOG_EVT_DETECTION,
          L"SBC_VENDOR_SP System Reboo Re-starting ");
     gRT->ResetSystem(EfiResetCold, EFI_SUCCESS, 0, NULL);
     while(TRUE) { };
@@ -1786,7 +1802,7 @@ VOID SBC_ShutdownSystem(VOID)
          SYS_LOG_APP_NAME,
          SYS_LOG_CSC_NAME,
          1,
-         L"Detectoin",
+         SYS_LOG_EVT_DETECTION,
          L"SBC_VENDOR_SP System Shutdown - Boot State Ab-normal");
 
     gRT->ResetSystem(EfiResetShutdown, EFI_SUCCESS, 0, NULL);
@@ -1911,7 +1927,7 @@ SBCStatus SBC_RawPrtHdrChange(
                  SYS_LOG_APP_NAME,
                  SYS_LOG_CSC_NAME,
                  0,
-                 L"Detectoin",
+                 SYS_LOG_EVT_DETECTION,
                  L"SFR-Vendor-SP Success to change the "
                  L"Header informaiton of Raw-partition \n");
 
@@ -1936,7 +1952,7 @@ errdone:
                  SYS_LOG_APP_NAME,
                  SYS_LOG_CSC_NAME,
                  0,
-                 L"Detectoin",
+                 SYS_LOG_EVT_DETECTION,
                  L"SFR-Vendor-SP Failed to change the "
                  L"Header informaiton of Raw-partition \n");
     }
@@ -2034,7 +2050,7 @@ SBCStatus SBC_RawPrtHdrChangeWithRecovery(
                  SYS_LOG_APP_NAME,
                  SYS_LOG_CSC_NAME,
                  0,
-                 L"Detectoin",
+                 SYS_LOG_EVT_DETECTION,
                  L"SFR-Vendor-SP Success to change the "
                  L"Header informaiton of Raw-partition \n");
 
@@ -2059,7 +2075,7 @@ errdone:
                  SYS_LOG_APP_NAME,
                  SYS_LOG_CSC_NAME,
                  0,
-                 L"Detectoin",
+                 SYS_LOG_EVT_DETECTION,
                  L"SFR-Vendor-SP Failed to change the "
                  L"Header informaiton of Raw-partition \n");
     }

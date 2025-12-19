@@ -79,6 +79,7 @@ typedef struct _boot_proc_t {
     UINTN   use_retore_fw;      /**< In Update Boot Mode, Decide whether to restore the firmware */
     BOOLEAN is_factory;
     UINT16  prevmode;
+    BOOLEAN b_forced;
 } boot_proc_t;
 #pragma pack()
 

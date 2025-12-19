@@ -131,6 +131,9 @@
     *_*_*_CC_FLAGS = -D_DEBUG_PRINT_ON_
     *_*_*_CC_FLAGS = -D_HANDLE_PROTSW_
     *_*_*_CC_FLAGS = -D_KERNEL_VERIFY_
+    *_*_*_CC_FLAGS = -D_FORCED_SHUTDOWN_
+
+    
 
 	#*_*_*_CC_FLAGS = -D_ALL_PASS_
     #*_*_*_CC_FLAGS = -D_USECASE_TEST_
