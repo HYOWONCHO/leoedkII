@@ -365,72 +365,8 @@ SBCStatus SBC_BootModeNormalAndpUdate(VOID *blkhnd, VOID *ImageHandle, UINTN nro
     goto errdone;
   }
 
-//ret = SBC_RawPrtReadBlock(blkhnd, (void *)loadimg, &imglen, startlba);
-//if (ret != SBCOK) {
-//  //Print(L"SSBL Factory Block Read Fail \n");
-//  goto errdone;
-//}
-//
-//if ((hndlcnt = SBC_FindEfiFileSystemProtocol(&ssbl_img_hndl)) <= 0) {
-//  //Print(L"File SYstem Handle Found fail \n");
-//  ret = SBCIO;
-//  goto errdone;
-//}
-//
-//////Print(L"File System Handle Found (Handle Count : %d) \n", hndlcnt);
-//
-//_lv_set_data(&wrlv,&loadimg[4], imglen - 4);
-
-  //SBC_mem_print_bin("SSBL Load Image", wrlv.value, 512);
 #ifndef _ALL_PASS_
 
-  //  for (idx = 0; idx < hndlcnt; idx++) {
-  //
-  ////  retval = SBC_IsFlieAccess(ssbl_img_hndl[idx], fname);
-  ////  dprint("[%d] ret value : %r", idx , retval);
-  ////  if (EFI_ERROR(retval)) {
-  ////    continue;
-  ////  }
-  //
-  //
-  //    BOOLEAN bret = FALSE;
-  //
-  //
-  //    bret = SBC_IsDirExist(ssbl_img_hndl[idx], L"\\EFI\\rocky");
-  //    dprint("bret : %d , idx : %d", bret, idx);
-  //    if (bret != TRUE) {
-  //      continue;
-  //    }
-  //
-  //    break;
-  //  }
-
-
-//for (int idx = 0; idx < hndlcnt; idx++) {
-//  retval = SBC_WriteFile(ssbl_img_hndl[idx], fname, &wrlv);
-//  if (EFI_ERROR(retval)) {
-//      continue;
-//      //goto errdone;
-//  }
-//
-//  retval = SBC_WriteFile(ssbl_img_hndl[idx], fname1, &wrlv);
-//  if (EFI_ERROR(retval)) {
-//      continue;
-//      //goto errdone;
-//  }
-//
-//  break;
-//}
-//
-//if (EFI_ERROR(retval)) {
-//  ret = SBCNOTFND;
-//  //continue;
-//  goto errdone;
-//}
-//dprint("idx : %d , hndlecount : %d", idx, hndlcnt);
-////Print(L"SSBL Write is Done \n");
-////SBC_mem_print_bin("SSBL Header", imghdr, imglen);
-//
   sys_end_time = SBC_PerfNowTicks();
   //dprint("sys_end_time : %ld (%ld)", sys_end_time, sys_end_time - sys_start_time);
   sys_ns_var  = SBC_PerfTicksTons(_PerfDeltaTicks(sys_start_time, sys_end_time));
@@ -1404,10 +1340,6 @@ UefiMain (
     dprint("Pres Low : 0x%04x Cur. Bank ID : %d , Prev. Bank ID : %d , IS_FACTTORY : %b", 
            pres_low, currbank_id, prevbank_id, btproc.is_factory);
 
-#ifdef _ALL_PASS_
-    h_rawprtheader.bootmode = BOOT_MODE_FACTORY;
-#endif
-
     btproc.curr_sw_bnk = currbank_id;
     btproc.pvs_sw_bnk = prevbank_id;
     btproc.bm = h_rawprtheader.bootmode;
@@ -1558,18 +1490,6 @@ UefiMain (
 #endif
 
     ZeroMem(mrgmsg, sizeof mrgmsg);
-//  UnicodeSPrint(mrgmsg, sizeof mrgmsg, L"SBC_SP_FW FSBL self-verify Success (%s)\n", baseansr.value);
-//  sbc_err_sysprn(SBC_LOG_CMN_PRIO_ERR, 2,
-//       L"SBC",
-//       L"FSBL",
-//       L"Weapon System",
-//       8,
-//       L"Validation",
-//       mrgmsg);
-//
-    
-
-
     ret = SBC_DiceKeysGen(ImageHandle, &diceid, currbank_id, h_rawprtheader.bootmode);
     if (ret != SBCOK) {
         sbc_err_sysprn(SBC_LOG_CMN_PRIO_ERR, 2,
@@ -1589,89 +1509,9 @@ UefiMain (
 
     btproc.dice = (VOID *)&diceid;
 
-
-
-#ifdef _FSBL_FACTORY_TEST_
-    dprint("Boot Mode is %d", h_rawprtheader.bootmode);
-    h_rawprtheader.bootmode  = BOOT_MODE_FACTORY;
-#endif
-
-
-
-
     switch (h_rawprtheader.bootmode) {
     case BOOT_MODE_NORMAL:
         dprint("Boot Mode is BOOT_MODE_NORMAL");
-#ifdef _SBC_DEVID_VERIFY_
-#if 0
-      if (h_rawprtheader.rcvmode) {
-          sbc_err_sysprn(SBC_LOG_CMN_PRIO_INFO,
-                         2,
-                         SYS_LOG_HOST_BOOT,
-                         SYS_LOG_APP_NAME,SYS_LOG_CSC_NAME,
-                         0,
-                         SYS_LOG_EVT_DETECTION,
-                         L"SBC_BootFW The System has booted from recovery mode \n");
-
-          ret = SBC_GenMigrationKey((void *)&btproc, diceid.migid);
-          if (ret != SBCOK) {
-              sbc_err_sysprn(SBC_LOG_CMN_PRIO_ERR,
-                           2,
-                           SYS_LOG_HOST_BOOT,
-                           SYS_LOG_APP_NAME,SYS_LOG_CSC_NAME,
-                           4,
-                           SYS_LOG_EVT_DETECTION,
-                           L"SBC_BootFW_Update Fail to MigrationKey Creation \n");
-              retval = EFI_INVALID_PARAMETER;
-              btproc.bootst = SB_PROC_ST_ABNRAM;
-#ifndef _ALL_PASS_
-              goto errdone;
-#endif
-          }
-
-          //
-          // No need to return because change the boot mode and reset the system.
-          //
-      }
-#endif
-
-#if 0
-      if ( btproc.rcvmode == 1 && btproc.prevmode == 1 ) {
-          dprint(" Normal mode verify running on Previously bank");
-          ret = SBC_SSBL_Verify(h_blkio, NULL, prevbank_id, BOOT_MODE_NORMAL, STR_SSBL_F_NAME);
-      }
-      else if ( btproc.rcvmode == 1 && btproc.prevmode == 0 ){
-          // factory bank
-          dprint(" Normal mode verify running on factory bank");
-          ret = SBC_SSBL_Verify(h_blkio, NULL, currbank_id, BOOT_MODE_FACTORY, STR_SSBL_F_NAME);
-      }
-      else {
-          dprint(" Normal mode verify running on currently bank");
-          ret = SBC_SSBL_Verify(h_blkio, NULL, currbank_id, BOOT_MODE_NORMAL, STR_SSBL_F_NAME);
-      }
-#else
-#if 0
-    UINT32 bank_id;
-    UINT32 boot_mode;
-
-    /* Decide bank and boot mode */
-    if (btproc.rcvmode == 1 && btproc.prevmode == 1) {
-        dprint("Normal mode verify running on previous bank");
-        bank_id  = prevbank_id;
-        boot_mode = BOOT_MODE_NORMAL;
-
-    } else if (btproc.rcvmode == 1 && btproc.prevmode == 0) {
-        dprint("Normal mode verify running on factory bank");
-        bank_id  = currbank_id;
-        boot_mode = BOOT_MODE_FACTORY;
-
-    } else {
-        dprint("Normal mode verify running on current bank");
-        bank_id  = currbank_id;
-        boot_mode = BOOT_MODE_NORMAL;
-    }
-#endif
-
         UINT32 bank_id;
         UINT32 boot_mode;
 
@@ -1688,7 +1528,6 @@ UefiMain (
                   boot_mode,
                   STR_SSBL_F_NAME
               );
-#endif
 
         if (ret != SBCOK) {
           sbc_err_sysprn(SBC_LOG_CMN_PRIO_ERR, 2,
@@ -2018,7 +1857,7 @@ UefiMain (
 
 
   // Access bank addr ( (0x200 + (128 << 20)) * currbank_id )
-#endif
+
 
 errdone:
 
