@@ -646,17 +646,6 @@ UefiMain (
     case BOOT_MODE_FACTORY:
        dprint("Boot Mode is BOOT_MODE_FACTORY");
 
-
-
-
-
-       // If boot status is abnromal, system should be shutdown.
-//     if (btproc.bootst != SB_PROC_ST_NRMA) {
-//         eprint("Factory Boot Mode is Abnormal, so, it goes to shutdown state");
-//         ret = SBCFAIL;
-//         goto errdone;
-//     }
-
        ret = SBC_SecureBootCheck((VOID *)&btproc);
        if (ret != SBCOK) {
            eprint("Secure Boot check fail for BOOT_MODE_FACTORY");
