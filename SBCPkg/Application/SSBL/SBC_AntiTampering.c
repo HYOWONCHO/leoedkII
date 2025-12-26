@@ -2127,8 +2127,13 @@ SBCStatus  SBC_BaseAnswerValidate(VOID *blkhnd, UINT8 *answer, UINTN answerl, UI
 
 //  ZeroMem(mrgmsg, sizeof mrgmsg);
 //  UnicodeSPrint(mrgmsg, sizeof mrgmsg, L"Base Answer validate Success (%s:%s) \n",answer,decbuf);
+
+    //
+    // T-SAT-PWT-SFR-003
+    // Validation 
+    //
     sbc_err_sysprn(SBC_LOG_CMN_PRIO_INFO, 2,
-         L"SBC",
+         SYS_LOG_HOST_BOOT,
          SYS_LOG_APP_NAME,
          SYS_LOG_CSC_NAME,
          3,
@@ -2138,8 +2143,12 @@ SBCStatus  SBC_BaseAnswerValidate(VOID *blkhnd, UINT8 *answer, UINTN answerl, UI
     return ret;
 errdone:
 
+    //
+    // T-SAT-PWT-SFR-003
+    // Detection 
+    //
     sbc_err_sysprn(SBC_LOG_CMN_PRIO_ERR, 2,
-       L"SBC",
+       SYS_LOG_HOST_BOOT,
        SYS_LOG_APP_NAME,
        SYS_LOG_CSC_NAME,
        3,

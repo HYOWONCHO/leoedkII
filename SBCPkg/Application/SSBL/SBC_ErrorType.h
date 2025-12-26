@@ -39,6 +39,7 @@ typedef enum {
    SBCENCFAIL           = 315,  /**< Encryption failed. */
    SBCDECFAIL           = 316,  /**< Decryption failed. */
    SBCBSANSWNOTFND      = 317,  /**< Base answer not found. */
+   SBCTPM               = 318,
    SBCUNKNOWN                   /**< Unknown or undefined error. */
 } SBCStatus;
 

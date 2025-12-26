@@ -15002,6 +15002,8 @@
         <F N="SBC_SystemControl.h"/>
         <F N="SBC_Timer.c"/>
         <F N="SBC_Timer.h"/>
+        <F N="SBC_Tpm.c"/>
+        <F N="SBC_Tpm.h"/>
         <F N="SBC_TypeDefs.h"/>
         <F N="SBC_UseCaseUpdateTest.c"/>
         <F N="SBC_Util.h"/>

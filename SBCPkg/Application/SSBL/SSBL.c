@@ -518,7 +518,7 @@ UefiMain (
                  SYS_LOG_HOST_BOOT,
                  SYS_LOG_APP_NAME,
                  SYS_LOG_CSC_NAME,
-                 5,
+                 8,
                  SYS_LOG_EVT_DETECTION,
                  L"SBC_tamper_SSBL signature verification faied\n");
           retval = EFI_INVALID_PARAMETER;
@@ -534,7 +534,7 @@ UefiMain (
                  SYS_LOG_HOST_BOOT,
                  SYS_LOG_APP_NAME,
                  SYS_LOG_CSC_NAME,
-                 5,
+                 8,
                  SYS_LOG_EVT_DETECTION,
                  L"SBC_tamper_OS image signature verification faied\n");
           retval = EFI_INVALID_PARAMETER;

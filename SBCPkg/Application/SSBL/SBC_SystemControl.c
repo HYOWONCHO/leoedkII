@@ -436,7 +436,7 @@ static SBCStatus _proetcted_sw_re_enc_dec(VOID *handle)
                SYS_LOG_HOST_BOOT,
                SYS_LOG_APP_NAME,
                SYS_LOG_CSC_NAME,
-               3,
+               6,
                SYS_LOG_EVT_DETECTION,
                L"SBC_Integrity_Protected SW integrity check failed");
 
@@ -447,7 +447,7 @@ static SBCStatus _proetcted_sw_re_enc_dec(VOID *handle)
                SYS_LOG_HOST_BOOT,
                SYS_LOG_APP_NAME,
                SYS_LOG_CSC_NAME,
-               3,
+               6,
                SYS_LOG_EVT_VALDIATION,
                L"SBC_Integrity_Protected SW successfully decryped using OSID-derived key");
 
@@ -459,7 +459,7 @@ errdone:
            SYS_LOG_HOST_BOOT,
            SYS_LOG_APP_NAME,
            SYS_LOG_CSC_NAME,
-           1,
+           0,
            SYS_LOG_EVT_DETECTION,
            L"SBC_ProtSW_Update Failed to update the Protected Software");
     }
