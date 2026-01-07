@@ -2507,7 +2507,7 @@ errdone:
 
     if (ret != SBCOK) {
       ZeroMem(mrgmsg, sizeof mrgmsg);
-      UnicodeSPrint(mrgmsg, sizeof mrgmsg, L"SBC_tamper_FSBL signature verification faied\n");
+      UnicodeSPrint(mrgmsg, sizeof mrgmsg, L"SBC_tamper_ FSBL signature verification faied\n");
       sbc_err_sysprn(SBC_LOG_CMN_PRIO_ERR, 2,
              L"AT_BOOT",
              L"FSBL",

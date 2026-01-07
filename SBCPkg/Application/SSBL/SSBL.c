@@ -121,7 +121,11 @@ SBCStatus  SBC_DiceKeysGen(EFI_HANDLE ImageHandle, VOID *p,UINTN normbank, UINTN
 {
     SBCStatus ret = SBCOK;
     atp_ident_t *h = NULL;
-
+#ifdef _TEST_BED_
+    at_key_t  devkey;
+    at_key_t  fwkey;
+    at_key_t  oskey;
+#endif
     h = (atp_ident_t *)p;
 
     ret = SBC_GenDeviceID(h->devid);
@@ -130,9 +134,13 @@ SBCStatus  SBC_DiceKeysGen(EFI_HANDLE ImageHandle, VOID *p,UINTN normbank, UINTN
         goto errdone;
     }
 
+#ifdef _TEST_BED_
+    dprint("5.2.6.1 4.Device ID Key-pair generation --->");
+    SBC_DICESeedKeyPair(h->devid, &devkey);
+    SBC_external_mem_print_bin("Device. Priv", devkey.d, sizeof devkey.d);
+    SBC_external_mem_print_bin("Device. Pub", devkey.q.value , sizeof devkey.q);
+#endif
     //SBC_mem_print_bin("Device ID", h->devid, sizeof h->devid);SBC_mem_print_bin("Device ID", h->devid, sizeof h->devid);
-
-
 
 
     ret = SBC_GenFWID(ImageHandle, h->devid, h->fwid, normbank, bm);
@@ -141,7 +149,13 @@ SBCStatus  SBC_DiceKeysGen(EFI_HANDLE ImageHandle, VOID *p,UINTN normbank, UINTN
         goto errdone;
     }
 
+#ifdef _TEST_BED_
+    dprint("5.2.6.1 5.Firmware ID Key-pair generation --->");
+    SBC_DICESeedKeyPair(h->fwid, &fwkey);
+    SBC_external_mem_print_bin("FW. Priv", fwkey.d, sizeof fwkey.d);
+    SBC_external_mem_print_bin("FW. Pub", fwkey.q.value , sizeof fwkey.q);
     //SBC_mem_print_bin("Firmware ID", h->fwid, sizeof h->fwid);
+#endif
 
     ret = SBC_GenOSID(ImageHandle,  h->fwid, h->osid);
     if (ret != SBCOK) {
@@ -149,6 +163,12 @@ SBCStatus  SBC_DiceKeysGen(EFI_HANDLE ImageHandle, VOID *p,UINTN normbank, UINTN
         goto errdone;
     }
 
+#ifdef _TEST_BED_
+    dprint("5.2.6.1 6.OS ID Key-pair generation --->");
+    SBC_DICESeedKeyPair(h->osid, &oskey);
+    SBC_external_mem_print_bin("OS. Priv", oskey.d, sizeof oskey.d);
+    SBC_external_mem_print_bin("OS. Pub", oskey.q.value , sizeof oskey.q);
+#endif
     //SBC_mem_print_bin("Firmware ID", h->fwid, sizeof h->fwid);
     ret = SBCOK;
 
@@ -520,12 +540,17 @@ UefiMain (
                  SYS_LOG_CSC_NAME,
                  8,
                  SYS_LOG_EVT_DETECTION,
-                 L"SBC_tamper_SSBL signature verification faied\n");
+                 L"SBC_tamper_ SSBL signature verification faied\n");
           retval = EFI_INVALID_PARAMETER;
           btproc.bootst = SB_PROC_ST_ABNRAM;
           btproc.b_forced = TRUE;
           goto errdone;
     }
+
+#ifdef _TEST_BED_
+    dprint("*** 5.3.6.1 5.Extract the Boot FW  baseanswer --->");
+    SBC_mem_print_bin("Base Answer", baseansr.value, baseansr.length);
+#endif
 
 #ifdef _KERNEL_VERIFY_
     ret = SBC_Kernel_Verify((void *)&btproc);
@@ -536,7 +561,7 @@ UefiMain (
                  SYS_LOG_CSC_NAME,
                  8,
                  SYS_LOG_EVT_DETECTION,
-                 L"SBC_tamper_OS image signature verification faied\n");
+                 L"SBC_tamper_ OS image signature verification faied\n");
           retval = EFI_INVALID_PARAMETER;
           btproc.bootst = SB_PROC_ST_ABNRAM;
           btproc.b_forced = TRUE;

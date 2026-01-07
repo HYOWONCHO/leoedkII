@@ -1478,7 +1478,7 @@ UefiMain (
                  SYS_LOG_CSC_NAME,
                  8,
                  SYS_LOG_EVT_DETECTION,
-                 L"SBC_tamper_FSBL signature verification faied\n");
+                 L"SBC_tamper_ FSBL signature verification faied\n");
           retval = EFI_INVALID_PARAMETER;
           btproc.b_forced = TRUE;
           btproc.bootst = SB_PROC_ST_ABNRAM;
@@ -1536,7 +1536,7 @@ UefiMain (
                      SYS_LOG_CSC_NAME,
                      8,
                      SYS_LOG_EVT_DETECTION,
-                     L"SBC_tamper_SSBL signature verification faied");
+                     L"SBC_tamper_ SSBL signature verification faied");
 
           btproc.bootst = SB_PROC_ST_ABNRAM;
           btproc.b_forced = TRUE;
@@ -1650,7 +1650,7 @@ UefiMain (
                      SYS_LOG_CSC_NAME,
                      8,
                      SYS_LOG_EVT_DETECTION,
-                     L"SBC_tamper_SSBL signature verification faied");
+                     L"SBC_tamper_ SSBL signature verification faied");
             btproc.bootst = SB_PROC_ST_ABNRAM;
             btproc.b_forced = TRUE;
             retval = EFI_INVALID_PARAMETER;
@@ -1720,7 +1720,7 @@ UefiMain (
                      SYS_LOG_CSC_NAME,
                      8,
                      SYS_LOG_EVT_DETECTION,
-                     L"SBC_tamper_SSBL signature verification faied");
+                     L"SBC_tamper_ SSBL signature verification faied");
             btproc.bootst = SB_PROC_ST_ABNRAM;
             btproc.b_forced = TRUE;
             retval = EFI_INVALID_PARAMETER;
@@ -1789,7 +1789,7 @@ UefiMain (
                      SYS_LOG_CSC_NAME,
                      8,
                      SYS_LOG_EVT_DETECTION,
-                     L"SBC_tamper_SSBL signature verification faied");
+                     L"SBC_tamper_ SSBL signature verification faied");
             btproc.bootst = SB_PROC_ST_ABNRAM;
             btproc.b_forced = TRUE;
             retval = EFI_INVALID_PARAMETER;

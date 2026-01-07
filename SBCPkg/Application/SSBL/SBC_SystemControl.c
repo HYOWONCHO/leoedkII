@@ -424,6 +424,7 @@ static SBCStatus _proetcted_sw_re_enc_dec(VOID *handle)
 
 
 
+    dprint("*** 5.8.6.1 4.Protected Secret Key Hash(OSID) --->");
     SBC_mem_print_bin("hash encrypt key", (UINT8 *)enckey, SBC_AT_RP_KEY_LEN);
 
     ret = SBC_ProtSWDecrypt((VOID *)bp, 

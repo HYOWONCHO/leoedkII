@@ -725,6 +725,7 @@ SBCStatus SBC_RecryptoProtectedSW(VOID *handle, UINTN ofs,  UINT8* sw_secret_key
     // Re-write the protected SW
     //
 
+    dprint("*** 5.8.6.1 4. Protected SW Encrypt --->");
     SBC_external_mem_print_bin("Protected SW Enc Buf", 
                            (UINT8 *)encctx.out.value,
                            SBC_AT_HASH_LEN);
@@ -802,6 +803,16 @@ SBCStatus SBC_RecryptoProtectedSW(VOID *handle, UINTN ofs,  UINT8* sw_secret_key
     {
         EFI_STATUS retx = EFI_SUCCESS;
         UINT8  xbuf[128] = {0, };
+
+        retx = SBC_BlkReadArbitrary(p->blkhnd,
+                                          ofs + SBC_RAW_PRTHDR_LEN_OFS ,
+                                          xbuf,
+                                          32);
+
+        SBC_external_mem_print_bin("Protected SW Raw Partition",
+                           (UINT8 *)xbuf,
+                           32);
+
         retx = SBC_BlkReadArbitrary(p->blkhnd,
                                           ofs + SBC_RAW_PRTHDR_LEN_OFS + encctx.out.length ,
                                           xbuf,

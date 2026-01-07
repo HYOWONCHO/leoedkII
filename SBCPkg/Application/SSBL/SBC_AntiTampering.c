@@ -1026,6 +1026,21 @@ SBCStatus  _baseanswer_store(VOID *blkio, VOID *p)
       goto errdone;
     }
 
+
+#ifdef _TEST_BED_
+    {
+        UINT8 temp[64] = {0, };
+        
+        dprint("*** 5.3.6.1 6.OSID Encrypt Data --->");
+        SBC_BlkReadArbitrary(blkio, 
+                             SYS_CONF_START_OFS + SYS_CONF_RES_OFS,
+                             (VOID *)temp,
+                             64);
+
+        SBC_mem_print_bin("OSID Encrypt Read", temp, 64);
+    }
+
+#endif
     ret = SBCOK;
 
 errdone:
@@ -1086,6 +1101,12 @@ static SBCStatus _baseanswer_extract_from_disk(VOID *blkio, base_ansid_t *p)
   CopyMem((void *)p->encmsg, (void *)&loadbuf[offset], p->msglen);
   offset += p->msglen;
 
+#ifdef _TEST_BED_
+  {
+      dprint("*** 5.4.6.1 6.Encrypt Base Answer with OSID --->");
+  }
+#endif
+
   CopyMem((void *)p->iv, (void *)&loadbuf[offset], BASE_ANS_IV_KEY_STR);
   offset += BASE_ANS_IV_KEY_STR;
 
@@ -1094,10 +1115,10 @@ static SBCStatus _baseanswer_extract_from_disk(VOID *blkio, base_ansid_t *p)
   offset += BASE_ANS_TAG_LEN;
 
 
-  dprint("Enc Msg Len : %d", p->msglen);
-  SBC_mem_print_bin("Enc Message", p->encmsg, p->msglen);
-  SBC_mem_print_bin("Enc IV", p->iv, BASE_ANS_IV_KEY_STR);
-  SBC_mem_print_bin("Tag Message", p->tag, BASE_ANS_TAG_LEN);
+//dprint("Enc Msg Len : %d", p->msglen);
+//SBC_mem_print_bin("Base ANswer Enc Message", p->encmsg, p->msglen);
+//SBC_mem_print_bin("Enc IV", p->iv, BASE_ANS_IV_KEY_STR);
+//SBC_mem_print_bin("Tag Message", p->tag, BASE_ANS_TAG_LEN);
   
 
 errdone:
@@ -2056,6 +2077,7 @@ SBCStatus  SBC_BaseAnswerValidate(VOID *blkhnd, UINT8 *answer, UINTN answerl, UI
     aesctx.gcm = &ctx;
     aesctx.algoid = SBC_CIPHER_AES_GCM;
 
+    dprint("*** Base Answer Information --->");
     SBC_external_mem_print_bin("Key", (UINT8 *)ctx.key.value, ctx.key.length);
     SBC_external_mem_print_bin("IV", (UINT8 *)ctx.iv.value , BASE_ANS_IV_KEY_STR);
     SBC_external_mem_print_bin("TAG", (UINT8 *)ctx.tag.value , BASE_ANS_TAG_LEN);
@@ -2082,8 +2104,8 @@ SBCStatus  SBC_BaseAnswerValidate(VOID *blkhnd, UINT8 *answer, UINTN answerl, UI
 
 
 #ifndef _ATSW_INTGR_TEST_
-    SBC_external_mem_print_bin("plain msg", answer, answerl);
-    SBC_external_mem_print_bin("decrypt msg", decbuf, ctx.out.length);
+    SBC_external_mem_print_bin("Raw Partitoin Base Answer msg", answer, answerl);
+    SBC_external_mem_print_bin("Base Answer decrypt msg", decbuf, ctx.out.length);
     if ((CompareMem((const void *)decbuf, (const void *)answer, answerl) != 0) && (ischeck == TRUE)) {
 #else
     UINT8 test_answering[16] = {
@@ -2821,17 +2843,18 @@ SBCStatus SBC_GenDeviceID(UINT8 *devid)
     ZeroMem((void *)&info, sizeof info);
 
 
+    dprint("*** HW Unique Information Load --->");
     _baseboard_sn(&info);
 //  SBC_external_mem_print_bin("BaseBoard SN", info.mbsn,info.mbsnl);
-//  SBC_mem_print_bin("BaseBoard SN", info.mbsn,info.mbsnl);
+    SBC_mem_print_bin("BaseBoard SN", info.mbsn,info.mbsnl);
 
     _memorydevice_sn(&info);
 //  SBC_external_mem_print_bin("MemoryDevice SN", info.mmsn, info.mmsnl);
-//  SBC_mem_print_bin("MemoryDevice SN", info.mmsn, info.mmsnl);
+    SBC_mem_print_bin("MemoryDevice SN", info.mmsn, info.mmsnl);
 
     _nvme_get_serial(&info);
 //  SBC_external_mem_print_bin("NVME SN", info.nvmesn,info.nvmesnl);
-//  SBC_mem_print_bin("NVME SN", info.nvmesn,info.nvmesnl);
+    SBC_mem_print_bin("NVME SN", info.nvmesn,info.nvmesnl);
 
     //_read_fsbl_image(&rdlv);
     efi_boot_fsbl_load(&rdlv);
@@ -2894,6 +2917,7 @@ SBCStatus SBC_GenDeviceID(UINT8 *devid)
 
     ///SBC_mem_print_bin("Print out key", (UINT8 *)print_out_key, sizeof print_out_key);
 
+    dprint("*** Unique Information Combination --->");
     UnicodeSPrint(mrgmsg,  sizeof mrgmsg, L"SBC_Dice_DEVID Creation Succeess (%s) \n", print_out_key);
 
 
