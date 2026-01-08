@@ -451,7 +451,6 @@ UefiMain (
     btproc.ldhndl = ImageHandle;
     btproc.b_forced = FALSE;
 
-
     SBC_LogFileInit(ImageHandle);
 
     sbc_err_sysprn(SBC_LOG_CMN_PRIO_INFO, 2,

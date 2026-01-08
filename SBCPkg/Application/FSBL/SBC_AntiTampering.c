@@ -1179,8 +1179,8 @@ SBCStatus  SBC_DeviceIdKyeVerify(VOID *blkio, UINT8 *fwid, UINT8 *deckey)
     ret = SBC_DICESeedKeyPair(fwid, &key_pair);
     SBC_RET_VALIDATE_ERRCODEMSG((ret == SBCOK), SBCINVPARAM, "Device ID Key-pair gen fail");
 
-    SBC_external_mem_print_bin("Org. Priv", key_pair.d, sizeof key_pair.d);
-    SBC_external_mem_print_bin("Org. Pub", key_pair.q.value , sizeof key_pair.q);
+    SBC_external_mem_print_bin("Device Id Priv", key_pair.d, sizeof key_pair.d);
+    SBC_external_mem_print_bin("Device ID Pub", key_pair.q.value , sizeof key_pair.q);
 
     // Device ID certificate Load 
     systm_lba = (SYS_CONF_START_OFS >> SBC_RAWPRT_DFLT_SHIFT);
@@ -2433,9 +2433,9 @@ SBCStatus  SBC_FSBL_Verify(VOID *blkhnd, VOID *ansr, UINTN normbank, UINTN bm, U
 
 
     HashSize = 32;
-    SBC_mem_print_bin("FSBL File Hash",
-                  (UINT8 *)HashValue,
-                  HashSize);
+//  SBC_mem_print_bin("FSBL File Hash",
+//                (UINT8 *)HashValue,
+//                HashSize);
 
     retbool = EcDsaVerify(
         EcPubKey,
@@ -2636,7 +2636,7 @@ SBCStatus SBC_GenDeviceID(UINT8 *devid)
 
     //SBC_mem_print_bin("Device ID", devid, 32);
 
-    SBC_mem_print_bin("Device ID", devid, 32);
+    //SBC_mem_print_bin("Device ID", devid, 32);
     ZeroMem(print_out_key, 32);
     ZeroMem(mrgmsg, sizeof mrgmsg);
     SBC_LogHexToStrChar16(devid, 32, print_out_key, sizeof(print_out_key)/sizeof(print_out_key[0]),  FALSE, 0);

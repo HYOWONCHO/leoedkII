@@ -109,7 +109,7 @@ SBCStatus  SBC_DiceKeysGen(EFI_HANDLE ImageHandle, VOID *p,UINTN normbank, UINTN
         goto errdone;
     }
 //
-    SBC_mem_print_bin("Device ID", h->devid, sizeof h->devid);
+    //SBC_mem_print_bin("Device ID", h->devid, sizeof h->devid);
     ret = SBC_GenFWID(ImageHandle, h->devid, h->fwid, normbank, bm);
     if (ret != SBCOK) {
         //Print(L"FW ID generate fail \n");
@@ -1245,9 +1245,9 @@ UefiMain (
                  L"Detetion",
                  L"SBC_VENDOR_SP Success to Reconnect to All controller \n");
     }
-#ifdef _DEBUG_PRINT_ON_
-    PrintMappingTable();
-#endif
+//#ifdef _DEBUG_PRINT_ON_
+//    PrintMappingTable();
+//#endif
 
     SBC_LogElapsedTime(L"SBC Driver Load", driver_load_ns);
     sbc_err_sysprn(SBC_LOG_CMN_PRIO_INFO, 2,
