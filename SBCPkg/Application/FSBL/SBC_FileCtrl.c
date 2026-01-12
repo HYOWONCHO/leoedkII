@@ -2445,7 +2445,7 @@ EFI_STATUS SBC_CopyBlockDeviceToFile(
     return Status;
 }
 
-
+#if 1
 SBCStatus SBC_DeleteFile (
     IN CHAR16 *FilePath
     )
@@ -2517,6 +2517,73 @@ SBCStatus SBC_DeleteFile (
             TmpRoot->Close(TmpRoot); // Just open + close for cleanup
         }
     }
+
+    if (EFI_ERROR(Status))
+        return SBCFAIL;
+
+    return SBCOK;
+}
+#endif
+
+SBCStatus
+SBC_DeleteFileOnMyBootFs(
+    IN CHAR16 *FilePath
+)
+{
+    if (FilePath == NULL)
+        return SBCNULLP;
+
+    EFI_STATUS Status;
+    EFI_LOADED_IMAGE_PROTOCOL *LoadedImage = NULL;
+    EFI_SIMPLE_FILE_SYSTEM_PROTOCOL *Fs = NULL;
+    EFI_FILE_PROTOCOL *Root = NULL;
+    EFI_FILE_PROTOCOL *File = NULL;
+
+    // 1) Get device handle where this image is loaded from
+    Status = gBS->HandleProtocol(
+                    gImageHandle,
+                    &gEfiLoadedImageProtocolGuid,
+                    (VOID**)&LoadedImage
+                );
+    if (EFI_ERROR(Status) || LoadedImage == NULL)
+        return SBCFAIL;
+
+    // 2) Get SimpleFS from that device handle (this avoids wrong FS)
+    Status = gBS->HandleProtocol(
+                    LoadedImage->DeviceHandle,
+                    &gEfiSimpleFileSystemProtocolGuid,
+                    (VOID**)&Fs
+                );
+    if (EFI_ERROR(Status) || Fs == NULL)
+        return SBCFAIL;
+
+    // 3) Open root
+    Status = Fs->OpenVolume(Fs, &Root);
+    if (EFI_ERROR(Status) || Root == NULL)
+        return SBCFAIL;
+
+    // 4) Open file
+    Status = Root->Open(
+                    Root,
+                    &File,
+                    FilePath,
+                    EFI_FILE_MODE_READ | EFI_FILE_MODE_WRITE,
+                    0
+                );
+
+    if (Status == EFI_NOT_FOUND) {
+        Root->Close(Root);
+        return SBCNOTFND;
+    }
+    if (EFI_ERROR(Status)) {
+        Root->Close(Root);
+        return SBCFAIL;
+    }
+
+    // 5) Delete
+    Status = File->Delete(File); // File becomes invalid after this
+
+    Root->Close(Root);
 
     if (EFI_ERROR(Status))
         return SBCFAIL;

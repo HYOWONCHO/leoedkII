@@ -429,6 +429,7 @@ errdone:
 
 #endif
 
+#if 0
 EFI_STATUS efi_boot_fsbl_load(LV_t *lv)
 {
   EFI_STATUS                          Status;
@@ -634,6 +635,205 @@ Exit:
   }
 
   return Status;
+}
+#endif
+
+
+
+EFI_STATUS
+OpenFileOnFsHandle(
+  IN  EFI_HANDLE                       FsHandle,
+  IN  CHAR16                          *AbsPath,
+  OUT EFI_SIMPLE_FILE_SYSTEM_PROTOCOL **OutFs OPTIONAL,
+  OUT EFI_FILE_PROTOCOL               **OutRoot,
+  OUT EFI_FILE_PROTOCOL               **OutFile
+  )
+{
+  if (OutRoot == NULL || OutFile == NULL || AbsPath == NULL)
+    return EFI_INVALID_PARAMETER;
+
+  EFI_STATUS Status;
+  EFI_SIMPLE_FILE_SYSTEM_PROTOCOL *Fs = NULL;
+  EFI_FILE_PROTOCOL *Root = NULL;
+  EFI_FILE_PROTOCOL *File = NULL;
+
+  Status = gBS->HandleProtocol(
+                  FsHandle,
+                  &gEfiSimpleFileSystemProtocolGuid,
+                  (VOID**)&Fs
+                  );
+  if (EFI_ERROR(Status))
+    return Status;
+
+  Status = Fs->OpenVolume(Fs, &Root);
+  if (EFI_ERROR(Status))
+    return Status;
+
+  Status = Root->Open(
+                  Root,
+                  &File,
+                  AbsPath,
+                  EFI_FILE_MODE_READ,
+                  0
+                  );
+  if (EFI_ERROR(Status)) {
+    Root->Close(Root);
+    return Status;
+  }
+
+  if (OutFs)   *OutFs   = Fs;
+  *OutRoot = Root;
+  *OutFile = File;
+  return EFI_SUCCESS;
+}
+
+static
+EFI_STATUS
+GetFileSizeOnMyFs(
+    IN  EFI_HANDLE ImageHandle,
+    IN  CHAR16    *AbsPath,
+    OUT UINT64    *FileSize
+    )
+{
+    if (!AbsPath || !FileSize)
+        return EFI_INVALID_PARAMETER;
+
+    EFI_STATUS Status;
+    EFI_LOADED_IMAGE_PROTOCOL *LoadedImage = NULL;
+    EFI_SIMPLE_FILE_SYSTEM_PROTOCOL *Fs = NULL;
+    EFI_FILE_PROTOCOL *Root = NULL;
+    EFI_FILE_PROTOCOL *File = NULL;
+    EFI_FILE_INFO *Info = NULL;
+    UINTN InfoSz = 0;
+
+    Status = gBS->HandleProtocol(
+                    ImageHandle,
+                    &gEfiLoadedImageProtocolGuid,
+                    (VOID**)&LoadedImage
+                );
+    if (EFI_ERROR(Status) || !LoadedImage)
+        return EFI_NOT_FOUND;
+
+    Status = gBS->HandleProtocol(
+                    LoadedImage->DeviceHandle,
+                    &gEfiSimpleFileSystemProtocolGuid,
+                    (VOID**)&Fs
+                );
+    if (EFI_ERROR(Status) || !Fs)
+        return Status;
+
+    Status = Fs->OpenVolume(Fs, &Root);
+    if (EFI_ERROR(Status) || !Root)
+        return Status;
+
+    Status = Root->Open(Root, &File, AbsPath, EFI_FILE_MODE_READ, 0);
+    if (EFI_ERROR(Status)) {
+        Root->Close(Root);
+        return Status;
+    }
+
+    Status = File->GetInfo(File, &gEfiFileInfoGuid, &InfoSz, NULL);
+    if (Status != EFI_BUFFER_TOO_SMALL) {
+        File->Close(File);
+        Root->Close(Root);
+        return Status;
+    }
+
+    Info = AllocateZeroPool(InfoSz);
+    if (!Info) {
+        File->Close(File);
+        Root->Close(Root);
+        return EFI_OUT_OF_RESOURCES;
+    }
+
+    Status = File->GetInfo(File, &gEfiFileInfoGuid, &InfoSz, Info);
+    if (EFI_ERROR(Status)) {
+        FreePool(Info);
+        File->Close(File);
+        Root->Close(Root);
+        return Status;
+    }
+
+    *FileSize = Info->FileSize;
+
+    FreePool(Info);
+    File->Close(File);
+    Root->Close(Root);
+    return EFI_SUCCESS;
+}
+
+EFI_STATUS
+efi_boot_fsbl_load(LV_t *lv)
+{
+    if (!lv)
+        return EFI_INVALID_PARAMETER;
+
+#ifndef _SSBL_TEST_RUN_
+    CHAR16 *TargetPath = L"\\EFI\\BOOT\\bootx64.efi";
+#else
+    CHAR16 *TargetPath = L"\\EFI\\BOOT\\FSBL.efi";
+#endif
+
+    EFI_STATUS Status;
+    UINT64 FileSize = 0;
+
+    lv->value  = NULL;
+    lv->length = 0;
+
+    //
+    // 1) Get file size (using the filesystem of current loaded image)
+    //
+    Status = GetFileSizeOnMyFs(gImageHandle, TargetPath, &FileSize);
+    if (EFI_ERROR(Status)) {
+        return Status;
+    }
+
+    //
+    // 2) Allocate buffer and set length for SBC_ReadFile()
+    //
+    lv->value = AllocatePool((UINTN)FileSize);
+    if (!lv->value)
+        return EFI_OUT_OF_RESOURCES;
+
+    lv->length = FileSize;
+
+    //
+    // 3) Read file using your existing SBC_ReadFile()
+    //    IMPORTANT: SBC_ReadFile() expects ImageHandle to be a handle that
+    //               supports SimpleFS. Your current implementation uses
+    //               HandleProtocol(ImageHandle, SimpleFS), which usually fails
+    //               if ImageHandle is gImageHandle.
+    //
+    //    To keep using SBC_ReadFile() WITHOUT changing it, we must pass a handle
+    //    that actually has SimpleFS installed.
+    //
+    //    Therefore, we will resolve the filesystem device handle and pass it.
+    //
+    EFI_LOADED_IMAGE_PROTOCOL *LoadedImage = NULL;
+    Status = gBS->HandleProtocol(
+                    gImageHandle,
+                    &gEfiLoadedImageProtocolGuid,
+                    (VOID**)&LoadedImage
+                );
+    if (EFI_ERROR(Status) || !LoadedImage) {
+        FreePool(lv->value);
+        lv->value = NULL;
+        lv->length = 0;
+        return EFI_NOT_FOUND;
+    }
+
+    //
+    // Use the device handle (ESP partition handle) that has SimpleFS
+    //
+    Status = SBC_ReadFile(LoadedImage->DeviceHandle, TargetPath, lv);
+    if (EFI_ERROR(Status)) {
+        FreePool(lv->value);
+        lv->value = NULL;
+        lv->length = 0;
+        return Status;
+    }
+
+    return EFI_SUCCESS;
 }
 
 SBCStatus  _read_fsbl_image(LV_t *lv)

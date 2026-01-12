@@ -729,6 +729,8 @@ SBCStatus SBC_RecryptoProtectedSW(VOID *handle, UINTN ofs,  UINT8* sw_secret_key
     SBC_external_mem_print_bin("Protected SW Enc Buf", 
                            (UINT8 *)encctx.out.value,
                            SBC_AT_HASH_LEN);
+                           //encctx.out.length);
+                           
 
     // Write the Encrypt Data 
 #ifdef _TEST_ERROR_SET_    
@@ -843,6 +845,14 @@ SBCStatus SBC_RecryptoProtectedSW(VOID *handle, UINTN ofs,  UINT8* sw_secret_key
         }
 
     }
+
+    sbc_err_sysprn(SBC_LOG_CMN_PRIO_INFO, 2,
+             SYS_LOG_HOST_BOOT,
+             SYS_LOG_APP_NAME,
+             SYS_LOG_CSC_NAME,
+             4,
+             SYS_LOG_EVT_VALDIATION,
+             L"SBC_Integrity_ Protected SW is Saving encrypted block to raw partition");
 
 //  {
 //      UINTN node_off;

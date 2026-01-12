@@ -1191,7 +1191,7 @@ VOID SBC_LogPrint(
     //final_ascii_len = remove_all_space(wrlog_ptr, AsciiConvertedLen); // Pass converted length, not full buffer size
 
     //dprint("SBC_LogPrint: ASCII Log msg after space removal: %a (Final Length: %d)\n", wrlog_ptr, final_ascii_len);
-
+#if 0
     {
         EFI_SIMPLE_FILE_SYSTEM_PROTOCOL *SimpleFs;
         EFI_FILE_PROTOCOL *Root;
@@ -1258,6 +1258,7 @@ VOID SBC_LogPrint(
 
         FreePool(AsciiBuf);
     }
+#endif
 
 ExitLog:
     return;

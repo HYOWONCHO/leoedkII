@@ -1209,6 +1209,14 @@ void  SBC_RecoveryBootProcessing(VOID *priv)
                                       0,
                                       BOOT_MODE_NORMAL,
                                       KEY_MODE_NORMAL);
+
+            sbc_err_sysprn(SBC_LOG_CMN_PRIO_INFO, 2,
+                     SYS_LOG_HOST_BOOT,
+                     SYS_LOG_APP_NAME,
+                     SYS_LOG_CSC_NAME,
+                     4,
+                     SYS_LOG_EVT_DETECTION,
+                     L"SBC_Integrity_Boot mode is NORMAL mode and Reboot");
             break;
         case KEY_MODE_UPDATE:
             dprint("KEY_MODE_UPDATE");
@@ -1263,6 +1271,13 @@ void  SBC_RecoveryBootProcessing(VOID *priv)
                                       BOOT_MODE_NORMAL,
                                       KEY_MODE_NORMAL);
 
+            sbc_err_sysprn(SBC_LOG_CMN_PRIO_INFO, 2,
+                     SYS_LOG_HOST_BOOT,
+                     SYS_LOG_APP_NAME,
+                     SYS_LOG_CSC_NAME,
+                     4,
+                     SYS_LOG_EVT_DETECTION,
+                     L"SBC_Integrity_Boot mode is NORMAL mode and Reboot");
             //((boot_proc_t *)priv)->prevmode = 0;
             //ret = SBC_BootKeyModeChange(BOOT_MODE_NORMAL, KEY_MODE_NORMAL, priv);
             break;
@@ -1384,6 +1399,14 @@ static void _update_reset_check_and_behavior(VOID *priv)
             // bug fixed at 20251019 - Normal to Recovery in Update
             // bug fixed at 20201022 - Recoveyr to Normal
             SBC_BootKeyModeChange(BOOT_MODE_NORMAL, KEY_MODE_NORMAL, priv);
+
+            sbc_err_sysprn(SBC_LOG_CMN_PRIO_INFO, 2,
+                     SYS_LOG_HOST_BOOT,
+                     SYS_LOG_APP_NAME,
+                     SYS_LOG_CSC_NAME,
+                     4,
+                     SYS_LOG_EVT_DETECTION,
+                     L"SBC_Integrity_Boot mode is NORMAL mode and Reboot");
             break;
         case SB_PROC_ST_ABNRAM:
             dprint("Boot is AbNormal");
@@ -1438,6 +1461,13 @@ static VOID _handling_sb_process_for_bm_normal(VOID *priv)
     case SB_PROC_ST_NRMA:
         if(stay_recovery_flag != 1) {
             SBC_BootKeyModeChange(BOOT_MODE_NORMAL, KEY_MODE_NORMAL, priv);
+            sbc_err_sysprn(SBC_LOG_CMN_PRIO_INFO, 2,
+                     SYS_LOG_HOST_BOOT,
+                     SYS_LOG_APP_NAME,
+                     SYS_LOG_CSC_NAME,
+                     4,
+                     SYS_LOG_EVT_DETECTION,
+                     L"SBC_Integrity_Boot mode is NORMAL mode and Reboot");
         }
 
         stay_recovery_flag = 0;

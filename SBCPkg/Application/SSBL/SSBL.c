@@ -451,7 +451,7 @@ UefiMain (
     btproc.ldhndl = ImageHandle;
     btproc.b_forced = FALSE;
 
-    SBC_LogFileInit(ImageHandle);
+    //SBC_LogFileInit(ImageHandle);
 
     sbc_err_sysprn(SBC_LOG_CMN_PRIO_INFO, 2,
                  SYS_LOG_HOST_BOOT,
@@ -542,7 +542,9 @@ UefiMain (
                  L"SBC_tamper_ SSBL signature verification faied\n");
           retval = EFI_INVALID_PARAMETER;
           btproc.bootst = SB_PROC_ST_ABNRAM;
-          btproc.b_forced = TRUE;
+          if (h_rawptrheader.bootmode == BOOT_MODE_NORMAL) {
+              btproc.b_forced = TRUE;
+          }
           goto errdone;
     }
 
@@ -563,7 +565,10 @@ UefiMain (
                  L"SBC_tamper_ OS image signature verification faied\n");
           retval = EFI_INVALID_PARAMETER;
           btproc.bootst = SB_PROC_ST_ABNRAM;
-          btproc.b_forced = TRUE;
+          if (h_rawptrheader.bootmode == BOOT_MODE_NORMAL) {
+              btproc.b_forced = TRUE;
+          }
+          
           goto errdone;
     }
     //return EFI_SUCCESS;

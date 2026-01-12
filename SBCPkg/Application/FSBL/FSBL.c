@@ -1146,6 +1146,11 @@ SBCStatus SBC_RunSsblNormalScenario(
 extern EFI_STATUS SBC_LogFileInit( EFI_HANDLE        logHandle);
 extern EFI_STATUS MapRebuild(VOID);
 extern VOID PrintMappingTable();
+extern SBCStatus
+SBC_DeleteFileOnMyBootFs(
+    IN CHAR16 *FilePath
+);
+
 
 EFI_STATUS
 EFIAPI
@@ -1188,14 +1193,14 @@ UefiMain (
 #endif
 
 
-    SBC_LogFileInit(ImageHandle);
+    //SBC_LogFileInit(ImageHandle);
  
     sys_start_time = SBC_PerfNowTicks();
 
     SBC_TIME_BLOCKS_NS (driver_load_ns,
         { retval = SBC_DrveriInit(); });
 
-    ret = SBC_DeleteFile (EFI_BOOT_SSBL_PATH);
+    ret = SBC_DeleteFileOnMyBootFs(EFI_BOOT_SSBL_PATH);
      if (ret == SBCNOTFND) {
              sbc_err_sysprn(SBC_LOG_CMN_PRIO_INFO, 2,
                   SYS_LOG_HOST_BOOT,
