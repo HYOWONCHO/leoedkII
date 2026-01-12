@@ -1657,7 +1657,7 @@ UefiMain (
                      SYS_LOG_EVT_DETECTION,
                      L"SBC_tamper_ SSBL signature verification faied");
             btproc.bootst = SB_PROC_ST_ABNRAM;
-            btproc.b_forced = TRUE;
+            //btproc.b_forced = TRUE;
             retval = EFI_INVALID_PARAMETER;
             factory_md_abnormal_boot_state(&btproc);
 #ifndef _ALL_PASS_
@@ -1752,7 +1752,7 @@ UefiMain (
                      L"Detection",
                      L"SBC_Dice_Verify Failed to Device ID verify");
           retval = EFI_INVALID_PARAMETER;
-          btproc.b_forced = TRUE;
+          //btproc.b_forced = TRUE;
           btproc.bootst = SB_PROC_ST_ABNRAM;
 #ifndef _ALL_PASS_
           goto errdone;
@@ -1796,7 +1796,7 @@ UefiMain (
                      SYS_LOG_EVT_DETECTION,
                      L"SBC_tamper_ SSBL signature verification faied");
             btproc.bootst = SB_PROC_ST_ABNRAM;
-            btproc.b_forced = TRUE;
+            //btproc.b_forced = TRUE;
             retval = EFI_INVALID_PARAMETER;
 #ifndef _ALL_PASS_
           goto errdone;

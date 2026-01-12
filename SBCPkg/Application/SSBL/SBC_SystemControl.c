@@ -1080,6 +1080,7 @@ void  SBC_RecoveryBootProcessing(VOID *priv)
     // Boot Mode is Recovery and Boot Status is abnormal 
     // Boot Mode is change from Recovery to Factory
     // Than, Key mode is Boot
+#if 1 // At 20260112
     if(bt_proc->bootst == SB_PROC_ST_ABNRAM) {
         //SBC_BootKeyModeChange(BOOT_MODE_FACTORY, bt_proc->km, priv);
         SBC_BootKeyModeChange(BOOT_MODE_FACTORY, KEY_MODE_NORMAL, priv);
@@ -1098,6 +1099,9 @@ void  SBC_RecoveryBootProcessing(VOID *priv)
         SBC_GRUB_LoadAndStart(bt_proc->ldhndl);
 #endif
     }
+#else
+     bt_proc->bootst = SB_PROC_ST_NNRMA;
+#endif
 
 //    if(_check_prev_fw(bt_proc->pvs_sw_bnk) != TRUE) {
 //        SBC_BootKeyModeChange(BOOT_MODE_FACTORY, KEY_MODE_BOOT, priv);
@@ -1225,7 +1229,7 @@ void  SBC_RecoveryBootProcessing(VOID *priv)
                             bt_proc->blkhnd,
                             ((LV_t *)bt_proc->baseansr)->value,
                             ((LV_t *)bt_proc->baseansr)->length,
-                            ((atp_ident_t *)bt_proc->keyinfo)->migid,
+                            new_dice_id.osid,
                             BASE_ANS_KEY_STR
             );
 
@@ -1257,19 +1261,19 @@ void  SBC_RecoveryBootProcessing(VOID *priv)
                 goto errdone;
             }
 
-//          ret = SBC_RawPrtHdrChange(priv,
-//                                    bt_proc->pvs_sw_bnk,
-//                                    bt_proc->curr_sw_bnk,
-//                                    0,
-//                                    BOOT_MODE_NORMAL,
-//                                    KEY_MODE_NORMAL);
-
             ret = SBC_RawPrtHdrChange(priv,
-                                      bt_proc->curr_sw_bnk,
                                       bt_proc->pvs_sw_bnk,
-                                      1,
+                                      bt_proc->curr_sw_bnk,
+                                      0,
                                       BOOT_MODE_NORMAL,
                                       KEY_MODE_NORMAL);
+
+//          ret = SBC_RawPrtHdrChange(priv,
+//                                    bt_proc->curr_sw_bnk,
+//                                    bt_proc->pvs_sw_bnk,
+//                                    1,
+//                                    BOOT_MODE_NORMAL,
+//                                    KEY_MODE_NORMAL);
 
             sbc_err_sysprn(SBC_LOG_CMN_PRIO_INFO, 2,
                      SYS_LOG_HOST_BOOT,

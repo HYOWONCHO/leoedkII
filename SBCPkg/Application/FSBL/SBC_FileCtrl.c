@@ -2783,6 +2783,432 @@ VOID SBC_FileCtrlTestMain(VOID)
 
 }
 
+#ifndef SBC_FILE_CHUNK_SZ
+#define SBC_FILE_CHUNK_SZ (64 * 1024) // 64KB
+#endif
+
+SBCStatus
+SBC_FindEfiFileSystemProtocol_X(
+    OUT EFI_HANDLE **OutHandles,
+    OUT UINTN      *OutCount
+)
+{
+    if (!OutHandles || !OutCount)
+        return SBCNULLP;
+
+    *OutHandles = NULL;
+    *OutCount   = 0;
+
+    EFI_STATUS Status;
+    EFI_HANDLE *Handles = NULL;
+    UINTN Count = 0;
+
+    Status = gBS->LocateHandleBuffer(
+                    ByProtocol,
+                    &gEfiSimpleFileSystemProtocolGuid,
+                    NULL,
+                    &Count,
+                    &Handles
+             );
+    if (EFI_ERROR(Status) || Handles == NULL || Count == 0) {
+        eprint("Locate Handle Buffer fail (%r)", Status);
+        return SBCFAIL;
+    }
+
+    *OutHandles = Handles; // caller FreePool()
+    *OutCount   = Count;
+
+    dprint("Out Handles : 0x%x , Count : %ld", 
+           *OutHandles, *OutCount);
+    return SBCOK;
+}
+
+SBCStatus
+SBC_OpenRootOnFsHandle(
+    IN  EFI_HANDLE        FsHandle,
+    OUT EFI_FILE_PROTOCOL **OutRoot
+)
+{
+    if (!OutRoot)
+        return SBCNULLP;
+
+    *OutRoot = NULL;
+
+    EFI_STATUS Status;
+    EFI_SIMPLE_FILE_SYSTEM_PROTOCOL *Fs = NULL;
+
+    Status = gBS->HandleProtocol(
+                    FsHandle,
+                    &gEfiSimpleFileSystemProtocolGuid,
+                    (VOID**)&Fs
+             );
+    if (EFI_ERROR(Status) || !Fs)
+        return SBCFAIL;
+
+    Status = Fs->OpenVolume(Fs, OutRoot);
+    if (EFI_ERROR(Status) || !(*OutRoot))
+        return SBCFAIL;
+
+    return SBCOK;
+}
+
+SBCStatus
+SBC_FindFileBufHndl_X(
+    IN  CHAR16     *FilePath,
+    IN  EFI_HANDLE *Handles,
+    IN  UINTN       HandleCount,
+    OUT UINTN      *OutIndex
+)
+{
+    if (!FilePath || !Handles || !OutIndex)
+        return SBCNULLP;
+
+    for (UINTN i = 0; i < HandleCount; i++) {
+        EFI_FILE_PROTOCOL *Root = NULL;
+        EFI_FILE_PROTOCOL *File = NULL;
+
+        if (SBC_OpenRootOnFsHandle(Handles[i], &Root) != SBCOK)
+            continue;
+
+        EFI_STATUS st = Root->Open(Root, &File, FilePath, EFI_FILE_MODE_READ, 0);
+        if (!EFI_ERROR(st) && File) {
+            File->Close(File);
+            Root->Close(Root);
+            *OutIndex = i;
+            return SBCOK;
+        }
+
+        dprint("[Not Error] : Open() : %r", st);
+
+        if (File) File->Close(File);
+        Root->Close(Root);
+    }
+
+    return SBCNOTFND;
+}
+
+SBCStatus
+SBC_GetFileSizeOnHandle(
+    IN  EFI_HANDLE FsHandle,
+    IN  CHAR16     *FilePath,
+    OUT UINTN      *OutSize
+)
+{
+    if (!FilePath || !OutSize)
+        return SBCNULLP;
+
+    *OutSize = 0;
+
+    EFI_FILE_PROTOCOL *Root = NULL;
+    EFI_FILE_PROTOCOL *File = NULL;
+    EFI_FILE_INFO *Info = NULL;
+    UINTN InfoSz = 0;
+
+    SBCStatus r = SBC_OpenRootOnFsHandle(FsHandle, &Root);
+    if (r != SBCOK) return r;
+
+    EFI_STATUS st = Root->Open(Root, &File, FilePath, EFI_FILE_MODE_READ, 0);
+    if (st == EFI_NOT_FOUND) { Root->Close(Root); return SBCNOTFND; }
+    if (EFI_ERROR(st) || !File) { Root->Close(Root); return SBCFAIL; }
+
+    st = File->GetInfo(File, &gEfiFileInfoGuid, &InfoSz, NULL);
+    if (st != EFI_BUFFER_TOO_SMALL) {
+        File->Close(File); Root->Close(Root);
+        return SBCFAIL;
+    }
+
+    Info = AllocateZeroPool(InfoSz);
+    if (!Info) {
+        File->Close(File); Root->Close(Root);
+        return SBCFAIL;
+    }
+
+    st = File->GetInfo(File, &gEfiFileInfoGuid, &InfoSz, Info);
+    if (EFI_ERROR(st)) {
+        FreePool(Info);
+        File->Close(File); Root->Close(Root);
+        return SBCFAIL;
+    }
+
+    *OutSize = (UINTN)Info->FileSize;
+
+    FreePool(Info);
+    File->Close(File);
+    Root->Close(Root);
+    return SBCOK;
+}
+
+SBCStatus
+SBC_WriteFileOnHandle(
+    IN EFI_HANDLE FsHandle,
+    IN CHAR16    *FilePath,
+    IN VOID      *Data,
+    IN UINTN      DataSize,
+    IN BOOLEAN    Overwrite
+)
+{
+    if (!FilePath || !Data)
+        return SBCNULLP;
+
+    EFI_FILE_PROTOCOL *Root = NULL;
+    EFI_FILE_PROTOCOL *File = NULL;
+
+    SBCStatus r = SBC_OpenRootOnFsHandle(FsHandle, &Root);
+    if (r != SBCOK) return r;
+
+    //
+    // If Overwrite, open/create with write.
+    // FAT driver will truncate if you call SetPosition/SetInfo; simplest is:
+    // - Open with CREATE
+    //
+    UINT64 Mode = EFI_FILE_MODE_READ | EFI_FILE_MODE_WRITE | EFI_FILE_MODE_CREATE;
+
+    EFI_STATUS st = Root->Open(Root, &File, FilePath, Mode, 0);
+    if (EFI_ERROR(st) || !File) {
+        Root->Close(Root);
+        return SBCFAIL;
+    }
+
+    //
+    // If you must strictly "delete then write", do it here:
+    // (Optional) If Overwrite is TRUE, you can delete and reopen
+    //
+    if (Overwrite) {
+        // Truncate by setting file position to 0 and writing only new size,
+        // but some drivers may leave tail data. Safest is to delete then recreate.
+        File->Close(File);
+        File = NULL;
+
+        // Try delete (ignore not found)
+        EFI_FILE_PROTOCOL *Tmp = NULL;
+        st = Root->Open(Root, &Tmp, FilePath, EFI_FILE_MODE_READ | EFI_FILE_MODE_WRITE, 0);
+        if (!EFI_ERROR(st) && Tmp) {
+            Tmp->Delete(Tmp); // handle invalid after this
+        }
+
+        st = Root->Open(Root, &File, FilePath, Mode, 0);
+        if (EFI_ERROR(st) || !File) {
+            Root->Close(Root);
+            return SBCFAIL;
+        }
+    }
+
+    UINTN Wr = DataSize;
+    st = File->Write(File, &Wr, Data);
+    File->Close(File);
+    Root->Close(Root);
+
+    if (EFI_ERROR(st) || Wr != DataSize)
+        return SBCIO;
+
+    return SBCOK;
+}
+
+SBCStatus
+SBC_DeleteFileOnHandle(
+    IN EFI_HANDLE FsHandle,
+    IN CHAR16    *FilePath
+)
+{
+    if (!FilePath)
+        return SBCNULLP;
+
+    EFI_FILE_PROTOCOL *Root = NULL;
+    EFI_FILE_PROTOCOL *File = NULL;
+
+    SBCStatus r = SBC_OpenRootOnFsHandle(FsHandle, &Root);
+    if (r != SBCOK) return r;
+
+    EFI_STATUS st = Root->Open(
+                        Root, &File, FilePath,
+                        EFI_FILE_MODE_READ | EFI_FILE_MODE_WRITE,
+                        0
+                    );
+
+    if (st == EFI_NOT_FOUND) {
+        Root->Close(Root);
+        return SBCNOTFND;
+    }
+    if (EFI_ERROR(st) || !File) {
+        Root->Close(Root);
+        return SBCFAIL;
+    }
+
+    // Optional: clear EFI_FILE_READ_ONLY attribute before delete (if needed)
+
+    st = File->Delete(File); // File invalid after this
+    Root->Close(Root);
+
+    if (EFI_ERROR(st))
+        return SBCFAIL;
+
+    return SBCOK;
+}
+
+
+SBCStatus
+SBC_ReadFileOnHandle(
+    IN  EFI_HANDLE FsHandle,
+    IN  CHAR16     *FilePath,
+    OUT LV_t       *OutLv
+)
+{
+    if (FilePath == NULL || OutLv == NULL)
+        return SBCNULLP;
+
+    OutLv->value  = NULL;
+    OutLv->length = 0;
+
+    EFI_STATUS Status;
+    EFI_SIMPLE_FILE_SYSTEM_PROTOCOL *Fs = NULL;
+    EFI_FILE_PROTOCOL *Root = NULL;
+    EFI_FILE_PROTOCOL *File = NULL;
+    EFI_FILE_INFO *Info = NULL;
+    UINTN InfoSz = 0;
+    UINTN ReadSz = 0;
+
+    //
+    // Get SimpleFS from the given handle
+    //
+    Status = gBS->HandleProtocol(
+                    FsHandle,
+                    &gEfiSimpleFileSystemProtocolGuid,
+                    (VOID**)&Fs
+             );
+    if (EFI_ERROR(Status) || Fs == NULL) {
+        eprint("Handle Protocol : %r", Status);
+        return SBCFAIL;
+    }
+
+    //
+    // Open volume root
+    //
+    Status = Fs->OpenVolume(Fs, &Root);
+    if (EFI_ERROR(Status) || Root == NULL) {
+        eprint("OpenVolume Protocol : %r", Status);
+        return SBCFAIL;
+    }
+
+    //
+    // Open file (absolute path recommended)
+    //
+    Status = Root->Open(Root, &File, FilePath, EFI_FILE_MODE_READ, 0);
+    if (Status == EFI_NOT_FOUND) {
+        eprint("Open Protocol : %r", Status);
+        Root->Close(Root);
+        return SBCNOTFND;
+    }
+    if (EFI_ERROR(Status) || File == NULL) {
+        eprint("Open Protocol : %r", Status);
+        Root->Close(Root);
+        return SBCFAIL;
+    }
+
+    //
+    // Query file info size
+    //
+    Status = File->GetInfo(File, &gEfiFileInfoGuid, &InfoSz, NULL);
+    if (Status != EFI_BUFFER_TOO_SMALL) {
+        eprint("Query file info size Protocol : %r", Status);
+        File->Close(File);
+        Root->Close(Root);
+        return SBCFAIL;
+    }
+
+    //
+    // Get file info
+    //
+    Info = AllocateZeroPool(InfoSz);
+    if (Info == NULL) {
+        File->Close(File);
+        Root->Close(Root);
+        return SBCFAIL;
+    }
+
+    Status = File->GetInfo(File, &gEfiFileInfoGuid, &InfoSz, Info);
+    if (EFI_ERROR(Status)) {
+        eprint("Get file info Protocol : %r", Status);
+        FreePool(Info);
+        File->Close(File);
+        Root->Close(Root);
+        return SBCFAIL;
+    }
+
+    //
+    // Allocate output buffer
+    //
+    if (Info->FileSize == 0) {
+        // Empty file is valid: return OK with empty buffer
+        eprint("Empty file is valid: return OK with empty buffer");
+        FreePool(Info);
+        File->Close(File);
+        Root->Close(Root);
+        OutLv->value  = NULL;
+        OutLv->length = 0;
+        return SBCOK;
+    }
+
+    // Prevent UINTN truncation issues (rare on X64 but safe)
+    if (Info->FileSize > MAX_UINTN) {
+        eprint("revent UINTN truncation issues (rare on X64 but safe)");
+        FreePool(Info);
+        File->Close(File);
+        Root->Close(Root);
+        return SBCFAIL;
+    }
+
+    OutLv->length = (UINT64)Info->FileSize;
+    OutLv->value  = AllocateZeroPool((UINTN)Info->FileSize);
+
+    FreePool(Info);
+    Info = NULL;
+
+    if (OutLv->value == NULL) {
+        OutLv->length = 0;
+        File->Close(File);
+        Root->Close(Root);
+        return SBCFAIL;
+    }
+
+    //
+    // Read file contents
+    //
+    ReadSz = (UINTN)OutLv->length;
+    Status = File->Read(File, &ReadSz, OutLv->value);
+    if (EFI_ERROR(Status)) {
+        eprint("File Read %r", Status);
+        FreePool(OutLv->value);
+        OutLv->value  = NULL;
+        OutLv->length = 0;
+        File->Close(File);
+        Root->Close(Root);
+        return SBCIO;
+    }
+
+    //
+    // If short read occurred, treat as I/O error for firmware payloads
+    //
+    if (ReadSz != (UINTN)OutLv->length) {
+        eprint("Read size invalid (ReadSz: %ld, Out Sz : %ld)",
+               ReadSz, (UINTN)OutLv->length);
+        FreePool(OutLv->value);
+        OutLv->value  = NULL;
+        OutLv->length = 0;
+        File->Close(File);
+        Root->Close(Root);
+        return SBCIO;
+    }
+
+    //
+    // Close handles
+    //
+    File->Close(File);
+    Root->Close(Root);
+
+    return SBCOK;
+}
+
+
 
 
 

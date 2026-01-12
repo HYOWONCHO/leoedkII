@@ -382,6 +382,7 @@ GetFileSizeOnMyFs(
     return EFI_SUCCESS;
 }
 
+#if 1
 EFI_STATUS
 efi_boot_fsbl_load(LV_t *rdlv)
 {
@@ -417,11 +418,47 @@ efi_boot_fsbl_load(LV_t *rdlv)
 errdone:
 
     if (ret != SBCOK) {
-        retrun EFI_NO_MEDIA;
+        return EFI_NO_MEDIA;
     }
 
     return retval;
 }
+#else
+SBCStatus
+efi_boot_fsbl_load(LV_t *rdlv)
+{
+    if (!rdlv) return SBCNULLP;
+
+    EFI_HANDLE *Handles = NULL;
+    UINTN FsCount = 0;
+    UINTN FsIndex = 0;
+
+    rdlv->value = NULL;
+    rdlv->length = 0;
+
+    SBCStatus r = SBC_FindEfiFileSystemProtocol_X(&Handles, &FsCount);
+    if (r != SBCOK) {
+        eprint("Find file system protocol error ");
+        return r;
+    }
+
+    r = SBC_FindFileBufHndl_X(L"\\EFI\\BOOT\\bootx64.efi", Handles, FsCount, &FsIndex);
+    if (r != SBCOK) {
+        eprint("Find Handle Not Found");
+        FreePool(Handles);
+        return r;
+    }
+
+    EFI_HANDLE FsHandle = Handles[FsIndex];
+
+    // Size/Read are pinned to the same FsHandle
+    r = SBC_ReadFileOnHandle(FsHandle, L"\\EFI\\BOOT\\bootx64.efi", rdlv);
+
+    FreePool(Handles);
+
+    return r;
+}
+#endif
 
 
 #if 0

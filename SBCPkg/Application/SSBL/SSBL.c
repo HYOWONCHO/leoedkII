@@ -548,6 +548,14 @@ UefiMain (
           goto errdone;
     }
 
+    sbc_err_sysprn(SBC_LOG_CMN_PRIO_ERR, 2,
+                 SYS_LOG_HOST_BOOT,
+                 SYS_LOG_APP_NAME,
+                 SYS_LOG_CSC_NAME,
+                 8,
+                 SYS_LOG_EVT_DETECTION,
+                 L"SBC_tamper_ SSBL signature verification success\n");
+
 #ifdef _TEST_BED_
     dprint("*** 5.3.6.1 5.Extract the Boot FW  baseanswer --->");
     SBC_mem_print_bin("Base Answer", baseansr.value, baseansr.length);

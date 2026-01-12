@@ -489,4 +489,141 @@ SBCStatus SBC_RawPrtHdrChange(
     UINT32 prevmode, 
     UINT32 bm, 
     UINT32 km);
+
+
+/**
+  Locate all EFI Simple File System handles.
+
+  @param[out] OutHandles   Pointer to array of EFI_HANDLEs (caller must FreePool)
+  @param[out] OutCount     Number of handles returned
+
+  @retval SBCOK            Success
+  @retval SBCFAIL          Failed to locate file systems
+  @retval SBCNULLP         Invalid parameter
+**/
+SBCStatus
+SBC_FindEfiFileSystemProtocol_X(
+    OUT EFI_HANDLE **OutHandles,
+    OUT UINTN      *OutCount
+    );
+
+/**
+  Find which file system handle contains the specified file.
+
+  @param[in]  FilePath     Absolute file path (e.g. "\\EFI\\BOOT\\bootx64.efi")
+  @param[in]  Handles      Array of file system handles
+  @param[in]  HandleCount  Number of handles
+  @param[out] OutIndex     Index of the handle containing the file
+
+  @retval SBCOK            File found
+  @retval SBCNOTFND        File not found on any FS
+  @retval SBCFAIL          Internal error
+  @retval SBCNULLP         Invalid parameter
+**/
+SBCStatus
+SBC_FindFileBufHndl_X(
+    IN  CHAR16     *FilePath,
+    IN  EFI_HANDLE *Handles,
+    IN  UINTN       HandleCount,
+    OUT UINTN      *OutIndex
+    );
+
+//
+// -----------------------------------------------------------------------------
+// File Size / Read / Write / Delete (FS Handle based)
+// -----------------------------------------------------------------------------
+
+/**
+  Get file size using a specific file system handle.
+
+  IMPORTANT:
+  - This function MUST NOT use LocateProtocol().
+  - File size is retrieved only from the specified FS handle.
+
+  @param[in]  FsHandle     File system handle
+  @param[in]  FilePath    Absolute file path
+  @param[out] OutSize     File size in bytes
+
+  @retval SBCOK            Success
+  @retval SBCNOTFND        File not found
+  @retval SBCFAIL          Failed to get file size
+  @retval SBCNULLP         Invalid parameter
+**/
+SBCStatus
+SBC_GetFileSizeOnHandle(
+    IN  EFI_HANDLE FsHandle,
+    IN  CHAR16     *FilePath,
+    OUT UINTN      *OutSize
+    );
+
+/**
+  Read entire file into memory using a specific file system handle.
+
+  - Allocates buffer internally.
+  - Caller must FreePool(OutLv->value) on success.
+  - OutLv is cleared on failure.
+
+  @param[in]  FsHandle     File system handle
+  @param[in]  FilePath    Absolute file path
+  @param[out] OutLv       Output buffer and size
+
+  @retval SBCOK            Success
+  @retval SBCNOTFND        File not found
+  @retval SBCIO            Read error or short read
+  @retval SBCFAIL          Allocation or internal error
+  @retval SBCNULLP         Invalid parameter
+**/
+SBCStatus
+SBC_ReadFileOnHandle(
+    IN  EFI_HANDLE FsHandle,
+    IN  CHAR16     *FilePath,
+    OUT LV_t       *OutLv
+    );
+
+/**
+  Write data to a file using a specific file system handle.
+
+  - Can overwrite existing file or create a new one.
+  - Uses the same FS handle to avoid write-protected issues.
+
+  @param[in] FsHandle      File system handle
+  @param[in] FilePath     Absolute file path
+  @param[in] Data          Pointer to data buffer
+  @param[in] DataSize      Data size in bytes
+  @param[in] Overwrite     TRUE to delete/recreate existing file
+
+  @retval SBCOK            Success
+  @retval SBCIO            Write failure
+  @retval SBCFAIL          Internal error
+  @retval SBCNULLP         Invalid parameter
+**/
+SBCStatus
+SBC_WriteFileOnHandle(
+    IN EFI_HANDLE FsHandle,
+    IN CHAR16    *FilePath,
+    IN VOID      *Data,
+    IN UINTN      DataSize,
+    IN BOOLEAN    Overwrite
+    );
+
+/**
+  Delete a file using a specific file system handle.
+
+  NOTE:
+  - LocateProtocol() must NOT be used.
+  - Always delete using the same FS handle used for read/write.
+
+  @param[in] FsHandle      File system handle
+  @param[in] FilePath     Absolute file path
+
+  @retval SBCOK            Success
+  @retval SBCNOTFND        File not found
+  @retval SBCFAIL          Delete failed
+  @retval SBCNULLP         Invalid parameter
+**/
+SBCStatus
+SBC_DeleteFileOnHandle(
+    IN EFI_HANDLE FsHandle,
+    IN CHAR16    *FilePath
+    );
 #endif
