@@ -1206,6 +1206,13 @@ void  SBC_RecoveryBootProcessing(VOID *priv)
 //                                    0,
 //                                    BOOT_MODE_NORMAL,
 //                                    KEY_MODE_NORMAL);
+            sbc_err_sysprn(SBC_LOG_CMN_PRIO_INFO, 2,
+                     SYS_LOG_HOST_BOOT,
+                     SYS_LOG_APP_NAME,
+                     SYS_LOG_CSC_NAME,
+                     4,
+                     SYS_LOG_EVT_DETECTION,
+                     L"SBC_tamper_Updated boot firmware invalid and initiating rollback to previous version");
 
             ret = SBC_RawPrtHdrChangeWithRecovery(priv,
                                       bt_proc->pvs_sw_bnk,
@@ -1260,6 +1267,15 @@ void  SBC_RecoveryBootProcessing(VOID *priv)
                 SBC_BootKeyModeChange(BOOT_MODE_FACTORY, KEY_MODE_UPDATE, priv);
                 goto errdone;
             }
+
+
+            sbc_err_sysprn(SBC_LOG_CMN_PRIO_INFO, 2,
+                     SYS_LOG_HOST_BOOT,
+                     SYS_LOG_APP_NAME,
+                     SYS_LOG_CSC_NAME,
+                     4,
+                     SYS_LOG_EVT_DETECTION,
+                     L"SBC_tamper_Updated boot firmware invalid and initiating rollback to previous version");
 
             ret = SBC_RawPrtHdrChange(priv,
                                       bt_proc->pvs_sw_bnk,

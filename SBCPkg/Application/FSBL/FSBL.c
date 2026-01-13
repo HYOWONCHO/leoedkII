@@ -213,7 +213,7 @@ SBCStatus SBC_BootModeFactory(VOID *blkhnd, VOID *ImageHandle)
                                      fname,
                                      NULL);
   if (EFI_ERROR(retval)) {
-    eprint("Factory SSBL File Create Fail");
+    eprint("Factory SSBL File Create Fail : %r", retval);
     ret = SBCNOTFND;
     goto errdone;
   }
@@ -1200,7 +1200,10 @@ UefiMain (
     SBC_TIME_BLOCKS_NS (driver_load_ns,
         { retval = SBC_DrveriInit(); });
 
-    ret = SBC_DeleteFileOnMyBootFs(EFI_BOOT_SSBL_PATH);
+
+    //ret = SBC_DeleteFileOnMyBootFs(EFI_BOOT_SSBL_PATH);
+    ret = SBC_DeleteFile(EFI_BOOT_SSBL_PATH);
+    
      if (ret == SBCNOTFND) {
              sbc_err_sysprn(SBC_LOG_CMN_PRIO_INFO, 2,
                   SYS_LOG_HOST_BOOT,
@@ -1230,7 +1233,6 @@ UefiMain (
                   L"Detetion",
                   L"SBC_VENDOR_SP Success to delete the \\EFI\\BOOT\\SSBL.efi \n");
 
-
     retval =  MapRebuild();
     if (EFI_ERROR(retval)) {
       sbc_err_sysprn(SBC_LOG_CMN_PRIO_INFO, 2,
@@ -1250,6 +1252,8 @@ UefiMain (
                  L"Detetion",
                  L"SBC_VENDOR_SP Success to Reconnect to All controller \n");
     }
+
+
 //#ifdef _DEBUG_PRINT_ON_
 //    PrintMappingTable();
 //#endif
@@ -1485,7 +1489,9 @@ UefiMain (
                  SYS_LOG_EVT_DETECTION,
                  L"SBC_tamper_ FSBL signature verification faied\n");
           retval = EFI_INVALID_PARAMETER;
-          btproc.b_forced = TRUE;
+          if (h_rawprtheader.bootmode  == BOOT_MODE_NORMAL) {
+              btproc.b_forced = TRUE;
+          }
           btproc.bootst = SB_PROC_ST_ABNRAM;
 #ifndef _ALL_PASS_
           goto errdone;
@@ -1506,7 +1512,9 @@ UefiMain (
              L"SBC_Dice_Key HW&SW Base Key Creation Fail");
         retval = EFI_INVALID_PARAMETER;
         btproc.bootst = SB_PROC_ST_ABNRAM;
-        btproc.b_forced = TRUE;
+          if (h_rawprtheader.bootmode  == BOOT_MODE_NORMAL) {
+              btproc.b_forced = TRUE;
+          }
 #ifndef _ALL_PASS_
         goto errdone;
 #endif
@@ -1544,7 +1552,9 @@ UefiMain (
                      L"SBC_tamper_ SSBL signature verification faied");
 
           btproc.bootst = SB_PROC_ST_ABNRAM;
-          btproc.b_forced = TRUE;
+           if (h_rawprtheader.bootmode  == BOOT_MODE_NORMAL) {
+              btproc.b_forced = TRUE;
+          }
           retval = EFI_INVALID_PARAMETER;
 #ifndef _ALL_PASS_
           goto errdone;
@@ -1570,7 +1580,9 @@ UefiMain (
                      L"SBC_Dice_Verify Failed to Device ID verify");
           retval = EFI_INVALID_PARAMETER;
           btproc.bootst = SB_PROC_ST_ABNRAM;
-          btproc.b_forced = TRUE;
+          if (h_rawprtheader.bootmode  == BOOT_MODE_NORMAL) {
+              btproc.b_forced = TRUE;
+          }
 #ifndef _ALL_PASS_
           goto errdone;
 #endif
@@ -1635,7 +1647,9 @@ UefiMain (
 
         if (ret != SBCOK) {
                 retval = EFI_INVALID_PARAMETER;
-                btproc.b_forced = TRUE;
+          if (h_rawprtheader.bootmode == BOOT_MODE_NORMAL) {
+              btproc.b_forced = TRUE;
+          }
             #ifndef _ALL_PASS_
                 goto errdone;
             #endif
@@ -1687,7 +1701,9 @@ UefiMain (
           factory_md_abnormal_boot_state(&btproc);
           retval = EFI_INVALID_PARAMETER;
           btproc.bootst = SB_PROC_ST_ABNRAM;
-          btproc.b_forced = TRUE;
+          if (h_rawprtheader.bootmode == BOOT_MODE_NORMAL) {
+              btproc.b_forced = TRUE;
+          }
 #ifndef _ALL_PASS_
           goto errdone;
 #endif
@@ -1727,7 +1743,9 @@ UefiMain (
                      SYS_LOG_EVT_DETECTION,
                      L"SBC_tamper_ SSBL signature verification faied");
             btproc.bootst = SB_PROC_ST_ABNRAM;
-            btproc.b_forced = TRUE;
+          if (h_rawprtheader.bootmode == BOOT_MODE_NORMAL) {
+              btproc.b_forced = TRUE;
+          }
             retval = EFI_INVALID_PARAMETER;
 #ifndef _ALL_PASS_
           goto errdone;
@@ -1775,7 +1793,9 @@ UefiMain (
           eprint("BOOT_MODE_UPDATE Boot Fail");
           retval = EFI_INVALID_PARAMETER;
           btproc.bootst = SB_PROC_ST_ABNRAM;
-          btproc.b_forced = TRUE;
+          if (h_rawprtheader.bootmode == BOOT_MODE_NORMAL) {
+              btproc.b_forced = TRUE;
+          }
 #ifndef _ALL_PASS_
           goto errdone;
 #endif
@@ -1821,7 +1841,9 @@ UefiMain (
                      SYS_LOG_EVT_DETECTION,
                      L"SBC_Dice_Verify Failed to Device ID verify");
              retval = EFI_INVALID_PARAMETER;
-             btproc.b_forced = TRUE;
+          if (h_rawprtheader.bootmode == BOOT_MODE_NORMAL) {
+              btproc.b_forced = TRUE;
+          }
              btproc.bootst = SB_PROC_ST_ABNRAM;
 #ifndef _ALL_PASS_
           goto errdone;

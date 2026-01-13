@@ -2332,7 +2332,7 @@ SBC_BlkReadArbitrary(
 
     return EFI_SUCCESS;
 }
-
+#if 0
 
 EFI_STATUS SBC_CopyBlockDeviceToFile(
     IN VOID   *_Blk,
@@ -2361,18 +2361,29 @@ EFI_STATUS SBC_CopyBlockDeviceToFile(
     //
     // 범위 체크
     //
-    if (ByteOffset > TotalBytes || ByteOffset + DataBytes > TotalBytes) {
-        return EFI_INVALID_PARAMETER;
-    }
+//  if (ByteOffset > TotalBytes || ByteOffset + DataBytes > TotalBytes) {
+    dprint("ByteOffset : %ld, TotalBytes : %ld, ByteOffset :%ld",
+           ByteOffset,
+           TotalBytes,
+           ByteOffset);
+//      eprint("EFI_INVALID_PARAMETER");
+//      return EFI_INVALID_PARAMETER;
+//  }
 
     //
     // 1) Filesystem 찾기
     //
     Status = gBS->LocateProtocol(&gEfiSimpleFileSystemProtocolGuid, NULL, (VOID**)&Fs);
-    if (EFI_ERROR(Status)) return Status;
+    if (EFI_ERROR(Status)) {
+        eprint("LocateProtocol : %r", Status);
+        return Status;
+    }
 
     Status = Fs->OpenVolume(Fs, &Root);
-    if (EFI_ERROR(Status)) return Status;
+    if (EFI_ERROR(Status)) {
+        eprint("OpenVolume : %r", Status);
+        return Status;
+    }
 
     //
     // 2) 출력 파일 생성
@@ -2385,6 +2396,7 @@ EFI_STATUS SBC_CopyBlockDeviceToFile(
                     0
                 );
     if (EFI_ERROR(Status)) {
+        eprint("Open : %r", Status);
         Root->Close(Root);
         return Status;
     }
@@ -2398,6 +2410,7 @@ EFI_STATUS SBC_CopyBlockDeviceToFile(
 
     UINT8 *buf = AllocatePool(FILE_CHUNK_SZ);
     if (!buf) {
+        eprint("Allocate error");
         OutFile->Close(OutFile);
         Root->Close(Root);
         return EFI_OUT_OF_RESOURCES;
@@ -2412,6 +2425,7 @@ EFI_STATUS SBC_CopyBlockDeviceToFile(
         //
         Status = SBC_BlkReadArbitrary(Blk, offset, buf, chunk);
         if (EFI_ERROR(Status)) {
+            eprint("Block Device → Read");
             break;
         }
 
@@ -2421,6 +2435,7 @@ EFI_STATUS SBC_CopyBlockDeviceToFile(
         UINTN wr = chunk;
         Status = OutFile->Write(OutFile, &wr, buf);
         if (EFI_ERROR(Status)) {
+            eprint("File Device → Write");
             break;
         }
 
@@ -2444,8 +2459,525 @@ EFI_STATUS SBC_CopyBlockDeviceToFile(
 
     return Status;
 }
+#endif
 
+#ifndef FILE_CHUNK_SZ
+#define FILE_CHUNK_SZ (64 * 1024)
+#endif
+
+// Provided by you
+// EFI_STATUS SBC_BlkReadArbitrary(EFI_BLOCK_IO_PROTOCOL *Blk, UINT64 ByteOffset, VOID *Buf, UINTN Len);
+
+#ifndef EFI_FILE_READ_ONLY
+#define EFI_FILE_READ_ONLY 0x0000000000000001ULL
+#endif
+
+#define SSBL_OUT_PATH L"\\EFI\\BOOT\\SSBL.efi"
+
+#define RW_TEST_PATH  L"\\EFI\\BOOT\\__rw_test.tmp"
+
+STATIC
+EFI_STATUS
+SBC_TryFlush(IN EFI_FILE_PROTOCOL *Fp, IN CHAR16 *Who)
+{
+    if (!Fp) return EFI_INVALID_PARAMETER;
+    EFI_STATUS St = Fp->Flush(Fp);
+    if (St == EFI_UNSUPPORTED) {
+        dprint("%s Flush: UNSUPPORTED", Who);
+        return EFI_SUCCESS;
+    }
+    if (EFI_ERROR(St)) {
+        eprint("%s Flush failed: %r", Who, St);
+    } else {
+        dprint("%s Flush OK", Who);
+    }
+    return St;
+}
+
+STATIC
+VOID
+SBC_LogBlkMedia(IN EFI_BLOCK_IO_PROTOCOL *Blk)
+{
+    if (!Blk || !Blk->Media) return;
+    EFI_BLOCK_IO_MEDIA *m = Blk->Media;
+
+    dprint("BLK: MediaPresent=%d, ReadOnly=%d, BlockSize=%u, LastBlock=%lu",
+           m->MediaPresent, m->ReadOnly, m->BlockSize, (UINT64)m->LastBlock);
+}
+
+STATIC
+EFI_STATUS
+SBC_EnsureDir(
+    IN EFI_FILE_PROTOCOL *Root,
+    IN CHAR16            *DirPath
+)
+{
+    if (!Root || !DirPath) return EFI_INVALID_PARAMETER;
+
+    EFI_STATUS Status;
+    EFI_FILE_PROTOCOL *Dir = NULL;
+
+    // Try open existing directory
+    Status = Root->Open(
+                    Root,
+                    &Dir,
+                    DirPath,
+                    EFI_FILE_MODE_READ,
+                    //EFI_FILE_MODE_READ | EFI_FILE_MODE_WRITE,
+                    0
+                );
+
+    if (Status == EFI_NOT_FOUND) {
+        dprint("DIR: not found, creating: %s", DirPath);
+//
+//      Status = Root->Open(
+//                      Root,
+//                      &Dir,
+//                      DirPath,
+//                      EFI_FILE_MODE_READ | EFI_FILE_MODE_WRITE | EFI_FILE_MODE_CREATE,
+//                      EFI_FILE_DIRECTORY
+//                  );
+//      if (EFI_ERROR(Status)) {
+//          eprint("DIR: create failed: %s => %r", DirPath, Status);
+//      }
+    } else if (EFI_ERROR(Status)) {
+        eprint("DIR: open failed: %s => %r", DirPath, Status);
+    } else {
+        dprint("DIR: exists: %s", DirPath);
+    }
+
+    (VOID)SBC_TryFlush(Root, DirPath);
+
+    if (!EFI_ERROR(Status) && Dir) Dir->Close(Dir);
+    return Status;
+}
+
+STATIC
+EFI_STATUS
+SBC_GetFileInfoAlloc(
+    IN  EFI_FILE_PROTOCOL *File,
+    OUT EFI_FILE_INFO     **OutInfo,
+    OUT UINTN             *OutInfoSize
+)
+{
+    if (!File || !OutInfo || !OutInfoSize) return EFI_INVALID_PARAMETER;
+
+    *OutInfo = NULL;
+    *OutInfoSize = 0;
+
+    EFI_STATUS Status;
+    UINTN InfoSize = 0;
+
+    Status = File->GetInfo(File, &gEfiFileInfoGuid, &InfoSize, NULL);
+    if (Status != EFI_BUFFER_TOO_SMALL || InfoSize == 0) {
+        eprint("GetInfo(size) failed: %r (InfoSize=%u)", Status, InfoSize);
+        return Status;
+    }
+
+    EFI_FILE_INFO *Info = (EFI_FILE_INFO*)AllocatePool(InfoSize);
+    if (!Info) {
+        eprint("AllocatePool(FileInfo) failed (size=%u)", InfoSize);
+        return EFI_OUT_OF_RESOURCES;
+    }
+
+    Status = File->GetInfo(File, &gEfiFileInfoGuid, &InfoSize, Info);
+    if (EFI_ERROR(Status)) {
+        eprint("GetInfo(data) failed: %r", Status);
+        FreePool(Info);
+        return Status;
+    }
+
+    *OutInfo = Info;
+    *OutInfoSize = InfoSize;
+    return EFI_SUCCESS;
+}
+
+STATIC
+EFI_STATUS
+SBC_ClearReadOnlyAndTruncate(
+    IN EFI_FILE_PROTOCOL *File
+)
+{
+    if (!File) return EFI_INVALID_PARAMETER;
+
+    EFI_STATUS Status;
+    EFI_FILE_INFO *Info = NULL;
+    UINTN InfoSize = 0;
+
+    Status = SBC_GetFileInfoAlloc(File, &Info, &InfoSize);
+    if (EFI_ERROR(Status)) return Status;
+
+    dprint("FILE: Attr=0x%lx Size=%lu", (UINT64)Info->Attribute, (UINT64)Info->FileSize);
+
+    // Clear READ_ONLY if set
+    if ((Info->Attribute & EFI_FILE_READ_ONLY) != 0) {
+        dprint("FILE: READ_ONLY set -> clearing");
+        Info->Attribute &= ~EFI_FILE_READ_ONLY;
+
+        Status = File->SetInfo(File, &gEfiFileInfoGuid, InfoSize, Info);
+        if (EFI_ERROR(Status)) {
+            eprint("FILE: SetInfo(clear RO) failed: %r", Status);
+            if (Status == EFI_WRITE_PROTECTED)
+                eprint("HINT: Volume/policy write-protected (not just file attribute).");
+            FreePool(Info);
+            return Status;
+        }
+
+        // Re-read confirm (optional but useful for debug)
+        FreePool(Info);
+        Info = NULL; InfoSize = 0;
+
+        Status = SBC_GetFileInfoAlloc(File, &Info, &InfoSize);
+        if (EFI_ERROR(Status)) return Status;
+
+        dprint("FILE: after clear RO Attr=0x%lx Size=%lu",
+               (UINT64)Info->Attribute, (UINT64)Info->FileSize);
+    }
+
+    // Truncate to 0
+    Info->FileSize = 0;
+    Status = File->SetInfo(File, &gEfiFileInfoGuid, InfoSize, Info);
+    if (EFI_ERROR(Status)) {
+        eprint("FILE: SetInfo(truncate) failed: %r", Status);
+        if (Status == EFI_WRITE_PROTECTED)
+            eprint("HINT: Volume/policy write-protected (cannot truncate).");
+        FreePool(Info);
+        return Status;
+    }
+
+    dprint("FILE: truncate OK (FileSize=0)");
+
+    FreePool(Info);
+    return EFI_SUCCESS;
+}
+
+
+
+//
+// Try to find an ESP-like writable volume:
+// - Must allow ensuring \EFI and \EFI\BOOT
+// - Must allow creating/writing a test file under \EFI\BOOT
+//
+STATIC
+EFI_STATUS
+SBC_FindWritableEspRoot(
+    OUT EFI_SIMPLE_FILE_SYSTEM_PROTOCOL **OutFs,
+    OUT EFI_FILE_PROTOCOL              **OutRoot
+)
+{
+    if (!OutFs || !OutRoot) return EFI_INVALID_PARAMETER;
+    *OutFs = NULL;
+    *OutRoot = NULL;
+
+    EFI_STATUS Status;
+    EFI_HANDLE *Handles = NULL;
+    UINTN HandleCount = 0;
+
+    Status = gBS->LocateHandleBuffer(
+                    ByProtocol,
+                    &gEfiSimpleFileSystemProtocolGuid,
+                    NULL,
+                    &HandleCount,
+                    &Handles
+             );
+    if (EFI_ERROR(Status) || !Handles || HandleCount == 0) {
+        eprint("ESP: LocateHandleBuffer(SimpleFS) failed: %r", Status);
+        return EFI_NOT_FOUND;
+    }
+
+    for (UINTN i = 0; i < HandleCount; i++) {
+        EFI_SIMPLE_FILE_SYSTEM_PROTOCOL *Fs = NULL;
+        EFI_FILE_PROTOCOL *Root = NULL;
+        EFI_FILE_PROTOCOL *T = NULL;
+
+        Status = gBS->HandleProtocol(
+                        Handles[i],
+                        &gEfiSimpleFileSystemProtocolGuid,
+                        (VOID**)&Fs
+                 );
+        if (EFI_ERROR(Status) || !Fs) continue;
+
+        Status = Fs->OpenVolume(Fs, &Root);
+        if (EFI_ERROR(Status) || !Root) continue;
+
+        // Ensure directories
+        Status = SBC_EnsureDir(Root, L"\\EFI");
+        if (EFI_ERROR(Status)) { Root->Close(Root); continue; }
+
+        Status = SBC_EnsureDir(Root, L"\\EFI\\BOOT");
+        if (EFI_ERROR(Status)) { Root->Close(Root); continue; }
+
+        // RW test under \EFI\BOOT
+        Status = Root->Open(
+                        Root,
+                        &T,
+                        RW_TEST_PATH,
+                        EFI_FILE_MODE_READ | EFI_FILE_MODE_WRITE | EFI_FILE_MODE_CREATE,
+                        0
+                 );
+        if (EFI_ERROR(Status) || !T) {
+            Root->Close(Root);
+            continue;
+        }
+
+        UINT8 b = 0xA5;
+        UINTN wr = 1;
+        Status = T->Write(T, &wr, &b);
+        T->Close(T);
+
+        if (EFI_ERROR(Status) || wr != 1) {
+            Root->Close(Root);
+            continue;
+        }
+
+        // Delete the test file
+        Status = Root->Open(Root, &T, RW_TEST_PATH, EFI_FILE_MODE_READ | EFI_FILE_MODE_WRITE, 0);
+        if (!EFI_ERROR(Status) && T) T->Delete(T);
+
+        dprint("ESP: selected SimpleFS handle index=%u", (UINT32)i);
+
+        FreePool(Handles);
+        *OutFs = Fs;
+        *OutRoot = Root;
+        return EFI_SUCCESS;
+    }
+
+    FreePool(Handles);
+    eprint("ESP: no writable ESP-like filesystem found");
+    return EFI_WRITE_PROTECTED;
+}
+
+STATIC
+EFI_STATUS
+SBC_OpenBootOrFallbackEspRoot(
+    OUT EFI_SIMPLE_FILE_SYSTEM_PROTOCOL **OutFs,
+    OUT EFI_FILE_PROTOCOL              **OutRoot
+)
+{
+    if (!OutFs || !OutRoot) return EFI_INVALID_PARAMETER;
+    *OutFs = NULL;
+    *OutRoot = NULL;
+
+    EFI_STATUS Status;
+    EFI_LOADED_IMAGE_PROTOCOL *LoadedImage = NULL;
+    EFI_SIMPLE_FILE_SYSTEM_PROTOCOL *Fs = NULL;
+    EFI_FILE_PROTOCOL *Root = NULL;
+
+    Status = gBS->HandleProtocol(
+                    gImageHandle,
+                    &gEfiLoadedImageProtocolGuid,
+                    (VOID**)&LoadedImage
+             );
+    if (EFI_ERROR(Status) || !LoadedImage) {
+        eprint("HandleProtocol(LoadedImage) failed: %r", Status);
+        return Status;
+    }
+
+    dprint("LoadedImage: DeviceHandle=%p FilePath=%p",
+           LoadedImage->DeviceHandle, LoadedImage->FilePath);
+
+    if (LoadedImage->DeviceHandle != NULL) {
+        Status = gBS->HandleProtocol(
+                        LoadedImage->DeviceHandle,
+                        &gEfiSimpleFileSystemProtocolGuid,
+                        (VOID**)&Fs
+                 );
+        if (!EFI_ERROR(Status) && Fs) {
+            Status = Fs->OpenVolume(Fs, &Root);
+            if (!EFI_ERROR(Status) && Root) {
+                dprint("FS: using boot device filesystem");
+                *OutFs = Fs;
+                *OutRoot = Root;
+                return EFI_SUCCESS;
+            }
+            eprint("FS: OpenVolume(boot fs) failed: %r", Status);
+        } else {
+            eprint("FS: boot DeviceHandle has no SimpleFS: %r", Status);
+        }
+    } else {
+        eprint("FS: LoadedImage->DeviceHandle is NULL (image not loaded from FS)");
+    }
+
+    // Fallback: scan for writable ESP-like filesystem
+    dprint("FS: fallback to scan writable ESP volume");
+    return SBC_FindWritableEspRoot(OutFs, OutRoot);
+}
+
+EFI_STATUS
+SBC_CopyBlockDeviceToFile(
+    IN VOID   *_Blk,
+    IN UINT64  ByteOffset,
+    IN UINT64  DataBytes,
+    IN CHAR16 *DstPath,
+    OUT UINT64 *BytesRead OPTIONAL
+)
+{
+    (VOID)DstPath; // fixed output path
+
+    if (BytesRead) *BytesRead = 0;
+    if (!_Blk) return EFI_INVALID_PARAMETER;
+
+    EFI_STATUS Status;
+    EFI_BLOCK_IO_PROTOCOL *Blk = (EFI_BLOCK_IO_PROTOCOL*)_Blk;
+
+    EFI_SIMPLE_FILE_SYSTEM_PROTOCOL *Fs = NULL;
+    EFI_FILE_PROTOCOL *Root = NULL;
+    EFI_FILE_PROTOCOL *OutFile = NULL;
+
+    // Block I/O Media
+    EFI_BLOCK_IO_MEDIA *m = Blk->Media;
+    if (!m || !m->MediaPresent) {
+        eprint("BLK: No media present");
+        return EFI_NO_MEDIA;
+    }
+
+    SBC_LogBlkMedia(Blk);
+
+    // Range check
+    UINT64 TotalBytes = (m->LastBlock + 1ULL) * (UINT64)m->BlockSize;
+    if (ByteOffset > TotalBytes || (ByteOffset + DataBytes) > TotalBytes) {
+        eprint("RANGE: invalid (Off=%lu Len=%lu Total=%lu)",
+               ByteOffset, DataBytes, TotalBytes);
+        return EFI_INVALID_PARAMETER;
+    }
+
+    dprint("COPY: ByteOffset=%lu DataBytes=%lu TotalBytes=%lu", ByteOffset, DataBytes, TotalBytes);
+
+    //
+    // 1) Open boot FS root or fallback to writable ESP-like FS root
+    //
+    Status = SBC_OpenBootOrFallbackEspRoot(&Fs, &Root);
+    if (EFI_ERROR(Status) || !Root) {
+        eprint("FS: failed to open a target filesystem root: %r", Status);
+        return Status;
+    }
+
+    //
+    // 2) Ensure \EFI and \EFI\BOOT exist on target FS
+    //
+    Status = SBC_EnsureDir(Root, L"\\EFI");
+    if (EFI_ERROR(Status)) {
+        if (Status == EFI_WRITE_PROTECTED)
+            eprint("HINT: target FS is write-protected: cannot access/create \\EFI");
+        Root->Close(Root);
+        return Status;
+    }
+
+    Status = SBC_EnsureDir(Root, L"\\EFI\\BOOT");
+    if (EFI_ERROR(Status)) {
+        if (Status == EFI_WRITE_PROTECTED)
+            eprint("HINT: target FS is write-protected: cannot access/create \\EFI\\BOOT");
+        Root->Close(Root);
+        return Status;
+    }
+
+    //
+    // 3) Open/create fixed output file: \EFI\BOOT\SSBL.efi
+    //
+    Status = Root->Open(
+                    Root,
+                    &OutFile,
+                    SSBL_OUT_PATH,
+                    EFI_FILE_MODE_READ | EFI_FILE_MODE_WRITE | EFI_FILE_MODE_CREATE,
+                    0
+             );
+
+    // Workaround cod
+//  for (UINTN retry = 0; retry < 30; retry++) { // up to ~3s if 100ms step
+//  St = Root->Open(Root, &OutFile, SSBL_OUT_PATH,
+//                  EFI_FILE_MODE_READ|EFI_FILE_MODE_WRITE|EFI_FILE_MODE_CREATE, 0);
+//  if (!EFI_ERROR(St)) break;
+//  gBS->Stall(100 * 1000); // 100ms
+//  }
+    if (EFI_ERROR(Status) || !OutFile) {
+        eprint("Open(%s) failed: %r", SSBL_OUT_PATH, Status);
+        if (Status == EFI_WRITE_PROTECTED)
+            eprint("HINT: target FS/policy blocks create/open under \\EFI\\BOOT");
+        Root->Close(Root);
+        return Status;
+    }
+
+    // Optional: flush root (best-effort)
+    (VOID)SBC_TryFlush(Root, L"Root");
+
+    //
+    // 4) Clear READ_ONLY + truncate to 0 (overwrite semantics)
+    //
+    Status = SBC_ClearReadOnlyAndTruncate(OutFile);
+    if (EFI_ERROR(Status)) {
+        eprint("Prep(attr/truncate) failed: %r", Status);
+        OutFile->Close(OutFile);
+        Root->Close(Root);
+        return Status;
+    }
+
+    //
+    // 5) Chunked copy: Raw(Block) -> File
+    //
+    UINT8 *Buf = AllocatePool(FILE_CHUNK_SZ);
+    if (!Buf) {
+        eprint("AllocatePool(%u) failed", (UINTN)FILE_CHUNK_SZ);
+        OutFile->Close(OutFile);
+        Root->Close(Root);
+        return EFI_OUT_OF_RESOURCES;
+    }
+
+    UINT64 Remaining = DataBytes;
+    UINT64 Offset = ByteOffset;
+    UINT64 WroteTotal = 0;
+
+    while (Remaining > 0) {
+        UINTN Chunk = (Remaining > FILE_CHUNK_SZ) ? FILE_CHUNK_SZ : (UINTN)Remaining;
+
+        Status = SBC_BlkReadArbitrary(Blk, Offset, Buf, Chunk);
+        if (EFI_ERROR(Status)) {
+            eprint("READ: failed: %r (Off=%lu Len=%u)", Status, Offset, Chunk);
+            break;
+        }
+
+        UINTN Wr = Chunk;
+        Status = OutFile->Write(OutFile, &Wr, Buf);
+        if (EFI_ERROR(Status) || Wr != Chunk) {
+            eprint("WRITE: failed: %r (Wr=%u Req=%u Off=%lu)",
+                   Status, Wr, Chunk, Offset);
+
+            if (Status == EFI_WRITE_PROTECTED)
+                eprint("HINT: target FS became write-protected during write.");
+
+            if (!EFI_ERROR(Status))
+                Status = EFI_DEVICE_ERROR;
+            break;
+        }
+
+        Offset += Chunk;
+        Remaining -= Chunk;
+        WroteTotal += Chunk;
+
+        UINTN Pct = (DataBytes == 0) ? 100 : (UINTN)((WroteTotal * 100) / DataBytes);
+        Print(L"\rWriting %s: %3u%%", SSBL_OUT_PATH, Pct);
+    }
+
+    Print(L"\rWriting %s: 100%%\n", SSBL_OUT_PATH);
+
+    // Best-effort flush file
+    (VOID)SBC_TryFlush(OutFile, L"OutFile");
+    FreePool(Buf);
+
+    OutFile->Close(OutFile);
+    Root->Close(Root);
+
+    if (BytesRead) *BytesRead = WroteTotal;
+
+    if (EFI_ERROR(Status)) {
+        eprint("RESULT: FAILED %r (BytesWritten=%lu / %lu)", Status, WroteTotal, DataBytes);
+    } else {
+        dprint("RESULT: OK (BytesWritten=%lu)", WroteTotal);
+    }
+
+    return Status;
+}
 #if 1
+#if 0
 SBCStatus SBC_DeleteFile (
     IN CHAR16 *FilePath
     )
@@ -2514,15 +3046,366 @@ SBCStatus SBC_DeleteFile (
         EFI_FILE_PROTOCOL *TmpRoot = NULL;
         EFI_STATUS St2 = Fs->OpenVolume(Fs, &TmpRoot);
         if (!EFI_ERROR(St2)) {
+            dprint(" Just open + close for cleanup");
             TmpRoot->Close(TmpRoot); // Just open + close for cleanup
         }
     }
+
+
 
     if (EFI_ERROR(Status))
         return SBCFAIL;
 
     return SBCOK;
 }
+#endif
+#if 1
+SBCStatus SBC_DeleteFile(IN CHAR16 *FilePath)
+{
+    if (FilePath == NULL)
+        return SBCNULLP;
+
+    EFI_STATUS Status;
+    EFI_SIMPLE_FILE_SYSTEM_PROTOCOL *Fs = NULL;
+    EFI_FILE_PROTOCOL *Root = NULL;
+    EFI_FILE_PROTOCOL *File = NULL;
+
+    // BAD: LocateProtocol may pick the wrong FS.
+    // Keeping your structure, but be aware this is the #1 root cause.
+    Status = gBS->LocateProtocol(&gEfiSimpleFileSystemProtocolGuid, NULL, (VOID**)&Fs);
+    if (EFI_ERROR(Status)) {
+        eprint("LocateProtocol(SimpleFS) failed: %r", Status);
+        return SBCFAIL;
+    }
+
+    Status = Fs->OpenVolume(Fs, &Root);
+    if (EFI_ERROR(Status) || !Root) {
+        eprint("OpenVolume failed: %r", Status);
+        return SBCFAIL;
+    }
+
+    Status = Root->Open(Root, &File, FilePath,
+                        EFI_FILE_MODE_READ | EFI_FILE_MODE_WRITE,
+                        0);
+
+    if (Status == EFI_NOT_FOUND) {
+        //gBS->Stall(3 * 1000 * 1000); // 3 seconds
+        Root->Close(Root);
+        return SBCNOTFND;
+    }
+    if (EFI_ERROR(Status) || !File) {
+        eprint("Open(%s) failed: %r", FilePath, Status);
+        Root->Close(Root);
+        return SBCFAIL;
+    }
+
+    //
+    // Clear READ_ONLY attribute if set
+    //
+    {
+        EFI_FILE_INFO *Info = NULL;
+        UINTN InfoSize = 0;
+
+        Status = File->GetInfo(File, &gEfiFileInfoGuid, &InfoSize, NULL);
+        if (Status == EFI_BUFFER_TOO_SMALL && InfoSize > 0) {
+            Info = AllocatePool(InfoSize);
+            if (!Info) {
+                eprint("AllocatePool(FileInfo) failed");
+                File->Close(File);
+                Root->Close(Root);
+                return SBCFAIL;
+            }
+
+            Status = File->GetInfo(File, &gEfiFileInfoGuid, &InfoSize, Info);
+            if (!EFI_ERROR(Status)) {
+                dprint("Attr=0x%lx", (UINT64)Info->Attribute);
+
+                if ((Info->Attribute & EFI_FILE_READ_ONLY) != 0) {
+                    dprint("READ_ONLY set -> clearing");
+                    Info->Attribute &= ~EFI_FILE_READ_ONLY;
+
+                    EFI_STATUS StSet = File->SetInfo(File, &gEfiFileInfoGuid, InfoSize, Info);
+                    if (EFI_ERROR(StSet)) {
+                        eprint("SetInfo(clear RO) failed: %r", StSet);
+                        if (StSet == EFI_WRITE_PROTECTED)
+                            eprint("HINT: Volume/policy is write-protected (cannot clear RO).");
+                        FreePool(Info);
+                        File->Close(File);
+                        Root->Close(Root);
+                        return SBCFAIL;
+                    }
+                }
+            } else {
+                eprint("GetInfo(FileInfo) failed: %r", Status);
+            }
+
+            FreePool(Info);
+        } else if (EFI_ERROR(Status)) {
+            eprint("GetInfo(size) failed: %r", Status);
+        }
+    }
+
+    //
+    // Delete
+    //
+    Status = File->Delete(File); // File handle invalid after this
+    if (EFI_ERROR(Status)) {
+        eprint("Delete(%s) failed: %r", FilePath, Status);
+        if (Status == EFI_WRITE_PROTECTED)
+            eprint("HINT: Volume/policy is write-protected (not fixable by reopen).");
+    }
+
+    Root->Close(Root);
+
+    // Your open/close workaround does NOT change write-protection, but harmless:
+    {
+        EFI_FILE_PROTOCOL *TmpRoot = NULL;
+        EFI_STATUS St2 = Fs->OpenVolume(Fs, &TmpRoot);
+        if (!EFI_ERROR(St2) && TmpRoot) {
+            dprint("Root reopen/close (cleanup)");
+            TmpRoot->Close(TmpRoot);
+        }
+    }
+
+    gBS->Stall(3 * 1000 * 1000); // 3 seconds
+
+    if (EFI_ERROR(Status))
+        return SBCFAIL;
+
+    return SBCOK;
+}
+#else
+// dprint/eprint assumed to exist in your project.
+
+#ifndef EFI_FILE_READ_ONLY
+#define EFI_FILE_READ_ONLY 0x0000000000000001ULL
+#endif
+
+//
+// Minimal: try boot FS first; if not available, scan SimpleFS volumes and pick one that can open \EFI\BOOT
+// (No directory creation; just selecting a plausible ESP root)
+//
+STATIC
+EFI_STATUS
+SBC_FindEspRoot_NoDirCreate(
+    OUT EFI_SIMPLE_FILE_SYSTEM_PROTOCOL **OutFs,
+    OUT EFI_FILE_PROTOCOL              **OutRoot
+)
+{
+    if (!OutFs || !OutRoot) return EFI_INVALID_PARAMETER;
+    *OutFs = NULL;
+    *OutRoot = NULL;
+
+    EFI_STATUS Status;
+    EFI_HANDLE *Handles = NULL;
+    UINTN HandleCount = 0;
+
+    Status = gBS->LocateHandleBuffer(
+                    ByProtocol,
+                    &gEfiSimpleFileSystemProtocolGuid,
+                    NULL,
+                    &HandleCount,
+                    &Handles
+             );
+    if (EFI_ERROR(Status) || !Handles || HandleCount == 0)
+        return EFI_NOT_FOUND;
+
+    for (UINTN i = 0; i < HandleCount; i++) {
+        EFI_SIMPLE_FILE_SYSTEM_PROTOCOL *Fs = NULL;
+        EFI_FILE_PROTOCOL *Root = NULL;
+
+        Status = gBS->HandleProtocol(
+                        Handles[i],
+                        &gEfiSimpleFileSystemProtocolGuid,
+                        (VOID**)&Fs
+                 );
+        if (EFI_ERROR(Status) || !Fs) continue;
+
+        Status = Fs->OpenVolume(Fs, &Root);
+        if (EFI_ERROR(Status) || !Root) continue;
+
+        //
+        // Heuristic: if \EFI\BOOT can be opened READ-only, treat as ESP candidate.
+        // We do NOT create directories here.
+        //
+        EFI_FILE_PROTOCOL *BootDir = NULL;
+        Status = Root->Open(Root, &BootDir, L"\\EFI\\BOOT", EFI_FILE_MODE_READ, 0);
+        if (!EFI_ERROR(Status) && BootDir) {
+            BootDir->Close(BootDir);
+            FreePool(Handles);
+            *OutFs = Fs;
+            *OutRoot = Root;
+            dprint("ESP: selected SimpleFS index=%u", (UINT32)i);
+            return EFI_SUCCESS;
+        }
+
+        Root->Close(Root);
+    }
+
+    FreePool(Handles);
+    return EFI_NOT_FOUND;
+}
+
+STATIC
+EFI_STATUS
+SBC_OpenTargetRoot_NoDirCreate(
+    OUT EFI_SIMPLE_FILE_SYSTEM_PROTOCOL **OutFs,
+    OUT EFI_FILE_PROTOCOL              **OutRoot
+)
+{
+    if (!OutFs || !OutRoot) return EFI_INVALID_PARAMETER;
+    *OutFs = NULL;
+    *OutRoot = NULL;
+
+    EFI_STATUS Status;
+    EFI_LOADED_IMAGE_PROTOCOL *LoadedImage = NULL;
+    EFI_SIMPLE_FILE_SYSTEM_PROTOCOL *Fs = NULL;
+    EFI_FILE_PROTOCOL *Root = NULL;
+
+    Status = gBS->HandleProtocol(gImageHandle, &gEfiLoadedImageProtocolGuid, (VOID**)&LoadedImage);
+    if (!EFI_ERROR(Status) && LoadedImage) {
+        dprint("LoadedImage: DeviceHandle=%p FilePath=%p", LoadedImage->DeviceHandle, LoadedImage->FilePath);
+
+        if (LoadedImage->DeviceHandle) {
+            Status = gBS->HandleProtocol(
+                            LoadedImage->DeviceHandle,
+                            &gEfiSimpleFileSystemProtocolGuid,
+                            (VOID**)&Fs
+                     );
+            if (!EFI_ERROR(Status) && Fs) {
+                Status = Fs->OpenVolume(Fs, &Root);
+                if (!EFI_ERROR(Status) && Root) {
+                    dprint("FS: using boot device filesystem");
+                    *OutFs = Fs;
+                    *OutRoot = Root;
+                    return EFI_SUCCESS;
+                }
+            } else {
+                eprint("FS: boot DeviceHandle has no SimpleFS: %r", Status);
+            }
+        } else {
+            eprint("FS: LoadedImage->DeviceHandle is NULL");
+        }
+    } else {
+        eprint("HandleProtocol(LoadedImage) failed: %r", Status);
+    }
+
+    dprint("FS: fallback scan for ESP root (no dir create)");
+    return SBC_FindEspRoot_NoDirCreate(OutFs, OutRoot);
+}
+
+STATIC
+EFI_STATUS
+SBC_ClearReadOnlyIfSet(
+    IN EFI_FILE_PROTOCOL *File
+)
+{
+    if (!File) return EFI_INVALID_PARAMETER;
+
+    EFI_STATUS Status;
+    EFI_FILE_INFO *Info = NULL;
+    UINTN InfoSize = 0;
+
+    Status = File->GetInfo(File, &gEfiFileInfoGuid, &InfoSize, NULL);
+    if (Status != EFI_BUFFER_TOO_SMALL || InfoSize == 0)
+        return Status;
+
+    Info = (EFI_FILE_INFO*)AllocatePool(InfoSize);
+    if (!Info) return EFI_OUT_OF_RESOURCES;
+
+    Status = File->GetInfo(File, &gEfiFileInfoGuid, &InfoSize, Info);
+    if (EFI_ERROR(Status)) {
+        FreePool(Info);
+        return Status;
+    }
+
+    dprint("FILE: Attr=0x%lx", (UINT64)Info->Attribute);
+
+    if ((Info->Attribute & EFI_FILE_READ_ONLY) != 0) {
+        dprint("FILE: READ_ONLY set -> clearing");
+        Info->Attribute &= ~EFI_FILE_READ_ONLY;
+
+        Status = File->SetInfo(File, &gEfiFileInfoGuid, InfoSize, Info);
+        if (EFI_ERROR(Status)) {
+            eprint("SetInfo(clear RO) failed: %r", Status);
+        }
+    } else {
+        Status = EFI_SUCCESS;
+    }
+
+    FreePool(Info);
+    return Status;
+}
+
+SBCStatus
+SBC_DeleteFile(
+    IN CHAR16 *FilePath
+)
+{
+    if (FilePath == NULL)
+        return SBCNULLP;
+
+    EFI_STATUS Status;
+    EFI_SIMPLE_FILE_SYSTEM_PROTOCOL *Fs = NULL;
+    EFI_FILE_PROTOCOL *Root = NULL;
+    EFI_FILE_PROTOCOL *File = NULL;
+
+    //
+    // 1) Open target FS root (boot FS or ESP fallback)
+    //
+    Status = SBC_OpenTargetRoot_NoDirCreate(&Fs, &Root);
+    if (EFI_ERROR(Status) || !Root) {
+        eprint("DeleteFile: open target root failed: %r", Status);
+        return SBCFAIL;
+    }
+
+    //
+    // 2) Open file (RW first)
+    //
+    Status = Root->Open(Root, &File, FilePath,
+                        EFI_FILE_MODE_READ | EFI_FILE_MODE_WRITE,
+                        0);
+
+    if (Status == EFI_NOT_FOUND) {
+        Root->Close(Root);
+        return SBCNOTFND;
+    }
+
+    if (EFI_ERROR(Status) || !File) {
+        eprint("DeleteFile: Open(%s) failed: %r", FilePath, Status);
+        Root->Close(Root);
+        return SBCFAIL;
+    }
+
+    //
+    // 3) Clear READ_ONLY attribute (best effort). If volume/policy is RO, this may fail.
+    //
+    EFI_STATUS StAttr = SBC_ClearReadOnlyIfSet(File);
+    if (EFI_ERROR(StAttr)) {
+        if (StAttr == EFI_WRITE_PROTECTED) {
+            eprint("DeleteFile: volume/policy write-protected (cannot clear RO)");
+        } else {
+            eprint("DeleteFile: clear RO failed: %r (continuing to Delete)", StAttr);
+        }
+        // We still try Delete; some implementations may delete even if attribute query fails.
+    }
+
+    //
+    // 4) Delete
+    //
+    Status = File->Delete(File); // File becomes invalid
+    if (EFI_ERROR(Status)) {
+        eprint("DeleteFile: Delete(%s) failed: %r", FilePath, Status);
+        if (Status == EFI_WRITE_PROTECTED)
+            eprint("HINT: target FS/policy is write-protected");
+        Root->Close(Root);
+        return SBCFAIL;
+    }
+
+    Root->Close(Root);
+    return SBCOK;
+}
+#endif
 #endif
 
 SBCStatus
@@ -2562,7 +3445,7 @@ SBC_DeleteFileOnMyBootFs(
     if (EFI_ERROR(Status) || Root == NULL)
         return SBCFAIL;
 
-    // 4) Open file
+    // 4) Open file (try RW first)
     Status = Root->Open(
                     Root,
                     &File,
@@ -2575,14 +3458,79 @@ SBC_DeleteFileOnMyBootFs(
         Root->Close(Root);
         return SBCNOTFND;
     }
+
+    //
+    // If the filesystem is write-protected, RW open may fail.
+    // Try opening as READ-only to at least detect the file existence,
+    // then deletion will still fail with WRITE_PROTECTED.
+    //
     if (EFI_ERROR(Status)) {
-        Root->Close(Root);
-        return SBCFAIL;
+        EFI_STATUS St2 = Root->Open(
+                            Root,
+                            &File,
+                            FilePath,
+                            EFI_FILE_MODE_READ,
+                            0
+                         );
+        if (St2 == EFI_NOT_FOUND) {
+            Root->Close(Root);
+            return SBCNOTFND;
+        }
+        if (EFI_ERROR(St2) || File == NULL) {
+            Root->Close(Root);
+            return SBCFAIL;
+        }
+        // Keep going; attribute clear / delete may still fail if volume is RO.
     }
 
-    // 5) Delete
+    //
+    // 5) Read EFI_FILE_INFO to check attributes
+    //
+    EFI_FILE_INFO *Info = NULL;
+    UINTN InfoSize = 0;
+
+    Status = File->GetInfo(File, &gEfiFileInfoGuid, &InfoSize, NULL);
+    if (Status == EFI_BUFFER_TOO_SMALL && InfoSize > 0) {
+        Info = (EFI_FILE_INFO*)AllocatePool(InfoSize);
+        if (Info != NULL) {
+            Status = File->GetInfo(File, &gEfiFileInfoGuid, &InfoSize, Info);
+        } else {
+            Status = EFI_OUT_OF_RESOURCES;
+        }
+    }
+
+    //
+    // 6) If READ_ONLY bit is set, clear it and SetInfo back
+    //
+    if (!EFI_ERROR(Status) && Info != NULL) {
+        if ((Info->Attribute & EFI_FILE_READ_ONLY) != 0) {
+            Info->Attribute &= ~EFI_FILE_READ_ONLY;
+
+            EFI_STATUS StSet = File->SetInfo(File, &gEfiFileInfoGuid, InfoSize, Info);
+            if (EFI_ERROR(StSet)) {
+                //
+                // If SetInfo fails with WRITE_PROTECTED, volume is RO or policy blocks writes.
+                //
+                FreePool(Info);
+                File->Close(File);
+                Root->Close(Root);
+                return SBCFAIL;
+            }
+        }
+        FreePool(Info);
+    } else {
+        //
+        // If GetInfo fails, we can still attempt Delete() directly.
+        //
+        if (Info != NULL) FreePool(Info);
+    }
+
+    //
+    // 7) Delete
+    //
     Status = File->Delete(File); // File becomes invalid after this
 
+    // Root is still valid
     Root->Close(Root);
 
     if (EFI_ERROR(Status))

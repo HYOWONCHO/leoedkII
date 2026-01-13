@@ -67,6 +67,10 @@ extern CHAR16 mrgmsg[8192];
 CHAR16 print_out_key[128];
 
 
+//static LV_t *fsbl_lv;
+//static LV_t *ssbl_lv;
+
+
 
 
 extern VOID *h_blkio;
@@ -373,6 +377,7 @@ errdone:
 
 SBCStatus _ssbl_image_load(EFI_HANDLE ImageHandle, LV_t *lv)
 {
+#if 1
     SBCStatus           ret = SBCOK;
     EFI_STATUS          Status;
     UINTN               len_of_kernel = 0;
@@ -421,10 +426,86 @@ SBCStatus _ssbl_image_load(EFI_HANDLE ImageHandle, LV_t *lv)
       goto errdone;
     }
 
+    //ssbl_lv = lv;
+
 
     //dprint();
 errdone:
     return ret;
+#else
+    if (!lv)
+        return EFI_INVALID_PARAMETER;
+
+#ifndef _SSBL_TEST_RUN_
+    CHAR16 *TargetPath = L"\\EFI\\BOOT\\SSBL.efi";
+#else
+    CHAR16 *TargetPath = L"\\EFI\\BOOT\\FSBL.efi";
+#endif
+
+    EFI_STATUS Status;
+    UINT64 FileSize = 0;
+
+    lv->value  = NULL;
+    lv->length = 0;
+
+    //
+    // 1) Get file size (using the filesystem of current loaded image)
+    //
+    Status = GetFileSizeOnMyFs(gImageHandle, TargetPath, &FileSize);
+    if (EFI_ERROR(Status)) {
+        eprint(" Get file size (using the filesystem of current loaded image) : %r", Status);
+        return SBCIO;
+    }
+
+    //
+    // 2) Allocate buffer and set length for SBC_ReadFile()
+    //
+    lv->value = AllocatePool((UINTN)FileSize);
+    if (!lv->value) {
+
+        return SBCNOSPC;
+    }
+
+    lv->length = FileSize;
+
+    //
+    // 3) Read file using your existing SBC_ReadFile()
+    //    IMPORTANT: SBC_ReadFile() expects ImageHandle to be a handle that
+    //               supports SimpleFS. Your current implementation uses
+    //               HandleProtocol(ImageHandle, SimpleFS), which usually fails
+    //               if ImageHandle is gImageHandle.
+    //
+    //    To keep using SBC_ReadFile() WITHOUT changing it, we must pass a handle
+    //    that actually has SimpleFS installed.
+    //
+    //    Therefore, we will resolve the filesystem device handle and pass it.
+    //
+    EFI_LOADED_IMAGE_PROTOCOL *LoadedImage = NULL;
+    Status = gBS->HandleProtocol(
+                    gImageHandle,
+                    &gEfiLoadedImageProtocolGuid,
+                    (VOID**)&LoadedImage
+                );
+    if (EFI_ERROR(Status) || !LoadedImage) {
+        FreePool(lv->value);
+        lv->value = NULL;
+        lv->length = 0;
+        return SBCNOTFND;
+    }
+
+    //
+    // Use the device handle (ESP partition handle) that has SimpleFS
+    //
+    Status = SBC_ReadFile(LoadedImage->DeviceHandle, TargetPath, lv);
+    if (EFI_ERROR(Status)) {
+        FreePool(lv->value);
+        lv->value = NULL;
+        lv->length = 0;
+        return SBCIO;
+    }
+
+    return SBCOK;
+#endif
 }
 
 #endif
@@ -3717,9 +3798,13 @@ SBCStatus SBC_GenMigrationKey(void *priv, void *outmsg)
     UINTN imglen = 0;
     UINTN cpyofs = 0;
 
+    LV_t fsbl_lv;
+    LV_t  ssbl_lv;
+    
+
     UINT8 *fbuf = NULL;
     [[maybe_unused]] UINTN flen = 0UL;
-    LV_t lv;
+    [[gnu::unused]]LV_t lv;
 
     EFI_HANDLE *f_hndl;
     UINT8 temp_hash[ATP_IDENT_KEY_STG] = {0, };
@@ -3896,10 +3981,12 @@ SBCStatus SBC_GenMigrationKey(void *priv, void *outmsg)
         cpyofs += ATP_IDENT_KEY_STG;
 
 
-        ret = SBC_ReadFile(f_hndl[0], EFI_BOOT_FSBL_PATH, &lv);
+        //ret = SBC_ReadFile(f_hndl[0], EFI_BOOT_FSBL_PATH, &lv);
+        efi_boot_fsbl_load(&fsbl_lv);
         SBC_RET_VALIDATE_ERRCODEMSG((ret == SBCOK), SBCNULLP, "FSBL File Reaed Fail");
 
-        ret = SBC_HashCompute(NULL, lv.value, lv.length, temp_hash);
+        //ret = SBC_HashCompute(NULL, lv.value, lv.length, temp_hash);
+        ret = SBC_HashCompute(NULL, fsbl_lv.value, fsbl_lv.length, temp_hash);
         SBC_RET_VALIDATE_ERRCODEMSG((ret == SBCOK), SBCNULLP, "FSBL File HASH Fail");
 
         SBC_mem_print_bin(" FSBL File Hash", (UINT8 *)temp_hash, ATP_IDENT_KEY_STG);
@@ -3918,11 +4005,13 @@ SBCStatus SBC_GenMigrationKey(void *priv, void *outmsg)
         lv.value = fbuf;
         lv.length = len_ssbl;
 
-        ret = SBC_ReadFile(f_hndl[0], EFI_BOOT_SSBL_PATH, &lv);
+        //ret = SBC_ReadFile(f_hndl[0], EFI_BOOT_SSBL_PATH, &lv);
+        _ssbl_image_load(NULL, &ssbl_lv);
         SBC_RET_VALIDATE_ERRCODEMSG((ret == SBCOK), SBCNULLP, "SSBL File Reaed Fail");
 
         ZeroMem((void *)temp_hash, 32);
-        ret = SBC_HashCompute(NULL, lv.value, lv.length, temp_hash);
+        //ret = SBC_HashCompute(NULL, lv.value, lv.length, temp_hash);
+        ret = SBC_HashCompute(NULL, ssbl_lv.value, ssbl_lv.length, temp_hash);
         SBC_RET_VALIDATE_ERRCODEMSG((ret == SBCOK), SBCNULLP, "SSBL File HASH Fail");
         SBC_mem_print_bin(" SSBL File Hash", (UINT8 *)temp_hash, ATP_IDENT_KEY_STG);
         CopyMem((void *)&msg[cpyofs], temp_hash, ATP_IDENT_KEY_STG);
@@ -3941,10 +4030,13 @@ SBCStatus SBC_GenMigrationKey(void *priv, void *outmsg)
     if (p->bm == BOOT_MODE_RECOVERY) {
 
         dprint("Migrattion Key Create by Reccovery");
-        ret = SBC_ReadFile(f_hndl[0], EFI_BOOT_FSBL_PATH, &lv);
+        //ret = SBC_ReadFile(f_hndl[0], EFI_BOOT_FSBL_PATH, &lv);
+        efi_boot_fsbl_load(&fsbl_lv);
         SBC_RET_VALIDATE_ERRCODEMSG((ret == SBCOK), SBCNULLP, "FSBL File Reaed Fail");
 
-        ret = SBC_HashCompute(NULL, lv.value, lv.length, temp_hash);
+
+        //ret = SBC_HashCompute(NULL, lv.value, lv.length, temp_hash);
+        ret = SBC_HashCompute(NULL, fsbl_lv.value, fsbl_lv.length, temp_hash);
         SBC_RET_VALIDATE_ERRCODEMSG((ret == SBCOK), SBCNULLP, "FSBL File HASH Fail");
 
         SBC_mem_print_bin(" FSBL File Hash", (UINT8 *)temp_hash, ATP_IDENT_KEY_STG);
@@ -3963,11 +4055,13 @@ SBCStatus SBC_GenMigrationKey(void *priv, void *outmsg)
         lv.value = fbuf;
         lv.length = len_ssbl;
 
-        ret = SBC_ReadFile(f_hndl[0], EFI_BOOT_SSBL_PATH, &lv);
+        //ret = SBC_ReadFile(f_hndl[0], EFI_BOOT_SSBL_PATH, &lv);
+        _ssbl_image_load(NULL, &ssbl_lv);
         SBC_RET_VALIDATE_ERRCODEMSG((ret == SBCOK), SBCNULLP, "SSBL File Reaed Fail");
 
         ZeroMem((void *)temp_hash, 32);
-        ret = SBC_HashCompute(NULL, lv.value, lv.length, temp_hash);
+        //ret = SBC_HashCompute(NULL, lv.value, lv.length, temp_hash);
+        ret = SBC_HashCompute(NULL, ssbl_lv.value, ssbl_lv.length, temp_hash);
         SBC_RET_VALIDATE_ERRCODEMSG((ret == SBCOK), SBCNULLP, "SSBL File HASH Fail");
         SBC_mem_print_bin(" SSBL File Hash", (UINT8 *)temp_hash, ATP_IDENT_KEY_STG);
         CopyMem((void *)&msg[cpyofs], temp_hash, ATP_IDENT_KEY_STG);
