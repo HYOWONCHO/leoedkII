@@ -420,7 +420,7 @@ SBCStatus SBC_SecureBootUpdateScenario(VOID *priv)
               0,
               p->prevmode,
               BOOT_MODE_FACTORY,
-              BOOT_MODE_UPDATE   /* ← 여기서 이제 실제로 key_mode 사용 */
+              KEY_MODE_UPDATE   /* ← 여기서 이제 실제로 key_mode 사용 */
           );
 
         sbc_err_sysprn(SBC_LOG_CMN_PRIO_INFO, 2,

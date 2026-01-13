@@ -1927,14 +1927,19 @@ errdone:
                 SBC_RawPrtBlockWrite(h_blkio, (UINT8 *)&tmp_prtheader, sizeof(rawprt_hdr_t), 0);
             }
 
-            sbc_err_sysprn(SBC_LOG_CMN_PRIO_INFO, 2,
-             SYS_LOG_HOST_BOOT,
-             SYS_LOG_APP_NAME,
-             SYS_LOG_CSC_NAME,
-             8,
-             SYS_LOG_EVT_VALDIATION,
-             L"SBC_tamper_Protected software integrity is compromised and reboot original ProtectedSW\n");
+
         }
+        else {
+            sbc_err_sysprn(SBC_LOG_CMN_PRIO_INFO, 2,
+                 SYS_LOG_HOST_BOOT,
+                 SYS_LOG_APP_NAME,
+                 SYS_LOG_CSC_NAME,
+                 8,
+                 SYS_LOG_EVT_VALDIATION,
+                 L"SBC_tamper_Factory firmware integrity is compromised and System Shutdown\n");
+        }
+
+
         
     default:
         break;
