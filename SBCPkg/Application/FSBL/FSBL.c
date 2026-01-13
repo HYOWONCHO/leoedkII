@@ -1552,7 +1552,7 @@ UefiMain (
                      L"SBC_tamper_ SSBL signature verification faied");
 
           btproc.bootst = SB_PROC_ST_ABNRAM;
-           if (h_rawprtheader.bootmode  == BOOT_MODE_NORMAL) {
+          if (h_rawprtheader.bootmode  == BOOT_MODE_NORMAL) {
               btproc.b_forced = TRUE;
           }
           retval = EFI_INVALID_PARAMETER;
@@ -1898,6 +1898,7 @@ errdone:
     switch(h_rawprtheader.bootmode) {
     case BOOT_MODE_NORMAL:
     case BOOT_MODE_UPDATE:
+    case BOOT_MODE_RECOVERY:
 
         if (btproc.b_forced == TRUE) {
             SBC_ShutdownSystem();
@@ -1910,6 +1911,7 @@ errdone:
         }
         
         break;
+
     case BOOT_MODE_FACTORY:
 
         if (btproc.b_forced == TRUE) {
@@ -1919,11 +1921,19 @@ errdone:
         // In terms of the Abnormal behavior on Factory Mode
         if ((btproc.bootst != SB_PROC_ST_ABNRAM)) {
                   // Change the key mode to normal based on key mode behavior scenario.
-                if (tmp_prtheader->keymode != KEY_MODE_NORMAL) {
+            if (tmp_prtheader->keymode != KEY_MODE_NORMAL) {
                 tmp_prtheader->keymode = KEY_MODE_NORMAL;
 
                 SBC_RawPrtBlockWrite(h_blkio, (UINT8 *)&tmp_prtheader, sizeof(rawprt_hdr_t), 0);
             }
+
+            sbc_err_sysprn(SBC_LOG_CMN_PRIO_INFO, 2,
+             SYS_LOG_HOST_BOOT,
+             SYS_LOG_APP_NAME,
+             SYS_LOG_CSC_NAME,
+             8,
+             SYS_LOG_EVT_VALDIATION,
+             L"SBC_tamper_Protected software integrity is compromised and reboot original ProtectedSW\n");
         }
         
     default:

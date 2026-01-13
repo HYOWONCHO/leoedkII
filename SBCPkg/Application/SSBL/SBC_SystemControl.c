@@ -873,6 +873,50 @@ static SBCStatus _store_fw_os_keypair_store(VOID *priv, VOID *fwid, VOID *osid)
                       SBC_AT_IV_LEN,
                       auth_iv);
 
+
+    SBC_AESGcmSetContext((void *)aesctx.gcm,
+                         (void *)enckey,
+                         (void *)auth_iv,
+                         (void *)auth_tag);
+
+    ctx.msg.value = (UINT8 *)osid;
+    ctx.msg.length = SYS_OSID_KEY_LEN;
+    ctx.out.value = encbuf;
+    ctx.out.length = ctx.msg.length;
+
+    dprint("OSID Key Buffer Size : %d", ctx.out.length);
+    ret = SBC_AESGcmEncrypt(&aesctx);
+    SBC_RET_VALIDATE_ERRCODEMSG((ret == SBCOK),
+                                ret,
+                                "Firmware ID Encrypt fail");
+
+        // Copy the Length for Ecnrypt Data
+    cpy_offset = SYS_CONF_OSID_OFS;
+    id_len = ctx.out.length;
+    // Copy Lengh
+    CopyMem(&buf[cpy_offset], &id_len, sizeof id_len);
+    cpy_offset += sizeof id_len;
+    // Copy Encrypt Data for OSID 
+    CopyMem(&buf[cpy_offset],
+            encbuf,
+            id_len);
+    cpy_offset += id_len;
+
+    // IV copy
+    CopyMem(&buf[cpy_offset], 
+            auth_iv,
+            SBC_AT_IV_LEN);
+    cpy_offset += SBC_AT_IV_LEN;
+
+    // Tag copy
+    CopyMem(&buf[cpy_offset], 
+            auth_tag,
+            SBC_AT_TAG_LEN);
+    cpy_offset += SBC_AT_TAG_LEN;
+
+
+    // Previously used TAG buffer initialize to zero 
+    ZeroMem((VOID *)auth_tag, sizeof auth_tag);
     SBC_AESGcmSetContext((void *)aesctx.gcm,
                          (void *)enckey,
                          (void *)auth_iv,

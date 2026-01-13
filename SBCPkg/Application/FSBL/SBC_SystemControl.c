@@ -402,6 +402,39 @@ SBCStatus SBC_SecureBootUpdateScenario(VOID *priv)
         return ret;
     }
 
+    if (p->bm  == BOOT_MODE_RECOVERY) {
+        dprint("Recovery Mode Boot Abnormal");
+
+        sbc_err_sysprn(SBC_LOG_CMN_PRIO_INFO, 2,
+             SYS_LOG_HOST_BOOT,
+             SYS_LOG_APP_NAME,
+             SYS_LOG_CSC_NAME,
+             8,
+             SYS_LOG_EVT_VALDIATION,
+             L"SBC_tamper_Updated boot firmware invalid and initiating rollback to factory version\n");
+
+        
+        ret = SBC_RawPrtHdrChange(
+              p,
+              0,
+              0,
+              p->prevmode,
+              BOOT_MODE_FACTORY,
+              BOOT_MODE_UPDATE   /* ← 여기서 이제 실제로 key_mode 사용 */
+          );
+
+        sbc_err_sysprn(SBC_LOG_CMN_PRIO_INFO, 2,
+             SYS_LOG_HOST_BOOT,
+             SYS_LOG_APP_NAME,
+             SYS_LOG_CSC_NAME,
+             8,
+             SYS_LOG_EVT_VALDIATION,
+             L"SBC_Integrity_Boot mode is FACTORY mode and Reboot\n");
+
+
+        SBC_RebootSystem();
+    }
+
     sbc_err_sysprn(SBC_LOG_CMN_PRIO_INFO, 2,
                    SYS_LOG_HOST_BOOT,
                    SYS_LOG_APP_NAME,
