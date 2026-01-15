@@ -1631,7 +1631,7 @@ EFI_STATUS SBC_LogFileInit( EFI_HANDLE        logHandle)
     Status = Root->Open(
                 Root,
                 &File,
-                FSBL_LOG_PATH,
+                SSBL_LOG_PATH,
                 EFI_FILE_MODE_CREATE | EFI_FILE_MODE_READ | EFI_FILE_MODE_WRITE,
                 0
             );

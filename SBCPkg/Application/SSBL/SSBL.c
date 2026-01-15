@@ -456,7 +456,7 @@ UefiMain (
 #ifdef _LOG_RECODING_
     SBC_LogInitAuto(&gLogCtx,
                     ImageHandle,
-                    FSBL_LOG_PATH,
+                    SSBL_LOG_PATH,
                     SBC_LOG_DEFAULT_BUF_SIZE,
                     NULL);
 #endif
