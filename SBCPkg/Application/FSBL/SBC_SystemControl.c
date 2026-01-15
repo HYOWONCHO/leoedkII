@@ -12,6 +12,7 @@
 #include <Protocol/BlockIo.h>
 //#include <Library/DevicePathToTextLib.h>
 
+#include "SBC_Log.h"
 #include "SBC_SystemControl.h"
 #include "SBC_AntiTampering.h"
 #include "SBC_Hashing.h"
@@ -231,8 +232,12 @@ VOID SBC_RebootSystem(VOID)
 {
   Print(L"\033[33mReset SBC System ...\033[0m\n");
 #ifndef _ALL_PASS_
+#ifdef _LOG_RECODING_
+    SBC_LogDeinit(&gLogCtx);
+#endif
   gRT->ResetSystem(EfiResetCold, EFI_SUCCESS, 0, NULL);
-  ASSERT(FALSE);
+  //ASSERT(FALSE);
+  while(TRUE) { };
 #endif
   return;
 }
@@ -249,8 +254,11 @@ VOID SBC_ShutdownSystem(VOID)
          L"Detectoin",
          L"SBC_VENDOR_SP System Shutdown - Boot State Ab-normal");
 #ifndef _ALL_PASS_
+#ifdef _LOG_RECODING_
+    SBC_LogDeinit(&gLogCtx);
+#endif
   gRT->ResetSystem(EfiResetShutdown, EFI_SUCCESS, 0, NULL);
-  ASSERT(FALSE);
+  while(TRUE) { };
 #endif
   return;
 }

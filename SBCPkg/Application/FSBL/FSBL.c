@@ -83,6 +83,8 @@ UINTN   sys_end_time = 0ULL;
 UINTN   sys_ns_var = 0ULL;
 
 
+
+
 VOID *h_blkio;               // Block I/O handle
 
 #ifndef _FSBL_TEST_
@@ -1252,6 +1254,16 @@ UefiMain (
                  L"Detetion",
                  L"SBC_VENDOR_SP Success to Reconnect to All controller \n");
     }
+
+#ifdef _LOG_RECODING_
+    SBC_LogInitAuto(&gLogCtx,
+                    ImageHandle,
+                    FSBL_LOG_PATH,
+                    SBC_LOG_DEFAULT_BUF_SIZE,
+                    NULL);
+#endif
+
+    //SBC_SetLogWriteCtxHndl((VOID *)&gLogCtx);
 
 
 //#ifdef _DEBUG_PRINT_ON_

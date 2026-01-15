@@ -490,7 +490,9 @@ SBCStatus SBC_SSBL_LoadAndStart(EFI_HANDLE ImageHandle)
                  0,
                  L"Detetion",
                  L"SBC_VENDOR_SP Jump to SSBL !!!"); 
-
+#ifdef _LOG_RECODING_
+    SBC_LogDeinit(&gLogCtx);
+#endif
     EFI_STATUS Status = gBS->LoadImage(FALSE, gImageHandle, DevicePath, NULL, 0, &ImageHandle);
     if (!EFI_ERROR(Status)) {
       

@@ -1,7 +1,7 @@
 
 #ifndef __SBCLOG__
 #define __SBCLOG__
-
+#include <Protocol/SimpleFileSystem.h>
 #include <Library/DebugLib.h>
 
 #include "SBC_Timer.h"
@@ -64,6 +64,8 @@ typedef enum {
 
 #define BYTES_PER_LINE 16
 //#define LINE_LEN 16
+
+
 
 void SBC_mem_print_bin(
         CHAR8 *title /**< [in] display name strings */,
@@ -311,6 +313,78 @@ typedef enum {
     LOG_EVENT_REBOOT,       // 재부팅 관련
     // ... 필요한 이벤트 추가
 } LOG_EVENT;
+
+
+// Added by Leon for Log recoding 
+#ifndef SBC_LOG_DEFAULT_BUF_SIZE
+#define SBC_LOG_DEFAULT_BUF_SIZE  (16 * 1024)  // 16KB
+#endif
+
+
+
+typedef struct {
+    EFI_HANDLE  FsHandle;
+    EFI_SIMPLE_FILE_SYSTEM_PROTOCOL *SimpleFs;
+    EFI_FILE_PROTOCOL *Root;
+    EFI_FILE_PROTOCOL *File;
+
+    CHAR16     *FilePath;
+
+    CHAR8      *Buf;
+    UINTN       BufCap;
+    UINTN       BufLen;
+
+    BOOLEAN     Ready;
+} SBC_LOG_CTX;
+
+extern SBC_LOG_CTX gLogCtx;
+/**
+  Initialize logging context.
+  - Binds to the given filesystem handle (do NOT use LocateProtocol).
+  - Opens volume and prepares internal buffer.
+**/
+EFI_STATUS
+SBC_LogInit(
+    OUT SBC_LOG_CTX   *Ctx,
+    IN  EFI_HANDLE     FsHandle,
+    IN  CONST CHAR16  *LogPath,
+    IN  UINTN          BufferSize
+);
+
+/**
+  Append a CHAR16 message as ASCII (+ '\n') into internal buffer.
+  Flushes automatically when buffer is full.
+**/
+EFI_STATUS
+SBC_LogWrite16(
+    IN OUT SBC_LOG_CTX  *Ctx,
+    IN     CONST CHAR16 *Msg
+);
+
+/**
+  Flush internal buffer to file (append).
+**/
+EFI_STATUS
+SBC_LogFlush(
+    IN OUT SBC_LOG_CTX *Ctx
+);
+
+/**
+  Close file/root and free resources.
+**/
+VOID
+SBC_LogDeinit(
+    IN OUT SBC_LOG_CTX *Ctx
+);
+
+EFI_STATUS
+SBC_LogInitAuto(
+    OUT SBC_LOG_CTX   *Ctx,
+    IN  EFI_HANDLE     ImageHandle,
+    IN  CONST CHAR16  *LogPath,
+    IN  UINTN          BufferSize,
+    OUT EFI_HANDLE    *OutFsHandle OPTIONAL
+);
 
 VOID UefiLog(LOG_LEVEL Level, LOG_EVENT Event, CONST CHAR16 *Format, ...);
 VOID SBC_LogElapsedTime(const CHAR16 *Tag, UINTN Ns);

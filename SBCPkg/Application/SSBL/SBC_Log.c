@@ -32,12 +32,12 @@
 
 #include <Library/MemoryAllocationLib.h>
 #include <Library/UefiBootServicesTableLib.h>
+
+#include <Protocol/LoadedImage.h>
 #include "SBC_Log.h"
 
 
-
-
-
+SBC_LOG_CTX gLogCtx;
 
 #ifndef FMT_INT64_DFORMAT
 #define FMT_INT64_DFORMAT   L"ll"   // For signed decimal 64-bit
@@ -1056,9 +1056,316 @@ SBC_InternalPrint (
 
   return Return;
 }
+
+//
+// Added by Leon
+//
+
+
+static
+VOID
+SbcLogZeroCtx(IN OUT SBC_LOG_CTX *Ctx)
+{
+    if (!Ctx) return;
+    SetMem(Ctx, sizeof(*Ctx), 0);
+}
+
+static
+EFI_STATUS
+SbcLogEnsureFileOpen(IN OUT SBC_LOG_CTX *Ctx)
+{
+    EFI_STATUS Status;
+
+    if (!Ctx || !Ctx->Ready) return EFI_NOT_READY;
+    if (Ctx->File) return EFI_SUCCESS;
+
+    // Try open existing for READ|WRITE (append)
+    Status = Ctx->Root->Open(
+                    Ctx->Root,
+                    &Ctx->File,
+                    Ctx->FilePath,
+                    EFI_FILE_MODE_READ | EFI_FILE_MODE_WRITE,
+                    0
+                );
+    if (!EFI_ERROR(Status)) {
+        // Seek EOF for append
+        Status = Ctx->File->SetPosition(Ctx->File, (UINT64)-1);
+        if (EFI_ERROR(Status)) {
+            Ctx->File->Close(Ctx->File);
+            Ctx->File = NULL;
+            return Status;
+        }
+        return EFI_SUCCESS;
+    }
+
+    // If not found, create it
+    if (Status == EFI_NOT_FOUND) {
+        Status = Ctx->Root->Open(
+                        Ctx->Root,
+                        &Ctx->File,
+                        Ctx->FilePath,
+                        EFI_FILE_MODE_READ | EFI_FILE_MODE_WRITE | EFI_FILE_MODE_CREATE,
+                        0
+                    );
+        if (EFI_ERROR(Status)) return Status;
+
+        Status = Ctx->File->SetPosition(Ctx->File, (UINT64)-1);
+        if (EFI_ERROR(Status)) {
+            Ctx->File->Close(Ctx->File);
+            Ctx->File = NULL;
+            return Status;
+        }
+        return EFI_SUCCESS;
+    }
+
+    return Status;
+}
+
+static
+EFI_STATUS
+SbcLogBufAppend(IN OUT SBC_LOG_CTX *Ctx, IN CONST CHAR8 *Data, IN UINTN Len)
+{
+    EFI_STATUS Status;
+
+    if (!Ctx || !Ctx->Ready) return EFI_NOT_READY;
+    if (!Data || Len == 0) return EFI_SUCCESS;
+
+    // If single message bigger than buffer: flush existing, then write directly.
+    if (Len > Ctx->BufCap) {
+        Status = SBC_LogFlush(Ctx);
+        if (EFI_ERROR(Status)) return Status;
+
+        Status = SbcLogEnsureFileOpen(Ctx);
+        if (EFI_ERROR(Status)) return Status;
+
+        UINTN W = Len;
+        Status = Ctx->File->Write(Ctx->File, &W, (VOID*)Data);
+        return Status;
+    }
+
+    // If not enough space: flush first
+    if (Ctx->BufLen + Len > Ctx->BufCap) {
+        Status = SBC_LogFlush(Ctx);
+        if (EFI_ERROR(Status)) return Status;
+    }
+
+    CopyMem(Ctx->Buf + Ctx->BufLen, Data, Len);
+    Ctx->BufLen += Len;
+    return EFI_SUCCESS;
+}
+
+EFI_STATUS
+SBC_LogInit(
+    OUT SBC_LOG_CTX   *Ctx,
+    IN  EFI_HANDLE     FsHandle,
+    IN  CONST CHAR16  *LogPath,
+    IN  UINTN          BufferSize
+)
+{
+    EFI_STATUS Status = EFI_SUCCESS;
+
+    if (Ctx == NULL || FsHandle == NULL || LogPath == NULL)
+        return EFI_INVALID_PARAMETER;
+
+    SbcLogZeroCtx(Ctx);
+
+    Ctx->FsHandle = FsHandle;
+
+    Status = gBS->HandleProtocol(
+                    FsHandle,
+                    &gEfiSimpleFileSystemProtocolGuid,
+                    (VOID**)&Ctx->SimpleFs
+                );
+    if (EFI_ERROR(Status) || Ctx->SimpleFs == NULL) {
+        goto Exit;
+    }
+
+    Status = Ctx->SimpleFs->OpenVolume(Ctx->SimpleFs, &Ctx->Root);
+    if (EFI_ERROR(Status) || Ctx->Root == NULL) {
+        goto Exit;
+    }
+
+    Ctx->FilePath = AllocateCopyPool(StrSize(LogPath), LogPath);
+    if (Ctx->FilePath == NULL) {
+        Status = EFI_OUT_OF_RESOURCES;
+        goto Exit;
+    }
+
+    if (BufferSize == 0)
+        BufferSize = SBC_LOG_DEFAULT_BUF_SIZE;
+
+    Ctx->Buf = AllocateZeroPool(BufferSize);
+    if (Ctx->Buf == NULL) {
+        Status = EFI_OUT_OF_RESOURCES;
+        goto Exit;
+    }
+
+    Ctx->BufCap = BufferSize;
+    Ctx->BufLen = 0;
+
+    // If you want to fail-fast for write-protected / path errors, enable this.
+    // Status = SbcLogEnsureFileOpen(Ctx);
+    // if (EFI_ERROR(Status)) goto Exit;
+
+    Ctx->Ready = TRUE;
+    return EFI_SUCCESS;
+
+Exit:
+    // Ensure Ready is false on failure
+    Ctx->Ready = FALSE;
+
+    if (Ctx->File) {
+        Ctx->File->Close(Ctx->File);
+        Ctx->File = NULL;
+    }
+    if (Ctx->Root) {
+        Ctx->Root->Close(Ctx->Root);
+        Ctx->Root = NULL;
+    }
+    if (Ctx->Buf) {
+        FreePool(Ctx->Buf);
+        Ctx->Buf = NULL;
+        Ctx->BufCap = 0;
+        Ctx->BufLen = 0;
+    }
+    if (Ctx->FilePath) {
+        FreePool(Ctx->FilePath);
+        Ctx->FilePath = NULL;
+    }
+
+    // Keep FsHandle/SimpleFs as-is or clear; usually clear to avoid stale pointers.
+    Ctx->FsHandle = NULL;
+    Ctx->SimpleFs = NULL;
+
+    return Status;
+}
+
+EFI_STATUS
+SBC_LogInitAuto(
+    OUT SBC_LOG_CTX   *Ctx,
+    IN  EFI_HANDLE     ImageHandle,
+    IN  CONST CHAR16  *LogPath,
+    IN  UINTN          BufferSize,
+    OUT EFI_HANDLE    *OutFsHandle OPTIONAL
+)
+{
+    EFI_STATUS Status;
+    EFI_LOADED_IMAGE_PROTOCOL *LoadedImage;
+
+    if (Ctx == NULL || ImageHandle == NULL || LogPath == NULL)
+        return EFI_INVALID_PARAMETER;
+
+    Status = gBS->HandleProtocol(ImageHandle, &gEfiLoadedImageProtocolGuid, (VOID**)&LoadedImage);
+    if (EFI_ERROR(Status) || LoadedImage == NULL || LoadedImage->DeviceHandle == NULL)
+        return EFI_UNSUPPORTED;
+
+    if (OutFsHandle)
+        *OutFsHandle = LoadedImage->DeviceHandle;
+
+    return SBC_LogInit(Ctx, LoadedImage->DeviceHandle, LogPath, BufferSize);
+}
+
+EFI_STATUS
+SBC_LogWrite16(
+    IN OUT SBC_LOG_CTX  *Ctx,
+    IN     CONST CHAR16 *Msg
+)
+{
+    EFI_STATUS Status;
+    if (!Ctx || !Ctx->Ready || !Msg) return EFI_INVALID_PARAMETER;
+
+    // Convert CHAR16 -> ASCII into a temporary buffer
+    // Worst-case allocate (Len*3 + 2) like you did, but WRITE only actual length.
+    UINTN ULen = StrLen((CHAR16*)Msg);
+    if (ULen == 0) return EFI_SUCCESS;
+
+    UINTN AsciiCap = (ULen * 3) + 2; // + newline space
+    CHAR8 *Tmp = AllocateZeroPool(AsciiCap);
+    if (!Tmp) return EFI_OUT_OF_RESOURCES;
+
+    // Safe conversion. Non-ASCII will become '?'
+    UnicodeStrToAsciiStrS((CHAR16*)Msg, Tmp, AsciiCap);
+
+    UINTN Actual = AsciiStrLen(Tmp); // IMPORTANT: write actual bytes only
+    Status = SbcLogBufAppend(Ctx, Tmp, Actual);
+    if (!EFI_ERROR(Status)) {
+        // Append newline
+        CHAR8 NL = '\n';
+        Status = SbcLogBufAppend(Ctx, &NL, 1);
+    }
+
+    FreePool(Tmp);
+    return Status;
+}
+
+EFI_STATUS
+SBC_LogFlush(
+    IN OUT SBC_LOG_CTX *Ctx
+)
+{
+    EFI_STATUS Status;
+
+    if (!Ctx || !Ctx->Ready) return EFI_NOT_READY;
+    if (Ctx->BufLen == 0) return EFI_SUCCESS;
+
+    Status = SbcLogEnsureFileOpen(Ctx);
+    if (EFI_ERROR(Status)) return Status;
+
+    UINTN W = Ctx->BufLen;
+    Status = Ctx->File->Write(Ctx->File, &W, Ctx->Buf);
+    if (EFI_ERROR(Status)) return Status;
+
+    // Optional: flush to media (some FS honor it, some ignore)
+    Ctx->File->Flush(Ctx->File);
+
+    // Reset buffer
+    Ctx->BufLen = 0;
+    SetMem(Ctx->Buf, Ctx->BufCap, 0);
+
+    return EFI_SUCCESS;
+}
+
+VOID
+SBC_LogDeinit(
+    IN OUT SBC_LOG_CTX *Ctx
+)
+{
+    if (!Ctx) return;
+
+    // Best-effort flush
+    if (Ctx->Ready) {
+        (VOID)SBC_LogFlush(Ctx);
+    }
+
+    if (Ctx->File) {
+        Ctx->File->Close(Ctx->File);
+        Ctx->File = NULL;
+    }
+    if (Ctx->Root) {
+        Ctx->Root->Close(Ctx->Root);
+        Ctx->Root = NULL;
+    }
+    if (Ctx->Buf) {
+        FreePool(Ctx->Buf);
+        Ctx->Buf = NULL;
+    }
+    if (Ctx->FilePath) {
+        FreePool(Ctx->FilePath);
+        Ctx->FilePath = NULL;
+    }
+
+    SbcLogZeroCtx(Ctx);
+}
+
 // ===========================================================================
 // SBC_LogPrint (Main Logging Function)
 // ===========================================================================
+//SBC_LOG_CTX *gLogWriteCtx;
+//
+//VOID SBC_SetLogWriteCtxHndl(VOID *ctx)
+//{
+//    gLogWriteCtx = (SBC_LOG_CTX *)ctx;
+//}
 
 VOID SBC_LogPrint(
   CONST CHAR16* func,     // For [%s:%d] if uncommented (CHAR16*)
@@ -1213,7 +1520,11 @@ VOID SBC_LogPrint(
     //UINTN final_ascii_len = remove_all_space(wrlog_ptr, AsciiConvertedLen); // Pass converted length, not full buffer size
 
     //dprint("SBC_LogPrint: ASCII Log msg after space removal: %a (Final Length: %d)\n", wrlog_ptr, final_ascii_len);
-#if 0
+#if 1
+#ifdef _LOG_RECODING_
+        SBC_LogWrite16(&gLogCtx, full_log_msg);
+#endif
+#else
     {
         EFI_SIMPLE_FILE_SYSTEM_PROTOCOL *SimpleFs;
         EFI_FILE_PROTOCOL *Root;
@@ -1320,7 +1631,7 @@ EFI_STATUS SBC_LogFileInit( EFI_HANDLE        logHandle)
     Status = Root->Open(
                 Root,
                 &File,
-                SSBL_LOG_PATH,
+                FSBL_LOG_PATH,
                 EFI_FILE_MODE_CREATE | EFI_FILE_MODE_READ | EFI_FILE_MODE_WRITE,
                 0
             );

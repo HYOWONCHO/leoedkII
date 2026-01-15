@@ -453,6 +453,14 @@ UefiMain (
 
     //SBC_LogFileInit(ImageHandle);
 
+#ifdef _LOG_RECODING_
+    SBC_LogInitAuto(&gLogCtx,
+                    ImageHandle,
+                    FSBL_LOG_PATH,
+                    SBC_LOG_DEFAULT_BUF_SIZE,
+                    NULL);
+#endif
+
     sbc_err_sysprn(SBC_LOG_CMN_PRIO_INFO, 2,
                  SYS_LOG_HOST_BOOT,
                  SYS_LOG_APP_NAME,

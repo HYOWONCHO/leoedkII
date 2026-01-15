@@ -51,6 +51,7 @@
 #include "SBC_Config.h"
 
 static UINT32 stay_recovery_flag = 0;
+static UINT8 g_temp_osid[SBC_AT_RP_KEY_LEN];
 
 //EFI_GUID g_sbc_guid  = {0x1F3F7E80, 0xDB6B, 0x93FA, {0x9E, 0x61, 0x4C, 0x31, 0x3D, 0x3A}};
 #ifdef _ALL_PASS_
@@ -390,7 +391,8 @@ static SBCStatus _proetcted_sw_re_enc_dec(VOID *handle)
     if(bp->km == KEY_MODE_BOOT) {
         //system_key = ((atp_ident_t *)bp->keyinfo)->osid;
         // compute the previously OSID 
-        ret = _compute_previously_osid((VOID *)bp, old_osid);
+        //ret = _compute_previously_osid((VOID *)bp, old_osid);
+        CopyMem(old_osid, g_temp_osid, SBC_AT_RP_KEY_LEN);
         SBC_RET_VALIDATE_ERRCODEMSG((ret == SBCOK), ret, "Fail to the OLD OSID generating");
 
         decrypt_key = (VOID *)old_osid;
@@ -470,7 +472,7 @@ errdone:
 #endif
 static SBCStatus _update_behavior_for_km(void *priv)
 {
-    BOOLEAN skip_protsw = FALSE;
+    //BOOLEAN skip_protsw = FALSE;
     SBCStatus ret = SBCOK;
     boot_proc_t *bp = (boot_proc_t *)priv;
 
@@ -524,12 +526,12 @@ static SBCStatus _update_behavior_for_km(void *priv)
 #ifdef _HANDLE_PROTSW_
         ret =  _proetcted_sw_re_enc_dec((void *)bp);
         if(ret != SBCOK) {
-            skip_protsw = TRUE;
+            //skip_protsw = TRUE;
             eprint("Detection _proetcted_sw_re_enc_dec ");
             goto errdone;
         }
 
-        skip_protsw = TRUE;
+        //skip_protsw = TRUE;
 #endif
         ret = SBC_BootKeyModeChange(BOOT_MODE_NORMAL, KEY_MODE_NORMAL, priv);
         if(ret != SBCOK) {
@@ -574,7 +576,7 @@ errdone:
             SBC_BootKeyModeChange(BOOT_MODE_RECOVERY,
                                   KEY_MODE_UPDATE,
                                   priv);
-
+#if 0
             UINTN bytes_read = 0ULL;
             UINTN dst_offset = 0ULL;
             UINTN src_offset = 0ULL;
@@ -616,7 +618,7 @@ errdone:
                 }
             }
 #endif
-
+#endif
             ret = SBCFAIL;
 
         }
@@ -634,7 +636,7 @@ errdone:
                                   KEY_MODE_UPDATE,
                                   priv);
 
-
+#if 0
             UINTN bytes_read = 0ULL;
             UINTN dst_offset = 0ULL;
             UINTN src_offset = 0ULL;
@@ -678,8 +680,21 @@ errdone:
             }
 #endif
         }
+#endif
+            ret = SBCFAIL;
+        }
 
-        ret = SBCFAIL;
+    }
+//errdone2:
+
+    if(ret != SBCOK) {
+        sbc_err_sysprn(SBC_LOG_CMN_PRIO_INFO, 2,
+             SYS_LOG_HOST_BOOT,
+             SYS_LOG_APP_NAME,
+             SYS_LOG_CSC_NAME,
+             0,
+             L"Validation",
+             L"SBC_VENDOR_SP Update Mode operation fail \n");
     }
     else {
         sbc_err_sysprn(SBC_LOG_CMN_PRIO_INFO, 2,
@@ -690,7 +705,7 @@ errdone:
              L"Validation",
              L"SBC_VENDOR_SP Update Mode operation done \n");
     }
-errdone2:
+
     return ret;
 }
 
@@ -1106,6 +1121,8 @@ errdone:
 }
 
 
+
+
 void  SBC_RecoveryBootProcessing(VOID *priv)
 {
     SBCStatus ret = SBCOK;
@@ -1200,6 +1217,8 @@ void  SBC_RecoveryBootProcessing(VOID *priv)
         switch(bt_proc->km) {
         case KEY_MODE_BOOT:
             dprint("Key Mode Boot");
+
+            _compute_previously_osid((VOID *)bt_proc, g_temp_osid);
         //case KEY_MODE_NORMAL:
             // Baseanswer Ecnrypt and Store
             ret = SBC_BaseAnswerEncryptStore(
@@ -1280,7 +1299,8 @@ void  SBC_RecoveryBootProcessing(VOID *priv)
                             bt_proc->blkhnd,
                             ((LV_t *)bt_proc->baseansr)->value,
                             ((LV_t *)bt_proc->baseansr)->length,
-                            new_dice_id.osid,
+                            ((atp_ident_t *)bt_proc->keyinfo)->migid, // Add @ 20260114
+                            //new_dice_id.osid, // comment @ 202600114
                             BASE_ANS_KEY_STR
             );
 
@@ -1884,7 +1904,12 @@ VOID SBC_RebootSystem(VOID)
          1,
          SYS_LOG_EVT_DETECTION,
          L"SBC_VENDOR_SP System Reboo Re-starting ");
+
+#ifdef _LOG_RECODING_
+    SBC_LogDeinit(&gLogCtx);
+#endif
     gRT->ResetSystem(EfiResetCold, EFI_SUCCESS, 0, NULL);
+
     while(TRUE) { };
 
 }
@@ -1899,7 +1924,9 @@ VOID SBC_ShutdownSystem(VOID)
          1,
          SYS_LOG_EVT_DETECTION,
          L"SBC_VENDOR_SP System Shutdown - Boot State Ab-normal");
-
+#ifdef _LOG_RECODING_
+    SBC_LogDeinit(&gLogCtx);
+#endif
     gRT->ResetSystem(EfiResetShutdown, EFI_SUCCESS, 0, NULL);
     while(TRUE) { };
 }
