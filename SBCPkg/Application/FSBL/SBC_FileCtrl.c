@@ -2499,7 +2499,7 @@ VOID
 SBC_LogBlkMedia(IN EFI_BLOCK_IO_PROTOCOL *Blk)
 {
     if (!Blk || !Blk->Media) return;
-    EFI_BLOCK_IO_MEDIA *m = Blk->Media;
+    [[maybe_unused]]EFI_BLOCK_IO_MEDIA *m = Blk->Media;
 
     dprint("BLK: MediaPresent=%d, ReadOnly=%d, BlockSize=%u, LastBlock=%lu",
            m->MediaPresent, m->ReadOnly, m->BlockSize, (UINT64)m->LastBlock);
@@ -3167,7 +3167,7 @@ SBCStatus SBC_DeleteFile(IN CHAR16 *FilePath)
         }
     }
 
-    gBS->Stall(3 * 1000 * 1000); // 3 seconds
+    gBS->Stall(1 * 1000 * 1000); // 3 seconds
 
     if (EFI_ERROR(Status))
         return SBCFAIL;

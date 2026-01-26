@@ -1164,8 +1164,12 @@ SBC_LogInit(
 {
     EFI_STATUS Status = EFI_SUCCESS;
 
-    if (Ctx == NULL || FsHandle == NULL || LogPath == NULL)
+    Print(L"Log Init sttart \n");
+
+    if (Ctx == NULL || FsHandle == NULL || LogPath == NULL) {
+        Print(L"Log init invalid parameter \n");
         return EFI_INVALID_PARAMETER;
+    }
 
     SbcLogZeroCtx(Ctx);
 
@@ -1177,16 +1181,19 @@ SBC_LogInit(
                     (VOID**)&Ctx->SimpleFs
                 );
     if (EFI_ERROR(Status) || Ctx->SimpleFs == NULL) {
+        Print(L"gBS->HandleProtocol failed \n");
         goto Exit;
     }
 
     Status = Ctx->SimpleFs->OpenVolume(Ctx->SimpleFs, &Ctx->Root);
     if (EFI_ERROR(Status) || Ctx->Root == NULL) {
+        Print(L"Ctx->SimpleFs->OpenVolume failed \n");
         goto Exit;
     }
 
     Ctx->FilePath = AllocateCopyPool(StrSize(LogPath), LogPath);
     if (Ctx->FilePath == NULL) {
+        Print(L"Ctx->FilePath = AllocateCopyPool out of resource \n");
         Status = EFI_OUT_OF_RESOURCES;
         goto Exit;
     }
@@ -1196,6 +1203,7 @@ SBC_LogInit(
 
     Ctx->Buf = AllocateZeroPool(BufferSize);
     if (Ctx->Buf == NULL) {
+        Print(L"Ctx->Buf = AllocateZeroPool out of resource \n");
         Status = EFI_OUT_OF_RESOURCES;
         goto Exit;
     }
@@ -1239,6 +1247,88 @@ Exit:
 
     return Status;
 }
+//
+//EFI_STATUS
+//SBC_LogInitAuto(
+//    OUT SBC_LOG_CTX   *Ctx,
+//    IN  EFI_HANDLE     ImageHandle,
+//    IN  CONST CHAR16  *LogPath,
+//    IN  UINTN          BufferSize,
+//    OUT EFI_HANDLE    *OutFsHandle OPTIONAL
+//)
+//{
+//    EFI_STATUS Status;
+//    EFI_LOADED_IMAGE_PROTOCOL *LoadedImage;
+//
+//    Print(L"SBC_LogInitAuto sttart \n");
+//    if (Ctx == NULL || ImageHandle == NULL || LogPath == NULL){
+//        Print(L"EFI_INVALID_PARAMETER \n");
+//        return EFI_INVALID_PARAMETER;
+//    }
+//
+//    Status = gBS->HandleProtocol(ImageHandle, &gEfiLoadedImageProtocolGuid, (VOID**)&LoadedImage);
+//    if (EFI_ERROR(Status) || LoadedImage == NULL || LoadedImage->DeviceHandle == NULL) {
+//        Print(L"EFI_UNSUPPORTED \n");
+//        return EFI_UNSUPPORTED;
+//    }
+//
+//    if (OutFsHandle)
+//        *OutFsHandle = LoadedImage->DeviceHandle;
+//
+//    return SBC_LogInit(Ctx, LoadedImage->DeviceHandle, LogPath, BufferSize);
+//}
+//
+
+static
+EFI_STATUS
+SBC_FindAnyWritableSimpleFsHandle(
+    OUT EFI_HANDLE *OutFsHandle
+)
+{
+    if (OutFsHandle == NULL)
+        return EFI_INVALID_PARAMETER;
+
+    *OutFsHandle = NULL;
+
+    EFI_STATUS Status;
+    EFI_HANDLE *Handles = NULL;
+    UINTN Count = 0;
+
+    Status = gBS->LocateHandleBuffer(
+                    ByProtocol,
+                    &gEfiSimpleFileSystemProtocolGuid,
+                    NULL,
+                    &Count,
+                    &Handles
+             );
+    if (EFI_ERROR(Status) || Handles == NULL || Count == 0) {
+        return EFI_NOT_FOUND;
+    }
+
+    // Pick the first FS that can open volume (you can add better selection logic)
+    for (UINTN i = 0; i < Count; i++) {
+        EFI_SIMPLE_FILE_SYSTEM_PROTOCOL *Fs = NULL;
+        EFI_FILE_PROTOCOL *Root = NULL;
+
+        Status = gBS->HandleProtocol(
+                        Handles[i],
+                        &gEfiSimpleFileSystemProtocolGuid,
+                        (VOID**)&Fs
+                 );
+        if (EFI_ERROR(Status) || Fs == NULL)
+            continue;
+
+        Status = Fs->OpenVolume(Fs, &Root);
+        if (!EFI_ERROR(Status) && Root != NULL) {
+            Root->Close(Root);
+            *OutFsHandle = Handles[i];
+            break;
+        }
+    }
+
+    FreePool(Handles);
+    return (*OutFsHandle != NULL) ? EFI_SUCCESS : EFI_NOT_FOUND;
+}
 
 EFI_STATUS
 SBC_LogInitAuto(
@@ -1250,20 +1340,58 @@ SBC_LogInitAuto(
 )
 {
     EFI_STATUS Status;
-    EFI_LOADED_IMAGE_PROTOCOL *LoadedImage;
+    EFI_LOADED_IMAGE_PROTOCOL *LoadedImage = NULL;
+    EFI_HANDLE FsHandle = NULL;
 
-    if (Ctx == NULL || ImageHandle == NULL || LogPath == NULL)
+    Print(L"SBC_LogInitAuto start\n");
+
+    if (Ctx == NULL || ImageHandle == NULL || LogPath == NULL) {
+        Print(L"EFI_INVALID_PARAMETER\n");
         return EFI_INVALID_PARAMETER;
+    }
 
-    Status = gBS->HandleProtocol(ImageHandle, &gEfiLoadedImageProtocolGuid, (VOID**)&LoadedImage);
-    if (EFI_ERROR(Status) || LoadedImage == NULL || LoadedImage->DeviceHandle == NULL)
+    Status = gBS->HandleProtocol(
+                    ImageHandle,
+                    &gEfiLoadedImageProtocolGuid,
+                    (VOID**)&LoadedImage
+             );
+    if (EFI_ERROR(Status) || LoadedImage == NULL || LoadedImage->DeviceHandle == NULL) {
+        Print(L"LoadedImage not available\n");
         return EFI_UNSUPPORTED;
+    }
+
+    //
+    // 1) First try: use LoadedImage->DeviceHandle directly
+    //
+    {
+        EFI_SIMPLE_FILE_SYSTEM_PROTOCOL *Fs = NULL;
+        Status = gBS->HandleProtocol(
+                        LoadedImage->DeviceHandle,
+                        &gEfiSimpleFileSystemProtocolGuid,
+                        (VOID**)&Fs
+                 );
+        if (!EFI_ERROR(Status) && Fs != NULL) {
+            FsHandle = LoadedImage->DeviceHandle;
+        }
+    }
+
+    //
+    // 2) Fallback: scan any SimpleFS handle
+    //
+    if (FsHandle == NULL) {
+        Status = SBC_FindAnyWritableSimpleFsHandle(&FsHandle);
+        if (EFI_ERROR(Status) || FsHandle == NULL) {
+            Print(L"No SimpleFS handle found\n");
+            return EFI_NOT_FOUND;
+        }
+    }
 
     if (OutFsHandle)
-        *OutFsHandle = LoadedImage->DeviceHandle;
+        *OutFsHandle = FsHandle;
 
-    return SBC_LogInit(Ctx, LoadedImage->DeviceHandle, LogPath, BufferSize);
+    return SBC_LogInit(Ctx, FsHandle, LogPath, BufferSize);
 }
+
 
 EFI_STATUS
 SBC_LogWrite16(
@@ -1272,12 +1400,20 @@ SBC_LogWrite16(
 )
 {
     EFI_STATUS Status;
-    if (!Ctx || !Ctx->Ready || !Msg) return EFI_INVALID_PARAMETER;
+
+    Print(L"Log SBC_LogWrite16 sttart \n");
+    if (!Ctx || !Ctx->Ready || !Msg) {
+        Print(L"Log Invalid Parameter \n");
+        return EFI_INVALID_PARAMETER;
+    }
 
     // Convert CHAR16 -> ASCII into a temporary buffer
     // Worst-case allocate (Len*3 + 2) like you did, but WRITE only actual length.
     UINTN ULen = StrLen((CHAR16*)Msg);
-    if (ULen == 0) return EFI_SUCCESS;
+    if (ULen == 0) {
+        Print(L"Message length is zero \n");
+        return EFI_SUCCESS;
+    }
 
     UINTN AsciiCap = (ULen * 3) + 2; // + newline space
     CHAR8 *Tmp = AllocateZeroPool(AsciiCap);
@@ -1393,7 +1529,7 @@ VOID SBC_LogPrint(
     // Calculate total buffer size in bytes for safer print functions
     UINTN max_full_log_msg_bytes = sizeof(full_log_msg);
 
-    //dprint("SBC_LogPrint: Log buf size in CHAR16s: %d (Bytes: %d)\n",
+    //dPrint(L"SBC_LogPrint: Log buf size in CHAR16s: %d (Bytes: %d)\n",
     //                     PcdGet32(PcdUefiLibMaxPrintBufferSize) + 1, max_full_log_msg_bytes);
     
     ZeroMem(full_log_msg, max_full_log_msg_bytes); // Clear the buffer
@@ -1459,7 +1595,7 @@ VOID SBC_LogPrint(
     ////dprint();
     // Ensure we have at least some space left for the message body and null terminator
     if (remaining_buffer_bytes <= sizeof(CHAR16) * 4) { // Small space for "..." + NULL
-        //dprint("SBC_LogPrint: Buffer almost full before message body. Truncating.\n");
+        //dPrint(L"SBC_LogPrint: Buffer almost full before message body. Truncating.\n");
         UnicodeSPrint(full_log_msg + nxtofs, sizeof(CHAR16)*4, L"..."); // Indicate truncation
         return; // Skip to the end
     }
@@ -1511,15 +1647,15 @@ VOID SBC_LogPrint(
     //CHAR8 *wrlog_ptr = AsciiLogBuffer; 
     
     // Print for debug (both Unicode and ASCII for comparison)
-    //dprint("SBC_LogPrint: Full Unicode Log msg : %s \n", full_log_msg);
-    //dprint("SBC_LogPrint: Full ASCII Log msg   : %a (Length: %d) \n", wrlog_ptr, AsciiConvertedLen);
+    //dPrint(L"SBC_LogPrint: Full Unicode Log msg : %s \n", full_log_msg);
+    //dPrint(L"SBC_LogPrint: Full ASCII Log msg   : %a (Length: %d) \n", wrlog_ptr, AsciiConvertedLen);
 
     // Call your remove_all_space function (expects ASCII CHAR8*)
     // It should modify wrlog_ptr in place and return the new length.
     // Make sure remove_all_space works on a null-terminated string and updates length correctly.
     //UINTN final_ascii_len = remove_all_space(wrlog_ptr, AsciiConvertedLen); // Pass converted length, not full buffer size
 
-    //dprint("SBC_LogPrint: ASCII Log msg after space removal: %a (Final Length: %d)\n", wrlog_ptr, final_ascii_len);
+    //dPrint(L"SBC_LogPrint: ASCII Log msg after space removal: %a (Final Length: %d)\n", wrlog_ptr, final_ascii_len);
 #if 1
 #ifdef _LOG_RECODING_
         SBC_LogWrite16(&gLogCtx, full_log_msg);
@@ -1577,7 +1713,7 @@ VOID SBC_LogPrint(
                 else {
 
                     dprint();
-                    eprint("Log File Open fail (%r) ", Status);
+                    ePrint(L"Log File Open fail (%r) ", Status);
                 }
 
                 Root->Close(Root);
@@ -1585,7 +1721,7 @@ VOID SBC_LogPrint(
             else {
 
                 dprint();
-                eprint("Log File OpenVolume fail (%r) ", Status);
+                ePrint(L"Log File OpenVolume fail (%r) ", Status);
             }
         }
 
@@ -1636,7 +1772,7 @@ EFI_STATUS SBC_LogFileInit( EFI_HANDLE        logHandle)
                 0
             );
     if (!EFI_ERROR(Status)) {
-        //dprint("Immediately close → this truncates file (%r)", Status);
+        //dPrint(L"Immediately close → this truncates file (%r)", Status);
         File->Close(File);
     }
     else {
@@ -1644,7 +1780,7 @@ EFI_STATUS SBC_LogFileInit( EFI_HANDLE        logHandle)
         return Status;
     }
 
-    dprint("Log Initialize Success (%r)", Status);
+    Print(L"Log Initialize Success (%r)", Status);
 
     Root->Close(Root);
     return EFI_SUCCESS;
@@ -1919,23 +2055,23 @@ VOID SBC_LogMsg(CHAR8* logmsg , CONST CHAR8 *funcname, UINTN linenumber, CONST C
 //
 //    hndlcnt = SBC_FindEfiFileSystemProtocol(&hndl);
 //
-//    ////dprint("Log gEfiSimpleFileSystemProtocolGuid Handle Count :%d ", hndlcnt);
+//    ////dPrint(L"Log gEfiSimpleFileSystemProtocolGuid Handle Count :%d ", hndlcnt);
 //
 //    for (int idx = 0; idx < hndlcnt; idx++) {
-//        ////dprint("[idx:%d] handle addr : 0x%x", idx, hndl[idx]);
+//        ////dPrint(L"[idx:%d] handle addr : 0x%x", idx, hndl[idx]);
 //        Status = SBC_IsDirExist(hndl[idx], rocky_dir_name);
 //        switch (Status) {
 //        case EFI_SUCCESS:
 //          loghnd=  hndl[idx];
-//          ////dprint("%s dir exists \n", rocky_dir_name);
+//          ////dPrint(L"%s dir exists \n", rocky_dir_name);
 //          break;
 //        case EFI_NOT_FOUND:
-//          ////dprint("%s dir not found \n", rocky_dir_name);
+//          ////dPrint(L"%s dir not found \n", rocky_dir_name);
 //          //////dprint();
 //          //goto errdone;
 //          break;
 //        default:
-//          //dprint("Unknown error (%s) \n", Status);
+//          //dPrint(L"Unknown error (%s) \n", Status);
 //          break;
 //        }
 //
@@ -1955,13 +2091,13 @@ VOID SBC_LogMsg(CHAR8* logmsg , CONST CHAR8 *funcname, UINTN linenumber, CONST C
 //      break;
 //
 //    default:
-//      //dprint("Unknown error (%s) \n", Status);
+//      //dPrint(L"Unknown error (%s) \n", Status);
 //      goto errdone;
 //
 //    }
 //
 //    if (ret != SBCOK) {
-//        eprint("log file create fail \n");
+//        ePrint(L"log file create fail \n");
 //        return;
 //    }
 //
@@ -1971,7 +2107,7 @@ VOID SBC_LogMsg(CHAR8* logmsg , CONST CHAR8 *funcname, UINTN linenumber, CONST C
 //
 //    retval = SBC_LogWriteFile(loghnd, sbc_log_fname, &wrlv);
 //    if (EFI_ERROR(retval)) {
-//        //dprint(" og  write fail (%r) \n",  retval);
+//        //dPrint(L" og  write fail (%r) \n",  retval);
 //
 //    }
 //
@@ -2227,7 +2363,7 @@ VOID SBC_LogInternalX(IN CHAR8 *fmt,...)
     va_start(args, fmt);
     ////dprint();
     fmtlen = AsciiVSPrint(buf, sizeof buf, fmt, args);
-    //dprint("Fmt (%d) : %a", fmtlen, buf);
+    //dPrint(L"Fmt (%d) : %a", fmtlen, buf);
     va_end(args);
 
     //VA_END(marker);
@@ -2243,7 +2379,7 @@ VOID SBC_LogInternal(IN CHAR8 *fmt, IN va_list marker)
     //VA_START(marker, format);
     ////dprint();
     fmtlen = AsciiVSPrint(buf, sizeof buf, fmt, marker);
-    //dprint("Fmt (%d) : %s", fmtlen, buf);
+    //dPrint(L"Fmt (%d) : %s", fmtlen, buf);
     //VA_END(marker);
 }
 
@@ -2326,7 +2462,7 @@ UINTN SBC_LogFmtOut(OUT CHAR16 *outbuf, IN CONST CHAR16 *fmt, ...)
 //
 ////  VA_START(args, format);
 ////
-////  //dprint("End of FS :  %lu", endofs);
+////  //dPrint(L"End of FS :  %lu", endofs);
 ////  //nxtofs += UnicodeVSPrint(&full_log_msg[nxtofs] , endofs, format, args);
 ////  nxtofs += UnicodeVSPrint(full_log_msg , endofs, format, args);
 ////  VA_END(args);
@@ -2382,7 +2518,7 @@ UINTN SBC_LogFmtOut(OUT CHAR16 *outbuf, IN CONST CHAR16 *fmt, ...)
 //
 ////  VA_START(args, format);
 ////
-////  //dprint("End of FS :  %lu", endofs);
+////  //dPrint(L"End of FS :  %lu", endofs);
 ////  //nxtofs += UnicodeVSPrint(&full_log_msg[nxtofs] , endofs, format, args);
 ////  nxtofs += UnicodeVSPrint(full_log_msg , endofs, format, args);
 ////  VA_END(args);
@@ -2627,23 +2763,23 @@ static UINTN remove_all_space(CHAR8* str, UINTN cnt) {
 //
 //    hndlcnt = SBC_FindEfiFileSystemProtocol(&hndl);
 //
-//    ////dprint("Log gEfiSimpleFileSystemProtocolGuid Handle Count :%d ", hndlcnt);
+//    ////dPrint(L"Log gEfiSimpleFileSystemProtocolGuid Handle Count :%d ", hndlcnt);
 //
 //    for (int idx = 0; idx < hndlcnt; idx++) {
-//        ////dprint("[idx:%d] handle addr : 0x%x", idx, hndl[idx]);
+//        ////dPrint(L"[idx:%d] handle addr : 0x%x", idx, hndl[idx]);
 //        Status = SBC_IsFlieAccess(hndl[idx], rocky_dir_name);
 //        switch (Status) {
 //        case EFI_SUCCESS:
 //          loghnd=  hndl[idx];
-//          ////dprint("%s dir exists \n", rocky_dir_name);
+//          ////dPrint(L"%s dir exists \n", rocky_dir_name);
 //          break;
 //        case EFI_NOT_FOUND:
-//          ////dprint("%s dir not found \n", rocky_dir_name);
+//          ////dPrint(L"%s dir not found \n", rocky_dir_name);
 //          //////dprint();
 //          //goto errdone;
 //          break;
 //        default:
-//          //dprint("Unknown error (%s) \n", Status);
+//          //dPrint(L"Unknown error (%s) \n", Status);
 //          break;
 //        }
 //
@@ -2663,13 +2799,13 @@ static UINTN remove_all_space(CHAR8* str, UINTN cnt) {
 //      break;
 //
 //    default:
-//      //dprint("Unknown error (%s) \n", Status);
+//      //dPrint(L"Unknown error (%s) \n", Status);
 //      goto errdone;
 //
 //    }
 //
 //    if (ret != SBCOK) {
-//        eprint("log file create fail \n");
+//        ePrint(L"log file create fail \n");
 //        return;
 //    }
 //
@@ -2679,7 +2815,7 @@ static UINTN remove_all_space(CHAR8* str, UINTN cnt) {
 //
 //    retval = SBC_LogWriteFile(loghnd, sbc_log_fname, &wrlv);
 //    if (EFI_ERROR(retval)) {
-//        //dprint(" og  write fail (%r) \n",  retval);
+//        //dPrint(L" og  write fail (%r) \n",  retval);
 //
 //    }
 //
@@ -2870,7 +3006,7 @@ static UINTN remove_all_space(CHAR8* str, UINTN cnt) {
 //      {
 //        ////dprint();
 //        UINTN Val = VA_ARG(CurrentVaList, UINTN);
-//        //dprint("x val :%lx", Val);
+//        //dPrint(L"x val :%lx", Val);
 //        UINTN BytesWritten = InternalUnicodePrintUint(Dest, RemainingBufChars * sizeof(CHAR16), Val, 16, FALSE, Width, PadWithZero);
 //        PrintedLength += BytesWritten / sizeof(CHAR16);
 //        Dest += BytesWritten / sizeof(CHAR16);
@@ -3045,7 +3181,7 @@ static UINTN remove_all_space(CHAR8* str, UINTN cnt) {
 //    wrlog = (CHAR8 *)full_log_msg; // Cast for ASCII processing
 //
 //    // Print for debug
-//    //dprint("Full Log msg : %s \n", full_log_msg);
+//    //dPrint(L"Full Log msg : %s \n", full_log_msg);
 //
 //    // Call your remove_all_space function (assumed to work on ASCII CHAR8*)
 //    // You need to be careful if remove_all_space expects an ASCII string,
@@ -3568,15 +3704,15 @@ SBC_LogPrint(
     CHAR8 *wrlog_ptr = AsciiLogBuffer; 
     
     // Print for debug (both Unicode and ASCII for comparison)
-    //dprint("SBC_LogPrint: Full Unicode Log msg : %s \n", full_log_msg);
-    //dprint("SBC_LogPrint: Full ASCII Log msg   : %a (Length: %d) \n", wrlog_ptr, AsciiConvertedLen);
+    //dPrint(L"SBC_LogPrint: Full Unicode Log msg : %s \n", full_log_msg);
+    //dPrint(L"SBC_LogPrint: Full ASCII Log msg   : %a (Length: %d) \n", wrlog_ptr, AsciiConvertedLen);
 
     // Call your remove_all_space function (expects ASCII CHAR8*)
     // It should modify wrlog_ptr in place and return the new length.
     // Make sure remove_all_space works on a null-terminated string and updates length correctly.
     UINTN final_ascii_len = remove_all_space(wrlog_ptr, AsciiConvertedLen); // Pass converted length, not full buffer size
 
-    //dprint("SBC_LogPrint: ASCII Log msg after space removal: %a (Final Length: %d)\n", wrlog_ptr, final_ascii_len);
+    //dPrint(L"SBC_LogPrint: ASCII Log msg after space removal: %a (Final Length: %d)\n", wrlog_ptr, final_ascii_len);
 
     // _sbc_write_log_file expects CHAR8* and its strlen.
     _sbc_write_log_file(wrlog_ptr, final_ascii_len);

@@ -222,7 +222,7 @@ EFI_STATUS MapRebuild(VOID)
 
     Print(L"Reconnect complete.\n");
 
-    gBS->Stall(50000); 
+    //gBS->Stall(50000); 
     gBS->FreePool(HandleBuffer);
     return EFI_SUCCESS;
 }
