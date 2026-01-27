@@ -1240,6 +1240,57 @@ Exit:
     return Status;
 }
 
+static
+EFI_STATUS
+SBC_FindAnyWritableSimpleFsHandle(
+    OUT EFI_HANDLE *OutFsHandle
+)
+{
+    if (OutFsHandle == NULL)
+        return EFI_INVALID_PARAMETER;
+
+    *OutFsHandle = NULL;
+
+    EFI_STATUS Status;
+    EFI_HANDLE *Handles = NULL;
+    UINTN Count = 0;
+
+    Status = gBS->LocateHandleBuffer(
+                    ByProtocol,
+                    &gEfiSimpleFileSystemProtocolGuid,
+                    NULL,
+                    &Count,
+                    &Handles
+             );
+    if (EFI_ERROR(Status) || Handles == NULL || Count == 0) {
+        return EFI_NOT_FOUND;
+    }
+
+    // Pick the first FS that can open volume (you can add better selection logic)
+    for (UINTN i = 0; i < Count; i++) {
+        EFI_SIMPLE_FILE_SYSTEM_PROTOCOL *Fs = NULL;
+        EFI_FILE_PROTOCOL *Root = NULL;
+
+        Status = gBS->HandleProtocol(
+                        Handles[i],
+                        &gEfiSimpleFileSystemProtocolGuid,
+                        (VOID**)&Fs
+                 );
+        if (EFI_ERROR(Status) || Fs == NULL)
+            continue;
+
+        Status = Fs->OpenVolume(Fs, &Root);
+        if (!EFI_ERROR(Status) && Root != NULL) {
+            Root->Close(Root);
+            *OutFsHandle = Handles[i];
+            break;
+        }
+    }
+
+    FreePool(Handles);
+    return (*OutFsHandle != NULL) ? EFI_SUCCESS : EFI_NOT_FOUND;
+}
+
 EFI_STATUS
 SBC_LogInitAuto(
     OUT SBC_LOG_CTX   *Ctx,
@@ -1250,19 +1301,56 @@ SBC_LogInitAuto(
 )
 {
     EFI_STATUS Status;
-    EFI_LOADED_IMAGE_PROTOCOL *LoadedImage;
+    EFI_LOADED_IMAGE_PROTOCOL *LoadedImage = NULL;
+    EFI_HANDLE FsHandle = NULL;
 
-    if (Ctx == NULL || ImageHandle == NULL || LogPath == NULL)
+    Print(L"SBC_LogInitAuto start\n");
+
+    if (Ctx == NULL || ImageHandle == NULL || LogPath == NULL) {
+        Print(L"EFI_INVALID_PARAMETER\n");
         return EFI_INVALID_PARAMETER;
+    }
 
-    Status = gBS->HandleProtocol(ImageHandle, &gEfiLoadedImageProtocolGuid, (VOID**)&LoadedImage);
-    if (EFI_ERROR(Status) || LoadedImage == NULL || LoadedImage->DeviceHandle == NULL)
+    Status = gBS->HandleProtocol(
+                    ImageHandle,
+                    &gEfiLoadedImageProtocolGuid,
+                    (VOID**)&LoadedImage
+             );
+    if (EFI_ERROR(Status) || LoadedImage == NULL || LoadedImage->DeviceHandle == NULL) {
+        Print(L"LoadedImage not available\n");
         return EFI_UNSUPPORTED;
+    }
+
+    //
+    // 1) First try: use LoadedImage->DeviceHandle directly
+    //
+    {
+        EFI_SIMPLE_FILE_SYSTEM_PROTOCOL *Fs = NULL;
+        Status = gBS->HandleProtocol(
+                        LoadedImage->DeviceHandle,
+                        &gEfiSimpleFileSystemProtocolGuid,
+                        (VOID**)&Fs
+                 );
+        if (!EFI_ERROR(Status) && Fs != NULL) {
+            FsHandle = LoadedImage->DeviceHandle;
+        }
+    }
+
+    //
+    // 2) Fallback: scan any SimpleFS handle
+    //
+    if (FsHandle == NULL) {
+        Status = SBC_FindAnyWritableSimpleFsHandle(&FsHandle);
+        if (EFI_ERROR(Status) || FsHandle == NULL) {
+            Print(L"No SimpleFS handle found\n");
+            return EFI_NOT_FOUND;
+        }
+    }
 
     if (OutFsHandle)
-        *OutFsHandle = LoadedImage->DeviceHandle;
+        *OutFsHandle = FsHandle;
 
-    return SBC_LogInit(Ctx, LoadedImage->DeviceHandle, LogPath, BufferSize);
+    return SBC_LogInit(Ctx, FsHandle, LogPath, BufferSize);
 }
 
 EFI_STATUS

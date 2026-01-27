@@ -465,281 +465,6 @@ MyUnicodeStrToAsciiStrS (
 }
 
 
-// ===========================================================================
-// _LogFmtVPrint (The heart of safe variable argument formatting)
-// ===========================================================================
-
-/**
-  Formats a variable argument list into a Unicode string buffer,
-  handling NULL CHAR16* arguments safely.
-
-  This function parses the format string and uses arguments from VaListMaker
-  to construct a formatted Unicode string in LogBuf. It performs NULL checks
-  for %s specifiers to prevent hard faults.
-
-  @param  Format        The format string.
-  @param  VaListMaker   The VA_LIST containing the arguments.
-  @param  LogBuf        The destination buffer for the formatted Unicode string.
-  @param  BufLenBytes   The remaining size of LogBuf in BYTES.
-
-  @retval The number of CHAR16s written to LogBuf (excluding null terminator).
-**/
-//UINTN
-//_LogFmtVPrint(
-//  IN CONST CHAR16 *Format,
-//  IN VA_LIST      VaListMaker, // The original VA_LIST
-//  IN OUT CHAR16   *LogBuf,     // Buffer to write into (CHAR16 array)
-//  IN UINTN        BufLenBytes  // Remaining buffer size in BYTES
-//  )
-//{
-//  CONST CHAR16      *Fmt;
-//  CHAR16            *Dest;
-//  UINTN             PrintedChars = 0;
-//  UINTN             RemainingBufChars;
-//  VA_LIST           CurrentVaList; // Use a copy to iterate
-//
-//  // Make a copy of the VA_LIST for safe iteration within this function.
-//  // VA_COPY is preferred for portability, but direct assignment often works.
-//  #ifdef VA_COPY
-//  ////dprint();
-//  VA_COPY(CurrentVaList, VaListMaker);
-//  #else
-//  ////dprint();
-//  CurrentVaList = VaListMaker;
-//  #endif
-//
-//  Fmt = Format;
-//  Dest = LogBuf;
-//  RemainingBufChars = BufLenBytes / sizeof(CHAR16);
-//
-//  ////dprint();
-//  // Leave at least one CHAR16 for the null terminator.
-//  if (RemainingBufChars == 0) {
-//      goto Exit;
-//  }
-//
-//  ////dprint();
-//  // Loop through the format string
-//  while (*Fmt != L'\0' && RemainingBufChars > 1) {
-//    if (*Fmt != L'%') {
-//      *Dest++ = *Fmt++;
-//      PrintedChars++;
-//      RemainingBufChars--;
-//      continue;
-//    }
-//
-//    ////dprint();
-//
-//    // Found a '%', now parse the specifier and arguments
-//    Fmt++; // Skip '%'
-//
-//    // Simple parsing for flags, width, precision, length modifiers
-//    // This is a minimalist set; PrintLib's internal v_snprintf_unicode is far more robust.
-//    BOOLEAN PadWithZero = FALSE;
-//    BOOLEAN LeftJustify = FALSE;
-//    UINTN   Width = 0;
-//    UINTN   Precision = MAX_UINTN; // Unlimited precision by default
-//    BOOLEAN Long = FALSE; // %l, %ll, %L (used for size modifiers)
-//
-//    ////dprint();
-//    // Parse flags
-//    while (TRUE) {
-//      if (*Fmt == L'-') { LeftJustify = TRUE; }
-//      else if (*Fmt == L'0') { PadWithZero = TRUE; }
-//      else { break; }
-//      Fmt++;
-//    }
-//
-//    ////dprint();
-//    // Parse width
-//    if (*Fmt == L'*') {
-//      Width = VA_ARG(CurrentVaList, UINTN);
-//      Fmt++;
-//    } else {
-//      while ((*Fmt >= L'0') && (*Fmt <= L'9')) {
-//        Width = Width * 10 + (*Fmt - L'0');
-//        Fmt++;
-//      }
-//    }
-//
-//    ////dprint();
-//
-//    // Parse precision
-//    if (*Fmt == L'.') {
-//      Fmt++;
-//      if (*Fmt == L'*') {
-//        Precision = VA_ARG(CurrentVaList, UINTN);
-//        Fmt++;
-//      } else {
-//        Precision = 0; // Default precision if no number follows '.'
-//        while ((*Fmt >= L'0') && (*Fmt <= L'9')) {
-//          Precision = Precision * 10 + (*Fmt - L'0');
-//          Fmt++;
-//        }
-//      }
-//    }
-//
-//    ////dprint();
-//    // Parse length modifiers
-//    if ((*Fmt == L'l') || (*Fmt == L'L')) {
-//      Long = TRUE; // Indicate a 'long' argument size
-//      Fmt++;
-//      if (*Fmt == L'l') { // For %ll (long long)
-//          Fmt++;
-//      }
-//    } else if ((*Fmt == L'h')) { // For %h (short)
-//        Fmt++;
-//        if (*Fmt == L'h') { // For %hh (char)
-//            Fmt++;
-//        }
-//    }
-//
-//    ////dprint();
-//
-//    UINTN CharsWrittenForSpecifier = 0;
-//    UINTN RemainingBytesForSpecifier = RemainingBufChars * sizeof(CHAR16);
-//
-//    switch (*Fmt) {
-//      case L's': // Unicode string (CHAR16*)
-//      {
-//        ////dprint();
-//        CONST CHAR16 *StringArg = VA_ARG(CurrentVaList, CONST CHAR16*);
-//        ////dprint();
-//        // *** THE CRITICAL NULL CHECK ***
-//        if (StringArg == NULL) {
-//          StringArg = gNullStringUefi; // Substitute with safe "(null)" string
-//        }
-//        // Use UnicodeSPrint for the segment to handle padding, width, precision for strings
-//        CharsWrittenForSpecifier = UnicodeSPrint(Dest, RemainingBytesForSpecifier, L"%s", StringArg);
-//        break;
-//      }
-//      case L'a': // ASCII string (CHAR8*) - needs conversion
-//      {
-//        ////dprint();
-//        CONST CHAR8 *AsciiArg = VA_ARG(CurrentVaList, CONST CHAR8*);
-//        CHAR8 TempAsciiBuf[PcdGet32(PcdUefiLibMaxPrintBufferSize) + 1]; // Temp buffer for ASCII string
-//        UINTN AsciiLen;
-//        ////dprint();
-//
-//        if (AsciiArg == NULL) {
-//          AsciiArg = gNullStringAscii; // Substitute with safe "(null)"
-//        }
-//        // Safely copy ASCII to temp buffer, truncate if needed for ASCII buffer
-//        AsciiLen = AsciiStrCpyS(TempAsciiBuf, sizeof(TempAsciiBuf), AsciiArg);
-//
-//        // Apply precision for ASCII strings before converting to Unicode
-//        if (Precision != MAX_UINTN && AsciiLen > Precision) {
-//            AsciiLen = Precision;
-//            TempAsciiBuf[AsciiLen] = '\0'; // Truncate
-//        }
-//
-//        // Now convert temp ASCII to Unicode char by char into the destination
-//        UINTN Count = 0;
-//        CHAR16 PadChar = PadWithZero ? L'0' : L' ';
-//
-//        // Handle right-justification (padding before string)
-//        if (Width > AsciiLen && !LeftJustify) {
-//            for (UINTN i = 0; i < Width - AsciiLen && RemainingBufChars > (PrintedChars + Count + 1); i++) {
-//                Dest[Count++] = PadChar;
-//            }
-//        }
-//        // Copy characters
-//        for (UINTN i = 0; i < AsciiLen && RemainingBufChars > (PrintedChars + Count + 1); i++) {
-//          Dest[Count++] = (CHAR16)TempAsciiBuf[i];
-//        }
-//        // Handle left-justification (padding after string)
-//        if (Width > AsciiLen && LeftJustify) {
-//            for (UINTN i = 0; i < Width - AsciiLen && RemainingBufChars > (PrintedChars + Count + 1); i++) {
-//                Dest[Count++] = PadChar;
-//            }
-//        }
-//        CharsWrittenForSpecifier = Count;
-//        break;
-//      }
-//      case L'd': // Signed decimal integer
-//      case L'i':
-//      {
-//        ////dprint();
-//        INTN Val = (Long ? VA_ARG(CurrentVaList, INT64) : VA_ARG(CurrentVaList, INTN));
-//        ////dprint();
-//        CharsWrittenForSpecifier = UnicodeSPrint(Dest, RemainingBytesForSpecifier, L"%" FMT_INT64_DFORMAT L"d", Val);
-//        break;
-//      }
-//      case L'u': // Unsigned decimal integer
-//      {
-//        ////dprint();
-//        UINTN Val = (Long ? VA_ARG(CurrentVaList, UINT64) : VA_ARG(CurrentVaList, UINTN));
-//        ////dprint();
-//        CharsWrittenForSpecifier = UnicodeSPrint(Dest, RemainingBytesForSpecifier, L"%" FMT_UINT64_DFORMAT L"u", Val);
-//        break;
-//      }
-//      case L'x': // Hexadecimal lowercase
-//      {
-//        ////dprint();
-//        UINTN Val = (Long ? VA_ARG(CurrentVaList, UINT64) : VA_ARG(CurrentVaList, UINTN));
-//        ////dprint();
-//        CharsWrittenForSpecifier = UnicodeSPrint(Dest, RemainingBytesForSpecifier, L"%" FMT_UINT64_XFORMAT L"x", Val);
-//        break;
-//      }
-//      case L'X': // Hexadecimal uppercase
-//      {
-//        ////dprint();
-//        UINTN Val = (Long ? VA_ARG(CurrentVaList, UINT64) : VA_ARG(CurrentVaList, UINTN));
-//        ////dprint();
-//        CharsWrittenForSpecifier = UnicodeSPrint(Dest, RemainingBytesForSpecifier, L"%" FMT_UINT64_XFORMAT L"X", Val);
-//        break;
-//      }
-//      case L'p': // Pointer address (hex)
-//      {
-//        ////dprint();
-//        VOID *Ptr = VA_ARG(CurrentVaList, VOID*);
-//        ////dprint();
-//        CharsWrittenForSpecifier = UnicodeSPrint(Dest, RemainingBytesForSpecifier, L"%p", Ptr);
-//        break;
-//      }
-//      case L'c': // Unicode character
-//      {
-//        ////dprint();
-//        CHAR16 CharVal = (CHAR16)VA_ARG(CurrentVaList, UINTN); // Char args are promoted to int
-//        ////dprint();
-//        *Dest = CharVal;
-//        CharsWrittenForSpecifier = 1;
-//        break;
-//      }
-//      case L'%': // Literal '%'
-//        ////dprint();
-//        *Dest = L'%';
-//        CharsWrittenForSpecifier = 1;
-//        break;
-//      default: // Unrecognized specifier, print literally
-//        ////dprint();
-//        *Dest++ = L'%';
-//        *Dest++ = *Fmt;
-//        PrintedChars += 2; // Adjust immediately as we wrote directly
-//        RemainingBufChars -= 2;
-//        goto NextFmtChar; // Skip common update at end of switch
-//    }
-//
-//    ////dprint();
-//    // Update pointers and counts after processing a specifier
-//    Dest += CharsWrittenForSpecifier;
-//    PrintedChars += CharsWrittenForSpecifier;
-//    RemainingBufChars -= CharsWrittenForSpecifier;
-//
-//NextFmtChar:
-//    ////dprint();
-//    Fmt++; // Move to next char in format string
-//  }
-//
-//  *Dest = L'\0'; // Null-terminate the buffer
-//
-//Exit:
-//  ////dprint();
-//  VA_END(CurrentVaList); // Clean up the copied VA_LIST
-//  ////dprint();
-//  return PrintedChars;
-//}
-
 
 UINTN
 _LogFmtVPrint(
@@ -753,30 +478,15 @@ _LogFmtVPrint(
   CHAR16            *Dest;
   UINTN             PrintedChars = 0;
   UINTN             RemainingBufChars;
-//VA_LIST           CurrentVaList; // Use a copy to iterate
-//
-//// Make a copy of the VA_LIST for safe iteration within this function.
-//// VA_COPY is preferred for portability, but direct assignment often works.
-//#ifdef VA_COPY
-//////dprint();
-//VA_COPY(CurrentVaList, VaListMaker);
-//#else
-//////dprint();
-//CurrentVaList = VaListMaker;
-//#endif
 
   Fmt = Format;
   Dest = LogBuf;
   RemainingBufChars = BufLenBytes / sizeof(CHAR16);
 
-  ////dprint();
-  // Leave at least one CHAR16 for the null terminator.
   if (RemainingBufChars == 0) {
       goto Exit;
   }
 
-  ////dprint();
-  // Loop through the format string
   while (*Fmt != L'\0' && RemainingBufChars > 1) {
     if (*Fmt != L'%') {
       *Dest++ = *Fmt++;
@@ -785,21 +495,14 @@ _LogFmtVPrint(
       continue;
     }
 
-    ////dprint();
-
-    // Found a '%', now parse the specifier and arguments
     Fmt++; // Skip '%'
 
-    // Simple parsing for flags, width, precision, length modifiers
-    // This is a minimalist set; PrintLib's internal v_snprintf_unicode is far more robust.
     BOOLEAN PadWithZero = FALSE;
     BOOLEAN LeftJustify = FALSE;
     UINTN   Width = 0;
     UINTN   Precision = MAX_UINTN; // Unlimited precision by default
     BOOLEAN Long = FALSE; // %l, %ll, %L (used for size modifiers)
 
-    ////dprint();
-    // Parse flags
     while (TRUE) {
       if (*Fmt == L'-') { LeftJustify = TRUE; }
       else if (*Fmt == L'0') { PadWithZero = TRUE; }
@@ -807,8 +510,6 @@ _LogFmtVPrint(
       Fmt++;
     }
 
-    ////dprint();
-    // Parse width
     if (*Fmt == L'*') {
       Width = VA_ARG(VaListMaker, UINTN);
       Fmt++;
@@ -819,9 +520,6 @@ _LogFmtVPrint(
       }
     }
 
-    ////dprint();
-
-    // Parse precision
     if (*Fmt == L'.') {
       Fmt++;
       if (*Fmt == L'*') {
@@ -836,8 +534,6 @@ _LogFmtVPrint(
       }
     }
 
-    ////dprint();
-    // Parse length modifiers
     if ((*Fmt == L'l') || (*Fmt == L'L')) {
       Long = TRUE; // Indicate a 'long' argument size
       Fmt++;
@@ -851,18 +547,13 @@ _LogFmtVPrint(
         }
     }
 
-    ////dprint();
-
     UINTN CharsWrittenForSpecifier = 0;
     UINTN RemainingBytesForSpecifier = RemainingBufChars * sizeof(CHAR16);
 
     switch (*Fmt) {
       case L's': // Unicode string (CHAR16*)
       {
-        ////dprint();
         CONST CHAR16 *StringArg = VA_ARG(VaListMaker, CONST CHAR16*);
-        ////dprint();
-        // *** THE CRITICAL NULL CHECK ***
         if (StringArg == NULL) {
           StringArg = gNullStringUefi; // Substitute with safe "(null)" string
         }
@@ -872,11 +563,9 @@ _LogFmtVPrint(
       }
       case L'a': // ASCII string (CHAR8*) - needs conversion
       {
-        ////dprint();
         CONST CHAR8 *AsciiArg = VA_ARG(VaListMaker, CONST CHAR8*);
         CHAR8 TempAsciiBuf[PcdGet32(PcdUefiLibMaxPrintBufferSize) + 1]; // Temp buffer for ASCII string
         UINTN AsciiLen;
-        ////dprint();
 
         if (AsciiArg == NULL) {
           AsciiArg = gNullStringAscii; // Substitute with safe "(null)"
@@ -916,33 +605,25 @@ _LogFmtVPrint(
       case L'd': // Signed decimal integer
       case L'i':
       {
-        ////dprint();
         INTN Val = (Long ? VA_ARG(VaListMaker, INT64) : VA_ARG(VaListMaker, INTN));
-        ////dprint();
         CharsWrittenForSpecifier = UnicodeSPrint(Dest, RemainingBytesForSpecifier, L"%" FMT_INT64_DFORMAT L"d", Val);
         break;
       }
       case L'u': // Unsigned decimal integer
       {
-        ////dprint();
         UINTN Val = (Long ? VA_ARG(VaListMaker, UINT64) : VA_ARG(VaListMaker, UINTN));
-        ////dprint();
         CharsWrittenForSpecifier = UnicodeSPrint(Dest, RemainingBytesForSpecifier, L"%" FMT_UINT64_DFORMAT L"u", Val);
         break;
       }
       case L'x': // Hexadecimal lowercase
       {
-        ////dprint();
         UINTN Val = (Long ? VA_ARG(VaListMaker, UINT64) : VA_ARG(VaListMaker, UINTN));
-        ////dprint();
         CharsWrittenForSpecifier = UnicodeSPrint(Dest, RemainingBytesForSpecifier, L"%" FMT_UINT64_XFORMAT L"x", Val);
         break;
       }
       case L'X': // Hexadecimal uppercase
       {
-        ////dprint();
         UINTN Val = (Long ? VA_ARG(VaListMaker, UINT64) : VA_ARG(VaListMaker, UINTN));
-        ////dprint();
         CharsWrittenForSpecifier = UnicodeSPrint(Dest, RemainingBytesForSpecifier, L"%" FMT_UINT64_XFORMAT L"X", Val);
         break;
       }
@@ -997,65 +678,6 @@ Exit:
   return PrintedChars;
 }
 
-
-UINTN
-SBC_InternalPrint (
-  IN  CONST CHAR16                     *Format,
-  IN  VA_LIST                          Marker
-  )
-{
-  [[maybe_unused]] EFI_STATUS  Status;
-  UINTN       Return;
-  CHAR16      *Buffer;
-  UINTN       BufferSize;
-
-  //dprint();
-  ASSERT (Format != NULL);
-  //dprint();
-
-  // The memory address pointed to by the Fromat Pointet
-  // Must be an even number.s
-  ASSERT (((UINTN)Format & BIT0) == 0);
-
-  //dprint();
-  BufferSize = (PcdGet32 (PcdUefiLibMaxPrintBufferSize) + 1) * sizeof (CHAR16);
-  //DEBUG((DEBUG_INFO,"Buffer Size : %d \n", BufferSize));
-  //Buffer = (CHAR16 *)AllocateZeroPool (BufferSize);
-  Status = gBS->AllocatePool(
-      EfiBootServicesData,
-      BufferSize,
-      (VOID **)&Buffer);
-
-  if (EFI_ERROR(Status)) {
-      dprint("Faile to allocate pool : %r", Status);
-      Buffer = NULL;
-      return 0;
-  }
-
-  if (((UINTN)Buffer % 8) != 0) {
-      dprint("Memory not align by 8 byte");
-      return 0;
-
-  }
-
-
-  dprint("Allocated 8-byte aligned memory at 0x%lx (Size: %ld)\n", (UINTN)Buffer, BufferSize);
-
-//if (Buffer == NULL) {
-//    //dprint();
-//  ASSERT (Buffer != NULL);
-//  return 0;
-//}
-
-  //dprint();
-  Return = UnicodeVSPrint (Buffer, BufferSize, Format, Marker);
-
-  dprint("Msg : %a", Buffer);
-
-  FreePool (Buffer);
-
-  return Return;
-}
 
 //
 // Added by Leon
@@ -1401,7 +1023,7 @@ SBC_LogWrite16(
 {
     EFI_STATUS Status;
 
-    Print(L"Log SBC_LogWrite16 sttart \n");
+    //Print(L"Log SBC_LogWrite16 sttart \n");
     if (!Ctx || !Ctx->Ready || !Msg) {
         Print(L"Log Invalid Parameter \n");
         return EFI_INVALID_PARAMETER;

@@ -116,7 +116,28 @@ RETURN_STATUS EFIAPI SerialPortInitialize(VOID)
 #endif
 
 
-
+/**
+ * @brief   Generate DICE-derived Device, Firmware, and OS identifiers.
+ *
+ * @details
+ * This function performs a DICE (Device Identifier Composition Engine)
+ * key derivation sequence during the boot process.
+ * It sequentially generates:
+ *  - Device ID (Device Identity)
+ *  - Firmware ID (derived from Device ID and firmware image)
+ *  - OS ID (derived from Firmware ID)
+ *
+ * @param[in] ImageHandle  EFI image handle of the current firmware image.
+ * @param[in,out] p        Pointer to an atp_ident_t structure that receives
+ *                          generated Device ID, Firmware ID, and OS ID.
+ * @param[in] normbank     Normal bank index used for firmware identity derivation.
+ * @param[in] bm           Boot mode or bitmap value influencing FW ID generation.
+ *
+ * @return  SBCStatus indicating the result of the operation.
+ *
+ * @retval  SBCOK          All DICE identifiers were successfully generated.
+ * @retval  SBCFAIL        One or more identifier generation steps failed.
+ */
 SBCStatus  SBC_DiceKeysGen(EFI_HANDLE ImageHandle, VOID *p,UINTN normbank, UINTN bm)
 {
     SBCStatus ret = SBCOK;
@@ -177,7 +198,20 @@ errdone:
 
 }
 
-
+/**
+ * @fn      SBCStatus SBC_BootModeFactory(VOID *blkhnd, VOID *ImageHandle)
+ * @brief   Factory boot-mode handler that restores SSBL image from raw partition and boots it.
+ *
+ * @param[in] blkhnd       Block I/O handle used to access the raw partition area.
+ * @param[in] ImageHandle  EFI image handle of the current boot stage.
+ *
+ * @return  SBCStatus indicating the result of the operation.
+ *
+ * @retval  SBCOK          SSBL image was restored and successfully started.
+ * @retval  SBCNULLP       Invalid input or memory allocation failure.
+ * @retval  SBCIO          Raw partition read failure, file system not found,
+ *                         or SSBL file write failure.
+ */
 SBCStatus SBC_BootModeFactory(VOID *blkhnd, VOID *ImageHandle)
 {
   SBCStatus ret = SBCOK;
@@ -701,7 +735,7 @@ UefiMain (
         sys_ns_var  = SBC_PerfTicksTons(_PerfDeltaTicks(sys_start_time, sys_end_time));
         //dprint("sys_ns_var : %ld", sys_ns_var);
 
-        SBC_LogElapsedTime(L"SSBL Factoory Boot Time", sys_ns_var); 
+        SBC_LogElapsedTime(L"SSBL Boot Time", sys_ns_var); 
 
         sbc_err_sysprn(SBC_LOG_CMN_PRIO_NOTICE, 2, 
             SYS_LOG_HOST_BOOT, 

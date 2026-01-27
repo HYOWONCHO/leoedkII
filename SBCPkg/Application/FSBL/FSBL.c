@@ -158,32 +158,16 @@ SBCStatus SBC_BootModeFactory(VOID *blkhnd, VOID *ImageHandle)
 
   [[gnu::unused]]LV_t wrlv;
 
-#ifdef _ALL_PASS_
-   sbc_err_sysprn(SBC_LOG_CMN_PRIO_INFO, 2,
-                 SYS_LOG_HOST_BOOT,
-                 SYS_LOG_APP_NAME,
-                 SYS_LOG_CSC_NAME,
-                 0,
-                 L"Detetion",
-                 L"SBC_VENDOR_SP Factory SSBL Forced Running"); 
-  SBC_SSBL_LoadAndStart(ImageHandle);
-  return SBCOK;
-#endif
 
   SBC_RET_VALIDATE_ERRCODEMSG((blkhnd != NULL), SBCNULLP, "Block I/O Handle Nill");
 
   startlba = ((BOOT_SECTOR3_OFS | BOOT_SSBL_OFS) >> SBC_RAWPRT_DFLT_SHIFT);
 
-#if 1 //ndef _ALL_PASS_
-//#error "ALL PASSED ENABLE not COmpile"
   ret = SBC_RawPrtReadBlock(blkhnd, (void *)imghdr, &imglen, startlba);
   if (ret != SBCOK) {
     //Print(L"SSBL Factory Block Read Fail \n");
     goto errdone;
   }
-
-
-
 
   CopyMem((void *)&imglen, &imghdr[0], sizeof imglen);
 
@@ -193,13 +177,6 @@ SBCStatus SBC_BootModeFactory(VOID *blkhnd, VOID *ImageHandle)
        imglen,
        imglen);
  
-//imglen = ALIGN_VALUE(imglen, SBC_RAWPRT_DFLT_BLK_SZ);
-//
-//    dprint("After SSBL Image  (Addr : 0x%lx) Start LBA : 0x%lx, Len : %ld (0x%lx)",
-//         (0 | BOOT_SSBL_OFS),
-//         startlba,
-//         imglen,
-//         imglen);
 
   dprint("Boot Service Allocate ");
   retval = gBS->AllocatePool(EfiBootServicesData, imglen, (VOID **)&loadimg);
@@ -219,44 +196,6 @@ SBCStatus SBC_BootModeFactory(VOID *blkhnd, VOID *ImageHandle)
     ret = SBCNOTFND;
     goto errdone;
   }
-//
-//ret = SBC_RawPrtReadBlock(blkhnd, (void *)loadimg, &imglen, startlba);
-//if (ret != SBCOK) {
-//  //Print(L"SSBL Factory Block Read Fail \n");
-//  goto errdone;
-//}
-//
-//if ((hndlcnt = SBC_FindEfiFileSystemProtocol(&ssbl_img_hndl)) <= 0) {
-//  //Print(L"File SYstem Handle Found fail \n");
-//  ret = SBCIO;
-//  goto errdone;
-//}
-//
-//
-//_lv_set_data(&wrlv,&loadimg[4], imglen - 4);
-//
-//
-////for (int idx = 0; idx < hndlcnt; idx++) {
-//  retval = SBC_WriteFile(ssbl_img_hndl[0], fname, &wrlv);
-////  if (EFI_ERROR(retval)) {
-////      ret = SBCIO;
-////      continue;
-////      //goto errdone;
-////  }
-//
-////  break;
-////}
-//
-//if (EFI_ERROR(retval)) {
-//  eprint("%s file write fail %r", fname, retval);
-//  ret = SBCIO;
-//  goto errdone;
-//}
-//
-//
-
-  //Print(L"SSBL Write is Done \n");
-  //SBC_mem_print_bin("SSBL Header", imghdr, imglen);
 #ifndef _FSBL_TEST_
   if (tmp_prtheader->keymode != KEY_MODE_NORMAL) {
     tmp_prtheader->keymode = KEY_MODE_NORMAL;
@@ -264,23 +203,21 @@ SBCStatus SBC_BootModeFactory(VOID *blkhnd, VOID *ImageHandle)
 
     CopyMem(imghdr, tmp_prtheader, sizeof(rawprt_hdr_t));
 
-    //SBC_external_mem_print_bin("Write Partition Header", imghdr, 512);
-
-    //ret = SBC_RawPrtBlockWrite(h_blkio, (UINT8 *)imghdr, SBC_RAWPRT_DFLT_BLK_SZ, 0);
-    //SBC_RET_VALIDATE_ERRCODEMSG((ret == SBCOK), ret, "Key mode change fail");
   }
 #endif 
+
+  sys_end_time = SBC_PerfNowTicks();
+  //dprint("sys_end_time : %ld (%ld)", sys_end_time, sys_end_time - sys_start_time);
+  sys_ns_var  = SBC_PerfTicksTons(_PerfDeltaTicks(sys_start_time, sys_end_time));
+  //dprint("sys_ns_var : %ld", sys_ns_var);
+
+  SBC_LogElapsedTime(L"FSBL Boot Time", sys_ns_var);
   ret = SBC_SSBL_LoadAndStart(ImageHandle);
   if (ret != SBCOK) {
     //Print(L"SSBL Factory Running Fail \n");
     goto errdone;
   }
-#else
-extern SBCStatus  LoadAndStartMemoryImage(VOID *handle, VOID *imgbuf, UINTN imglen);
 
-    ret = LoadAndStartMemoryImage(ImageHandle, wrlv.value, wrlv.length);
-
-#endif
 errdone:
 
   if (loadimg != NULL) {
@@ -367,8 +304,6 @@ SBCStatus SBC_BootModeNormalAndpUdate(VOID *blkhnd, VOID *ImageHandle, UINTN nro
     goto errdone;
   }
 
-#ifndef _ALL_PASS_
-
   sys_end_time = SBC_PerfNowTicks();
   //dprint("sys_end_time : %ld (%ld)", sys_end_time, sys_end_time - sys_start_time);
   sys_ns_var  = SBC_PerfTicksTons(_PerfDeltaTicks(sys_start_time, sys_end_time));
@@ -382,12 +317,6 @@ SBCStatus SBC_BootModeNormalAndpUdate(VOID *blkhnd, VOID *ImageHandle, UINTN nro
     //Print(L"SSBL  Running Fail \n");
     goto errdone;
   }
-#else
-extern SBCStatus  LoadAndStartMemoryImage(VOID *handle, VOID *imgbuf, UINTN imglen);
-
-    ret = LoadAndStartMemoryImage(ImageHandle, wrlv.value, wrlv.length);
-
-#endif
 errdone:
 
   if (loadimg != NULL) {
@@ -401,285 +330,7 @@ errdone:
   
 }
 
-UINT32 FindPreviouslyBank(UINT32 bankid)
-{
-    UINT32 ret = 0;
-    switch (bankid) {
-    case 1:
-        ret = 2;
-        break;
-    case 2:
-        ret = 1;
-        break;
-    default:
-        ret = 0xFFFFFFFF;
-        break;
-    }
-
-    return ret;
-}
-
-UINTN SBC_LogUnicodeSPrint (
-  OUT CHAR16        *StartOfBuffer,
-  IN  UINTN         BufferSize,
-  IN  CONST CHAR16  *FormatString,
-  ...
-  )
-{
-  VA_LIST  Marker;
-  UINTN    NumberOfPrinted;
-
-  VA_START (Marker, FormatString);
-  NumberOfPrinted = UnicodeVSPrint (StartOfBuffer, BufferSize, FormatString, Marker);
-  VA_END (Marker);
-  return NumberOfPrinted;
-}
-
-
-extern  VOID SBC_LogInternalX(IN CHAR8 *fmt,...);
-EFI_HANDLE sbcImgHandle;
-
-UINTN
-IntToUnicodeStringManual (
-  IN INT64        Value,
-  OUT CHAR16      *StringBuffer,
-  IN UINTN        BufferSize
-  )
-{
-  CHAR16  *Ptr = StringBuffer;
-  CHAR16  TempChar;
-  UINTN   Count = 0;
-  BOOLEAN IsNegative = FALSE;
-  UINT64  AbsValue; // 절대값을 저장할 부호 없는 타입
-
-  // 입력 유효성 검사
-  if (StringBuffer == NULL || BufferSize == 0) {
-    DEBUG((DEBUG_ERROR, "IntToUnicodeStringManual: Invalid input parameters (buffer or size).\n"));
-    return 0;
-  }
-
-  // 버퍼가 Null-terminator를 포함할 수 있도록 최소 1 CHAR16 공간이 필요합니다.
-  if (BufferSize < sizeof(CHAR16)) {
-      DEBUG((DEBUG_ERROR, "IntToUnicodeStringManual: Buffer too small for null terminator.\n"));
-      return 0;
-  }
-
-  // 음수 처리
-  if (Value < 0) {
-    IsNegative = TRUE;
-    AbsValue = (UINT64)(-Value); // 음수의 절대값
-  } else {
-    AbsValue = (UINT64)Value;
-  }
-
-  // 0인 경우 특별 처리
-  if (AbsValue == 0) {
-    if (BufferSize < 2 * sizeof(CHAR16)) { // '0' + null terminator
-        DEBUG((DEBUG_ERROR, "IntToUnicodeStringManual: Buffer too small for '0'.\n"));
-        return 0;
-    }
-    *Ptr++ = L'0';
-    Count = 1;
-  } else {
-    // 숫자를 역순으로 버퍼에 채웁니다.
-    while (AbsValue > 0 && Count < (BufferSize / sizeof(CHAR16)) - 1) { // -1 for null terminator
-      *Ptr++ = (CHAR16)(L'0' + (AbsValue % 10));
-      AbsValue /= 10;
-      Count++;
-    }
-  }
-
-  // 음수인 경우 '-' 부호를 추가합니다.
-  if (IsNegative) {
-    if (Count < (BufferSize / sizeof(CHAR16)) - 1) { // -1 for null terminator
-      *Ptr++ = L'-';
-      Count++;
-    } else {
-      // 버퍼가 너무 작아 음수 부호를 추가할 수 없는 경우
-      DEBUG((DEBUG_ERROR, "IntToUnicodeStringManual: Buffer too small for negative sign.\n"));
-      // 이 경우 부분적으로 변환된 문자열이 남을 수 있으므로 0을 반환하거나 오류 처리 필요
-      // 여기서는 Null-terminator를 추가하고 현재까지의 Count를 반환합니다.
-      *Ptr = L'\0';
-      return 0; // 또는 Count를 반환하여 부분 변환을 알림
-    }
-  }
-
-  // Null-terminator 추가
-  *Ptr = L'\0';
-
-  // 문자열 역순 정렬
-  // 시작 포인터는 StringBuffer, 끝 포인터는 Null-terminator 바로 앞
-  CHAR16 *Start = StringBuffer;
-  CHAR16 *End = StringBuffer + Count - 1; // Count는 부호까지 포함된 길이
-
-  if (IsNegative) { // 음수인 경우 부호는 그대로 두고 숫자 부분만 역순 정렬
-    Start++; // 부호 다음부터 시작
-  }
-
-  while (Start < End) {
-    TempChar = *Start;
-    *Start = *End;
-    *End = TempChar;
-    Start++;
-    End--;
-  }
-
-  return Count;
-}
-
-/**
-  가변 인자를 받아 포맷된 유니코드 문자열을 콘솔에 출력하는 사용자 정의 함수입니다.
-  이 함수는 //PrintLib의 //Print() 함수와 유사하게 작동하지만,
-  간단한 포맷 지정자 (%d, %s)만 지원합니다.
-
-  @param  Format          유니코드 포맷 문자열입니다 (예: L"Hello %s, Value: %d\n").
-  @param  ...             포맷 문자열에 해당하는 가변 인자들입니다.
-
-  @retval EFI_STATUS      출력 작업의 상태입니다.
-**/
-EFI_STATUS
-EFIAPI
-SBC_LogCustomPrint (
-  OUT CHAR16 *OutFormat,
-  IN CONST CHAR16 *Format,
-  ...
-  )
-{
-  VA_LIST     Args;
-  CHAR16      Buffer[256] = {0, }; // 출력 버퍼 (충분한 크기 할당)
-  CHAR16      *BufferPtr = OutFormat;
-  CONST CHAR16 *FormatPtr = Format;
-  EFI_STATUS  Status = EFI_SUCCESS;
-  UINTN       RemainingBufferSize = sizeof(Buffer);
-  UINT32      CopyCnt = 0;
-
-  // 입력 유효성 검사
-  if (Format == NULL) {
-    DEBUG((DEBUG_ERROR, "SBC_LogCustomPrint: Format string is NULL.\n"));
-    return EFI_INVALID_PARAMETER;
-  }
-
-  // 가변 인자 목록 초기화
-  VA_START(Args, Format);
-
-  // 포맷 문자열을 파싱하며 버퍼에 문자열을 구성합니다.
-  while (*FormatPtr != L'\0' && RemainingBufferSize > sizeof(CHAR16)) { // Null-terminator 공간 확보
-    CopyCnt++;
-    if (*FormatPtr == L'%') {
-      FormatPtr++; // '%' 다음 문자로 이동
-
-      switch (*FormatPtr) {
-        case L'd': // 10진수 정수
-          {
-            INTN Value = VA_ARG(Args, INTN); // 다음 인자를 INTN으로 가져옴
-            CHAR16 TempNumBuffer[30]; // 숫자를 문자열로 변환할 임시 버퍼
-            UINTN NumChars;
-
-            NumChars = IntToUnicodeStringManual(Value, TempNumBuffer, sizeof(TempNumBuffer));
-            if (NumChars > 0) {
-              // 임시 버퍼의 내용을 메인 버퍼로 복사
-              UINTN CopySize = NumChars * sizeof(CHAR16);
-              if (CopySize < RemainingBufferSize) {
-                CopyMem(BufferPtr, TempNumBuffer, CopySize);
-                BufferPtr += NumChars;
-                RemainingBufferSize -= CopySize;
-              } else {
-                // 버퍼 오버플로우 처리
-                DEBUG((DEBUG_ERROR, "SBC_LogCustomPrint: Buffer overflow for %%d.\n"));
-                Status = EFI_BUFFER_TOO_SMALL;
-                goto Exit; // 오류 발생 시 종료
-              }
-            }
-          }
-          break;
-        case L's': // 유니코드 문자열
-          {
-            CHAR16 *Str = VA_ARG(Args, CHAR16*); // 다음 인자를 CHAR16*으로 가져옴
-            UINTN StrLen = 0;
-            CHAR16 *TempStrPtr = Str;
-
-            if (Str == NULL) {
-                Str = L"(null)"; // NULL 포인터 처리
-            }
-
-            while (*TempStrPtr != L'\0') {
-              StrLen++;
-              TempStrPtr++;
-            }
-
-            UINTN CopySize = StrLen * sizeof(CHAR16);
-            if (CopySize < RemainingBufferSize) {
-              CopyMem(BufferPtr, Str, CopySize);
-              BufferPtr += StrLen;
-              RemainingBufferSize -= CopySize;
-            } else {
-              // 버퍼 오버플로우 처리
-              DEBUG((DEBUG_ERROR, "SBC_LogCustomPrint: Buffer overflow for %%s.\n"));
-              Status = EFI_BUFFER_TOO_SMALL;
-              goto Exit; // 오류 발생 시 종료
-            }
-          }
-          break;
-        case L'%': // '%%' 이스케이프 시퀀스
-          if (RemainingBufferSize >= 2 * sizeof(CHAR16)) {
-            *BufferPtr++ = L'%';
-            RemainingBufferSize -= sizeof(CHAR16);
-          } else {
-            DEBUG((DEBUG_ERROR, "SBC_LogCustomPrint: Buffer too small for '%%'.\n"));
-            Status = EFI_BUFFER_TOO_SMALL;
-            goto Exit;
-          }
-          break;
-        default: // 알 수 없는 포맷 지정자
-          DEBUG((DEBUG_INFO,"SBC_LogCustomPrint: Unknown format specifier '%%%c'.\n", *FormatPtr));
-          // 알 수 없는 지정자는 그대로 출력하거나 무시
-          if (RemainingBufferSize >= 2 * sizeof(CHAR16)) {
-            *BufferPtr++ = L'%';
-            *BufferPtr++ = *FormatPtr;
-            RemainingBufferSize -= 2 * sizeof(CHAR16);
-          } else {
-            DEBUG((DEBUG_ERROR, "SBC_LogCustomPrint: Buffer too small for unknown specifier.\n"));
-            Status = EFI_BUFFER_TOO_SMALL;
-            goto Exit;
-          }
-          break;
-      }
-    } else {
-      // 일반 문자 복사
-      if (RemainingBufferSize >= 2 * sizeof(CHAR16)) {
-        *BufferPtr++ = *FormatPtr;
-        RemainingBufferSize -= sizeof(CHAR16);
-      } else {
-        DEBUG((DEBUG_ERROR, "SBC_LogCustomPrint: Buffer too small for normal character.\n"));
-        Status = EFI_BUFFER_TOO_SMALL;
-        goto Exit;
-      }
-    }
-    FormatPtr++;
-  }
-
-Exit:
-  // Null-terminator 추가
-  *BufferPtr = L'\0';
-
-  // 가변 인자 목록 정리
-  VA_END(Args);
-
-  // 구성된 문자열을 콘솔에 출력
-  if (!EFI_ERROR(Status)) {
-    Status = gST->ConOut->OutputString(gST->ConOut, Buffer);
-  } else {
-    // 오류 발생 시 디버그 메시지만 출력
-    DEBUG((DEBUG_ERROR, "SBC_LogCustomPrint: Failed to format string, attempting to //Print partial buffer.\n"));
-    gST->ConOut->OutputString(gST->ConOut, Buffer); // 부분적으로라도 출력 시도
-  }
-
-  return Status;
-}
-
 CHAR16 mrgmsg[8192]; 
-
-
 static BOOLEAN _get_fw_bankid(UINT32 val, UINT32 *cur, UINT32 *prev)
 {
     UINT8 bank_first;
@@ -733,17 +384,17 @@ extern EFI_STATUS SBC_LodaDriver(CONST CHAR16 *FileName, CONST BOOLEAN  Connect)
                      L"Failed to load the Serial Driver");
       //goto errdone;
     }
-    else {
-      sbc_err_sysprn(SBC_LOG_CMN_PRIO_INFO, 2,
-                   SYS_LOG_HOST_BOOT,
-                   SYS_LOG_APP_NAME,
-                   SYS_LOG_CSC_NAME,
-                   0,
-                   L"Detection",
-                   L"Loaded to the Serial Driver");
-    }
+//  else {
+//    sbc_err_sysprn(SBC_LOG_CMN_PRIO_INFO, 2,
+//                 SYS_LOG_HOST_BOOT,
+//                 SYS_LOG_APP_NAME,
+//                 SYS_LOG_CSC_NAME,
+//                 0,
+//                 L"Detection",
+//                 L"Loaded to the Serial Driver");
+//  }
 
-    gBS->Stall(50000);   // 50ms 지연
+    //gBS->Stall(50000);   // 50ms 지연
     //sleep(1);
 
     retval = SBC_LodaDriver(FTDI_USB_SERIAL_DXE_PATH, TRUE);
@@ -758,19 +409,19 @@ extern EFI_STATUS SBC_LodaDriver(CONST CHAR16 *FileName, CONST BOOLEAN  Connect)
                  L"Failed to load the FTDI USB Serial Driver");
       //goto errdone;
     }
-    else {
-      sbc_err_sysprn(SBC_LOG_CMN_PRIO_INFO, 2,
-                   SYS_LOG_HOST_BOOT,
-                   SYS_LOG_APP_NAME,
-                   SYS_LOG_CSC_NAME,
-                   0,
-                   L"Detection",
-                   L"Loaded to the FTDI USB Serial Driver");
+//  else {
+//    sbc_err_sysprn(SBC_LOG_CMN_PRIO_INFO, 2,
+//                 SYS_LOG_HOST_BOOT,
+//                 SYS_LOG_APP_NAME,
+//                 SYS_LOG_CSC_NAME,
+//                 0,
+//                 L"Detection",
+//                 L"Loaded to the FTDI USB Serial Driver");
+//
+//    //sleep(1);
+//  }
 
-      //sleep(1);
-    }
-
-    gBS->Stall(50000);   // 50ms 지연
+    //gBS->Stall(50000);   // 50ms 지연
     retval = SBC_LodaDriver(TERMINAL_DXE_PATH, TRUE);
     if (EFI_ERROR (retval)){
       //Print(L"TERMINAL_DXE_PATH Dxe driver load fail \n");
@@ -783,20 +434,20 @@ extern EFI_STATUS SBC_LodaDriver(CONST CHAR16 *FileName, CONST BOOLEAN  Connect)
                  L"Failed to load the Terminal Dxe Driver");
       ///goto errdone;
     }
-    else {
+//  else {
+//
+//    sbc_err_sysprn(SBC_LOG_CMN_PRIO_INFO, 2,
+//                 SYS_LOG_HOST_BOOT,
+//                 SYS_LOG_APP_NAME,
+//                 SYS_LOG_CSC_NAME,
+//                 0,
+//                 L"Detection",
+//                 L"Loaded to the Terminal Dxe Driver");
+//
+//    //sleep(1);
+//  }
 
-      sbc_err_sysprn(SBC_LOG_CMN_PRIO_INFO, 2,
-                   SYS_LOG_HOST_BOOT,
-                   SYS_LOG_APP_NAME,
-                   SYS_LOG_CSC_NAME,
-                   0,
-                   L"Detection",
-                   L"Loaded to the Terminal Dxe Driver");
-
-      //sleep(1);
-    }
-
-    gBS->Stall(50000);   // 50ms 지연
+    //gBS->Stall(50000);   // 50ms 지연
     retval = SBC_LodaDriver(XFS64_PATH, TRUE);
     if (EFI_ERROR (retval)){
           sbc_err_sysprn(SBC_LOG_CMN_PRIO_INFO, 2,
@@ -808,18 +459,18 @@ extern EFI_STATUS SBC_LodaDriver(CONST CHAR16 *FileName, CONST BOOLEAN  Connect)
                  L"Failed to load the XF64 Driver");
       //goto errdone;
     }
-    else {
-      sbc_err_sysprn(SBC_LOG_CMN_PRIO_INFO, 2,
-                   SYS_LOG_HOST_BOOT,
-                   SYS_LOG_APP_NAME,
-                   SYS_LOG_CSC_NAME,
-                   0,
-                   L"Detection",
-                   L"Loaded to the XF64 Driver");
-
-      //sleep(3);
-    }
-    gBS->Stall(50000);   // 50ms 지연
+//  else {
+//    sbc_err_sysprn(SBC_LOG_CMN_PRIO_INFO, 2,
+//                 SYS_LOG_HOST_BOOT,
+//                 SYS_LOG_APP_NAME,
+//                 SYS_LOG_CSC_NAME,
+//                 0,
+//                 L"Detection",
+//                 L"Loaded to the XF64 Driver");
+//
+//    //sleep(3);
+//  }
+    //gBS->Stall(50000);   // 50ms 지연
 #else
     if (retval != EFI_SUCCESS) {
         goto errdone;
@@ -839,219 +490,6 @@ static void factory_md_abnormal_boot_state(VOID *priv)
 
     return;
 }
-
-
-#ifdef _SHELL_CMD_LINE_
-typedef struct {
-    CHAR16 *BootMode;
-    CHAR16 *KeyMode;
-    CHAR16 *LoadImg;
-} SBC_SHELL_OPTIONS;
-
-/**
- * @code
- * if ((val = MatchLongOption(arg, L"--bootmode"))) {
-            Opts->BootMode = val;
-        } else if ((val = MatchLongOption(arg, L"--keymode"))) {
- *          Opts->KeyMode = val;
- *      }
- * 
- * @endcode
- * 
- * @author leoc (11/4/25)
- * 
- * @param Arg    
- * @param Name   
- * 
- * @return CHAR16* 
- */
-CHAR16* MatchLongOption(IN CHAR16 *Arg, IN CONST CHAR16 *Name)
-{
-    UINTN len = StrLen(Name);
-    if (StrnCmp(Arg, Name, len) == 0 && Arg[len] == L'=') {
-        return &Arg[len + 1];
-    }
-    return NULL;
-}
-
-EFI_STATUS CopyHugeFileToRawFS(CHAR16 *Src, UINTN ofs)
-{
-    return EFI_SUCCESS;
-}
-
-EFI_STATUS ParseShellOptions(VOID *hndl)
-{
-    EFI_STATUS Status;
-    EFI_SHELL_PARAMETERS_PROTOCOL *ShellParams;
-    boot_proc_t *bp = (boot_proc_t *)hndl;
-
-    SBCStatus ret = SBCOK;
-
-    //anj
-    cmd_dprint("Locate Shell Parameters Protocol");
-    //
-    Status = gBS->OpenProtocol(
-        bp->imghndl,
-        &gEfiShellParametersProtocolGuid,
-        (VOID **)&ShellParams,
-        bp->imghndl,
-        NULL,
-        EFI_OPEN_PROTOCOL_GET_PROTOCOL
-    );
-
-    if (EFI_ERROR(Status)) {
-        Print(L"ShellParametersProtocol not available (%r)\n", Status);
-        return EFI_NOT_FOUND;
-    }
-
-    //
-    // Parse arguments
-    //
-    for (UINTN i = 1; i < ShellParams->Argc; i++) {
-        CHAR16 *arg = ShellParams->Argv[i];
-
-        cmd_dprint("arg : %s", arg);
-        
-//      CHAR16 *val = NULL;
-//
-//      if ((val = MatchLongOption(arg, -L"--loadimg"))) {
-//      }
-
-        if (!StrCmp(arg, L"--loadimg")) {
-            if (i + 2 < ShellParams->Argc) {
-                CHAR16 *LoadImgName;   
-                [[maybe_unused]] UINT64  LoadImgAddr;
-                UINTN   FileSize;
-                EFI_STATUS retval = EFI_SUCCESS;
-
-                LoadImgName = ShellParams->Argv[++i];
-                LoadImgAddr = StrHexToUint64(ShellParams->Argv[++i]);
-
-
-                
-                ret = SBC_GetFileSize(LoadImgName, &FileSize);
-                if (ret != SBCOK) {
-                    cmd_eprint("Can't found the %s", LoadImgName);
-                    return EFI_UNSUPPORTED;
-                }
-
-                cmd_dprint("Load Image Name: %s (size %d), Load Image : 0x%lx\n", LoadImgName, FileSize, LoadImgAddr );
-                retval = SBC_CopyFileToBlockDevice(LoadImgName,
-                                                   bp->blkhnd,
-                                                   LoadImgAddr,
-                                                   &FileSize);
-
-
-                if (EFI_ERROR(retval)) {
-                    cmd_eprint("Copy fail from %s to 0x%lx %r", LoadImgName, LoadImgAddr, retval);
-                    return retval;
-                }
-
-                SBC_RebootSystem();
-
-            }
-          }
-          else if (!StrCmp(arg, L"--dumpimg")) {
-              if (i + 2 < ShellParams->Argc) {
-                  UINT8 *blob = NULL;
-                  UINTN LoadBlkAddr = StrHexToUint64(ShellParams->Argv[++i]);
-                  UINTN LoadBlkLen = StrDecimalToUintn(ShellParams->Argv[++i]);
-
-                  cmd_dprint("Load Addr : 0x%lx, Load Length : %d", LoadBlkAddr, LoadBlkLen);
-
-                  blob = AllocateZeroPool(LoadBlkLen);
-                  if (blob == NULL) {
-                    cmd_eprint("Out of Resource !!!");
-                    return EFI_UNSUPPORTED;
-                  }
-
-                  ret = SBC_RawAlignedReadBlockIO(bp->blkhnd, 
-                                                  LoadBlkAddr,
-                                                  LoadBlkLen,
-                                                  blob);
-                  if (ret != SBCOK) {
-                    return EFI_UNSUPPORTED;
-                  }
-
-                  
-                  SBC_external_mem_print_bin("Dump", blob, (UINT32)LoadBlkLen);
-
-              }
-          }
-          else if (!StrCmp(arg, L"--bootmode")) {
-            if (i + 2 < ShellParams->Argc) {
-                UINT8 bkm_buf[16] = {0, };
-                UINTN bm = StrDecimalToUintn(ShellParams->Argv[++i]);
-                UINTN km = StrDecimalToUintn(ShellParams->Argv[++i]);
-                //UINTN rcvm = StrDecimalToUintn(ShellParams->Argv[++i]);
-
-                //bp->rcvmode = rcvm;
-
-                ret = SBC_BootKeyModeChange(bm, km, (VOID *)bp);
-                if (ret != SBCOK) {
-                    cmd_eprint("Failed to Boot and Key Mode change bm:%d , km:%d", bm, km);
-                    return EFI_UNSUPPORTED;
-                }
-
-                ret = SBC_RawAlignedReadBlockIO(bp->blkhnd, 
-                                                0x70,
-                                                16,
-                                                bkm_buf);
-                if (ret != SBCOK) {
-                    cmd_eprint("Failed to Read (0x%lx)", 0x70);
-                    return EFI_UNSUPPORTED;
-                }
-
-                
-                SBC_external_mem_print_bin("Dump", bkm_buf, 16);
-
-            }
-          }
-          else if (!StrCmp(arg, L"--nvramwrite")) {
-                cmd_dprint("NVMwrite Argc : %d , i+2 : %d", ShellParams->Argc, i + 2);
-                if (i + 2 < ShellParams->Argc ) {
-                    EFI_STATUS retval = EFI_SUCCESS;
-                    CHAR16 *varname = ShellParams->Argv[++i];
-                    UINTN nv_varbuf = StrHexToUint64(ShellParams->Argv[++i]);
-                    UINTN nv_varsz = sizeof nv_varbuf;
-
-                    cmd_dprint("NVRAM write command ~~ running");
-
-                    retval = SBC_NvramSetVar((VOID *)varname, (VOID *)&nv_varbuf, (VOID*)&nv_varsz);
-                    if (EFI_ERROR(retval)) {
-                        Print(L"Faile to NVRAM Set Variable \n");
-                        return EFI_UNSUPPORTED;
-                    }
-                }
-          }
-          else if (!StrCmp(arg, L"--nvramread")) {
-                cmd_dprint("Nvmread Argc : %d , i+2 : %d", ShellParams->Argc, i + 1);
-                if (i + 1 < ShellParams->Argc) {
-                    EFI_STATUS retval = EFI_SUCCESS;
-                    CHAR16 *varname = ShellParams->Argv[++i];
-                    UINTN nv_varbuf = 0ULL;
-                    UINTN nv_varsz = 0ULL;
-
-                    cmd_dprint("NVRAM read command ~~ running");
-
-                    retval = SBC_NvramGetVar((VOID *)varname, (VOID *)&nv_varbuf, (VOID*)&nv_varsz);
-                    if (EFI_ERROR(retval)) {
-                        Print(L"Faile to NVRAM Get Variable \n");
-                        return EFI_UNSUPPORTED;
-                    }
-
-                    Print(L"NVRAM Variable Name : %s \n", varname);
-                    Print(L"NVRAM Variable Value : 0x%x \n", nv_varbuf);
-                }
-          }
-
-        
-
-    }
-
-    return EFI_SUCCESS;
-}
-#endif
 
 VOID SBC_SelectSsblVerifyTarget(
     IN  const boot_proc_t *btproc,
@@ -1169,9 +607,6 @@ UefiMain (
     EFI_STATUS retval = EFI_SUCCESS;
     SBCStatus  ret = SBCOK;
     rawprt_hdr_t h_rawprtheader;    // Raw Partition Header handle
-    //rawprt_hdr_t tmp_prtheader;    // Raw Partition Header handle
-    
-    //UINT32 pres_hi = 0;
     UINT32 pres_low = 0;
     UINT32 currbank_id = 0;
     UINT32 prevbank_id = 0;
@@ -1185,25 +620,12 @@ UefiMain (
 
     UINTN driver_load_ns = 0ULL;
 
-//  UINTN change_bm = BOOT_MODE_NORMAL;
-//  UINTN change_km = KEY_MODE_NORMAL;
-
-
-#ifdef _UNIT_TEST_ON_
-    CHAR16 *varname = L"SBCBOOTORDER";
-    UINTN boot_oredr_mode = 0;
-#endif
-
-
-    //SBC_LogFileInit(ImageHandle);
- 
     sys_start_time = SBC_PerfNowTicks();
 
     SBC_TIME_BLOCKS_NS (driver_load_ns,
         { retval = SBC_DrveriInit(); });
 
 
-    //ret = SBC_DeleteFileOnMyBootFs(EFI_BOOT_SSBL_PATH);
     ret = SBC_DeleteFile(EFI_BOOT_SSBL_PATH);
     
      if (ret == SBCNOTFND) {
@@ -1354,7 +776,6 @@ UefiMain (
     tmp_prtheader = &h_rawprtheader;
     // Check the Preference SSBL bank
     CopyMem((void *)&pres_low, (void *)&h_rawprtheader.bootpres[0], 4);
-    //CopyMem((void *)&pres_hi, (void *)&h_rawprtheader.bootpres[4], 4);
 
     btproc.is_factory = _get_fw_bankid(pres_low, &currbank_id, &prevbank_id);
 
@@ -1413,80 +834,7 @@ UefiMain (
 
     //return EFI_SUCCESS; 
 
-#ifdef _UNIT_TEST_ON_
-//#   error "unit test mode"    
-    dprint("============= Unit Test Starting =============");
-    UINTN  varsz =  0;
-    retval = SBC_NvramGetVar((VOID *)varname, (VOID *)&boot_oredr_mode, (VOID *)&varsz);
-    if (EFI_ERROR(retval)) {
-      UINTN bt_order = SBC_BOOT_SHDN_SFR_003;
-      UINTN bt_varsz = sizeof bt_order;
-      retval = SBC_NvramSetVar((VOID *)varname, (VOID *)&bt_order, (VOID *)&bt_varsz);
-      SBC_RebootSystem();
-    }
-
-    //retval = SBC_NvramGetVar((VOID *)varname, (VOID *)&boot_oredr_mode, (VOID *)&varsz);
-
-    Print(L"Boot Order : 0x%04x\n", boot_oredr_mode);
-    //return EFI_SUCCESS; 
-
-    //SBC_BiosReadBootOrder();
-//#ifdef _UNIT_TEST_SFR001_TO_003_
-    if (boot_oredr_mode == SBC_BOOT_SHDN_SFR_003) {
-      UINTN bt_order = SBC_BOOT_SHDN_SFR_006;
-      UINTN bt_varsz = sizeof bt_order;
-      retval = SBC_NvramSetVar((VOID *)varname, (VOID *)&bt_order, (VOID *)&bt_varsz);
-      SBC_UnitTestSFR001_TO_003((void *)&btproc);
-    }
-//#endif
-
-//#ifdef _UNIT_TEST_SFR008_FSBL_
-    if (boot_oredr_mode == SBC_BOOT_SHDN_SFR_006) {
-      UINTN bt_order = SBC_BOOT_SHDN_SFR_006_TAMPER;
-      UINTN bt_varsz = sizeof bt_order;
-      retval = SBC_NvramSetVar((VOID *)varname, (VOID *)&bt_order, (VOID *)&bt_varsz);
-      SBC_UnitFsblNormalTamperTest((void *)&btproc);
-
-      sbc_err_sysprn(SBC_LOG_CMN_PRIO_NOTICE, 2,
-         L"AT_BOOT",
-         L"FSBL",
-         L"SAT",
-         6,
-         L"Validation",
-         L"SBC_Integrity_All boot components passed signature verification");
-  //#endif
-    }
-
-    if (boot_oredr_mode == SBC_BOOT_SHDN_SFR_006_TAMPER) {
-      UINTN bt_order = SBC_BOOT_SHDN_SFR_003;
-      UINTN bt_varsz = sizeof bt_order;
-      retval = SBC_NvramSetVar((VOID *)varname, (VOID *)&bt_order, (VOID *)&bt_varsz);
-    //#ifdef _UNIT_TEST_SFR008_ABNORMAL_FSBL_
-      extern void SBC_UnitFsblAbNormalTamperTest(void *priv);
-      SBC_UnitFsblAbNormalTamperTest((void *)&btproc);
-
-      
-
-      sbc_err_sysprn(SBC_LOG_CMN_PRIO_NOTICE, 2,
-         L"AT_BOOT",
-         L"FSBL",
-         L"SAT",
-         6,
-         L"Validation",
-         L"SBC_tamper_FSBL_SSBL_OS signature verification faied");
-
-
-      dprint("Unit Test Finish !!!!");
-//endif
-    }
-
-
-//unit_test_done:
-    return EFI_SUCCESS;
-#else
-
 #ifndef _SHELL_CMD_LINE_
-
     ret = SBC_FSBL_Verify(h_blkio, 
                           &baseansr, 
                           currbank_id, 
@@ -1607,47 +955,6 @@ UefiMain (
              8,
              SYS_LOG_EVT_VALDIATION,
              L"SBC_Integrity_All boot components passed signature verification \n");
-#endif
-#if 0
-      //SBC_GRUB_LoadAndStart(NULL);         
-      if ( btproc.rcvmode == 1 && btproc.prevmode == 1 ) {
-        dprint(" Normal mode SSBL running on Previously bank");
-        ret = SBC_BootModeNormalAndpUdate(h_blkio, ImageHandle, prevbank_id);
-        if (ret != SBCOK) {
-            eprint("BOOT_MODE_NORMAL Boot Fail");
-            retval = EFI_INVALID_PARAMETER;
-            btproc.bootst = SB_PROC_ST_ABNRAM;
-            #ifndef _ALL_PASS_
-            goto errdone;
-            #endif
-        }          
-      }
-      else if ( btproc.rcvmode == 1 && btproc.prevmode == 0 ){
-        dprint(" Normal mode SSBL running on Factory bank");
-        ret = SBC_BootModeFactory(h_blkio, ImageHandle);
-        if (ret != SBCOK) {
-              eprint("BOOT_MODE_FACTORY Boot Fail");
-              //factory_md_abnormal_boot_state(&btproc);
-              retval = EFI_INVALID_PARAMETER;
-              btproc.bootst = SB_PROC_ST_ABNRAM;
-            #ifndef _ALL_PASS_
-              goto errdone;
-            #endif
-        }
-      }
-      else {
-        dprint(" Normal mode SSBL running on Currently bank");
-        ret = SBC_BootModeNormalAndpUdate(h_blkio, ImageHandle, currbank_id);
-        if (ret != SBCOK) {
-            eprint("BOOT_MODE_NORMAL Boot Fail");
-            retval = EFI_INVALID_PARAMETER;
-            btproc.bootst = SB_PROC_ST_ABNRAM;
-            #ifndef _ALL_PASS_
-            goto errdone;
-            #endif
-        }
-      }
-#else
 
         ret = SBC_RunSsblNormalScenario(
                 &btproc,
@@ -1666,7 +973,6 @@ UefiMain (
                 goto errdone;
             #endif
         }
-            #endif
       break;
     case BOOT_MODE_FACTORY:
       //Print(L"Factory Boot Mode !!! \n");
@@ -1905,7 +1211,7 @@ errdone:
     sys_ns_var  = SBC_PerfTicksTons(_PerfDeltaTicks(sys_start_time, sys_end_time));
     //dprint("sys_ns_var : %ld", sys_ns_var);
 
-    SBC_LogElapsedTime(L"x FSBL Boot Time", sys_ns_var);
+    SBC_LogElapsedTime(L"FSBL Boot Time", sys_ns_var);
 #ifndef _ALL_PASS_
     switch(h_rawprtheader.bootmode) {
     case BOOT_MODE_NORMAL:

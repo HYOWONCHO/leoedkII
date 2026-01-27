@@ -3167,7 +3167,7 @@ SBCStatus SBC_DeleteFile(IN CHAR16 *FilePath)
         }
     }
 
-    gBS->Stall(1 * 1000 * 1000); // 3 seconds
+    //gBS->Stall(1 * 1000 * 1000); // 3 seconds
 
     if (EFI_ERROR(Status))
         return SBCFAIL;

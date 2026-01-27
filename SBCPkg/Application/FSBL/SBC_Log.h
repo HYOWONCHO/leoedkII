@@ -207,14 +207,6 @@ EFI_STATUS SBC_CustomPrint (
   );
 
 
-EFI_STATUS
-EFIAPI
-SBC_LogCustomPrint (
-  OUT CHAR16 *OutFormat,
-  IN CONST CHAR16 *Format,
-  ...
-  );
-
 extern CHAR16 mrgmsg[8192]; 
 
 CHAR16 *SBC_LogMrg(CONST CHAR16 *fmt, ...);
