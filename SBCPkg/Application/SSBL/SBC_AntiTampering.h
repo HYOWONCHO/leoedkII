@@ -451,17 +451,70 @@ SBCStatus SBC_GenFWID(VOID *priv, UINT8 *devid, UINT8 *fwid, UINTN normbank, UIN
 
 
 /**
- * @fn SBCStatus SBC_GenOSID(EFI_HANDLE *h_image, UINT8 *fwid,
- *     UINT8 *osid)
- * 
- * @author leoc (6/2/25)
- * 
- * @param h_image EFI Image Handle
- * @param devid   Pointer to Firmware ID buffer where computed 
- * @param osid    Pointer to OS ID buffer 
- * 
- * @return On Success, return the SBCOK, otherwise, return the apporiate error
- *         value.
+ * @fn SBC_GenOSID
+ * @brief Generate OSID by hashing FWID and OS image hash (Kernel).
+ *
+ * This function generates an OS Identity (OSID) as:
+ *   OSID = Hash( FWID || Hash(OS_Image) )
+ *
+ * Where:
+ * - OS_Image is the loaded kernel image read from EFI filesystem.
+ * - Hash() is computed using SBC_HashCompute().
+ *
+ * @param[in]  h_image
+ *      Image handle used to locate the filesystem/device for kernel loading.
+ *      (Passed to SBC_EFI_Kernel_Load().)
+ *
+ * @param[in]  fwid
+ *      Pointer to FWID hash buffer (expected SBC_AT_HASH_LEN bytes).
+ *
+ * @param[out] osid
+ *      Output buffer to receive generated OSID (expected SBC_AT_HASH_LEN bytes; printed as 32 bytes).
+ *
+ * @retval SBCOK
+ *      OSID generated successfully.
+ *
+ * @retval SBCFAIL
+ *      Forced failure in test mode or kernel load failure.
+ *
+ * @retval SBCNULLP / Others
+ *      Propagated SBCStatus from hashing, allocation, or dependent operations.
+ *
+ * @details
+ * Processing steps:
+ *
+ * Step 1. Initialize local LV container (<code>lv.value = NULL</code>, <code>lv.length = 0</code>).
+ *
+ * Step 2. Load OS kernel image from EFI filesystem by calling
+ *         <code>SBC_EFI_Kernel_Load(h_image, &lv)</code>.
+ *         - On failure: log "OS File Not Found" and return error.
+ *
+ * Step 3. Compute OS image hash:
+ *         <code>os_hash = Hash(lv.value, lv.length)</code> via <code>SBC_HashCompute()</code>.
+ *         - On failure: log "OS Hash Create Fail" and return error.
+ *
+ * Step 4. Allocate a temporary buffer of size <code>(SBC_AT_HASH_LEN * 2)</code> bytes.
+ *         - On failure: log "Not enough resource" and return error.
+ *
+ * Step 5. Construct concatenation buffer:
+ *         - temp[0 .. SBC_AT_HASH_LEN-1]              = FWID
+ *         - temp[SBC_AT_HASH_LEN .. 2*SBC_AT_HASH_LEN-1] = os_hash
+ *
+ * Step 6. Compute OSID:
+ *         <code>osid = Hash(temp, 2*SBC_AT_HASH_LEN)</code> via <code>SBC_HashCompute()</code>.
+ *         - On failure: log "OSID compute Fail" and return error.
+ *
+ * Step 7. (Debug/Log) Print OSID and emit success message (hex string conversion).
+ *
+ * Step 8. Free allocated resources:
+ *         - Free <code>temp</code>
+ *         - Free <code>lv.value</code> (kernel image buffer)
+ *         Then return final status.
+ *
+ * @note
+ * - Caller must provide valid buffers: <code>fwid</code> and <code>osid</code>.
+ * - This function prints OSID; avoid printing identifiers or hashes in production if sensitive.
+ * - Hash length assumptions: SBC_AT_HASH_LEN is assumed to be 32 bytes in current logging/printing.
  */
 SBCStatus SBC_GenOSID(EFI_HANDLE *h_image, UINT8 *fwid, UINT8 *osid);
 

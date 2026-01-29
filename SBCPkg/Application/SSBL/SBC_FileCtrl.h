@@ -11,6 +11,7 @@
 #define SBC_FILECTRL_H
 
 #include "SBC_ErrorType.h"
+#include "SBC_AntiTampering.h"
 #include <Protocol/BlockIo.h>
 
 #define BOOT_VENDOR_BASEDIR     L"\\EFI\\rocky"
@@ -577,26 +578,66 @@ SBCStatus SBC_RawPrtReadBlock(VOID *blkhnd, VOID *rdbuf, UINT32 *rdlen, UINTN rl
  */
 SBCStatus  SBC_FindBlkIoHandle(OUT VOID **hblk);  
                     
-/*!
- * \fn SBCStatus  SBC_RawPrtBlockWrite(VOID *blkio, UINT8 *wrbuf, UINT32 wrlen, UINT32 wrlba)
- * 
- * \brief Write the data in Raw Partition block at the specified
-   LBA
- * 
- * 
- * 
- * \param blkio  Context handle for Block IO
- * \param wrbuf  Pointer to the buffer containing data to be
-   written
- * \param wrlen  Length of the data to write, in bytes.
- * \param wrlba  Logicl Block Address where the data should be
-   written
+/**
+ * @fn SBC_RawPrtBlockWrite
+ * @brief Write a block-aligned buffer to raw partition using EFI Block I/O.
  *
- * @retval SBCOK        The file was successfully created.
- * @retval SBCFAIL      Failed to create the file due to a write or access error.
- * @retval SBCNULLP     One or more input pointers are NULL.
- * @retval SBCIO        A device or I/O error occurred while creating the file.
- * @retval SBCINVPARAM  Invalid file name or handle.
+ * This function writes @p wrbuf to the device using EFI_BLOCK_IO_PROTOCOL::WriteBlocks().
+ * The caller should provide a length that is aligned to the device block size.
+ *
+ * @param[in] blkio
+ *      Pointer to EFI_BLOCK_IO_PROTOCOL instance (Block I/O handle).
+ *
+ * @param[in] wrbuf
+ *      Pointer to write buffer.
+ *
+ * @param[in] wrlen
+ *      Write length in bytes. Should be non-zero and typically aligned to BlockSize.
+ *
+ * @param[in] wrlba
+ *      Starting LBA to write.
+ *
+ * @retval SBCOK
+ *      Write succeeded.
+ *
+ * @retval SBCNULLP
+ *      Invalid parameter (NULL pointers).
+ *
+ * @retval SBCZEROL
+ *      Invalid length (wrlen == 0).
+ *
+ * @retval SBCIO
+ *      Block I/O write failure (WriteBlocks returned EFI error).
+ *
+ * @details
+ * Processing steps:
+ *
+ * Step 1. Validate input parameters:
+ *         - <code>blkio</code> must not be NULL
+ *         - <code>wrbuf</code> must not be NULL
+ *         - <code>wrlen</code> must be non-zero
+ *
+ * Step 2. Cast <code>blkio</code> to <code>EFI_BLOCK_IO_PROTOCOL*</code>.
+ *
+ * Step 3. Call <code>p->WriteBlocks()</code> with:
+ *         - MediaId from <code>p->Media->MediaId</code>
+ *         - LBA = <code>wrlba</code>
+ *         - BufferSize = <code>wrlen</code>
+ *         - Buffer = <code>wrbuf</code>
+ *
+ * Step 4. If WriteBlocks fails:
+ *         - Print debug message and system log
+ *         - Return <code>SBCIO</code>
+ *
+ * Step 5. Return <code>SBCOK</code> on success.
+ *
+ * @note
+ * - Current implementation validates <code>p</code> before it is assigned:
+ *   <code>p</code> is initialized to NULL, so the condition
+ *   <code>((p != NULL) || (wrbuf != NULL))</code> effectively only checks <code>wrbuf</code>.
+ *   Consider changing it to:
+ *   <code>(blkio != NULL) && (wrbuf != NULL)</code>.
+ * - Consider enforcing <code>(wrlen % p->Media->BlockSize) == 0</code> to avoid EFI_INVALID_PARAMETER.
  */
 SBCStatus  SBC_RawPrtBlockWrite(VOID *blkio, UINT8 *wrbuf, UINT32 wrlen, UINT32 wrlba);                    
 
@@ -668,22 +709,93 @@ SBCStatus SBC_ProtectedSWRead(VOID *blkio,
                               UINT32 bnkid);
 
 
-/*!
- * \fn SBCStatus SBC_RawAlignedWriteBlockIO(VOID *blk, UINTN off, UINTN sz, CONST VOID *buf);
- * \brief Write arbitrary bytes to a Block I/O device
- * 
- * \author leoc (9/24/25)
- * 
- * \param blk    Pointer to EFI_BLOCK_IO_PROTOCOL
- * \param off    Byte offset from the start to media to begin writting
- * \param sz     Number of bytes to write.
- * \param buf    Source bufferw to write
- * 
- * @retval SBCOK        The file was successfully created.
- * @retval SBCFAIL      Failed to create the file due to a write or access error.
- * @retval SBCNULLP     One or more input pointers are NULL.
- * @retval SBCIO        A device or I/O error occurred while creating the file.
- * @retval SBCINVPARAM  Invalid file name or handle.
+/**
+ * @fn SBC_RawAlignedWriteBlockIO
+ * @brief Write arbitrary-length data to Block I/O at byte offset, handling unaligned head/tail via RMW.
+ *
+ * This function writes @p sz bytes from @p buf to the Block I/O device @p blk
+ * starting at byte offset @p off. If the write is not block-aligned, it performs
+ * read-modify-write (RMW) for the partial head/tail blocks, and uses direct
+ * block writes for the fully-aligned body.
+ *
+ * @param[in] blk
+ *      Pointer to EFI_BLOCK_IO_PROTOCOL instance.
+ *
+ * @param[in] off
+ *      Byte offset from the start of the device.
+ *
+ * @param[in] sz
+ *      Number of bytes to write.
+ *
+ * @param[in] buf
+ *      Source buffer containing data to write.
+ *
+ * @retval SBCOK
+ *      Write succeeded.
+ *
+ * @retval SBCIO
+ *      Media not present or Block I/O read/write failure.
+ *
+ * @retval SBCINVPARAM
+ *      Invalid parameter (write range exceeds device boundary).
+ *
+ * @retval SBCNULLP
+ *      Temporary buffer allocation failed.
+ *
+ * @details
+ * Processing steps:
+ *
+ * Step 1. Cast @p blk to <code>EFI_BLOCK_IO_PROTOCOL*</code> and obtain media info (<code>io->Media</code>).
+ *
+ * Step 2. Validate media state:
+ *         - <code>MediaPresent</code> must be TRUE.
+ *         - Determine block size <code>B = BlockSize</code>.
+ *
+ * Step 3. Compute device total size in bytes:
+ *         <code>total = (LastBlock + 1) * BlockSize</code>.
+ *
+ * Step 4. Validate boundary:
+ *         - Ensure <code>off</code> and <code>off + sz</code> do not exceed <code>total</code>.
+ *         - If invalid, return <code>SBCINVPARAM</code>.
+ *
+ * Step 5. Initialize cursor:
+ *         - <code>cur = off</code>, <code>p = (UINT8*)buf</code>
+ *         - Compute starting <code>lba = cur / B</code> and intra-block offset <code>intra = cur % B</code>.
+ *
+ * Step 6. Head handling (partial first block):
+ *         - If <code>intra != 0</code>:
+ *           <ol>
+ *             <li>Allocate temp block buffer (<code>tmp</code>, size B).</li>
+ *             <li>Read existing block at <code>lba</code> into <code>tmp</code>.</li>
+ *             <li>Copy <code>c = min(sz, B - intra)</code> bytes from <code>p</code> into <code>tmp + intra</code>.</li>
+ *             <li>Write the full block <code>tmp</code> back to <code>lba</code>.</li>
+ *             <li>Advance <code>p</code>, decrease <code>sz</code>, advance <code>cur</code>, increment <code>lba</code>.</li>
+ *           </ol>
+ *
+ * Step 7. Body handling (full blocks):
+ *         - While <code>sz >= B</code>:
+ *           - Write one full block directly from <code>p</code> to current <code>lba</code>.
+ *           - Advance pointers/counters by B and increment <code>lba</code>.
+ *
+ * Step 8. Tail handling (partial last block):
+ *         - If remaining <code>sz > 0</code>:
+ *           <ol>
+ *             <li>Allocate temp block buffer (<code>tmp</code>, size B).</li>
+ *             <li>Read existing block at <code>lba</code> into <code>tmp</code>.</li>
+ *             <li>Overwrite the first <code>sz</code> bytes of <code>tmp</code> with remaining data from <code>p</code>.</li>
+ *             <li>Write the full block <code>tmp</code> back to <code>lba</code>.</li>
+ *           </ol>
+ *
+ * Step 9. Return <code>SBCOK</code> on success.
+ *
+ * @note
+ * - This routine relies on RMW for unaligned writes; it preserves bytes outside the written range
+ *   within the head/tail blocks.
+ * - Consider validating <code>buf</code> is not NULL when <code>sz > 0</code>.
+ * - Current implementation checks <code>EFI_ERROR(retval)</code> at <code>errdone</code>, but
+ *   <code>retval</code> may be uninitialized on some early error paths (e.g., boundary failure).
+ *   Initializing <code>retval = EFI_SUCCESS</code> at function entry would harden the code.
+ * - Consider checking <code>m->ReadOnly</code> to fail early if the medium is write-protected.
  */
 SBCStatus SBC_RawAlignedWriteBlockIO(VOID *blk, UINTN off, UINTN sz, CONST VOID *buf);
 
@@ -881,55 +993,100 @@ EFI_STATUS SBC_LogWriteFile(EFI_HANDLE ImageHandle, CHAR16 *FileNames, LV_t *out
 
 
 /**
- * @fn SBCStatus SBC_LoadSystemSetting(VOID *blkio, VOID *blob)
- * @brief Loads system configuration data from a block I/O device into a memory blob.
+ * @fn SBC_LoadSystemSetting
+ * @brief Load system setting repository from raw partition into an LV_t blob.
  *
- * This function reads system settings or configuration data from a secure storage region
- * (typically a raw partition) using the provided block I/O handle, and stores the result
- * into the specified memory blob.
+ * This function allocates a block-size-aligned buffer, reads the system setting
+ * repository region from raw partition starting at <code>SYS_CONF_START_OFS</code>,
+ * and returns the loaded data via an <code>LV_t</code> container.
  *
- * @param[in]  blkio  Pointer to the block I/O interface used to access the storage device.
- * @param[out] blob   Pointer to the memory buffer where the loaded configuration will be stored.
+ * @param[in]  blkio
+ *      Pointer to EFI_BLOCK_IO_PROTOCOL (raw partition Block I/O handle).
  *
- * @return SBCStatus
- *         - SBCOK: System settings successfully loaded.
- *         - SBCNULLP: Null pointer input detected.
- *         - SBCFAIL: Read or parse operation failed.
- *         - SBCDECFAIL: Decryption of system settings failed.
+ * @param[out] blob
+ *      Pointer to an <code>LV_t</code> structure that will receive:
+ *      - value  : allocated buffer containing loaded system setting data
+ *      - length : number of bytes read (aligned length)
+ *
+ * @retval SBCOK
+ *      Load succeeded.
+ *
+ * @retval SBCNULLP
+ *      Memory allocation failed (or invalid pointer in hardened implementations).
+ *
+ * @retval Others
+ *      Propagated SBCStatus from <code>SBC_RawPrtReadBlock()</code>.
+ *
+ * @details
+ * Processing steps:
+ *
+ * Step 1. Compute base LBA of system setting repository:
+ *         <code>lba = SYS_CONF_START_OFS >> SBC_RAWPRT_DFLT_SHIFT</code>.
+ *
+ * Step 2. Compute aligned load length:
+ *         <code>ldlen = ALIGN_VALUE(SYS_SETTING_STORAGE_LEN, BlockSize)</code>,
+ *         where BlockSize is taken from <code>((EFI_BLOCK_IO_PROTOCOL*)blkio)->Media->BlockSize</code>.
+ *
+ * Step 3. Allocate a zero-initialized buffer of size <code>ldlen</code> and assign it to
+ *         <code>((LV_t*)blob)->value</code>.
+ *         If allocation fails, return <code>SBCNULLP</code>.
+ *
+ * Step 4. Read repository blocks from raw partition into the allocated buffer using
+ *         <code>SBC_RawPrtReadBlock(blkio, value, &ldlen, lba)</code>.
+ *         If read fails, return the error status.
+ *
+ * Step 5. Set <code>((LV_t*)blob)->length = ldlen</code> and return <code>SBCOK</code>.
  *
  * @note
- * - The caller must ensure that `blob` points to a valid memory region with sufficient size.
- * - This function may internally perform decryption or integrity checks depending on the system design.
- * - Used during boot initialization to retrieve platform configuration, security policies, or provisioning data.
- *
- * @warning
- * The function assumes that the system settings are stored in a known offset and format.
- * If the format is corrupted or the key is invalid, the operation may fail.
+ * - Caller is responsible for freeing <code>((LV_t*)blob)->value</code> with <code>FreePool()</code>.
+ * - Consider validating <code>blkio</code> and <code>blob</code> are not NULL before use.
+ * - On read failure, current implementation does not free the allocated buffer; consider freeing
+ *   it and resetting <code>blob->value/length</code> in the error path to avoid leaks.
  */
 SBCStatus SBC_LoadSystemSetting(VOID *blkio, VOID *blob);
 
 
 /**
- * @fn EFI_STATUS SBC_CopyFileToBlockDevice(
- *       IN CHAR16 *SrcPath,
- *       IN VOID   *_Blk,
- *       IN UINT64 ByteOffset,
- *       OUT UINT64 *BytesWritten OPTIONAL)
- * @brief Copy a file from the EFI file system into a block device region.
+ * @fn SBC_CopyFileToBlockDevice
+ * @brief Copy a file from EFI filesystem to a raw block device at a given byte offset.
  *
- * @param[in]  SrcPath       Unicode path of the source file to be copied.
- * @param[in]  _Blk          Pointer to a block device handle implementing
- *                           EFI_BLOCK_IO_PROTOCOL.
- * @param[in]  ByteOffset    Starting byte offset on the block device where
- *                           the file data will be written.
- * @param[out] BytesWritten  Optional pointer that receives the number of bytes
- *                           successfully written to the block device.
+ * Reads the source file in chunks and writes it to the target Block I/O device
+ * using byte-granular write helper (e.g., SBC_BlkWriteArbitrary()).
  *
- * @retval EFI_SUCCESS            The file was successfully written to the block device.
- * @retval EFI_INVALID_PARAMETER  One or more parameters are NULL or invalid.
- * @retval EFI_NOT_FOUND          The source file could not be opened.
- * @retval EFI_DEVICE_ERROR       A read/write error occurred on the block device.
- * @retval EFI_OUT_OF_RESOURCES   Memory allocation failed during the operation.
+ * @param[in]  SrcPath
+ *      Source file path on the EFI filesystem (e.g., L"\\EFI\\...\\file.bin").
+ *
+ * @param[in]  _Blk
+ *      Target block device handle (EFI_BLOCK_IO_PROTOCOL*).
+ *
+ * @param[in]  ByteOffset
+ *      Destination byte offset on the block device where the file will be written.
+ *
+ * @param[out] BytesWritten
+ *      Optional pointer to receive total bytes written.
+ *
+ * @retval EFI_SUCCESS
+ *      File copied successfully.
+ *
+ * @retval EFI_INVALID_PARAMETER
+ *      SrcPath or _Blk is NULL.
+ *
+ * @retval EFI_NO_MEDIA
+ *      Block device media not present.
+ *
+ * @retval EFI_VOLUME_FULL
+ *      Write range exceeds block device boundary.
+ *
+ * @retval EFI_OUT_OF_RESOURCES
+ *      Memory allocation failed.
+ *
+ * @retval Others
+ *      Propagated EFI_STATUS from file I/O or block write operations.
+ * @note
+ * - Caller provides a block device that supports write operations; consider checking m->ReadOnly.
+ * - SBC_BlkWriteArbitrary() must correctly handle unaligned writes if ByteOffset/rd are not block-aligned.
+ * - Current implementation calls LocateProtocol(SimpleFS) and thus uses the first available filesystem.
+ *   If multiple filesystems exist, consider selecting the filesystem bound to the current image/device.
  */
 EFI_STATUS SBC_CopyFileToBlockDevice(IN CHAR16 *SrcPath,
                       IN VOID *_Blk,
@@ -1131,8 +1288,285 @@ SBC_BlkReadArbitrary(
     IN  UINTN                  Length   /**< [in] Number of bytes to read */
 );
 
+/**
+ * @fn SBC_BaseAnswerExtractFromDisk
+ * @brief Extract Base Answer data from raw system configuration partition.
+ *
+ * This function reads the system configuration storage region from disk and
+ * extracts Base Answer fields from the reserved response offset area.
+ *
+ * @param[in]  blkio
+ *      Block I/O protocol handle for raw partition access.
+ *
+ * @param[out] p
+ *      Pointer to base_ansid_t structure to receive:
+ *      - msglen : encrypted message length
+ *      - encmsg : encrypted message payload
+ *      - iv     : AES-GCM IV
+ *      - tag    : AES-GCM authentication tag
+ *
+ * @retval SBCOK
+ *      Extraction succeeded.
+ *
+ * @retval SBCNULLP
+ *      Invalid parameter or allocation failure.
+ *
+ * @retval SBCFAIL
+ *      Forced failure in test mode or underlying read error.
+ *
+ * @retval SBCBSANSWNOTFND
+ *      Base Answer not found (msglen <= 0).
+ *
+ * @details
+ * Processing steps:
+ *
+ * Step 1. Validate output parameter (<code>p</code> != NULL).
+ *
+ * Step 2. Calculate the base LBA of the system configuration storage
+ *         using <code>SYS_CONF_START_OFS</code>.
+ *
+ * Step 3. Align the storage length to the block size reported by
+ *         <code>EFI_BLOCK_IO_PROTOCOL</code>.
+ *
+ * Step 4. Allocate a zero-initialized temporary buffer for the read operation.
+ *
+ * Step 5. Read the system configuration data block from the raw partition
+ *         into the temporary buffer.
+ *
+ * Step 6. Set <code>offset</code> to the reserved response offset
+ *         (<code>SYS_CONF_RES_OFS</code>).
+ *
+ * Step 7. Extract Base Answer message length (<code>msglen</code>) from the buffer
+ *         and validate it is greater than 0. If not, return <code>SBCBSANSWNOTFND</code>.
+ *
+ * Step 8. Extract encrypted message (<code>encmsg</code>) using <code>msglen</code>.
+ *
+ * Step 9. Extract AES-GCM IV (<code>iv</code>) with length <code>BASE_ANS_IV_KEY_STR</code>.
+ *
+ * Step 10. Extract AES-GCM authentication tag (<code>tag</code>) with length
+ *          <code>BASE_ANS_TAG_LEN</code>.
+ *
+ * Step 11. Return status (caller owns <code>p</code> and must ensure its internal
+ *          buffers are large enough).
+ *
+ * @note
+ * - Caller must ensure <code>p->encmsg</code> buffer capacity is >= stored msglen.
+ * - This function currently does not FreePool(loadbuf); consider releasing it
+ *   to avoid memory leaks in long-running contexts.
+ */
+SBCStatus SBC_BaseAnswerExtractFromDisk(VOID *blkio, base_ansid_t *p);
 
+/**
+ * @fn SBC_EFI_FSBL_Load
+ * @brief Load FSBL (or test image) from the EFI System Partition into memory.
+ *
+ * This function loads a target EFI binary from the same filesystem device
+ * where the current image is loaded (typically ESP). The loaded content is
+ * returned via @p lv (buffer pointer + length).
+ *
+ * Target file selection:
+ * - Normal build: "\\EFI\\BOOT\\bootx64.efi"
+ * - _SSBL_TEST_RUN_ build: "\\EFI\\BOOT\\FSBL.efi"
+ *
+ * @param[in,out] lv
+ *      Pointer to LV_t output container.
+ *      On success:
+ *        - lv->value  points to newly allocated buffer containing file content
+ *        - lv->length is set to file size in bytes
+ *      On failure:
+ *        - lv->value is NULL
+ *        - lv->length is 0
+ *
+ * @retval EFI_SUCCESS
+ *      File loaded successfully.
+ *
+ * @retval EFI_INVALID_PARAMETER
+ *      @p lv is NULL.
+ *
+ * @retval EFI_OUT_OF_RESOURCES
+ *      Memory allocation failed.
+ *
+ * @retval EFI_NOT_FOUND
+ *      Failed to resolve LoadedImage protocol or filesystem device handle.
+ *
+ * @retval Others
+ *      Propagated EFI_STATUS from underlying filesystem operations.
+ *
+ * @details
+ * Processing steps:
+ *
+ * Step 1. Validate input parameter (<code>lv</code> != NULL). If invalid, return
+ *         <code>EFI_INVALID_PARAMETER</code>.
+ *
+ * Step 2. Select the target file path depending on build option
+ *         (<code>_SSBL_TEST_RUN_</code>).
+ *
+ * Step 3. Initialize output fields:
+ *         <code>lv->value = NULL</code>, <code>lv->length = 0</code>.
+ *
+ * Step 4. Query the target file size using <code>GetFileSizeOnMyFs()</code>.
+ *         If it fails, return the error status.
+ *
+ * Step 5. Allocate a buffer of <code>FileSize</code> bytes and set
+ *         <code>lv->length = FileSize</code>. If allocation fails, return
+ *         <code>EFI_OUT_OF_RESOURCES</code>.
+ *
+ * Step 6. Resolve <code>EFI_LOADED_IMAGE_PROTOCOL</code> from <code>gImageHandle</code>
+ *         to obtain the filesystem device handle (<code>LoadedImage->DeviceHandle</code>).
+ *         If not found, free the buffer, reset <code>lv</code>, and return
+ *         <code>EFI_NOT_FOUND</code>.
+ *
+ * Step 7. Read the file content using the existing <code>SBC_ReadFile()</code>
+ *         by passing <code>LoadedImage->DeviceHandle</code> (a handle that supports
+ *         SimpleFS) and <code>TargetPath</code>.
+ *         If read fails, free the buffer, reset <code>lv</code>, and return the error.
+ *
+ * Step 8. Return <code>EFI_SUCCESS</code> with <code>lv</code> containing the loaded image.
+ *
+ * @note
+ * - The caller is responsible for freeing <code>lv->value</code> with <code>FreePool()</code>.
+ * - This function intentionally passes <code>LoadedImage->DeviceHandle</code> to
+ *   <code>SBC_ReadFile()</code> because <code>gImageHandle</code> usually does not have
+ *   SimpleFS installed.
+ */
+EFI_STATUS
+SBC_EFI_FSBL_Load(LV_t *lv);
 
+/**
+ * @fn SBC_EFI_SSBL_Load
+ * @brief Locate and load the SSBL EFI image from an accessible EFI filesystem into memory.
+ *
+ * This function finds an EFI SimpleFS handle that can access the SSBL image
+ * located at <code>EFI_BOOT_SSBL_PATH</code>, allocates a buffer sized to the
+ * file, and loads the file content into @p lv.
+ *
+ * @param[in]  ImageHandle
+ *      Current image handle (reserved for future use; not used in current implementation).
+ *
+ * @param[in,out] lv
+ *      Pointer to LV_t output container.
+ *      On success:
+ *        - lv->value  points to newly allocated buffer containing SSBL image
+ *        - lv->length is set to SSBL image size in bytes
+ *
+ * @retval SBCOK
+ *      SSBL loaded successfully.
+ *
+ * @retval SBCFAIL
+ *      Failed to find an EFI filesystem handle that can access the SSBL file, or other fatal error.
+ *
+ * @retval SBCNULLP
+ *      Memory allocation failed.
+ *
+ * @retval SBCNOTFND
+ *      SSBL file access succeeded, but read operation failed.
+ *
+ * @retval Others
+ *      Propagated SBCStatus from SBC_GetFileSize() or internal validations.
+ *
+ * @details
+ * Processing steps:
+ *
+ * Step 1. Query SSBL file size using <code>SBC_GetFileSize(EFI_BOOT_SSBL_PATH)</code>.
+ *         If not found or error occurs, return the error status.
+ *
+ * Step 2. Enumerate EFI filesystem handles via <code>SBC_FindEfiFileSystemProtocol()</code>.
+ *         If none are found, return <code>SBCFAIL</code>.
+ *
+ * Step 3. Iterate over filesystem handles and check accessibility of
+ *         <code>EFI_BOOT_SSBL_PATH</code> via <code>SBC_IsFlieAccess()</code>.
+ *         Stop at the first handle that can access the file.
+ *
+ * Step 4. If no filesystem handle can access the SSBL file, return <code>SBCFAIL</code>.
+ *
+ * Step 5. Allocate a zero-initialized buffer of <code>len_of_kernel</code> bytes,
+ *         assign it to <code>lv->value</code>, and set <code>lv->length</code>.
+ *
+ * Step 6. Read the SSBL file content using <code>SBC_ReadFile()</code> with the selected
+ *         filesystem handle.
+ *         If read fails, set <code>ret = SBCNOTFND</code> and return.
+ *
+ * Step 7. Return <code>SBCOK</code> on success.
+ *
+ * @note
+ * - The caller is responsible for freeing <code>lv->value</code> with <code>FreePool()</code>.
+ * - Consider validating <code>lv</code> is not NULL before use.
+ * - Consider initializing <code>Status</code> before the loop to avoid using an
+ *   uninitialized value if the loop does not find a valid handle.
+ * - If <code>SBC_FindEfiFileSystemProtocol()</code> allocates <code>hndl</code>,
+ *   define ownership and free it accordingly to avoid leaks.
+ */
+SBCStatus SBC_EFI_SSBL_Load(EFI_HANDLE ImageHandle, LV_t *lv);
+
+/**
+ * @fn SBC_EFI_Kernel_Load
+ * @brief Locate and load the Linux kernel image from an accessible EFI filesystem into memory.
+ *
+ * This function resolves the kernel path, finds an EFI SimpleFS handle that can
+ * access the kernel file, allocates a buffer sized to the kernel image, and
+ * loads the file content into @p lv.
+ *
+ * @param[in]  ImageHandle
+ *      Current image handle (reserved for future use; not used in current implementation).
+ *
+ * @param[in,out] lv
+ *      Pointer to LV_t output container.
+ *      On success:
+ *        - lv->value  points to newly allocated buffer containing the kernel image
+ *        - lv->length is set to the kernel image size in bytes
+ *      On failure:
+ *        - lv->value may be NULL (or stale if caller didn't pre-init); caller should initialize it.
+ *
+ * @retval SBCOK
+ *      Kernel loaded successfully.
+ *
+ * @retval SBCFAIL
+ *      Failed to find a filesystem handle that can access the kernel, or other fatal error.
+ *
+ * @retval SBCNULLP
+ *      Memory allocation failed.
+ *
+ * @retval SBCNOTFND
+ *      Kernel file exists but read operation failed.
+ *
+ * @retval Others
+ *      Propagated SBCStatus from SBC_GetFileSize() or internal validations.
+ *
+ * @details
+ * Processing steps:
+ *
+ * Step 1. Resolve the kernel path by calling <code>_find_kernel_path()</code>
+ *         which sets <code>kernel_name</code> and (optionally) <code>len_of_kernel</code>.
+ *
+ * Step 2. Query the kernel file size using <code>SBC_GetFileSize()</code>.
+ *         If the file is not found or size query fails, return the error.
+ *
+ * Step 3. Enumerate EFI filesystem handles via <code>SBC_FindEfiFileSystemProtocol()</code>.
+ *         If none are found, return <code>SBCFAIL</code>.
+ *
+ * Step 4. Iterate over filesystem handles and test accessibility using
+ *         <code>SBC_IsFlieAccess()</code>. Stop at the first handle that can access
+ *         <code>kernel_name</code>.
+ *
+ * Step 5. If no handle can access the file, return <code>SBCFAIL</code>.
+ *
+ * Step 6. Allocate a zero-initialized buffer of <code>len_of_kernel</code> bytes,
+ *         assign it to <code>lv->value</code>, and set <code>lv->length</code>.
+ *
+ * Step 7. Read the kernel file using <code>SBC_ReadFile()</code> with the selected
+ *         filesystem handle. On read failure, set <code>ret = SBCNOTFND</code> and return.
+ *
+ * Step 8. Return <code>SBCOK</code> on success.
+ *
+ * @note
+ * - The caller is responsible for freeing <code>lv->value</code> with <code>FreePool()</code>.
+ * - Current implementation does not free <code>kernel_name</code> (if dynamically allocated)
+ *   and does not free <code>hndl</code> (if allocated by SBC_FindEfiFileSystemProtocol()).
+ *   Ensure ownership rules are defined to avoid leaks.
+ * - Consider initializing <code>Status</code> before the loop to avoid using an
+ *   uninitialized value if <code>hndlcnt</code> is 0 or loop does not execute.
+ */
+SBCStatus SBC_EFI_Kernel_Load(EFI_HANDLE ImageHandle, LV_t *lv);
 #if 0
 /**
  * @brief Write arbitrary bytes to a raw partition (Block I/O device).

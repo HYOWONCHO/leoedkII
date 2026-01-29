@@ -45,7 +45,7 @@
 #include "SBC_ProtectedSW.h"
 #include "SBC_CryptAES.h"
 #include "SBC_Kdf.h"
-#include "SBC_AntiTampering.h"
+//#include "SBC_AntiTampering.h"
 #include "SBC_Config.h"
 
 SBCStatus  SBC_RawPrtHeadRead(VOID *h, VOID *out)
@@ -2726,6 +2726,77 @@ SBC_BlkReadArbitrary(
     return EFI_SUCCESS;
 }
 
+SBCStatus SBC_BaseAnswerExtractFromDisk(VOID *blkio, base_ansid_t *p)
+{
+  SBCStatus ret = SBCOK;
+
+  UINT8 *loadbuf;
+  UINT32 ldlen = BASE_ANS_BLK_LEN;
+  UINTN baseansr_lba = 0;
+  UINTN offset = 0;
+
+
+  SBC_RET_VALIDATE_ERRCODEMSG((p != NULL), SBCNULLP, "Invalid parameter");
+
+
+  baseansr_lba = (SYS_CONF_START_OFS >> SBC_RAWPRT_DFLT_SHIFT);
+  ldlen = ALIGN_VALUE(SYS_SETTING_STORAGE_LEN, ((EFI_BLOCK_IO_PROTOCOL *)blkio)->Media->BlockSize);
+  loadbuf = AllocateZeroPool(ldlen);
+  SBC_RET_VALIDATE_ERRCODEMSG((loadbuf != NULL), SBCNULLP, "Buffer invalid object");
+
+  // NOTES : It SHOLUD be consider for TAG size if Message is encrypt to  AES-GCM mode
+  ret = SBC_RawPrtReadBlock(blkio, (VOID *)loadbuf,  &ldlen , baseansr_lba);
+  if (ret != SBCOK) {
+   dprint("SBC_RawPrtReadBlock fail (%p)\n", blkio);
+    goto errdone;
+  }
+  //Print(L"%a:%d \n",__FUNCTION__, __LINE__);
+
+
+  // Copy Length
+
+  offset = SYS_CONF_RES_OFS;
+  CopyMem((void *)&p->msglen, (void *)&loadbuf[offset], 4);
+  SBC_RET_VALIDATE_ERRCODEMSG((p->msglen > 0), SBCBSANSWNOTFND, "Base Answer Not Foudn");
+  offset += 4;
+    /* --- msglen range validation (NOTE 반영) --- */
+//  {
+//      UINTN max_payload =
+//          ldlen - SYS_CONF_RES_OFS
+//                - sizeof(UINT32)
+//                - BASE_ANS_IV_KEY_STR
+//                - BASE_ANS_TAG_LEN;
+//
+//      SBC_RET_VALIDATE_ERRCODEMSG((p->msglen <= max_payload),
+//                                  SBCINVPARAM,
+//                                  "Base Answer msglen overflow");
+//  }
+  CopyMem((void *)p->encmsg, (void *)&loadbuf[offset], p->msglen);
+  offset += p->msglen;
+
+#ifdef _TEST_BED_
+  {
+      dprint("*** 5.4.6.1 6.Encrypt Base Answer with OSID --->");
+  }
+#endif
+
+  CopyMem((void *)p->iv, (void *)&loadbuf[offset], BASE_ANS_IV_KEY_STR);
+  offset += BASE_ANS_IV_KEY_STR;
+
+
+  CopyMem((void *)p->tag, (void *)&loadbuf[offset], BASE_ANS_TAG_LEN);
+  offset += BASE_ANS_TAG_LEN;
+
+
+errdone:
+
+  if (loadbuf != NULL) {
+      FreePool(loadbuf);
+      loadbuf = NULL;
+  }
+  return ret;
+}
+
 
 //EFI_STATUS SBC_CopyBlockDeviceToFile(
 //    IN VOID   *_Blk,
@@ -3404,64 +3475,419 @@ EFI_STATUS SBC_CopyBlockReadAndBlockWrite(
     return EFI_SUCCESS;
 }
 
-
-VOID SBC_FileCtrlTestMain(VOID)
+static
+EFI_STATUS
+GetFileSizeOnMyFs(
+    IN  EFI_HANDLE ImageHandle,
+    IN  CHAR16    *AbsPath,
+    OUT UINT64    *FileSize
+    )
 {
-    SBCStatus ret = SBCOK;
+    if (!AbsPath || !FileSize)
+        return EFI_INVALID_PARAMETER;
 
-    EFI_HANDLE ImageHandle = NULL;
-    CHAR8 *wrmsg = "Hi, I am Leo, It is an pleasure, to meet you here xxxxx";
-    UINTN wrmsgl = strlen(wrmsg);
-    CHAR16 *fname = L"baseanswer.txt";
-    //UINTN filesize = 0;
+    EFI_STATUS Status;
+    EFI_LOADED_IMAGE_PROTOCOL *LoadedImage = NULL;
+    EFI_SIMPLE_FILE_SYSTEM_PROTOCOL *Fs = NULL;
+    EFI_FILE_PROTOCOL *Root = NULL;
+    EFI_FILE_PROTOCOL *File = NULL;
+    EFI_FILE_INFO *Info = NULL;
+    UINTN InfoSz = 0;
 
-    UINT8 rdmsg[64] = {0, };
-    LV_t rdlv;
-    LV_t wrlv;
+    Status = gBS->HandleProtocol(
+                    ImageHandle,
+                    &gEfiLoadedImageProtocolGuid,
+                    (VOID**)&LoadedImage
+                );
+    if (EFI_ERROR(Status) || !LoadedImage)
+        return EFI_NOT_FOUND;
 
-    // Length/Value structure initialize
-    _lv_set_data(&wrlv, wrmsg, wrmsgl);
-    _lv_set_data(&rdlv, rdmsg, 0);
+    Status = gBS->HandleProtocol(
+                    LoadedImage->DeviceHandle,
+                    &gEfiSimpleFileSystemProtocolGuid,
+                    (VOID**)&Fs
+                );
+    if (EFI_ERROR(Status) || !Fs)
+        return Status;
 
-    // Must step) Find the File handle protocol for gEfiSimpleFileSystemProtocolGuid
-    if(SBC_FileSysFindHndl(&ImageHandle) <= 0) {
+    Status = Fs->OpenVolume(Fs, &Root);
+    if (EFI_ERROR(Status) || !Root)
+        return Status;
 
-        eprint("SBC_FileSysFindHndl fail");
-        return ;
+    Status = Root->Open(Root, &File, AbsPath, EFI_FILE_MODE_READ, 0);
+    if (EFI_ERROR(Status)) {
+        Root->Close(Root);
+        return Status;
     }
 
-    ret =  SBC_CreateFile(ImageHandle, fname);
-    if (ret != SBCOK) {
-        eprint("%a file create fail", fname);
-        return;
+    Status = File->GetInfo(File, &gEfiFileInfoGuid, &InfoSz, NULL);
+    if (Status != EFI_BUFFER_TOO_SMALL) {
+        File->Close(File);
+        Root->Close(Root);
+        return Status;
     }
 
-     ret = SBC_WriteFile(ImageHandle, fname, &wrlv);
-     if (ret != SBCOK) {
-         eprint("%a frile write fail", fname);
-         return;
-     }
+    Info = AllocateZeroPool(InfoSz);
+    if (!Info) {
+        File->Close(File);
+        Root->Close(Root);
+        return EFI_OUT_OF_RESOURCES;
+    }
+
+    Status = File->GetInfo(File, &gEfiFileInfoGuid, &InfoSz, Info);
+    if (EFI_ERROR(Status)) {
+        FreePool(Info);
+        File->Close(File);
+        Root->Close(Root);
+        return Status;
+    }
+
+    *FileSize = Info->FileSize;
+
+    FreePool(Info);
+    File->Close(File);
+    Root->Close(Root);
+    return EFI_SUCCESS;
+}
+
+EFI_STATUS
+SBC_EFI_FSBL_Load(LV_t *lv)
+{
+    if (!lv)
+        return EFI_INVALID_PARAMETER;
+
+#ifndef _SSBL_TEST_RUN_
+    CHAR16 *TargetPath = L"\\EFI\\BOOT\\bootx64.efi";
+#else
+    CHAR16 *TargetPath = L"\\EFI\\BOOT\\FSBL.efi";
+#endif
+
+    EFI_STATUS Status;
+    UINT64 FileSize = 0;
+
+    lv->value  = NULL;
+    lv->length = 0;
+
+    //
+    // 1) Get file size (using the filesystem of current loaded image)
+    //
+    Status = GetFileSizeOnMyFs(gImageHandle, TargetPath, &FileSize);
+    if (EFI_ERROR(Status)) {
+        return Status;
+    }
+
+    //
+    // 2) Allocate buffer and set length for SBC_ReadFile()
+    //
+    lv->value = AllocatePool((UINTN)FileSize);
+    if (!lv->value)
+        return EFI_OUT_OF_RESOURCES;
+
+    lv->length = FileSize;
+
+    //
+    // 3) Read file using your existing SBC_ReadFile()
+    //    IMPORTANT: SBC_ReadFile() expects ImageHandle to be a handle that
+    //               supports SimpleFS. Your current implementation uses
+    //               HandleProtocol(ImageHandle, SimpleFS), which usually fails
+    //               if ImageHandle is gImageHandle.
+    //
+    //    To keep using SBC_ReadFile() WITHOUT changing it, we must pass a handle
+    //    that actually has SimpleFS installed.
+    //
+    //    Therefore, we will resolve the filesystem device handle and pass it.
+    //
+    EFI_LOADED_IMAGE_PROTOCOL *LoadedImage = NULL;
+    Status = gBS->HandleProtocol(
+                    gImageHandle,
+                    &gEfiLoadedImageProtocolGuid,
+                    (VOID**)&LoadedImage
+                );
+    if (EFI_ERROR(Status) || !LoadedImage) {
+        FreePool(lv->value);
+        lv->value = NULL;
+        lv->length = 0;
+        return EFI_NOT_FOUND;
+    }
+
+    //
+    // Use the device handle (ESP partition handle) that has SimpleFS
+    //
+    Status = SBC_ReadFile(LoadedImage->DeviceHandle, TargetPath, lv);
+    if (EFI_ERROR(Status)) {
+        FreePool(lv->value);
+        lv->value = NULL;
+        lv->length = 0;
+        return Status;
+    }
+
+    return EFI_SUCCESS;
+}
+
+/**
+ * @fn SBC_EFI_SSBL_Load
+ * @brief Locate and load the SSBL EFI image from an accessible EFI filesystem into memory.
+ *
+ * This function finds an EFI SimpleFS handle that can access the SSBL image
+ * located at <code>EFI_BOOT_SSBL_PATH</code>, allocates a buffer sized to the
+ * file, and loads the file content into @p lv.
+ *
+ * @param[in]  ImageHandle
+ *      Current image handle (reserved for future use; not used in current implementation).
+ *
+ * @param[in,out] lv
+ *      Pointer to LV_t output container.
+ *      On success:
+ *        - lv->value  points to newly allocated buffer containing SSBL image
+ *        - lv->length is set to SSBL image size in bytes
+ *
+ * @retval SBCOK
+ *      SSBL loaded successfully.
+ *
+ * @retval SBCFAIL
+ *      Failed to find an EFI filesystem handle that can access the SSBL file, or other fatal error.
+ *
+ * @retval SBCNULLP
+ *      Memory allocation failed.
+ *
+ * @retval SBCNOTFND
+ *      SSBL file access succeeded, but read operation failed.
+ *
+ * @retval Others
+ *      Propagated SBCStatus from SBC_GetFileSize() or internal validations.
+ *
+ * @details
+ * Processing steps:
+ *
+ * Step 1. Query SSBL file size using <code>SBC_GetFileSize(EFI_BOOT_SSBL_PATH)</code>.
+ *         If not found or error occurs, return the error status.
+ *
+ * Step 2. Enumerate EFI filesystem handles via <code>SBC_FindEfiFileSystemProtocol()</code>.
+ *         If none are found, return <code>SBCFAIL</code>.
+ *
+ * Step 3. Iterate over filesystem handles and check accessibility of
+ *         <code>EFI_BOOT_SSBL_PATH</code> via <code>SBC_IsFlieAccess()</code>.
+ *         Stop at the first handle that can access the file.
+ *
+ * Step 4. If no filesystem handle can access the SSBL file, return <code>SBCFAIL</code>.
+ *
+ * Step 5. Allocate a zero-initialized buffer of <code>len_of_kernel</code> bytes,
+ *         assign it to <code>lv->value</code>, and set <code>lv->length</code>.
+ *
+ * Step 6. Read the SSBL file content using <code>SBC_ReadFile()</code> with the selected
+ *         filesystem handle.
+ *         If read fails, set <code>ret = SBCNOTFND</code> and return.
+ *
+ * Step 7. Return <code>SBCOK</code> on success.
+ *
+ * @note
+ * - The caller is responsible for freeing <code>lv->value</code> with <code>FreePool()</code>.
+ * - Consider validating <code>lv</code> is not NULL before use.
+ * - Consider initializing <code>Status</code> before the loop to avoid using an
+ *   uninitialized value if the loop does not find a valid handle.
+ * - If <code>SBC_FindEfiFileSystemProtocol()</code> allocates <code>hndl</code>,
+ *   define ownership and free it accordingly to avoid leaks.
+ */
+SBCStatus SBC_EFI_SSBL_Load(EFI_HANDLE ImageHandle, LV_t *lv)
+{
+
+    SBCStatus           ret = SBCOK;
+    EFI_STATUS          Status;
+    UINTN               len_of_kernel = 0;
+    UINTN               hndlcnt;
+    UINTN               idx;
+    EFI_HANDLE          *hndl;
 
 
-     SBC_GetFileSize(fname, (UINTN *)&rdlv.length);
-     dprint("File size of %a : %d", fname, rdlv.length);
+    //dprint();
+    ret = SBC_GetFileSize( EFI_BOOT_SSBL_PATH, &len_of_kernel);
+    SBC_RET_VALIDATE_ERRCODEMSG((ret == SBCOK), ret, "File Not Found");
+    //dprint();
+    hndlcnt = SBC_FindEfiFileSystemProtocol(&hndl);
+    if (hndlcnt <= 0) {
+      eprint("File System Handle find fail : %d", hndlcnt);
+      return SBCFAIL;
+    }
+    //dprint();
+    for (idx = 0; idx < hndlcnt; idx++) {
+      Status = SBC_IsFlieAccess(hndl[idx], EFI_BOOT_SSBL_PATH);
+      if (EFI_ERROR(Status)) {
+        continue;
+      }
+
+      break;
+    }
+    //dprint();
+
+    if (EFI_ERROR(Status)) {
+        eprint("%s  : %r", EFI_BOOT_SSBL_PATH, Status);
+        return SBCFAIL;
+    }
+
+    //dprint();
+    lv->value = AllocateZeroPool(len_of_kernel);
+    lv->length = len_of_kernel;
+    dprint("%s size %d", EFI_BOOT_SSBL_PATH, lv->length);
+    SBC_RET_VALIDATE_ERRCODEMSG((lv->value != NULL), SBCNULLP, "Out of Memory");
+
+    //dprint();
+
+    Status = SBC_ReadFile(hndl[idx], EFI_BOOT_SSBL_PATH, lv);
+    if (EFI_ERROR(Status)) {
+      eprint("%s file read fail with %r", EFI_BOOT_SSBL_PATH, Status);
+      ret = SBCNOTFND;
+      goto errdone;
+    }
+
+    //ssbl_lv = lv;
 
 
-
-     ret = SBC_ReadFile(ImageHandle, fname, &rdlv);
-     if (ret != SBCOK) {
-         eprint("%a frile read fail", fname);
-         return;
-     }
-
-     SBC_external_mem_print_bin("Read data", rdlv.value, rdlv.length);
-
-
-     SBC_CheckAvailableBlkIODev();
-     return;
-
-
+    //dprint();
+errdone:
+    return ret;
 
 }
 
+static SBCStatus _find_kernel_path(CHAR16 **buf, UINTN *len_of_kernel)
+{
+    SBCStatus ret = SBCOK;
 
+    ret = SBC_FileReadUnicodeSimple(KERNEL_DIR_FILE, buf, len_of_kernel);
+
+    //SBC_mem_print_bin("Kernel path" , buf, *len_of_kernel);
+
+    //dprint("kernel path : %s (count : %d )", (CHAR16 *)*buf, *len_of_kernel);
+
+    return ret;
+
+} 
+/**
+ * @fn SBC_EFI_Kernel_Load
+ * @brief Locate and load the Linux kernel image from an accessible EFI filesystem into memory.
+ *
+ * This function resolves the kernel path, finds an EFI SimpleFS handle that can
+ * access the kernel file, allocates a buffer sized to the kernel image, and
+ * loads the file content into @p lv.
+ *
+ * @param[in]  ImageHandle
+ *      Current image handle (reserved for future use; not used in current implementation).
+ *
+ * @param[in,out] lv
+ *      Pointer to LV_t output container.
+ *      On success:
+ *        - lv->value  points to newly allocated buffer containing the kernel image
+ *        - lv->length is set to the kernel image size in bytes
+ *      On failure:
+ *        - lv->value may be NULL (or stale if caller didn't pre-init); caller should initialize it.
+ *
+ * @retval SBCOK
+ *      Kernel loaded successfully.
+ *
+ * @retval SBCFAIL
+ *      Failed to find a filesystem handle that can access the kernel, or other fatal error.
+ *
+ * @retval SBCNULLP
+ *      Memory allocation failed.
+ *
+ * @retval SBCNOTFND
+ *      Kernel file exists but read operation failed.
+ *
+ * @retval Others
+ *      Propagated SBCStatus from SBC_GetFileSize() or internal validations.
+ *
+ * @details
+ * Processing steps:
+ *
+ * Step 1. Resolve the kernel path by calling <code>_find_kernel_path()</code>
+ *         which sets <code>kernel_name</code> and (optionally) <code>len_of_kernel</code>.
+ *
+ * Step 2. Query the kernel file size using <code>SBC_GetFileSize()</code>.
+ *         If the file is not found or size query fails, return the error.
+ *
+ * Step 3. Enumerate EFI filesystem handles via <code>SBC_FindEfiFileSystemProtocol()</code>.
+ *         If none are found, return <code>SBCFAIL</code>.
+ *
+ * Step 4. Iterate over filesystem handles and test accessibility using
+ *         <code>SBC_IsFlieAccess()</code>. Stop at the first handle that can access
+ *         <code>kernel_name</code>.
+ *
+ * Step 5. If no handle can access the file, return <code>SBCFAIL</code>.
+ *
+ * Step 6. Allocate a zero-initialized buffer of <code>len_of_kernel</code> bytes,
+ *         assign it to <code>lv->value</code>, and set <code>lv->length</code>.
+ *
+ * Step 7. Read the kernel file using <code>SBC_ReadFile()</code> with the selected
+ *         filesystem handle. On read failure, set <code>ret = SBCNOTFND</code> and return.
+ *
+ * Step 8. Return <code>SBCOK</code> on success.
+ *
+ * @note
+ * - The caller is responsible for freeing <code>lv->value</code> with <code>FreePool()</code>.
+ * - Current implementation does not free <code>kernel_name</code> (if dynamically allocated)
+ *   and does not free <code>hndl</code> (if allocated by SBC_FindEfiFileSystemProtocol()).
+ *   Ensure ownership rules are defined to avoid leaks.
+ * - Consider initializing <code>Status</code> before the loop to avoid using an
+ *   uninitialized value if <code>hndlcnt</code> is 0 or loop does not execute.
+ */
+SBCStatus SBC_EFI_Kernel_Load(EFI_HANDLE ImageHandle, LV_t *lv)
+{
+    SBCStatus           ret = SBCOK;
+    EFI_STATUS          Status;
+    UINTN               len_of_kernel = 0;
+    UINTN               hndlcnt;
+    UINTN               idx;
+    EFI_HANDLE          *hndl;
+//  CHAR16 kernel_name[512] = {
+//      [0 ... 511] = 0
+//  };
+
+    CHAR16 *kernel_name = NULL;
+
+
+    _find_kernel_path((CHAR16 **)&kernel_name, &len_of_kernel);
+    dprint("kernel name : %s (len :%ld) ", kernel_name, len_of_kernel);
+
+    ret = SBC_GetFileSize( kernel_name, &len_of_kernel);
+    SBC_RET_VALIDATE_ERRCODEMSG((ret == SBCOK), ret, "File Not Found");
+    //dprint();
+    hndlcnt = SBC_FindEfiFileSystemProtocol(&hndl);
+    if (hndlcnt <= 0) {
+      eprint("File System Handle find fail : %d", hndlcnt);
+      return SBCFAIL;
+    }
+    //dprint();
+    for (idx = 0; idx < hndlcnt; idx++) {
+      Status = SBC_IsFlieAccess(hndl[idx], kernel_name);
+      if (EFI_ERROR(Status)) {
+        continue;
+      }
+
+      break;
+    }
+    //dprint();
+
+    if (EFI_ERROR(Status)) {
+        eprint("%s  : %r", kernel_name, Status);
+        return SBCFAIL;
+    }
+
+    //dprint();
+    lv->value = AllocateZeroPool(len_of_kernel);
+    lv->length = len_of_kernel;
+    dprint("%s size %d", kernel_name, lv->length);
+    SBC_RET_VALIDATE_ERRCODEMSG((lv->value != NULL), SBCNULLP, "Out of Memory");
+
+    //dprint();
+
+    Status = SBC_ReadFile(hndl[idx], kernel_name, lv);
+    if (EFI_ERROR(Status)) {
+      eprint("%s file read fail with %r", kernel_name, Status);
+      ret = SBCNOTFND;
+      goto errdone;
+    }
+
+
+    //dprint();
+errdone:
+    return ret;
+}
