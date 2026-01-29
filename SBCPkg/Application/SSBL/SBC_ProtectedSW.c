@@ -899,7 +899,7 @@ errdone:
 
 }
 
-SBCStatus SBC_ProtSWDecrypt(VOID *handle, UINT8 *key, UINT8 *migkey, UINT8 *decbuf ,UINT32 *declen)
+SBCStatus SBC_ProtSWReCrypto(VOID *handle, UINT8 *key, UINT8 *migkey, UINT8 *decbuf ,UINT32 *declen)
 {
     SBCStatus ret = SBCOK;
     boot_proc_t *p = (boot_proc_t *)handle;

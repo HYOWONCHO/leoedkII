@@ -86,35 +86,6 @@ CHAR16 mrgmsg[8192];
 
 extern SBCStatus SBC_SSBL_LoadAndStart(EFI_HANDLE ImageHandle);
 
-#ifdef LEO_EMUPKG
-RETURN_STATUS EFIAPI SerialPortInitialize(VOID)
-{
-  RETURN_STATUS ret = RETURN_SUCCESS;
-
-  UINT64              BaudRate;
-  UINT32              ReceiveFifoDepth;
-  EFI_PARITY_TYPE     Parity;
-  UINT8               DataBits;
-  EFI_STOP_BITS_TYPE  StopBits;
-
-  BaudRate         = FixedPcdGet64 (PcdUartDefaultBaudRate);
-  ReceiveFifoDepth = 0;         // Use default FIFO depth
-  Parity           = (EFI_PARITY_TYPE)FixedPcdGet8 (PcdUartDefaultParity);
-  DataBits         = FixedPcdGet8 (PcdUartDefaultDataBits);
-  StopBits         = (EFI_STOP_BITS_TYPE)FixedPcdGet8 (PcdUartDefaultStopBits);
-
-
-  dprint("----- SerialProtInitialize -----");
-  dprint("Baud Rate : %d", BaudRate);
-  dprint("ReceiveFifoDepth : %d", ReceiveFifoDepth);
-  dprint("Parity : %d", (UINT32)Parity);
-  dprint("DataBits : %d", (UINT32)DataBits);
-  dprint("StopBits : %d", (UINT32)StopBits);
-
-  return ret;
-}
-#endif
-
 
 /**
  * @brief   Generate DICE-derived Device, Firmware, and OS identifiers.
@@ -339,69 +310,6 @@ errdone:
 
 }
 
-
-
-SBCStatus  SBC_BootModeNormal(UINT16 km, VOID *priv)
-{
-    SBCStatus ret = SBCOK;
-
-    
-    SBC_RET_VALIDATE_ERRCODEMSG((priv != NULL), SBCNULLP, "Invalid argument");
-
-    switch (((boot_proc_t *)priv)->km) {
-    case KEY_MODE_NORMAL:
-      //VOID *hnd_load_img = NULL;
-      sys_end_time = SBC_PerfNowTicks();
-      //dprint("sys_end_time : %ld (%ld)", sys_end_time, sys_end_time - sys_start_time);
-      sys_ns_var  = SBC_PerfTicksTons(_PerfDeltaTicks(sys_start_time, sys_end_time));
-      //dprint("sys_ns_var : %ld", sys_ns_var);
-
-      SBC_LogElapsedTime(L"SSBL Boot Time", sys_ns_var);      
-      SBC_GRUB_LoadAndStart(((boot_proc_t *)priv)->ldhndl);
-      while (TRUE) { }
-      break;
-    case KEY_MODE_BOOT:
-      break;
-    case KEY_MODE_UPDATE:
-      break;
-    default:
-      eprint("Unknown Key Mode (%d)", km);
-      goto errdone;
-    }
-
-errdone:
-    return ret;
-
-}
-
-
-SBCStatus SBC_BootModeNormalAndpUdate(VOID *blkhnd, VOID *ImageHandle, VOID *priv)
-{
-  SBCStatus ret = SBCOK;
-
-
-  switch (((boot_proc_t *)priv)->bm) {
-  case BOOT_MODE_NORMAL:
-    SBC_BootModeNormal(((boot_proc_t *)priv)->km, priv);
-    break;
-  case BOOT_MODE_UPDATE:
-    break;
-  case BOOT_MODE_RECOVERY:
-    break;
-  case BOOT_MODE_FACTORY:
-    break;
-  default:
-    eprint("Unknown Boot Mode (%d)", ((boot_proc_t *)priv)->bm);
-    goto errdone;
-    break;
-  }
-
-
-errdone:
-  return ret;
-
-  
-}
 
 UINT32 FindPreviouslyBank(UINT32 bankid)
 {

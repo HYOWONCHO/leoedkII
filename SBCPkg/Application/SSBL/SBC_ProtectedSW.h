@@ -262,7 +262,7 @@ SBCStatus SBC_ProtSWGetCnt(VOID *handle, UINTN *cnt);
 
 
 /**
- * @fn SBCStatus SBC_ProtSWDecrypt(
+ * @fn SBCStatus SBC_ProtSWReCrypto(
  *   VOID  *handle,  
  *   UINT8 *key,      
  *   UINT8 *migkey,   
@@ -290,7 +290,7 @@ SBCStatus SBC_ProtSWGetCnt(VOID *handle, UINTN *cnt);
  * @retval SBCINVPARAM   Invalid parameter (e.g., incorrect buffer length or key).
  * @retval SBCCRYPTO     Cryptographic engine or AES-GCM error.
  */
-SBCStatus SBC_ProtSWDecrypt(
+SBCStatus SBC_ProtSWReCrypto(
     VOID  *handle,   /**< [in] Protected SW context handle */
     UINT8 *key,      /**< [in] Decryption key (AES-256) */
     UINT8 *migkey,   /**< [in] Optional migration key */

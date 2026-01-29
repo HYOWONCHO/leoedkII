@@ -488,7 +488,27 @@ SBCStatus SBC_GenOSID(EFI_HANDLE *h_image, UINT8 *fwid, UINT8 *osid);
  */
 SBCStatus  SBC_FSBLIntgCheck(EFI_HANDLE *h_image , VOID *blkio, VOID *cert, UINTN certle, UINTN nrombank, UINTN mode);
 
-
+/**
+ * @fn SBC_FSBL_Verify
+ * @brief Verify the integrity and authenticity of FSBL image.
+ * 
+ * @param[in]  blkhnd
+ *      Block I/O handler or raw storage handle used to access the FSBL image.
+ *
+ * @param[out] ansr
+ *      Pointer to a buffer where verification results or response data
+ *      will be stored.
+ *
+ * @param[in]  normbank
+ *      Normal boot bank index indicating which FSBL image bank is verified.
+ *
+ * @param[in]  bm
+ *      Boot mode value (e.g., normal, update, recovery) that affects
+ *      verification behavior.
+ *
+ * @retval SBCOK
+ *      FSBL verification succeeded.
+ */
 SBCStatus  SBC_FSBL_Verify(VOID *blkhnd, VOID *ansr, UINTN normbank, UINTN bm);
 
 SBCStatus  SBC_BlkIoHandleInit(OUT VOID **hblk, OUT VOID *hdr);
@@ -599,4 +619,62 @@ SBCStatus  SBC_Kernel_Verify(VOID *handle);
  * \return On success, return the SBCOK, otherwise, return the approiate error value  
  */
 SBCStatus SBC_DiceIDKeyVerify(VOID *priv);
+
+
+/**
+ * @fn SBC_BaseAnswerStore
+ * @brief Store Base Answer data into raw system configuration partition.
+ *
+ * @param[in]  blkio
+ *      Block I/O protocol handle for raw partition access.
+ *
+ * @param[in]  p
+ *      Pointer to base_ansid_t structure containing encrypted Base Answer data.
+ *
+ * @retval SBCOK
+ *      Base Answer stored successfully.
+ *
+ * @retval SBCNULLP
+ *      Invalid input parameter or memory allocation failure.
+ *
+ * @retval SBCFAIL
+ *      Raw partition read/write failure or forced test error.
+ *
+ * @details
+ * Processing steps:
+ *
+ * Step 1. Validate input parameters (<code>blkio</code>, <code>p</code>).
+ *
+ * Step 2. Calculate the base LBA of the system configuration storage
+ *         using <code>SYS_CONF_START_OFS</code>.
+ *
+ * Step 3. Align the storage length to the block size reported by
+ *         <code>EFI_BLOCK_IO_PROTOCOL</code>.
+ *
+ * Step 4. Allocate a zero-initialized temporary buffer for
+ *         read-modify-write operation.
+ *
+ * Step 5. Read existing system configuration data from the raw partition
+ *         into the temporary buffer.
+ *
+ * Step 6. Move the write pointer to the reserved response offset
+ *         (<code>SYS_CONF_RES_OFS</code>).
+ *
+ * Step 7. Store Base Answer fields sequentially into the buffer:
+ *         - Encrypted message length
+ *         - Encrypted message payload
+ *         - AES-GCM IV
+ *         - AES-GCM authentication tag
+ *
+ * Step 8. Clear remaining reserved bytes with zero for deterministic layout.
+ *
+ * Step 9. Write the updated buffer back to the raw partition.
+ *
+ * Step 10. Release allocated resources and return the final status.
+ *
+ * @note
+ * Caller must ensure that the encrypted message length does not exceed
+ * the reserved storage region.
+ */
+SBCStatus  SBC_BaseAnswerStore(VOID *blkio, VOID *p);
 #endif

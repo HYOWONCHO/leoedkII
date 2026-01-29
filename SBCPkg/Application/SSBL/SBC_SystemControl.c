@@ -156,7 +156,58 @@ errdone:
 
 }
 
-static SBCStatus _base_answer_decrypt_encrypt(void *priv)
+
+/**
+ * @fn SBC_BaseAnswerDecAndEnc
+ * @brief Validate (decrypt/verify) the Base Answer and then re-encrypt/store it with OSID key.
+ *
+ * This function obtains the Base Answer using MIGID-derived key material, validates it
+ * (typically includes decrypt + authentication check), and then encrypts/stores the Base Answer
+ * using OSID-derived key material.
+ *
+ * @param[in] priv
+ *      Opaque pointer to a boot_proc_t context.
+ *      Expected fields:
+ *      - bp->blkhnd   : block/raw partition handle
+ *      - bp->keyinfo  : pointer to atp_ident_t containing migid and osid
+ *
+ * @retval SBCOK
+ *      Base Answer validation and re-encryption/store succeeded.
+ *
+ * @retval SBCFAIL / Others
+ *      Propagated SBCStatus from SBC_BaseAnswerValidate() or SBC_BaseAnswerEncryptStore().
+ *
+ * @details
+ * Processing steps:
+ *
+ * Step 1. Cast @p priv to <code>boot_proc_t*</code> and obtain Base Answer key:
+ *         - <code>answer_key = ((atp_ident_t*)bp->keyinfo)->migid</code>
+ *         (or use a fixed test vector when compiled in test mode).
+ *
+ * Step 2. Initialize local crypto contexts (<code>ctx</code>, <code>aesctx</code>) and
+ *         clear the temporary decrypt buffer (<code>decbuf</code>).
+ *
+ * Step 3. Call <code>SBC_BaseAnswerValidate()</code> to obtain and validate the Base Answer:
+ *         - Input: bp->blkhnd, answer_key (MIGID), key storage selector (ATP_IDENT_KEY_STG)
+ *         - Output: decrypted/plain Base Answer into <code>decbuf</code>
+ *         If validation fails, return the error.
+ *
+ * Step 4. (Debug) Print first 16 bytes of decrypted Base Answer for inspection.
+ *
+ * Step 5. Call <code>SBC_BaseAnswerEncryptStore()</code> to encrypt and store the Base Answer:
+ *         - Input: bp->blkhnd, decbuf, OSID (from keyinfo), key storage selector
+ *         If encrypt/store fails, return the error.
+ *
+ * Step 6. Return <code>SBCOK</code> on success.
+ *
+ * @note
+ * - Caller must ensure <code>priv</code>, <code>bp</code>, <code>bp->keyinfo</code>, and
+ *   <code>bp->blkhnd</code> are valid before calling this function.
+ * - Printing decrypted material may leak sensitive data; guard debug prints in production.
+ * - Local variables <code>ctx</code> and <code>aesctx</code> are currently cleared but not used
+ *   directly in this function (kept for future extensions or to match crypto flow style).
+ */
+static SBCStatus SBC_BaseAnswerDecAndEnc(void *priv)
 {
     SBCStatus ret = SBCOK;
 #if 1
@@ -371,8 +422,74 @@ errdone:
 
 }
 
-
-static SBCStatus _proetcted_sw_re_enc_dec(VOID *handle)
+/**
+ * @fn SBC_ProtSwReEncDec
+ * @brief Re-encrypt/decrypt Protected SW using derived keys (hash of MIGID/OSID or previous OSID).
+ *
+ * This function derives a decryption key and an encryption key from identity material,
+ * then invokes the protected software re-crypto routine to update Protected SW content.
+ *
+ * Key selection policy:
+ * - If <code>bp->km == KEY_MODE_BOOT</code>:
+ *     - Use previously computed OSID (copied from <code>g_temp_osid</code>) as decrypt source key.
+ * - Else:
+ *     - Use MIGID from <code>bp->keyinfo</code> as decrypt source key.
+ * - Encryption source key is always OSID from <code>bp->keyinfo</code>.
+ *
+ * Both source keys are hashed (SBC_HashCompute) to derive fixed-length secret keys:
+ *  - <code>deckey</code> : derived decryption key
+ *  - <code>enckey</code> : derived encryption key
+ *
+ * @param[in] handle
+ *      Opaque pointer to boot_proc_t context.
+ *      Expected fields:
+ *      - bp->km      : key mode selector (e.g., KEY_MODE_BOOT)
+ *      - bp->keyinfo : pointer to atp_ident_t containing MIGID/OSID
+ *
+ * @retval SBCOK
+ *      Protected SW re-crypto operation succeeded.
+ *
+ * @retval Others
+ *      Propagated SBCStatus from SBC_HashCompute() or SBC_ProtSWReCrypto().
+ *
+ * @details
+ * Processing steps:
+ *
+ * Step 1. Cast @p handle to <code>boot_proc_t*</code> (<code>bp</code>).
+ *
+ * Step 2. Select decrypt source key:
+ *         - If <code>bp->km == KEY_MODE_BOOT</code>, copy previous OSID from
+ *           <code>g_temp_osid</code> into <code>old_osid</code> and set
+ *           <code>decrypt_key = old_osid</code>.
+ *         - Otherwise, set <code>decrypt_key = ((atp_ident_t*)bp->keyinfo)->migid</code>.
+ *
+ * Step 3. Select encrypt source key:
+ *         - <code>encrypt_key = ((atp_ident_t*)bp->keyinfo)->osid</code>.
+ *
+ * Step 4. Derive decryption secret key:
+ *         - Compute <code>deckey = Hash(decrypt_key)</code> using <code>SBC_HashCompute()</code>.
+ *         - If hash fails, return error.
+ *
+ * Step 5. Derive encryption secret key:
+ *         - Compute <code>enckey = Hash(encrypt_key)</code> using <code>SBC_HashCompute()</code>.
+ *         - If hash fails, return error.
+ *
+ * Step 6. Call <code>SBC_ProtSWReCrypto(bp, enckey, deckey, NULL, NULL)</code> to
+ *         re-crypt Protected SW using OSID-derived encryption key and selected decrypt key.
+ *         - On failure, emit failure log and return error.
+ *
+ * Step 7. Emit success log message and return <code>SBCOK</code>.
+ *
+ * Step 8. On error path, emit update-failed log message and return error status.
+ *
+ * @note
+ * - This function prints raw key material and hashed keys via SBC_mem_print_bin().
+ *   In production, guard these prints to avoid leaking sensitive key material.
+ * - Ensure <code>handle</code>, <code>bp</code>, and <code>bp->keyinfo</code> are valid.
+ * - Variable <code>ret</code> is checked after CopyMem in KEY_MODE_BOOT branch, but ret is not
+ *   set there; consider removing that check or setting ret explicitly if a computation is added.
+ */
+static SBCStatus SBC_ProtSwReEncDec(VOID *handle)
 {
     SBCStatus ret = SBCOK;
     boot_proc_t *bp = (boot_proc_t *)handle;
@@ -429,7 +546,7 @@ static SBCStatus _proetcted_sw_re_enc_dec(VOID *handle)
     dprint("*** 5.8.6.1 4.Protected Secret Key Hash(OSID) --->");
     SBC_mem_print_bin("hash encrypt key", (UINT8 *)enckey, SBC_AT_RP_KEY_LEN);
 
-    ret = SBC_ProtSWDecrypt((VOID *)bp, 
+    ret = SBC_ProtSWReCrypto((VOID *)bp, 
                             enckey,
                             deckey,
                             NULL, NULL);
@@ -515,7 +632,7 @@ static SBCStatus _update_behavior_for_km(void *priv)
 //                                       ((LV_t *)bp->baseansr)->length,
 //                                       ((atp_ident_t *)bp->keyinfo)->migid,
 //                                       ATP_IDENT_KEY_STG);
-        ret = _base_answer_decrypt_encrypt((void *)bp);
+        ret = SBC_BaseAnswerDecAndEnc((void *)bp);
         if(ret != SBCOK) {
             eprint("Detection SBC_tamper_OSID derived answer "
                             "mismatched known answer");
@@ -524,10 +641,10 @@ static SBCStatus _update_behavior_for_km(void *priv)
 
 
 #ifdef _HANDLE_PROTSW_
-        ret =  _proetcted_sw_re_enc_dec((void *)bp);
+        ret =  SBC_ProtSwReEncDec((void *)bp);
         if(ret != SBCOK) {
             //skip_protsw = TRUE;
-            eprint("Detection _proetcted_sw_re_enc_dec ");
+            eprint("Detection SBC_ProtSwReEncDec ");
             goto errdone;
         }
 
@@ -611,7 +728,7 @@ errdone:
 
 #ifdef _HANDLE_PROTSW_
             if(skip_protsw != TRUE) {
-                ret =  _proetcted_sw_re_enc_dec((void *)bp);
+                ret =  SBC_ProtSwReEncDec((void *)bp);
                 if(ret != SBCOK) {
                     //goto errdone;
                     ret = SBCFAIL;
@@ -671,9 +788,9 @@ errdone:
 
 #ifdef _HANDLE_PROTSW_
             if(skip_protsw != TRUE) {
-                ret =  _proetcted_sw_re_enc_dec((void *)bp);
+                ret =  SBC_ProtSwReEncDec((void *)bp);
                 if(ret != SBCOK) {
-                    eprint("Detection _proetcted_sw_re_enc_dec ");
+                    eprint("Detection SBC_ProtSwReEncDec ");
                     //goto errdone;
                     ret = SBCFAIL;
                 }
@@ -792,7 +909,101 @@ errdone:
     return ret;
 }
 
-static SBCStatus _store_fw_os_keypair_store(VOID *priv, VOID *fwid, VOID *osid)
+/**
+ * @fn SBC_StoreFwAndOsKeyPairStore
+ * @brief Derive FW/OS DICE key pairs and securely store them (and OSID) into system configuration repository.
+ *
+ * This function:
+ *  - derives key pairs from FWID and OSID using DICE seed derivation,
+ *  - creates a device security encryption key,
+ *  - reads the system setting repository from raw partition,
+ *  - encrypts OSID and derived key pairs using AES-GCM,
+ *  - stores encrypted blobs (len + data + iv + tag) at predefined offsets,
+ *  - writes the updated repository back to raw partition.
+ *
+ * Stored layout for each item (at its corresponding SYS_CONF_* offset):
+ * <pre>
+ * |------|-------|------|------|
+ * | len  | data  |  iv  |  tag |
+ * |------|-------|------|------|
+ * </pre>
+ *
+ * @param[in] priv
+ *      Opaque pointer to boot_proc_t context.
+ *      Expected:
+ *        - bp->blkhnd : raw partition/block handle used by SBC_RawPrtReadBlock/Write
+ *
+ * @param[in] fwid
+ *      Pointer to FWID seed buffer (expected 32 bytes).
+ *
+ * @param[in] osid
+ *      Pointer to OSID seed buffer (expected SYS_OSID_KEY_LEN bytes; typically 32 bytes).
+ *
+ * @retval SBCOK
+ *      Key pairs were derived, encrypted, and stored successfully.
+ *
+ * @retval SBCNULLP
+ *      Allocation failure.
+ *
+ * @retval Others
+ *      Propagated SBCStatus from DICE derivation, security key creation, RNG, AES-GCM,
+ *      or raw partition read/write operations.
+ *
+ * @details
+ * Processing steps:
+ *
+ * Step 1. Cast @p priv to <code>boot_proc_t*</code> and prepare local buffers/contexts.
+ *
+ * Step 2. Derive FWID key pair by calling <code>SBC_DICESeedKeyPair(fwid, &fw_key)</code>.
+ *         On failure, log FWID hex dump and return error.
+ *
+ * Step 3. Derive OSID key pair by calling <code>SBC_DICESeedKeyPair(osid, &os_key)</code>.
+ *         On failure, log OSID hex dump and return error.
+ *
+ * Step 4. Create device security encryption key via <code>SBC_DeviceSecuirtyKeyCreate(enckey)</code>.
+ *         This key is used for AES-GCM encryption of all stored items.
+ *
+ * Step 5. Allocate an aligned repository buffer (<code>buf</code>) sized to
+ *         <code>ALIGN_VALUE(SYS_SETTING_STORAGE_LEN, 512)</code>.
+ *
+ * Step 6. Compute repository base LBA (<code>lba = SYS_CONF_START_OFS >> SBC_RAWPRT_DFLT_SHIFT</code>)
+ *         and read current repository content from disk into <code>buf</code>.
+ *
+ * Step 7. Configure AES-GCM context:
+ *         - <code>aesctx.gcm = &ctx</code>
+ *         - <code>aesctx.algoid = SBC_CIPHER_AES_GCM</code>
+ *
+ * Step 8. Generate authentication IV (<code>auth_iv</code>) using
+ *         <code>SBC_RngGeneration(osid, SYS_OSID_KEY_LEN, SBC_AT_IV_LEN, auth_iv)</code>.
+ *         (OSID used as RNG seed in current implementation.)
+ *
+ * Step 9. Encrypt raw OSID bytes (ctx.msg = osid) with AES-GCM and store at <code>SYS_CONF_OSID_OFS</code>:
+ *         - Write <code>len</code> (UINT32)
+ *         - Write encrypted data
+ *         - Write IV
+ *         - Write TAG
+ *
+ * Step 10. Encrypt FWID-derived key pair (<code>fw_key</code>) with AES-GCM and store at <code>SYS_CONF_FWID_CRT_OFS</code>
+ *          using the same (IV, reinitialized TAG buffer) and the same layout (len|data|iv|tag).
+ *
+ * Step 11. Encrypt OSID-derived key pair (<code>os_key</code>) with AES-GCM and store at <code>SYS_CONF_OSID_CRT_OFS</code>
+ *          using the same layout (len|data|iv|tag).
+ *
+ * Step 12. Write the updated repository buffer back to raw partition at <code>lba</code>
+ *          using <code>SBC_RawPrtBlockWrite()</code>.
+ *
+ * Step 13. Free allocated repository buffer and return final status.
+ *
+ * @note
+ * - This function currently reuses the same IV (<code>auth_iv</code>) across multiple AES-GCM encryptions
+ *   with the same key (<code>enckey</code>). Reusing an IV with AES-GCM is unsafe; consider generating
+ *   a unique IV per encrypted item (OSID / fw_key / os_key) to preserve confidentiality and integrity.
+ * - The parameter <code>priv</code> and <code>bp->blkhnd</code> are assumed valid; consider adding
+ *   explicit NULL checks for hardening.
+ * - Ensure offsets (<code>SYS_CONF_OSID_OFS</code>, <code>SYS_CONF_FWID_CRT_OFS</code>, <code>SYS_CONF_OSID_CRT_OFS</code>)
+ *   and maximum sizes do not overlap within the repository.
+ */
+static SBCStatus SBC_StoreFwAndOsKeyPairStore(VOID *priv, VOID *fwid, VOID *osid)
 { 
     SBCStatus ret = SBCOK;
 
@@ -1033,42 +1244,6 @@ static SBCStatus _store_fw_os_keypair_store(VOID *priv, VOID *fwid, VOID *osid)
         goto errdone;
     }
 
-
-
-//    id_len = 512;
-//    ret = SBC_RawPrtReadBlock(bp->blkhnd,
-//                             buf,
-//                              &id_len,
-//                              0);
-//    if(ret != SBCOK) {
-//        eprint("Block Read Fail for Raw-Partition Header");
-//        goto errdone;
-//    }
-//
-//    CopyMem((void *)&h_rawptrheader, buf, 128);
-//
-//    h_rawptrheader.rcvmode = 1;
-//
-//    CopyMem((void *)buf,
-//            (void *)&h_rawptrheader,
-//            sizeof h_rawptrheader);
-//
-////  SBC_mem_print_bin("WR Recovery Bits", (UINT8 *)buf, 128);
-//
-//    ret = SBC_RawPrtBlockWrite(bp->blkhnd,
-//                         buf,
-//                         id_len,
-//                         0);
-//    if(ret != SBCOK) {
-//        eprint("Block Write Fail for Raw-Partition Header");
-//        goto errdone;
-//    }
-
-//  ret = SBC_RawPrtReadBlock(bp->blkhnd,
-//                           buf,
-//                            &id_len,
-//                            0);
-//  SBC_mem_print_bin("RD Recovery Bits", (UINT8 *)buf, 128);
 errdone:
 
     if(buf != NULL) {
@@ -1242,16 +1417,16 @@ void  SBC_RecoveryBootProcessing(VOID *priv)
             SBC_mem_print_bin("Recovery Base Answer Encrypt Key",
                               new_dice_id.osid, BASE_ANS_KEY_STR);
 
-            ret = _store_fw_os_keypair_store(priv,
+            ret = SBC_StoreFwAndOsKeyPairStore(priv,
                                new_dice_id.fwid,
                                new_dice_id.osid);
 
             if(ret != SBCOK) {
-                eprint("_store_fw_os_keypair_store fail, that is, Abnormal");
+                eprint("SBC_StoreFwAndOsKeyPairStore fail, that is, Abnormal");
                 bt_proc->bootst = SB_PROC_ST_ABNRAM;
             }
 
-            ret = _proetcted_sw_re_enc_dec((VOID *)bt_proc);
+            ret = SBC_ProtSwReEncDec((VOID *)bt_proc);
             if(ret != SBCOK) {
                 //
                 // Abnromal state added at 20251021
@@ -1313,16 +1488,16 @@ void  SBC_RecoveryBootProcessing(VOID *priv)
                 goto errdone;
             }
 
-            ret = _store_fw_os_keypair_store(priv,
+            ret = SBC_StoreFwAndOsKeyPairStore(priv,
                                new_dice_id.fwid,
                                new_dice_id.osid);
 
             if(ret != SBCOK) {
-                eprint("_store_fw_os_keypair_store fail, that is, Abnormal");
+                eprint("SBC_StoreFwAndOsKeyPairStore fail, that is, Abnormal");
                 bt_proc->bootst = SB_PROC_ST_ABNRAM;
             }
 
-            ret = _proetcted_sw_re_enc_dec((VOID *)bt_proc);
+            ret = SBC_ProtSwReEncDec((VOID *)bt_proc);
             if(ret != SBCOK) {
                 //
                 // Abnromal state added at 20251021

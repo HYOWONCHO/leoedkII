@@ -429,7 +429,52 @@ VOID LoadFile(EFI_HANDLE        ImageHandle,VOID **rdout, UINTN *rdlen)
   return;
 }
 
-
+/**
+ * @fn SBC_GRUB_LoadAndStart
+ * @brief Locate, load, and start the GRUB EFI image (grubx64.efi) from an EFI filesystem.
+ *
+ * This function enumerates all handles that support Simple File System (SimpleFS),
+ * builds a device path to "\\EFI\\rocky\\grubx64.efi" for each handle, attempts to
+ * LoadImage(), and starts the first successfully loaded GRUB image via StartImage().
+ *
+ * @param[in] ImageHandle
+ *      Image handle variable used as an OUT target for LoadImage().
+ *      (Note: Current signature passes by value; only used internally after LoadImage.)
+ *
+ * @retval SBCOK
+ *      Function returns SBCOK regardless of whether GRUB was actually started
+ *      in the current implementation.
+ *
+ * @details
+ * Processing steps:
+ *
+ * Step 1. Locate all handles that support <code>EFI_SIMPLE_FILE_SYSTEM_PROTOCOL</code>
+ *         via <code>gBS->LocateHandleBuffer(ByProtocol, ...)</code>.
+ *
+ * Step 2. Emit a log message indicating GRUB loading is starting.
+ *
+ * Step 3. For each SimpleFS handle:
+ *         <ol>
+ *           <li>Create a device path to <code>"\\EFI\\rocky\\grubx64.efi"</code>
+ *               using <code>FileDevicePath()</code>.</li>
+ *           <li>Convert the device path to text with <code>ConvertDevicePathToText()</code>
+ *               and print it for debugging.</li>
+ *           <li>Attempt to load the image with <code>gBS->LoadImage()</code>.</li>
+ *           <li>If load succeeds, start it with <code>gBS->StartImage()</code> and stop searching.</li>
+ *         </ol>
+ *
+ * Step 4. Return <code>SBCOK</code>.
+ *
+ * @note
+ * - Current implementation does not check the return status of LocateHandleBuffer()
+ *   and does not free the handle buffer (<code>Handles</code>) on exit.
+ * - The created <code>DevicePath</code> may need to be freed depending on implementation.
+ * - The function always returns <code>SBCOK</code>, even if GRUB was not found or failed
+ *   to load/start. Consider returning an error when all attempts fail.
+ * - Parameter name <code>ImageHandle</code> shadows the global <code>gImageHandle</code>
+ *   conceptually; ensure there is no confusion between "current image handle" and
+ *   "loaded grub image handle".
+ */
 SBCStatus SBC_GRUB_LoadAndStart(EFI_HANDLE ImageHandle)
 {
   EFI_HANDLE *Handles;
