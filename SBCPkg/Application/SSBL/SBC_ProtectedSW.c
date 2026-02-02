@@ -908,10 +908,6 @@ SBCStatus SBC_ProtSWReCrypto(VOID *handle, UINT8 *key, UINT8 *migkey, UINT8 *dec
     UINTN check = 0;
     UINTN sw_off;
 
-
-    
-
-
     SBC_RET_VALIDATE_ERRCODEMSG((p != NULL), SBCNULLP, "Invalid Handle Object");
 
     ret = SBC_ProtSWGetCnt((VOID *)p, &sw_list_line);

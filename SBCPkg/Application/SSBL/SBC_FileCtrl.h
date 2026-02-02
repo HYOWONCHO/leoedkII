@@ -481,63 +481,8 @@ SBCStatus SBC_GetFileSize(CHAR16 *FileName, UINTN *FileSize);
  * Returns 0 if no file system handles were located or an error occurred.
  */
 UINTN SBC_FileSysFindHndl(EFI_HANDLE *handle);
-                                                           
-                                                                                                             
-/**
- * @fn SBCStatus SBC_CreateFile(EFI_HANDLE h, CHAR16 *fname)
- * @brief Create a new file in the UEFI file system.
- *
- * @param[in] h        Handle to a valid EFI file system.
- *                     Typically obtained via @ref SBC_FileSysFindHndl().
- * @param[in] fname    Unicode (CHAR16) string representing the file path
- *                     and name to be created (e.g., L"\\LOG\\bootlog.txt").
- *
- * @retval SBCOK        The file was successfully created.
- * @retval SBCFAIL      Failed to create the file due to a write or access error.
- * @retval SBCNULLP     One or more input pointers are NULL.
- * @retval SBCIO        A device or I/O error occurred while creating the file.
- * @retval SBCINVPARAM  Invalid file name or handle.
- */
-SBCStatus SBC_CreateFile(EFI_HANDLE h, CHAR16 *fname);
-                                                  
-                                                                                                             
-/**
- * @fn SBCStatus SBC_CreateDirectory(EFI_HANDLE h, CHAR16 *fname)
- * @brief Create a new directory in the UEFI file system.
- *
- * @param[in] h        Handle to a valid EFI file system.
- *                     Typically obtained via @ref SBC_FileSysFindHndl().
- * @param[in] fname    Unicode (CHAR16) string representing the file path
- *                     and name to be created (e.g., L"\\LOG\\bootlog.txt").
- *
- * @retval SBCOK        The file was successfully created.
- * @retval SBCFAIL      Failed to create the file due to a write or access error.
- * @retval SBCNULLP     One or more input pointers are NULL.
- * @retval SBCIO        A device or I/O error occurred while creating the file.
- * @retval SBCINVPARAM  Invalid file name or handle.
- */                                                                                                       
-SBCStatus  SBC_CreateDirectory(EFI_HANDLE h, CHAR16 *fname);                                                 
-                                                                                                             
-/*!                                                                                                          
- *                                                                                                           
- * \fn SBCStatus SBC_ReadRawPrtHeaderInfo(IN VOID *blkhnd, OUT VOID *rdbuf, IN UINT32 *rdlen)                   
- *                                                                                                           
- * \brief Load the raw-partition header information                                                          
- *                                                                                                           
- * \author leoc (6/4/25)                                                                                     
- *                                                                                                           
- * \param[in] blkhnd        Handle pointer for the BlockIo device  operation                                 
- * \param[out] rdbuf        Pointer to load the Header information                                           
- * \param[in,out] rdlen     Length of read bytes                                                             
- *                                                                                                           
- * @retval SBCOK        The file was successfully created.
- * @retval SBCFAIL      Failed to create the file due to a write or access error.
- * @retval SBCNULLP     One or more input pointers are NULL.
- * @retval SBCIO        A device or I/O error occurred while creating the file.
- * @retval SBCINVPARAM  Invalid file name or handle.                              
- */                                                                                                          
-SBCStatus SBC_ReadRawPrtHeaderInfo(VOID *blkhnd, VOID *rdbuf,  UINT32 *rdlen);
-                           
+                                             
+                                                                
                            
 /**
  * @fn SBCStatus SBC_RawPrtReadBlock(VOID *blkhnd, VOID *rdbuf, UINT32 *rdlen, UINTN rlba)
@@ -562,22 +507,7 @@ SBCStatus SBC_ReadRawPrtHeaderInfo(VOID *blkhnd, VOID *rdbuf,  UINT32 *rdlen);
 SBCStatus SBC_RawPrtReadBlock(VOID *blkhnd, VOID *rdbuf, UINT32 *rdlen, UINTN rlba);
    
                       
-/*!
- * \fn SBCStatus  SBC_FindBlkIoHandle(OUT VOID **hblk)
- * 
- * \brief Find the Block Protocol interface for SBC Raw Partition 
- * 
- * 
- * \param hblk   Context handle for Block IO
- * 
- * @retval SBCOK        The file was successfully created.
- * @retval SBCFAIL      Failed to create the file due to a write or access error.
- * @retval SBCNULLP     One or more input pointers are NULL.
- * @retval SBCIO        A device or I/O error occurred while creating the file.
- * @retval SBCINVPARAM  Invalid file name or handle.
- */
-SBCStatus  SBC_FindBlkIoHandle(OUT VOID **hblk);  
-                    
+                   
 /**
  * @fn SBC_RawPrtBlockWrite
  * @brief Write a block-aligned buffer to raw partition using EFI Block I/O.
@@ -658,55 +588,6 @@ SBCStatus  SBC_RawPrtBlockWrite(VOID *blkio, UINT8 *wrbuf, UINT32 wrlen, UINT32 
  */
 UINT32 SBC_ReadBootMode(VOID);
 
-
-
-/*!
- * \fn SBCStatus SBC_ProtectedSWWrite(VOID *blkio, 
-                              VOID *buf, UINT32 *len, 
-                              UINT32 bnkid)
- * \brief Protected SW blob write to Raw Partition
- * 
- * \
- * 
- * \param blkio  Pointer to the block I/O interface or handle.
- * \param buf    Pointer to the buffer containing data to be
-   written
- * \param len    Length of the data to write, in bytes.
- * \param bnkid  Protected SW Bank Index in Raw Partition 
- * 
- * @retval SBCOK        The file was successfully created.
- * @retval SBCFAIL      Failed to create the file due to a write or access error.
- * @retval SBCNULLP     One or more input pointers are NULL.
- * @retval SBCIO        A device or I/O error occurred while creating the file.
- * @retval SBCINVPARAM  Invalid file name or handle.
- */
-SBCStatus SBC_ProtectedSWWrite(VOID *blkio, 
-                              VOID *buf, UINT32 *len, 
-                              UINT32 bnkid);
-
-/*!
- * \fn SBCStatus SBC_ProtectedSWRead(VOID *blkio, 
-                              VOID *buf, UINT32 *len, 
-                              UINT32 bnkid)
- * \brief Protected SW blob write to Raw Partition
- * 
- *
- * 
- * \param blkio  Pointer to the block I/O interface or handle.
- * \param buf    Pointer to the buffer containing data to be
-   read
- * \param len    Length of the data to read, in bytes.
- * \param bnkid  Protected SW Bank Index in Raw Partition 
- * 
- * @retval SBCOK        The file was successfully created.
- * @retval SBCFAIL      Failed to create the file due to a write or access error.
- * @retval SBCNULLP     One or more input pointers are NULL.
- * @retval SBCIO        A device or I/O error occurred while creating the file.
- * @retval SBCINVPARAM  Invalid file name or handle.
- */
-SBCStatus SBC_ProtectedSWRead(VOID *blkio, 
-                              VOID **buf, UINT32 *len, 
-                              UINT32 bnkid);
 
 
 /**
@@ -841,23 +722,6 @@ SBCStatus SBC_RawAlignedReadBlockIO(VOID *blk, UINTN off, UINTN sz, VOID *buf);
  */
 SBCStatus SBC_ProtSwLoadRawPrt(VOID *handle, UINT8 *shared_secret, UINT8 *decbuf, UINTN *rdlen, UINTN rd_ofs);
 
-/**
- * @fn EFI_STATUS SBC_WriteFile(EFI_HANDLE ImageHandle,
- *     CHAR16 *FileNames, LV_t *out)
- * @brief Writes the user data in specified file.
- * 
- * @author leonc (10/31/25)
- * 
- * @param ImageHandle Pointer to EFH_HANDLE 
- * @param FileNames   Pointer to the File path string
- * @param out         Pointer to the buffer containing data to be
-   written 
- * 
- * @return On Success, return the SBCOK, otherwise, return the
- *         apporiate value.
- */
-EFI_STATUS SBC_WriteFile(EFI_HANDLE ImageHandle, CHAR16 *FileNames, LV_t *out);
-
 
 /**
  * @fn UINTN SBC_FindEfiFileSystemProtocol(EFI_HANDLE **handle)
@@ -911,31 +775,6 @@ UINTN SBC_FindEfiFileSystemProtocol(EFI_HANDLE **handle);
  */
 EFI_STATUS SBC_IsFlieAccess(EFI_HANDLE ImageHandle, CHAR16 *FileNames);
 
-/**
- * @fn BOOLEAN SBC_IsDirExist(EFI_HANDLE ImageHandle, CHAR16 *DirectoryName)
- * @brief Checks whether a specified directory exists in the EFI file system.
- *
- * This function attempts to open a directory from the root of the EFI volume using the
- * Simple File System Protocol. If the directory exists and is valid, it returns TRUE.
- *
- * @param[in] ImageHandle    EFI image handle used to locate the file system protocol.
- * @param[in] DirectoryName  Pointer to the UTF-16 string representing the directory path.
- *
- * @return BOOLEAN
- *         - TRUE: Directory exists and is valid.
- *         - FALSE: Directory does not exist or is not accessible.
- *
- * @note
- * - The function uses `EFI_FILE_MODE_READ` and `EFI_FILE_DIRECTORY` flags to open the target directory.
- * - It verifies the directory by checking the `EFI_FILE_DIRECTORY` attribute in the file info.
- * - All opened handles are properly closed before returning.
- *
- * @warning
- * The caller must ensure that `DirectoryName` is a valid null-terminated CHAR16 string.
- * If memory allocation for file info fails, the function will return FALSE.
- */
-BOOLEAN SBC_IsDirExist(EFI_HANDLE ImageHandle, CHAR16 *DirectoryName);
-
 
 /**
  * @fn SBCStatus  SBC_FindFileBufHndl(UINT16 *f_path, UINTN *hndlcnt,
@@ -965,35 +804,7 @@ BOOLEAN SBC_IsDirExist(EFI_HANDLE ImageHandle, CHAR16 *DirectoryName);
 SBCStatus  SBC_FindFileBufHndl(UINT16 *f_path, UINTN *hndlcnt, VOID **hndl);
 
 /**
- * @fn EFI_STATUS SBC_LogWriteFile(EFI_HANDLE ImageHandle, CHAR16 *FileNames,
- *     LV_t *out)
- * @brief Appends log data to a file in the EFI file system.
- *
- * This function locates the EFI Simple File System Protocol, opens the specified file,
- * moves the file pointer to the end, and writes the contents of the provided buffer.
- *
- * @param[in]  ImageHandle EFI image handle used to locate the file system.
- * @param[in]  FileNames   Pointer to the UTF-16 string representing the target file name.
- * @param[in]  out         Pointer to an LV_t structure containing the data to be written.
- *
- * @return EFI_STATUS
- *         - EFI_SUCCESS: Data was successfully written to the file.
- *         - EFI_INVALID_PARAMETER: Input buffer is null or invalid.
- *         - EFI_NOT_FOUND / other EFI errors: File system or file access failed.
- *
- * @note
- * - The file is opened in read/write mode. If it does not exist, this function will fail unless modified to create it.
- * - The file pointer is moved to the end before writing, so this function appends data.
- * - The caller must ensure that `out->value` points to valid data and `out->length` is non-zero.
- *
- * @warning
- * This function does not perform file creation or truncation. It assumes the file already exists.
- */
-EFI_STATUS SBC_LogWriteFile(EFI_HANDLE ImageHandle, CHAR16 *FileNames, LV_t *out);
-
-
-/**
- * @fn SBC_LoadSystemSetting
+ * @fn cf
  * @brief Load system setting repository from raw partition into an LV_t blob.
  *
  * This function allocates a block-size-aligned buffer, reads the system setting
@@ -1044,55 +855,6 @@ EFI_STATUS SBC_LogWriteFile(EFI_HANDLE ImageHandle, CHAR16 *FileNames, LV_t *out
  *   it and resetting <code>blob->value/length</code> in the error path to avoid leaks.
  */
 SBCStatus SBC_LoadSystemSetting(VOID *blkio, VOID *blob);
-
-
-/**
- * @fn SBC_CopyFileToBlockDevice
- * @brief Copy a file from EFI filesystem to a raw block device at a given byte offset.
- *
- * Reads the source file in chunks and writes it to the target Block I/O device
- * using byte-granular write helper (e.g., SBC_BlkWriteArbitrary()).
- *
- * @param[in]  SrcPath
- *      Source file path on the EFI filesystem (e.g., L"\\EFI\\...\\file.bin").
- *
- * @param[in]  _Blk
- *      Target block device handle (EFI_BLOCK_IO_PROTOCOL*).
- *
- * @param[in]  ByteOffset
- *      Destination byte offset on the block device where the file will be written.
- *
- * @param[out] BytesWritten
- *      Optional pointer to receive total bytes written.
- *
- * @retval EFI_SUCCESS
- *      File copied successfully.
- *
- * @retval EFI_INVALID_PARAMETER
- *      SrcPath or _Blk is NULL.
- *
- * @retval EFI_NO_MEDIA
- *      Block device media not present.
- *
- * @retval EFI_VOLUME_FULL
- *      Write range exceeds block device boundary.
- *
- * @retval EFI_OUT_OF_RESOURCES
- *      Memory allocation failed.
- *
- * @retval Others
- *      Propagated EFI_STATUS from file I/O or block write operations.
- * @note
- * - Caller provides a block device that supports write operations; consider checking m->ReadOnly.
- * - SBC_BlkWriteArbitrary() must correctly handle unaligned writes if ByteOffset/rd are not block-aligned.
- * - Current implementation calls LocateProtocol(SimpleFS) and thus uses the first available filesystem.
- *   If multiple filesystems exist, consider selecting the filesystem bound to the current image/device.
- */
-EFI_STATUS SBC_CopyFileToBlockDevice(IN CHAR16 *SrcPath,
-                      IN VOID *_Blk,
-                      IN UINT64 ByteOffset,
-                      OUT UINT64 *BytesWritten OPTIONAL);
-
 
 
 /**
@@ -1206,26 +968,6 @@ EFI_STATUS SBC_BlkWriteArbitrary(
     IN CONST VOID            *Buf, /**< [in] Source data buffer. */
     IN UINTN                  Len  /**< [in] Length of data to write. */
 );
-
-/**
- * @fn EFI_STATUS SBC_DeleteFileByPath(IN CHAR16 *FilePath)
- * @brief Delete a file from the EFI file system using its Unicode path.
- *
- * @param[in] FilePath  Unicode path of the file to be deleted.  
- *                      The path must be valid and located on an accessible
- *                      EFI Simple File System volume.
- *
- * @retval EFI_SUCCESS           The file was successfully deleted.
- * @retval EFI_INVALID_PARAMETER @p FilePath is NULL or invalid.
- * @retval EFI_NOT_FOUND         The specified file does not exist.
- * @retval EFI_ACCESS_DENIED     The file cannot be deleted due to protection
- *                               or insufficient permissions.
- * @retval EFI_DEVICE_ERROR      A device I/O error occurred during deletion.
- */
-EFI_STATUS SBC_DeleteFileByPath(
-    IN CHAR16 *FilePath  /**< [in] Path of the file to delete */
-);
-
 
 /**
  * @fn EFI_STATUS SBC_CopyBlockReadAndBlockWrite(
@@ -1567,28 +1309,5 @@ SBCStatus SBC_EFI_SSBL_Load(EFI_HANDLE ImageHandle, LV_t *lv);
  *   uninitialized value if <code>hndlcnt</code> is 0 or loop does not execute.
  */
 SBCStatus SBC_EFI_Kernel_Load(EFI_HANDLE ImageHandle, LV_t *lv);
-#if 0
-/**
- * @brief Write arbitrary bytes to a raw partition (Block I/O device).
- *
- * Performs partial-block read-modify-write if ByteOffset or Length
- * are not block aligned.
- *
- * @param[in]  Blk         Target EFI_BLOCK_IO_PROTOCOL
- * @param[in]  ByteOffset  Byte offset from start of device
- * @param[in]  Buffer      Data buffer to write
- * @param[in]  Length      Number of bytes to write
- *
- * @retval EFI_SUCCESS             Write succeeded.
- * @retval EFI_INVALID_PARAMETER   Bad argument or out of range.
- * @retval EFI_NO_MEDIA            No media present.
- * @retval EFI_DEVICE_ERROR        Write failure.
- */
-EFI_STATUS SBC_BlkWriteArbitrary(
-    IN EFI_BLOCK_IO_PROTOCOL *Blk,
-    IN UINT64                 ByteOffset,
-    IN CONST VOID            *Buffer,
-    IN UINTN                  Length
-);
-#endif
+
 #endif

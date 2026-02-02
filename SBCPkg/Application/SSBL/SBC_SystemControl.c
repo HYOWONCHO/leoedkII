@@ -826,55 +826,24 @@ errdone:
     return ret;
 }
 
-
-static SBCStatus __attribute__((unused)) _protected_sw_rewrite(VOID *priv) 
-{
-
-    SBCStatus ret = SBCOK;
-    UINT8 secret_key[SYS_OSID_KEY_LEN] = {0, };
-    boot_proc_t *bp = NULL; 
-    UINT8   *blob = NULL;       // Binary or Byte Large Object
-    UINT32  blob_len = 0;
-
-    SBC_RET_VALIDATE_ERRCODEMSG((priv != NULL), 
-                                SBCNULLP,
-                                "Invalid Blob Parameter");
-
-    bp = (boot_proc_t *)priv;
-
-    ret = SBC_HashCompute(NULL, 
-                          ((atp_ident_t *)bp->keyinfo)->migid,
-                          SYS_OSID_KEY_LEN,
-                          secret_key);
-
-    SBC_RET_VALIDATE_ERRCODEMSG((ret == SBCOK),
-                                ret,
-                                "Secret Key create fail");
-
-    ret = SBC_ProtectedSWRead(bp->blkhnd,
-                              (void **)&blob,
-                              &blob_len,
-                              bp->curr_sw_bnk);
-
-
-    SBC_RET_VALIDATE_ERRCODEMSG((ret == SBCOK),
-                                ret,
-                                "Protected SW Read fail");
-
-    // 
-
-
-errdone:
-
-    if(blob != NULL) {
-        FreePool(blob);
-        blob = NULL;
-    }
-
-    return ret;
-}
                                        
-
+/**
+ * @fn static SBCStatus SBC_UpdateBootPorcsesing(void *priv)
+ * @brief Perform boot update processing based on key mode.
+ * 
+ * Supported key modes:
+ * - KEY_MODE_NORMAL : Perform normal update behavior.
+ * - KEY_MODE_UPDATE : Perform update-mode specific behavior.
+ * - KEY_MODE_BOOT   : No update operation.
+ * - KEY_MODE_NONE   : No operation.
+ *
+ * @param[in] priv  Pointer to the boot processing context
+ *                  (cast internally to @c boot_proc_t).
+ *
+ * @retval SBCOK         Boot update processing completed successfully.
+ * @retval SBCINVPARAM   Invalid or unsupported key mode detected.
+ * @retval SBCFAIL       Update behavior execution failed.
+ */
 static SBCStatus  SBC_UpdateBootPorcsesing(void *priv)
 {
     SBCStatus ret = SBCOK;
@@ -1297,7 +1266,53 @@ errdone:
 
 
 
-
+/**
+ * @fn void SBC_RecoveryBootProcessing(VOID *priv)
+ * @brief Execute recovery boot processing and restore secure boot state.
+ *
+ * This function performs the recovery boot sequence when the system enters
+ * recovery mode due to integrity failure, update rollback, or abnormal boot state.
+ * It regenerates DICE identifiers, re-encrypts sensitive metadata (e.g., Base Answer),
+ * re-encrypts protected software blobs, and updates raw partition headers to
+ * restore a trusted boot path.
+ *
+ * The overall flow is:
+ * - Detect abnormal recovery state and optionally force factory mode + reboot.
+ * - Regenerate DICE keys (device/firmware/OS/migration identifiers).
+ * - Depending on boot status and key mode:
+ *   - Encrypt and store Base Answer using OSID or migration key.
+ *   - Store FW/OS key pair metadata.
+ *   - Re-encrypt protected software nodes/blobs.
+ *   - Update raw partition header to transition to NORMAL boot mode.
+ * - Reboot (or chainload GRUB if _ALL_PASS_ is enabled).
+ *
+ * @param[in,out] priv  Pointer to the boot processing context (cast to @c boot_proc_t).
+ *                      This context is updated during recovery (boot status, mode changes,
+ *                      key materials, offsets, etc.).
+ *
+ * @note
+ * - When @c bt_proc->bootst is @c SB_PROC_ST_ABNRAM at entry, the function forces
+ *   BOOT_MODE_FACTORY with KEY_MODE_NORMAL and resets the system (unless _ALL_PASS_).
+ * - Base Answer encryption key selection depends on key mode:
+ *   - KEY_MODE_BOOT   : uses newly generated OSID (new_dice_id.osid)
+ *   - KEY_MODE_UPDATE : uses migration ID from @c bt_proc->keyinfo (migid)
+ * - On any critical failure, @c bt_proc->bootst is set to @c SB_PROC_ST_ABNRAM and
+ *   the system is rebooted to prevent continuing with an untrusted state.
+ *
+ * @warning
+ * This routine may rewrite security-critical metadata and raw partition headers.
+ * Do not interrupt power during execution. An incomplete operation can leave the
+ * platform in an unrecoverable or locked state.
+ *
+ * @see SBC_DiceKeysReGen()
+ * @see SBC_BaseAnswerEncryptStore()
+ * @see SBC_StoreFwAndOsKeyPairStore()
+ * @see SBC_ProtSwReEncDec()
+ * @see SBC_RawPrtHdrChangeWithRecovery()
+ * @see SBC_RawPrtHdrChange()
+ * @see SBC_BootKeyModeChange()
+ * @see SBC_RebootSystem()
+ */
 void  SBC_RecoveryBootProcessing(VOID *priv)
 {
     SBCStatus ret = SBCOK;

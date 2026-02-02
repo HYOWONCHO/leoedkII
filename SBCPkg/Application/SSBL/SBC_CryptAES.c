@@ -121,11 +121,6 @@ SBCStatus SBC_AESGcmEncrypt(SBC_AESContext *ctx)
 
   gcm = ctx->gcm;
 
-//SBC_external_mem_print_bin("GCM enc key", gcm->key.value, gcm->key.length);
-//SBC_external_mem_print_bin("GCM iv result", gcm->iv.value, gcm->iv.length);
-////SBC_external_mem_print_bin("GCM aad result", gcm->aad.value, gcm->aad.length);
-//SBC_external_mem_print_bin("GCM msg result", gcm->msg.value, gcm->msg.length);
-//SBC_external_mem_print_bin("GCM tag result", gcm->tag.value, gcm->tag.length);
 
   if(AeadAesGcmEncrypt(gcm->key.value, gcm->key.length,
                        gcm->iv.value, gcm->iv.length,
@@ -174,17 +169,6 @@ SBCStatus SBC_AESGcmDecrypt(SBC_AESContext *ctx)
 
   gcm = ctx->gcm;
 
-//SBC_external_mem_print_bin("GCM Dec Key",
-//                           (UINT8 *)gcm->key.value,
-//                           gcm->key.length);
-//
-//SBC_external_mem_print_bin("GCM IV Key",
-//                     (UINT8 *)gcm->iv.value,
-//                     gcm->iv.length);
-//
-//SBC_external_mem_print_bin("GCM TAG Key",
-//                     (UINT8 *)gcm->tag.value,
-//                     gcm->tag.length);
 
 
   if(AeadAesGcmDecrypt(gcm->key.value, gcm->key.length,
@@ -234,14 +218,8 @@ SBCStatus SBC_AESEncrypt(SBC_AESContext *ctx)
 
   SBCStatus ret = SBCOK;
 
-  //DEBUG((DEBUG_INFO , "%s:%d \n",__func__, __LINE__));
-  //SBC_AES_RET_VAL_IF_FAIL((ctx != NULL), SBCNULLP);
-  //DEBUG((DEBUG_INFO , "%s:%d \n",__func__, __LINE__));
   switch(ctx->algoid) {
     case SBC_CIPHER_AES_CBC:
-     // DEBUG((DEBUG_INFO , "%s:%d \n",__func__, __LINE__));
-      //SBC_AES_RET_VAL_IF_FAIL((ctx->cbc != NULL), SBCNULLP);
-      //DEBUG((DEBUG_INFO , "%s:%d \n",__func__, __LINE__));
 
       ctx->cbc->handle = ctx->handle;
       ctx->cbc->keylv.value = ctx->key;
