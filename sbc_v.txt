@@ -1,4 +1,4 @@
-MAJOR_VAR="v5"
+MAJOR_VAR="v8"
 MINOR_VAR="0"
 PATCH_VAR="0"
 PRERES_VAR="build"
