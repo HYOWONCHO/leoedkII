@@ -18,7 +18,7 @@
 #define ANSI_COLOR_RESET    "\x1b[0m"
 
 #define SSBL_LOG_PATH  L"\\EFI\\BOOT\\sys_log_for_ssbl.log"
-
+//#define FSBL_LOG_PATH  L"\\EFI\\BOOT\\sys_log_for_fsbl.log"
 
 #define SYS_LOG_EVT_VALDIATION                  L"Validation"
 #define SYS_LOG_EVT_DETECTION                   L"Detection"

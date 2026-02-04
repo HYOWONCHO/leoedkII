@@ -670,8 +670,14 @@ SbcLogEnsureFileOpen(IN OUT SBC_LOG_CTX *Ctx)
 {
     EFI_STATUS Status;
 
-    if (!Ctx || !Ctx->Ready) return EFI_NOT_READY;
-    if (Ctx->File) return EFI_SUCCESS;
+    if (!Ctx || !Ctx->Ready) {
+        Print(L"SbcLogEnsureFileOpen NOT READY \n");
+        return EFI_NOT_READY;
+    }
+    if (Ctx->File) {
+        Print(L"SbcLogEnsureFileOpen Ctx->File already open \n");
+        return EFI_SUCCESS;
+    }
 
     // Try open existing for READ|WRITE (append)
     Status = Ctx->Root->Open(
@@ -682,18 +688,21 @@ SbcLogEnsureFileOpen(IN OUT SBC_LOG_CTX *Ctx)
                     0
                 );
     if (!EFI_ERROR(Status)) {
-        // Seek EOF for append
+        Print(L"Seek EOF for append \n");
         Status = Ctx->File->SetPosition(Ctx->File, (UINT64)-1);
         if (EFI_ERROR(Status)) {
+            Print(L"SetPosition fail : %r \n", Status);
             Ctx->File->Close(Ctx->File);
             Ctx->File = NULL;
             return Status;
         }
+
         return EFI_SUCCESS;
     }
 
-    // If not found, create it
+    Print(L"If not found, create it \n");
     if (Status == EFI_NOT_FOUND) {
+        Print(L"%s file not found, so it's create \n",Ctx->FilePath);
         Status = Ctx->Root->Open(
                         Ctx->Root,
                         &Ctx->File,
@@ -701,10 +710,14 @@ SbcLogEnsureFileOpen(IN OUT SBC_LOG_CTX *Ctx)
                         EFI_FILE_MODE_READ | EFI_FILE_MODE_WRITE | EFI_FILE_MODE_CREATE,
                         0
                     );
-        if (EFI_ERROR(Status)) return Status;
+        if (EFI_ERROR(Status)) {
+            Print(L"%a   file create fail (%r) \n", Ctx->FilePath, Status);
+            return Status;
+        }
 
         Status = Ctx->File->SetPosition(Ctx->File, (UINT64)-1);
         if (EFI_ERROR(Status)) {
+            Print(L"2. SetPosition fail : %r \n", Status);
             Ctx->File->Close(Ctx->File);
             Ctx->File = NULL;
             return Status;
@@ -721,26 +734,50 @@ SbcLogBufAppend(IN OUT SBC_LOG_CTX *Ctx, IN CONST CHAR8 *Data, IN UINTN Len)
 {
     EFI_STATUS Status;
 
-    if (!Ctx || !Ctx->Ready) return EFI_NOT_READY;
-    if (!Data || Len == 0) return EFI_SUCCESS;
+    if (!Ctx || !Ctx->Ready) {
+        Print(L"SbcLogBufAppend NOT ready( ctx : %p, ready : %d) \n", Ctx, Ctx->Ready);
+        return EFI_NOT_READY;
+    }
+    if (!Data || Len == 0) {
+        Print(L"SbcLogBufAppend Data : %p, Message Len :%lu \n", Data, Len);
+        return EFI_SUCCESS;
+    }
 
     // If single message bigger than buffer: flush existing, then write directly.
+    //Print(L"Len :%lu, BufCap : %lu \n", Len, Ctx->BufCap);
     if (Len > Ctx->BufCap) {
+        
         Status = SBC_LogFlush(Ctx);
-        if (EFI_ERROR(Status)) return Status;
+        if (EFI_ERROR(Status)) {
+            Print(L"SBC_LogFlush call fail \n");
+            return Status;
+        }
 
         Status = SbcLogEnsureFileOpen(Ctx);
-        if (EFI_ERROR(Status)) return Status;
+        if (EFI_ERROR(Status)) {
+            Print(L"SbcLogEnsureFileOpen call fail \n");
+            return Status;
+        }
 
         UINTN W = Len;
+        Print(L"SbcLogBufAppend Ctx->File->Write ... \n");
         Status = Ctx->File->Write(Ctx->File, &W, (VOID*)Data);
+        if (EFI_ERROR(Status)) {
+            Print(L"Ctx->File->Write fail (%r) \n", Status);
+        }
         return Status;
     }
 
     // If not enough space: flush first
+
+    //Print(L"Len :%lu, BufCap : %lu \n", Ctx->BufLen + Len , Ctx->BufCap);
     if (Ctx->BufLen + Len > Ctx->BufCap) {
+        Print(L"SBC_LogFlush .... \n");
         Status = SBC_LogFlush(Ctx);
-        if (EFI_ERROR(Status)) return Status;
+        if (EFI_ERROR(Status))  {
+            Print(L"2.. SBC_LogFlush call fail \n");
+            return Status;
+        }
     }
 
     CopyMem(Ctx->Buf + Ctx->BufLen, Data, Len);
@@ -758,8 +795,12 @@ SBC_LogInit(
 {
     EFI_STATUS Status = EFI_SUCCESS;
 
-    if (Ctx == NULL || FsHandle == NULL || LogPath == NULL)
+    Print(L"SSBL Log Init sttart ( path : %s ) \n", LogPath);
+
+    if (Ctx == NULL || FsHandle == NULL || LogPath == NULL) {
+        Print(L"Log init invalid parameter \n");
         return EFI_INVALID_PARAMETER;
+    }
 
     SbcLogZeroCtx(Ctx);
 
@@ -771,25 +812,30 @@ SBC_LogInit(
                     (VOID**)&Ctx->SimpleFs
                 );
     if (EFI_ERROR(Status) || Ctx->SimpleFs == NULL) {
+        Print(L"gBS->HandleProtocol failed \n");
         goto Exit;
     }
 
     Status = Ctx->SimpleFs->OpenVolume(Ctx->SimpleFs, &Ctx->Root);
     if (EFI_ERROR(Status) || Ctx->Root == NULL) {
+        Print(L"Ctx->SimpleFs->OpenVolume failed \n");
         goto Exit;
     }
 
     Ctx->FilePath = AllocateCopyPool(StrSize(LogPath), LogPath);
     if (Ctx->FilePath == NULL) {
+        Print(L"Ctx->FilePath = AllocateCopyPool out of resource \n");
         Status = EFI_OUT_OF_RESOURCES;
         goto Exit;
     }
+    Print(L"Copy File Path : %s, %s \n", Ctx->FilePath, LogPath );
 
     if (BufferSize == 0)
         BufferSize = SBC_LOG_DEFAULT_BUF_SIZE;
 
     Ctx->Buf = AllocateZeroPool(BufferSize);
     if (Ctx->Buf == NULL) {
+        Print(L"Ctx->Buf = AllocateZeroPool out of resource \n");
         Status = EFI_OUT_OF_RESOURCES;
         goto Exit;
     }
@@ -802,6 +848,8 @@ SBC_LogInit(
     // if (EFI_ERROR(Status)) goto Exit;
 
     Ctx->Ready = TRUE;
+
+    Print(L" SBC_LogInit success \n");
     return EFI_SUCCESS;
 
 Exit:
@@ -831,6 +879,7 @@ Exit:
     Ctx->FsHandle = NULL;
     Ctx->SimpleFs = NULL;
 
+    Print(L" SBC_LogInit Fail \n");
     return Status;
 }
 
@@ -857,6 +906,7 @@ SBC_FindAnyWritableSimpleFsHandle(
                     &Handles
              );
     if (EFI_ERROR(Status) || Handles == NULL || Count == 0) {
+        Print(L"Log Handle not found : %r\n", Status);
         return EFI_NOT_FOUND;
     }
 
@@ -877,6 +927,7 @@ SBC_FindAnyWritableSimpleFsHandle(
         if (!EFI_ERROR(Status) && Root != NULL) {
             Root->Close(Root);
             *OutFsHandle = Handles[i];
+            Print(L"Out FsHandle : %p \n", *OutFsHandle);
             break;
         }
     }
@@ -898,7 +949,7 @@ SBC_LogInitAuto(
     EFI_LOADED_IMAGE_PROTOCOL *LoadedImage = NULL;
     EFI_HANDLE FsHandle = NULL;
 
-    Print(L"SBC_LogInitAuto start\n");
+    Print(L"SSBL SBC_LogInitAuto start\n");
 
     if (Ctx == NULL || ImageHandle == NULL || LogPath == NULL) {
         Print(L"EFI_INVALID_PARAMETER\n");
@@ -936,9 +987,11 @@ SBC_LogInitAuto(
     if (FsHandle == NULL) {
         Status = SBC_FindAnyWritableSimpleFsHandle(&FsHandle);
         if (EFI_ERROR(Status) || FsHandle == NULL) {
-            Print(L"No SimpleFS handle found\n");
+            Print(L"SBC_FindAnyWritableSimpleFsHandle No SimpleFS handle found\n");
             return EFI_NOT_FOUND;
         }
+
+        Print(L"FsHandle : %p \n", FsHandle);
     }
 
     if (OutFsHandle)
@@ -954,26 +1007,48 @@ SBC_LogWrite16(
 )
 {
     EFI_STATUS Status;
-    if (!Ctx || !Ctx->Ready || !Msg) return EFI_INVALID_PARAMETER;
+
+    //Print(L"%a \n", __FUNCTION__);
+    if (!Ctx || !Ctx->Ready || !Msg) {
+        Print(L"LogWrite16 EFI_NOT_READY \n");
+        return EFI_INVALID_PARAMETER;
+    }
 
     // Convert CHAR16 -> ASCII into a temporary buffer
     // Worst-case allocate (Len*3 + 2) like you did, but WRITE only actual length.
     UINTN ULen = StrLen((CHAR16*)Msg);
-    if (ULen == 0) return EFI_SUCCESS;
+    if (ULen == 0) {
+        Print(L"Message Length is %lu \n", ULen);
+        return EFI_SUCCESS;
+    }
 
     UINTN AsciiCap = (ULen * 3) + 2; // + newline space
+    //Print(L"AsciiCap : %lu \n", AsciiCap);
     CHAR8 *Tmp = AllocateZeroPool(AsciiCap);
-    if (!Tmp) return EFI_OUT_OF_RESOURCES;
+    if (!Tmp) {
+        Print(L"EFI_OUT_OF_RESOURCES \n");
+        return EFI_OUT_OF_RESOURCES;
+    }
 
     // Safe conversion. Non-ASCII will become '?'
     UnicodeStrToAsciiStrS((CHAR16*)Msg, Tmp, AsciiCap);
 
     UINTN Actual = AsciiStrLen(Tmp); // IMPORTANT: write actual bytes only
+    //Print(L"write actual : %a (%lu) \n", Tmp, Actual);
     Status = SbcLogBufAppend(Ctx, Tmp, Actual);
     if (!EFI_ERROR(Status)) {
+
         // Append newline
+        //Print(L"Append newline \n");
         CHAR8 NL = '\n';
         Status = SbcLogBufAppend(Ctx, &NL, 1);
+    }
+    else {
+        Print(L"SbcLogBufAppend fail \n");
+    }
+
+    if (EFI_ERROR(Status)) {
+        Print(L"Append New line fail \n");
     }
 
     FreePool(Tmp);
@@ -987,15 +1062,28 @@ SBC_LogFlush(
 {
     EFI_STATUS Status;
 
-    if (!Ctx || !Ctx->Ready) return EFI_NOT_READY;
-    if (Ctx->BufLen == 0) return EFI_SUCCESS;
+    if (!Ctx || !Ctx->Ready) {
+        Print(L"LogFlush EFI_NOT_READY \n");
+        return EFI_NOT_READY;
+    }
+    if (Ctx->BufLen == 0) {
+        Print(L"LogFlush BufLen 0 \n");
+        return EFI_SUCCESS;
+    }
 
     Status = SbcLogEnsureFileOpen(Ctx);
-    if (EFI_ERROR(Status)) return Status;
+    if (EFI_ERROR(Status)) {
+        Print(L"SbcLogEnsureFileOpen fail \n");
+        return Status;
+    }
 
     UINTN W = Ctx->BufLen;
+    Print(L"SBC_LogFlush Ctx->File->Write ... \n");
     Status = Ctx->File->Write(Ctx->File, &W, Ctx->Buf);
-    if (EFI_ERROR(Status)) return Status;
+    if (EFI_ERROR(Status)) {
+        Print(L"Log write fail (%r) \n", Status);
+        return Status;
+    }
 
     // Optional: flush to media (some FS honor it, some ignore)
     Ctx->File->Flush(Ctx->File);

@@ -226,6 +226,10 @@ SBCStatus SBC_GRUB_LoadAndStart(EFI_HANDLE ImageHandle)
             8, 
             L"Validation ", 
             L"SBC_VENDOR_SP Grub Loading !!!");  
+
+ #ifdef _LOG_RECODING_
+    SBC_LogDeinit(&gLogCtx);
+#endif
   for (UINTN i = 0; i < HandleCount; i++) {
     DevicePath = FileDevicePath(Handles[i], L"\\EFI\\rocky\\grubx64.efi");
     PathStr = ConvertDevicePathToText(DevicePath, TRUE, TRUE);

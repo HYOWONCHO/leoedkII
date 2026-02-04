@@ -259,6 +259,7 @@ UefiMain (
                     SSBL_LOG_PATH,
                     SBC_LOG_DEFAULT_BUF_SIZE,
                     NULL);
+
 #endif
 
     sbc_err_sysprn(SBC_LOG_CMN_PRIO_INFO, 2,
