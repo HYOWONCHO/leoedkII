@@ -1747,12 +1747,23 @@ static VOID _handling_sb_process_for_bm_normal(VOID *priv)
         stay_recovery_flag = 0;
         break;
     case SB_PROC_ST_ABNRAM:
-        if(p->pvs_sw_bnk) {
-            SBC_BootKeyModeChange(BOOT_MODE_RECOVERY, KEY_MODE_BOOT, priv);
-        }
-        else {
-            SBC_BootKeyModeChange(BOOT_MODE_FACTORY, KEY_MODE_BOOT, priv);
-        }
+
+        sbc_err_sysprn(SBC_LOG_CMN_PRIO_INFO, 2,
+             SYS_LOG_HOST_BOOT,
+             SYS_LOG_APP_NAME,
+             SYS_LOG_CSC_NAME,
+             1,
+             SYS_LOG_EVT_DETECTION,
+             L"SBC_VENDOR_SP System Shutdown - Boot State Ab-normal");
+
+        SBC_ShutdownSystem();
+
+//      if(p->pvs_sw_bnk) {
+//          SBC_BootKeyModeChange(BOOT_MODE_RECOVERY, KEY_MODE_BOOT, priv);
+//      }
+//      else {
+//          SBC_BootKeyModeChange(BOOT_MODE_FACTORY, KEY_MODE_BOOT, priv);
+//      }
 
         //
         // System Reboot 
@@ -2067,7 +2078,8 @@ SBCStatus  SBC_SecureBootCheck(VOID *priv)
 errdone:
 
 
-    if(bp->bootst == SB_PROC_ST_ABNRAM && bp->bm == BOOT_MODE_FACTORY) {
+    if(bp->bootst == SB_PROC_ST_ABNRAM && 
+       ( bp->bm == BOOT_MODE_FACTORY || bp->bm == BOOT_MODE_NORMAL)) {
         SBC_ShutdownSystem();
         return ret;
     }

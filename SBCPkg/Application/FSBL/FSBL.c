@@ -646,7 +646,7 @@ UefiMain (
                   0,
                   L"Detetion",
                   L"SBC_VENDOR_SP Failed to delete the \\EFI\\BOOT\\SSBL.efi \n");
-             goto errdone;
+             //goto errdone;
      }
 
      sbc_err_sysprn(SBC_LOG_CMN_PRIO_INFO, 2,

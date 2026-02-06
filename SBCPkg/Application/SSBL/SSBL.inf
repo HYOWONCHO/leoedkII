@@ -1,7 +1,4 @@
-## @file
-#  Brief Description of UEFI MyHelloWorld
-#
-#  Detailed Description of UEFI MyWizardDriver
+## @file Brief Description of UEFI MyHelloWorld Detailed Description of UEFI MyWizardDriver
 #
 #  Copyright for UEFI  MyHelloWorld
 #
@@ -132,8 +129,8 @@
     *_*_*_CC_FLAGS = -D_KERNEL_VERIFY_
     *_*_*_CC_FLAGS = -D_FORCED_SHUTDOWN_
     *_*_*_CC_FLAGS = -D_TEST_BED_
-    #*_*_*_CC_FLAGS = -D_DEBUG_PRINT_ON_
-    *_*_*_CC_FLAGS = -D_LOG_RECODING_
+    *_*_*_CC_FLAGS = -D_DEBUG_PRINT_ON_
+    #*_*_*_CC_FLAGS = -D_LOG_RECODING_
 
 
     

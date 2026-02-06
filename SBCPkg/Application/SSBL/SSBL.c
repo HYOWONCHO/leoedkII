@@ -487,6 +487,11 @@ UefiMain (
        }
 
        ret = SBC_SecureBootCheck((VOID *)&btproc);
+//     if (ret != SBCOK) {
+//         btproc.b_forced = TRUE;
+//         eprint("Secure Boot check fail for BOOT_MODE_NORMAL");
+//         goto errdone;
+//     }
 
        break;
     case BOOT_MODE_FACTORY:
@@ -494,6 +499,7 @@ UefiMain (
 
        ret = SBC_SecureBootCheck((VOID *)&btproc);
        if (ret != SBCOK) {
+           btproc.b_forced = TRUE;
            eprint("Secure Boot check fail for BOOT_MODE_FACTORY");
            goto errdone;
        }
