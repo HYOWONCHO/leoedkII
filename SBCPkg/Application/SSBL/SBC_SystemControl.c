@@ -1074,6 +1074,8 @@ static SBCStatus SBC_StoreFwAndOsKeyPairStore(VOID *priv, VOID *fwid, VOID *osid
                          (void *)auth_iv,
                          (void *)auth_tag);
 
+    SBC_mem_print_bin("OSID encrypt key", (UINT8 *)ctx.key.value, ctx.key.length);
+
     ctx.msg.value = (UINT8 *)osid;
     ctx.msg.length = SYS_OSID_KEY_LEN;
     ctx.out.value = encbuf;
@@ -1096,8 +1098,9 @@ static SBCStatus SBC_StoreFwAndOsKeyPairStore(VOID *priv, VOID *fwid, VOID *osid
             encbuf,
             id_len);
     cpy_offset += id_len;
-
+    SBC_mem_print_bin("OSID encrypt", (UINT8 *)encbuf, id_len);
     // IV copy
+    SBC_mem_print_bin("OSID IV", (UINT8 *)auth_iv, SBC_AT_IV_LEN);
     CopyMem(&buf[cpy_offset], 
             auth_iv,
             SBC_AT_IV_LEN);
@@ -1107,6 +1110,7 @@ static SBCStatus SBC_StoreFwAndOsKeyPairStore(VOID *priv, VOID *fwid, VOID *osid
     CopyMem(&buf[cpy_offset], 
             auth_tag,
             SBC_AT_TAG_LEN);
+    SBC_mem_print_bin("OSID TAG", (UINT8 *)auth_tag, SBC_AT_TAG_LEN);
     cpy_offset += SBC_AT_TAG_LEN;
 
 
@@ -1121,6 +1125,8 @@ static SBCStatus SBC_StoreFwAndOsKeyPairStore(VOID *priv, VOID *fwid, VOID *osid
     ctx.msg.length = sizeof fw_key;
     ctx.out.value = encbuf;
     ctx.out.length = ctx.msg.length;
+
+    SBC_mem_print_bin("Firmware ID Key-pair encrypt key", (UINT8 *)ctx.key.value, ctx.key.length);
 
     dprint("Firmware Key Buffer Size : %d", ctx.out.length);
     ret = SBC_AESGcmEncrypt(&aesctx);
@@ -1146,22 +1152,26 @@ static SBCStatus SBC_StoreFwAndOsKeyPairStore(VOID *priv, VOID *fwid, VOID *osid
             encbuf,
             id_len);
     cpy_offset += id_len;
-
+    SBC_mem_print_bin("FirmwareID key-pair encrypt", (UINT8 *)encbuf, id_len);
     // IV copy
     CopyMem(&buf[cpy_offset], 
             auth_iv,
             SBC_AT_IV_LEN);
+    SBC_mem_print_bin("FirwmareID IV", (UINT8 *)auth_iv, SBC_AT_IV_LEN);
     cpy_offset += SBC_AT_IV_LEN;
 
     // Tag copy
     CopyMem(&buf[cpy_offset], 
             auth_tag,
             SBC_AT_TAG_LEN);
+    SBC_mem_print_bin("FirwmareID TAG", (UINT8 *)auth_tag, SBC_AT_TAG_LEN);
     cpy_offset += SBC_AT_TAG_LEN;
 
 
     // Previously used TAG buffer initialize to zero 
     ZeroMem((VOID *)auth_tag, sizeof auth_tag);
+
+    SBC_mem_print_bin("FirmwareID key-pair encrypt key", (UINT8 *)ctx.key.value, ctx.key.length);
 
     ctx.msg.value = (UINT8 *)&os_key;
     ctx.msg.length = sizeof os_key;
@@ -1188,6 +1198,8 @@ static SBCStatus SBC_StoreFwAndOsKeyPairStore(VOID *priv, VOID *fwid, VOID *osid
             encbuf,
             id_len);
     cpy_offset += id_len;
+    
+    SBC_mem_print_bin("OSID key-pair encrypt", (UINT8 *)encbuf, id_len);
 
     // IV copy
     CopyMem(&buf[cpy_offset], 
@@ -1201,7 +1213,8 @@ static SBCStatus SBC_StoreFwAndOsKeyPairStore(VOID *priv, VOID *fwid, VOID *osid
             SBC_AT_TAG_LEN);
     cpy_offset += SBC_AT_TAG_LEN;
 
-
+    SBC_mem_print_bin("OSID key-pair IV", (UINT8 *)auth_iv, SBC_AT_IV_LEN);
+    SBC_mem_print_bin("OSID key-pair TAG", (UINT8 *)auth_tag, SBC_AT_TAG_LEN);
 
     ret = SBC_RawPrtBlockWrite(bp->blkhnd,
                                buf,
@@ -1489,8 +1502,8 @@ void  SBC_RecoveryBootProcessing(VOID *priv)
                             bt_proc->blkhnd,
                             ((LV_t *)bt_proc->baseansr)->value,
                             ((LV_t *)bt_proc->baseansr)->length,
-                            ((atp_ident_t *)bt_proc->keyinfo)->migid, // Add @ 20260114
-                            //new_dice_id.osid, // comment @ 202600114
+                            //((atp_ident_t *)bt_proc->keyinfo)->migid, // Add @ 20260114
+                            new_dice_id.osid, // comment @ 202600114
                             BASE_ANS_KEY_STR
             );
 
@@ -1921,7 +1934,7 @@ SBCStatus  SBC_SecureBootCheck(VOID *priv)
         }
 
         if(((rawprt_hdr_t *)bp->rawprt_hdr)->rcvmode) {
-            dprint("Because recovery mode, decrypot using old osid");
+            dprint("Because recovery mode, decrypot using  osid");
             dec_key = ((atp_ident_t *)bp->keyinfo)->osid;
         }
 
