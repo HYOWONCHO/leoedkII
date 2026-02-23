@@ -824,7 +824,9 @@ SBC_NvFindSlotByName (
     return NULL;
   }
 
-  for (UINTN i = 0; i < g_nv_table_count; i++) {
+  for (UINTN i = 0; 
+       i < ARRAY_SIZE(g_nv_table); 
+       i++) {
     if (AsciiStrCmp (g_nv_table[i].Name, Name) == 0) {
       return &g_nv_table[i];
     }

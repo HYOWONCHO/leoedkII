@@ -752,14 +752,14 @@ UefiMain (
                      L"Detetion",
                      L"SBC_VENDOR_SP TPM Version found \n");
 
-    for (int rndlp = 0; rndlp < 10; rndlp++) {
+    for (int rndlp = 0; rndlp < 1; rndlp++) {
         retval = SBC_TpmGetRandom(RandBuf, sizeof(RandBuf));
         SBC_external_mem_print_bin("TPM Random", RandBuf, sizeof(RandBuf));
     }
 
     const SBC_NV_SLOT *osid_slot = SBC_NvFindSlotByName("OS ID Key");
     dprint("Slock Name : %a", osid_slot->Name);
-    dprint("Slock Index : 0x%lu", osid_slot->Index);
+    dprint("Slock Index : 0x%08lx", osid_slot->Index);
     dprint("Slock Size : %d", osid_slot->Size);
    
     retval = SBC_NvReadBuffer(osid_slot,
