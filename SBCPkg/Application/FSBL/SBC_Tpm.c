@@ -9,8 +9,6 @@
 #include <Library/BaseMemoryLib.h>
 #include <Library/MemoryAllocationLib.h>
 #include <Library/DebugLib.h>
-#include <IndustryStandard/Tpm20.h>
-#include <Library/Tpm2CommandLib.h>
 #include <Library/Tpm2DeviceLib.h>
 
 
@@ -451,22 +449,20 @@ SBC_TpmGetRandom (
     return EFI_SUCCESS;
 }
 
-/**
-  NV slot descriptor (UEFI side).
 
-  name  : logical name (ASCII)
-  index : NV index handle (0x01XXXXXX range)
-  size  : expected data size
-**/
-typedef struct {
-  TPMI_RH_NV_INDEX Index;
-  UINT16           Size;
-  CONST CHAR8     *Name;
-} SBC_NV_SLOT;
 
 /* External table defined elsewhere (same 개념 as g_nv_table in app) */
-extern CONST SBC_NV_SLOT g_nv_table[];
-extern CONST UINTN       g_nv_table_count;
+SBC_NV_SLOT g_nv_table[] = {
+    { NV_KEY_DEVICE_ID,             NV_KEY_SIZE,  "Device ID Key"  },
+    { NV_KEY_FIRMWARE_ID,           NV_KEY_SIZE,  "Firmware ID Key"  },
+    { NV_KEY_OS_ID,                 NV_KEY_SIZE,  "OS ID Key"  },
+    { NV_KEY_BASEANSWER_ID,         NV_KEY_SIZE,  "Baseanswer Key" },
+    { NV_ROOT_CA_ID,                NV_CERT_SIZE, "ROOT CA" },
+    { NV_DEVICE_CA_ID,              NV_CERT_SIZE, "DeviceID CA" },
+    { NV_OS_CA_ID,                  NV_CERT_SIZE, "OSID CA" },
+    
+};
+UINTN       g_nv_table_count;
 
 //
 // Standard CRC32 Table (IEEE 802.3)
@@ -655,7 +651,6 @@ SBC_NvExists (
 
   *Exists = FALSE;
 
-  NvPublic = NULL;
   ZeroMem (&NvName, sizeof (NvName));
 
   Status = Tpm2NvReadPublic (Index, &NvPublic, &NvName);
@@ -705,11 +700,11 @@ SBC_NvDefine (
   NvPub.size                = sizeof (TPMS_NV_PUBLIC);
   NvPub.nvPublic.nvIndex    = Index;
   NvPub.nvPublic.nameAlg    = TPM_ALG_SHA256;
-  NvPub.nvPublic.attributes =
-      TPMA_NV_AUTHREAD
-    | TPMA_NV_AUTHWRITE
-    | TPMA_NV_OWNERREAD
-    | TPMA_NV_OWNERWRITE;
+  NvPub.nvPublic.attributes.TPMA_NV_AUTHREAD = 1;
+  NvPub.nvPublic.attributes.TPMA_NV_AUTHWRITE = 1;
+  NvPub.nvPublic.attributes.TPMA_NV_OWNERREAD = 1;
+  NvPub.nvPublic.attributes.TPMA_NV_OWNERWRITE = 1;
+
   NvPub.nvPublic.dataSize   = Size;
 
   Status = Tpm2NvDefineSpace (
@@ -820,8 +815,7 @@ SBC_NvEnsureDefined (
 /**
   @brief Find NV slot from table by logical name.
 **/
-STATIC
-CONST SBC_NV_SLOT *
+SBC_NV_SLOT *
 SBC_NvFindSlotByName (
   IN CONST CHAR8 *Name
   )
@@ -865,7 +859,7 @@ SBC_NvWriteChecked (
   )
 {
   EFI_STATUS           Status;
-  TPM2B_MAX_NV_BUFFER  NvWrite;
+  TPM2B_MAX_BUFFER  NvWrite;
   UINT32               Crc;
 
   if ((Slot == NULL) || (Data == NULL)) {
@@ -887,7 +881,8 @@ SBC_NvWriteChecked (
   }
 
   // Compute CRC
-  Crc = crc32_calc (Data, Size);
+  //Crc = crc32_calc (Data, Size);
+  Crc = CalculateCrc32((VOID *)Data, Size);
   DEBUG ((DEBUG_INFO,
           "[TPM NV] CRC32(%a) = 0x%08x\n",
           Slot->Name,
@@ -962,7 +957,7 @@ SBC_NvReadBuffer (
 {
   EFI_STATUS           Status;
   BOOLEAN              Exists;
-  TPM2B_MAX_NV_BUFFER  NvRead;
+  TPM2B_MAX_BUFFER  NvRead;
 
   if ((Slot == NULL) || (OutBuf == NULL)) {
     return EFI_INVALID_PARAMETER;

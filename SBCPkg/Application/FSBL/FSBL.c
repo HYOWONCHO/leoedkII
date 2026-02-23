@@ -707,7 +707,8 @@ UefiMain (
     ZeroMem(&h_rawprtheader, sizeof h_rawprtheader);
 
 #ifdef _SBC_TPM_
-    UINT8      RandBuf[32];
+    UINT8      RandBuf[512];
+    UINT16     RdSize = 0;
     retval = SBC_TpmInit();
     if (EFI_ERROR(retval)) {
         sbc_err_sysprn(SBC_LOG_CMN_PRIO_INFO, 2,
@@ -755,6 +756,17 @@ UefiMain (
         retval = SBC_TpmGetRandom(RandBuf, sizeof(RandBuf));
         SBC_external_mem_print_bin("TPM Random", RandBuf, sizeof(RandBuf));
     }
+
+    const SBC_NV_SLOT *osid_slot = SBC_NvFindSlotByName("OS ID Key");
+    dprint("Slock Name : %a", osid_slot->Name);
+    dprint("Slock Index : 0x%lu", osid_slot->Index);
+    dprint("Slock Size : %d", osid_slot->Size);
+   
+    retval = SBC_NvReadBuffer(osid_slot,
+                              RandBuf,
+                              osid_slot->Size,
+                              &RdSize);
+
 
     return EFI_SUCCESS;
 #endif

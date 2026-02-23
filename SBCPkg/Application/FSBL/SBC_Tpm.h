@@ -18,27 +18,52 @@
 #include <IndustryStandard/Tpm20.h>
 
 
-#ifndef TPMA_NV_AUTHREAD
-#define TPMA_NV_AUTHREAD     (1U << 18)
+#ifndef SBC_TPMA_NV_AUTHREAD
+#define SBC_TPMA_NV_AUTHREAD     (1 << 18)
 #endif
 
-#ifndef TPMA_NV_AUTHWRITE
-#define TPMA_NV_AUTHWRITE    (1U << 19)
+#ifndef SBC_TPMA_NV_AUTHWRITE
+#define SBC_TPMA_NV_AUTHWRITE    (1 << 19)
 #endif
 
-#ifndef TPMA_NV_OWNERREAD
-#define TPMA_NV_OWNERREAD    (1U << 16)
+#ifndef SBC_TPMA_NV_OWNERREAD
+#define SBC_TPMA_NV_OWNERREAD    (1 << 16)
 #endif
 
-#ifndef TPMA_NV_OWNERWRITE
-#define TPMA_NV_OWNERWRITE   (1U << 17)
+#ifndef SBC_TPMA_NV_OWNERWRITE
+#define SBC_TPMA_NV_OWNERWRITE   (1 << 17)
 #endif
 
+#define NV_KEY_DEVICE_ID            0x01500001   /* 32 bytes */
+#define NV_KEY_FIRMWARE_ID          0x01500002
+#define NV_KEY_OS_ID                0x01500003
+#define NV_KEY_BASEANSWER_ID        0x01500003
 
 
+#define NV_ROOT_CA_ID               0x01500101   /* 512 bytes */
+#define NV_DEVICE_CA_ID             0x01500102
+#define NV_OS_CA_ID                 0x01500103
+
+#define NV_KEY_SIZE     64 
+#define NV_CERT_SIZE    512
+
+/**
+  NV slot descriptor (UEFI side).
+
+  name  : logical name (ASCII)
+  index : NV index handle (0x01XXXXXX range)
+  size  : expected data size
+**/
+typedef struct {
+  TPMI_RH_NV_INDEX Index;
+  UINT16           Size;
+  CONST CHAR8     *Name;
+} SBC_NV_SLOT;
 //
 // Public APIs
 //
+
+
 
 /**
   @brief Initialize TPM2 (Startup + SelfTest)
@@ -138,5 +163,18 @@ SBC_TpmGetRandom (
     OUT UINT8  *Buffer,
     IN  UINT32  Length
     );
+
+EFI_STATUS
+SBC_NvReadBuffer (
+  IN  CONST SBC_NV_SLOT *Slot,
+  OUT UINT8             *OutBuf,
+  IN  UINT16             OutBufSize,
+  OUT UINT16            *OutReadSize OPTIONAL
+  );
+
+SBC_NV_SLOT *
+SBC_NvFindSlotByName (
+  IN CONST CHAR8 *Name
+  );
 #endif // __SBC_TPM_H__
 
