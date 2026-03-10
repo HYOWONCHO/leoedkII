@@ -1861,35 +1861,11 @@ SBCStatus  SBC_SecureBootCheck(VOID *priv)
 
     LV_t        blob; 
     boot_proc_t *bp = (boot_proc_t *)priv;
-    sb_rcv_proc_t srp;
     [[gnu::unused]] UINTN         swcnt = 0;
     VOID *dec_key = NULL;
 
     ZeroMem((VOID *)&blob, sizeof blob);
-    ZeroMem((VOID *)&srp, sizeof srp);
 
-    //boot_proc_t backup_bp;
-    //atp_ident_t newid;
-    //atp_ident_t oldid;
-
-    //ZeroMem(&backup_bp, sizeof(backup_bp));
-
-#ifdef SAT_PROT_SW_ENABLE
-#error "x1"
-    ret = SBC_LoadSystemSetting(bp->blkhnd, (VOID *)&blob);
-    SBC_RET_VALIDATE_ERRCODEMSG((ret == SBCOK), ret, "System Setting Load fail");
-#endif
-    srp.osid = ((atp_ident_t *)bp->keyinfo)->osid;
-    srp.migkey = ((atp_ident_t *)bp->keyinfo)->migid;
-    srp.baseans = bp->baseansr;
-    srp.handle = bp->blkhnd;
-#ifdef SAT_PROT_SW_ENABLE
-#error "x2"
-    // Referencing the address of a buffer regarding the SW LIST 
-    //srp.whitels = &((UINT8 *)blob.value)[SYS_CONF_SW_LIST_OFS];;
-    srp.whitels = (UINT8 *)(blob.value) + SYS_CONF_SW_LIST_OFS;
-    swcnt = ((LV_t *)srp.whitels)->length / sizeof(sw_whitels_t);
-#endif
 
     switch(bp->bm) {
     case BOOT_MODE_NORMAL:

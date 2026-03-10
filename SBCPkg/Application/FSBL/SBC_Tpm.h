@@ -45,7 +45,7 @@
 #define NV_OS_CA_ID                 0x01500103
 
 #define NV_KEY_SIZE     64 
-#define NV_CERT_SIZE    512
+#define NV_CERT_SIZE    1024
 
 /**
   NV slot descriptor (UEFI side).
@@ -175,6 +175,27 @@ SBC_NvReadBuffer (
 SBC_NV_SLOT *
 SBC_NvFindSlotByName (
   IN CONST CHAR8 *Name
+  );
+
+/**
+  @brief Write data into NV after CRC check.
+
+  @param[in] Slot         NV slot descriptor.
+  @param[in] Data         Data to write.
+  @param[in] Size         Data size (must match Slot->Size).
+  @param[in] ExpectedCrc  If non-zero, compare with computed CRC and fail on mismatch.
+
+  @retval EFI_SUCCESS         Write OK.
+  @retval EFI_INVALID_PARAMETER  Slot/Data invalid, or size mismatch.
+  @retval EFI_COMPROMISED_DATA   CRC mismatch.
+  @retval Others                 Error from NV operations.
+**/
+EFI_STATUS
+SBC_NvWriteChecked (
+  IN CONST SBC_NV_SLOT *Slot,
+  IN CONST UINT8       *Data,
+  IN UINT16             Size,
+  IN UINT32             ExpectedCrc
   );
 #endif // __SBC_TPM_H__
 

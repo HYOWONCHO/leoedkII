@@ -706,6 +706,14 @@ SBC_NvDefine (
   NvPub.nvPublic.attributes.TPMA_NV_OWNERWRITE = 1;
 
   NvPub.nvPublic.dataSize   = Size;
+  // IMPORTANT: empty policy, and size fields must be valid
+  NvPub.nvPublic.authPolicy.size = 0;
+
+  // IMPORTANT: TPM marshalled size of TPMS_NV_PUBLIC
+  // = nvIndex(4) + nameAlg(2) + attributes(4) + authPolicy(2 + N) + dataSize(2)
+  // = 14 + authPolicy.size
+  NvPub.size = (UINT16)(14u + NvPub.nvPublic.authPolicy.size);
+
 
   Status = Tpm2NvDefineSpace (
              TPM_RH_OWNER,   // AuthHandle

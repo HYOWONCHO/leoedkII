@@ -154,6 +154,7 @@ function post_copy_fsbl()
 
     cp -i ./FSBL.efi ../../../../FwSignPy/.
     cp -i ./FSBL.efi ../../../../FwSignPy/$copyname
+    cp -i ./FSBL.efi ../../../../../../workspace_sat/build_efi/$copyname
 
     popd
     echo -e "${NC}"
@@ -175,6 +176,8 @@ function post_copy_ssbl()
 
     cp -i ./SSBL.efi ../../../../FwSignPy/.
     cp -i ./SSBL.efi ../../../../FwSignPy/$copyname
+    cp -i ./SSBL.efi ../../../../../../workspace_sat/build_efi/$copyname
+
     popd
     echo -e "${NC}"
 }

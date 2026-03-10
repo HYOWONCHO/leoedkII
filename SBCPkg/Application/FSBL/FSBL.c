@@ -707,8 +707,7 @@ UefiMain (
     ZeroMem(&h_rawprtheader, sizeof h_rawprtheader);
 
 #ifdef _SBC_TPM_
-    UINT8      RandBuf[512];
-    UINT16     RdSize = 0;
+
     retval = SBC_TpmInit();
     if (EFI_ERROR(retval)) {
         sbc_err_sysprn(SBC_LOG_CMN_PRIO_INFO, 2,
@@ -751,7 +750,10 @@ UefiMain (
                      0,
                      L"Detetion",
                      L"SBC_VENDOR_SP TPM Version found \n");
-
+#if 0
+    UINT8      RandBuf[512];
+    UINT8      RdBuf[512] = {0,};
+    UINT16     RdSize = 0;
     for (int rndlp = 0; rndlp < 1; rndlp++) {
         retval = SBC_TpmGetRandom(RandBuf, sizeof(RandBuf));
         SBC_external_mem_print_bin("TPM Random", RandBuf, sizeof(RandBuf));
@@ -761,14 +763,22 @@ UefiMain (
     dprint("Slock Name : %a", osid_slot->Name);
     dprint("Slock Index : 0x%08lx", osid_slot->Index);
     dprint("Slock Size : %d", osid_slot->Size);
+
+    retval = SBC_NvWriteChecked(osid_slot,
+                                RandBuf,
+                                64,
+                                0);
    
     retval = SBC_NvReadBuffer(osid_slot,
-                              RandBuf,
+                              RdBuf,
                               osid_slot->Size,
                               &RdSize);
 
+    SBC_mem_print_bin("OSID NVKEY", RdBuf, RdSize);
+
 
     return EFI_SUCCESS;
+#endif
 #endif
 
     btproc.bootst = SB_PROC_ST_NRMA;

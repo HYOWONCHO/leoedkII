@@ -36,6 +36,10 @@
 #include "SBC_Log.h"
 #include "SBC_UnitTest.h"
 
+#ifdef _SBC_TPM_
+#include "SBC_Tpm.h"
+#endif
+
 [[maybe_unused]] static LV_t fsbl_certi_lv;
 [[maybe_unused]] static LV_t rootca_certi_lv;
   
@@ -1443,8 +1447,8 @@ SBCStatus  SBC_DeviceIdKyeVerify(VOID *blkio, UINT8 *fwid, UINT8 *deckey)
     UINT8 pubkey[64] = {0,};
     UINTN pubkeyl = 0;
     UINT8 *loadbuf;
-    UINT32 ldlen = BASE_ANS_BLK_LEN;
-    UINTN systm_lba = 0;
+
+    
     SBC_AESGcmCtx  decctx;
     SBC_AESContext  aesctx;
 
@@ -1460,6 +1464,32 @@ SBCStatus  SBC_DeviceIdKyeVerify(VOID *blkio, UINT8 *fwid, UINT8 *deckey)
     // Generate the Public Key
     ret = SBC_DICESeedKeyPair(fwid, &key_pair);
     SBC_RET_VALIDATE_ERRCODEMSG((ret == SBCOK), SBCINVPARAM, "Device ID Key-pair gen fail");
+#ifdef _SBC_TPM_
+    loadbuf = AllocateZeroPool(1024);
+    SBC_RET_VALIDATE_ERRCODEMSG((loadbuf != NULL),
+                                 SBCNULLP,
+                                 "Buffer Allocate Resource Busy");
+
+    SBC_NV_SLOT *slot = SBC_NvFindSlotByName("DeviceID CA");
+    if (slot == NULL) {
+        eprint("TPM Slot information find fail");
+        ret = SBCNULLP;
+        goto errdone;
+    }
+
+    EFI_STATUS ret_val = SBC_NvReadBuffer(slot,
+                                         loadbuf,
+                                         slot->Size,
+                                         0);
+
+    if (EFI_ERROR(ret_val)) {
+        eprint("TPM NV Read Buffer fail (%r)", ret_val);
+        ret = SBCFAIL;
+        goto errdone;
+    }
+#else
+    UINTN systm_lba = 0;
+    UINT32 ldlen = BASE_ANS_BLK_LEN;
 
     SBC_external_mem_print_bin("Device Id Priv", key_pair.d, sizeof key_pair.d);
     SBC_external_mem_print_bin("Device ID Pub", key_pair.q.value , sizeof key_pair.q);
@@ -1482,51 +1512,9 @@ SBCStatus  SBC_DeviceIdKyeVerify(VOID *blkio, UINT8 *fwid, UINT8 *deckey)
     }
 
     //SBC_mem_print_bin("12 Device ID cert", (UINT8 *)loadbuf, ldlen);
-#if 1 //ndef _FSBL_TEST_ 
+ 
     offset = SYS_CONF_DEVID_CRT_OFS;
-#else
 
-    UINT8 rawData[428] = {                                           
-    	0x8C, 0x01, 0x00, 0x00, 0xD9, 0xFA, 0xCB, 0x23, 0x89, 0xBA, 0xE4, 0x9A,
-    	0xCB, 0x75, 0xB2, 0x8B, 0x3D, 0xC2, 0x5C, 0x9E, 0xA7, 0xF2, 0x94, 0x66,
-    	0x70, 0x22, 0x4A, 0xDF, 0x2D, 0x70, 0x36, 0xAB, 0xA7, 0x6C, 0xE0, 0xC3,
-    	0x3D, 0xDD, 0xB4, 0xBD, 0x85, 0xD0, 0x86, 0xC4, 0x53, 0x2F, 0xBE, 0x7E,
-    	0x73, 0x83, 0x23, 0x0B, 0x15, 0xA5, 0x65, 0xE3, 0xB0, 0x84, 0x0A, 0x4A,
-    	0x3F, 0xC6, 0xED, 0xD7, 0xED, 0x5A, 0x5A, 0x53, 0x80, 0xA8, 0xAB, 0x02,
-    	0xA2, 0xE8, 0x48, 0x4D, 0x4C, 0x2E, 0x27, 0x5D, 0xF8, 0xF3, 0xAC, 0x06,
-    	0x21, 0xFE, 0xA4, 0x7F, 0xE6, 0x2A, 0x4D, 0xC9, 0x7B, 0x73, 0x33, 0xEF,
-    	0xB3, 0xD8, 0x6E, 0xA7, 0xB4, 0x4C, 0xD4, 0xB5, 0x5E, 0x06, 0xA4, 0x87,
-    	0xCF, 0x44, 0xA0, 0xE1, 0x6F, 0x00, 0x62, 0xA5, 0xC1, 0x51, 0x27, 0x89,
-    	0xD0, 0xFF, 0x40, 0x56, 0xAF, 0x29, 0x57, 0x45, 0x22, 0x3B, 0x2A, 0xE1,
-    	0xBF, 0x32, 0x59, 0x05, 0xC3, 0x05, 0x19, 0x62, 0x9D, 0x79, 0x56, 0x70,
-    	0xDC, 0x30, 0xE0, 0xFE, 0x5F, 0x1D, 0x2F, 0xB8, 0x16, 0x71, 0x3B, 0x2B,
-    	0x03, 0x8A, 0x0B, 0x29, 0x67, 0x97, 0x42, 0x08, 0x0D, 0x9D, 0xD0, 0x20,
-    	0xE1, 0x80, 0x0A, 0x29, 0xE3, 0xC7, 0x46, 0x2C, 0xFE, 0xC3, 0xC0, 0x81,
-    	0xC9, 0x33, 0x3F, 0x81, 0xAC, 0x7D, 0x9A, 0xC2, 0xBE, 0x8A, 0x4E, 0xD1,
-    	0x76, 0xFB, 0x25, 0xB3, 0x07, 0x17, 0x08, 0x5B, 0x5C, 0x67, 0x06, 0xDB,
-    	0x02, 0xF5, 0xFC, 0x09, 0x10, 0xD4, 0x06, 0xB9, 0xAD, 0xAE, 0x4F, 0xF7,
-    	0x16, 0x80, 0x7F, 0x21, 0x0A, 0x56, 0x48, 0xA1, 0x32, 0x69, 0xA9, 0xDB,
-    	0x52, 0x5B, 0x43, 0x87, 0xBD, 0x08, 0x8E, 0x06, 0x91, 0x88, 0x9E, 0x66,
-    	0x82, 0x47, 0x6B, 0x69, 0xE7, 0x12, 0x9A, 0xDE, 0xB9, 0x61, 0x2F, 0xE3,
-    	0xDC, 0x71, 0x8E, 0x61, 0xE9, 0x5A, 0x8E, 0x17, 0x90, 0xBF, 0x35, 0x9B,
-    	0x4D, 0x16, 0xAF, 0x72, 0x16, 0x54, 0x0D, 0xA6, 0xCD, 0x0A, 0xFF, 0x76,
-    	0xB8, 0x49, 0x0C, 0xF2, 0x8E, 0x29, 0x04, 0x77, 0x43, 0x5C, 0x69, 0x83,
-    	0x34, 0xA8, 0xA4, 0x6B, 0xD6, 0x52, 0x8A, 0x93, 0x2D, 0x23, 0x46, 0x8F,
-    	0xBD, 0x08, 0x84, 0x2C, 0x3F, 0xA5, 0x52, 0x5B, 0x90, 0x75, 0x10, 0xF7,
-    	0xF6, 0x93, 0x97, 0x89, 0xA9, 0xC1, 0x41, 0x6A, 0xD9, 0xA2, 0xC0, 0x9A,
-    	0x3D, 0xDB, 0x41, 0x00, 0xA3, 0x8D, 0x89, 0xCD, 0x41, 0x71, 0x7B, 0x31,
-    	0xE6, 0x90, 0x5A, 0x9D, 0x33, 0x79, 0x02, 0xC6, 0xDD, 0xB0, 0x49, 0x96,
-    	0x92, 0xD5, 0xE6, 0xD9, 0xE5, 0x4C, 0x8D, 0xC8, 0x0C, 0x8C, 0x7F, 0x0D,
-    	0xEA, 0x7B, 0xD4, 0xA2, 0x52, 0xC2, 0x95, 0x81, 0x5B, 0x11, 0xFB, 0x6D,
-    	0x75, 0x9F, 0xD8, 0xEE, 0x0E, 0x19, 0x5A, 0xFE, 0xA0, 0xC2, 0x3D, 0x01,
-    	0x80, 0x38, 0xBF, 0xC2, 0xBC, 0x8A, 0xAA, 0x30, 0x47, 0xC6, 0x34, 0x8B,
-    	0x16, 0x62, 0x7D, 0x39, 0x46, 0x66, 0x58, 0x8C, 0x75, 0x4B, 0x37, 0x87,
-    	0xCE, 0x53, 0x4A, 0x35, 0xEE, 0x9B, 0x9E, 0x30, 0xF2, 0xD3, 0xB4, 0xA5,
-    	0x85, 0x85, 0xF8, 0x2B, 0x90, 0xB4, 0xFE, 0xF7                         
-    };                                                                       
-
-    loadbuf = rawData;
-    offset = 0;
 #endif
 
     CopyMem((void *)&calen, (void *)&loadbuf[offset], 4);
@@ -1551,19 +1539,12 @@ SBCStatus  SBC_DeviceIdKyeVerify(VOID *blkio, UINT8 *fwid, UINT8 *deckey)
     decctx.tag.length = BASE_ANS_TAG_LEN;
     //SBC_mem_print_bin("Device ID TAG", (UINT8 *)&loadbuf[offset], BASE_ANS_TAG_LEN);
 
-#ifdef _FSBL_TEST_
-    UINTN idx = 0;
-
-    for (idx = 0; idx < 32; idx++)
-        secret_key[idx] = idx + 20;
-#else
     // Device Secret Key Create 
     ret = SBC_DeviceSecuirtyKeyCreate(secret_key);
     SBC_RET_VALIDATE_ERRCODEMSG((ret == SBCOK), 
                                 SBCINVPARAM, 
                                 "Device ID Key-pair gen fail");
 
-#endif
     SBC_mem_print_bin("Device Secert Key", secret_key, BASE_ANS_KEY_STR);
     decctx.key.value = secret_key;
     decctx.key.length = BASE_ANS_KEY_STR;
@@ -3488,15 +3469,9 @@ errdone:
 SBCStatus  SBC_FSBLIntgCheck([[gnu::unused]]EFI_HANDLE *h_image , VOID *blkio, VOID *cert, UINTN certlen, UINTN nrombank, UINTN mode)
 {
     SBCStatus ret = SBCOK;
-
-    UINTN   startlba = 0;
-    UINT32  imglen = SBC_RAWPRT_DFLT_BLK_SZ;
-    [[maybe_unused]] UINT8   imghdr[SBC_RAWPRT_DFLT_BLK_SZ] = { 0, };
     UINT8 *imgbuf = NULL;
-//  VOID *blkio;
     UINT8 *cabuf =  NULL;
     UINTN calen = 0;
-    //UINTN certlen = 0;
     SBC_AESGcmCtx  ctx;
     SBC_AESContext  aesctx;
     UINT8 decbuf[1024] ={0,};
@@ -3505,6 +3480,39 @@ SBCStatus  SBC_FSBLIntgCheck([[gnu::unused]]EFI_HANDLE *h_image , VOID *blkio, V
     UINT8 *iv;
     UINT8 *tag;
 
+#ifdef _SBC_TPM_
+    imgbuf = AllocateZeroPool(1024);
+    SBC_RET_VALIDATE_ERRCODEMSG((imgbuf != NULL),
+                                 SBCNULLP,
+                                 "Buffer Allocate Resource Busy");
+
+    SBC_NV_SLOT *slot = SBC_NvFindSlotByName("ROOT CA");
+    if (slot == NULL) {
+        eprint("TPM Slt information find fail");
+        ret = SBCNULLP;
+        goto errdone;
+    }
+
+    EFI_STATUS retval = SBC_NvReadBuffer(slot,
+                                         imgbuf,
+                                         slot->Size,
+                                         0);
+
+    if (EFI_ERROR(retval)) {
+        eprint("TPM NV Read Buffer fail (%r)", retval);
+        ret = SBCFAIL;
+        goto errdone;
+    }
+
+    CopyMem((void *)&calen, (void *)&imgbuf[0], LEN_DFLT_OFS);
+    cabuf = &imgbuf[LEN_DFLT_OFS];
+
+    iv = &imgbuf[LEN_DFLT_OFS + calen];
+    tag = &imgbuf[LEN_DFLT_OFS + calen +  SBC_AT_IV_LEN];
+
+
+#else
+    UINTN   startlba = 0;
 
     switch (mode) {
     case BOOT_MODE_NORMAL:
@@ -3533,18 +3541,19 @@ SBCStatus  SBC_FSBLIntgCheck([[gnu::unused]]EFI_HANDLE *h_image , VOID *blkio, V
                               &imglen, 
                               startlba);
     SBC_RET_VALIDATE_ERRCODEMSG((ret == SBCOK), ret, "RooTCA load fail");
-#ifndef _UNIT_TEST_ON_
+
     // Pointing the RooTCA Address
     CopyMem((void *)&calen, (void *)&imgbuf[SYS_CONF_ROOT_CA_OFS], LEN_DFLT_OFS);
     cabuf = &imgbuf[SYS_CONF_ROOT_CA_OFS + LEN_DFLT_OFS];
 
     iv = &imgbuf[SYS_CONF_ROOT_CA_OFS + LEN_DFLT_OFS + calen];
     tag = &imgbuf[SYS_CONF_ROOT_CA_OFS + LEN_DFLT_OFS + calen +  SBC_AT_IV_LEN];
-
+#endif
     ret = SBC_DeviceSecuirtyKeyCreate(secret_key);
     SBC_RET_VALIDATE_ERRCODEMSG((ret == SBCOK), 
                                 SBCINVPARAM, 
                                 "SBC_DeviceSecuirtyKeyCreate fail");
+
    //offset = 0;
     ctx.out.value = (void *)decbuf;
     //declen = calen;
@@ -3570,13 +3579,7 @@ SBCStatus  SBC_FSBLIntgCheck([[gnu::unused]]EFI_HANDLE *h_image , VOID *blkio, V
     //SBC_mem_print_bin("RawFS RootCA", decbuf, calen);
 
     //SBC_mem_print_bin("Firmware RootCA", cert, certlen);
-#else
-    calen = rootca_certi_lv.length;
-    cabuf = (UINT8 *)rootca_certi_lv.value;
 
-    //SBC_mem_print_bin("Root CA", cabuf, calen);
-    //SBC_mem_print_bin("Cert", cert, certlen);
-#endif
 
     ret = SBC_X509VerifyCert(
                       (CONST UINT8 *)cert,  //  Cert
