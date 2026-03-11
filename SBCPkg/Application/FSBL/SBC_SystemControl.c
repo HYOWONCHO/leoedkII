@@ -23,6 +23,7 @@
 #include "SBC_FileCtrl.h"
 #include "SBC_Kdf.h"
 #include "SBC_UnitTest.h"
+#include "SBC_Nvram.h"
 
 
 
@@ -502,6 +503,32 @@ SBCStatus SBC_SecureBootUpdateScenario(VOID *priv)
 
 errdone:
     return ret;
+}
+
+VOID SBC_HardWareInfoReadFailed(VOID)
+{
+    EFI_STATUS retval = EFI_SUCCESS;
+    CHAR16 *str_varid = L"SBC_ForcedFaultRejct";
+    UINTN nv_env = 0ULL;
+    UINTN nv_len = 0ULL;
+
+    retval = SBC_NvramGetVar((VOID *)str_varid, 
+                             (VOID *)&nv_env,
+                             (VOID *)&nv_len);
+    if (EFI_ERROR(retval)) {
+        nv_env = 0;
+        nv_len = sizeof(UINTN);
+        retval = SBC_NvramSetVar((VOID *)str_varid,
+                                 (VOID *)&nv_env,
+                                 (VOID *)&nv_len);
+
+        return;
+    }
+
+    if (nv_env == 1) {
+        SBC_ShutdownSystem();
+    }
+
 }
 
 

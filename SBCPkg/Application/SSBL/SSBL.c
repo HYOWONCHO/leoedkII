@@ -348,7 +348,7 @@ UefiMain (
                  SYS_LOG_CSC_NAME,
                  8,
                  SYS_LOG_EVT_DETECTION,
-                 L"SBC_tamper_ SSBL signature verification faied\n");
+                 L"SBC_tamper_SSBL signature verification failed\n");
           retval = EFI_INVALID_PARAMETER;
           btproc.bootst = SB_PROC_ST_ABNRAM;
           if (h_rawptrheader.bootmode == BOOT_MODE_NORMAL) {
@@ -379,7 +379,7 @@ UefiMain (
                  SYS_LOG_CSC_NAME,
                  8,
                  SYS_LOG_EVT_DETECTION,
-                 L"SBC_tamper_ OS image signature verification faied\n");
+                 L"SBC_tamper_OS image signature verification failed\n");
           retval = EFI_INVALID_PARAMETER;
           btproc.bootst = SB_PROC_ST_ABNRAM;
           if (h_rawptrheader.bootmode == BOOT_MODE_NORMAL) {
