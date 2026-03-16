@@ -509,14 +509,15 @@ VOID SBC_HardWareInfoReadFailed(VOID)
 {
     EFI_STATUS retval = EFI_SUCCESS;
     CHAR16 *str_varid = L"SBC_ForcedFaultRejct";
-    UINTN nv_env = 0ULL;
-    UINTN nv_len = 0ULL;
+    UINT8 nv_env[sizeof(UINT32)] = { 0, };
+    UINT32 nv_len = 0;
 
     retval = SBC_NvramGetVar((VOID *)str_varid, 
                              (VOID *)&nv_env,
                              (VOID *)&nv_len);
     if (EFI_ERROR(retval)) {
-        nv_env = 0;
+        //nv_env = 0;
+        ZeroMem((void *)nv_env, sizeof(nv_env));
         nv_len = sizeof(UINTN);
         retval = SBC_NvramSetVar((VOID *)str_varid,
                                  (VOID *)&nv_env,
@@ -525,7 +526,11 @@ VOID SBC_HardWareInfoReadFailed(VOID)
         return;
     }
 
-    if (nv_env == 1) {
+    //Print(L"Nvram Read Value (Len : %d) : 0x%lx, %ld \n", nv_len, nv_env, nv_env);
+
+    SBC_mem_print_bin("SBC_ForcedFaultRejct", (UINT8 *)nv_env, nv_len);
+
+    if (nv_env[nv_len - 1] == 1) {
         SBC_ShutdownSystem();
     }
 

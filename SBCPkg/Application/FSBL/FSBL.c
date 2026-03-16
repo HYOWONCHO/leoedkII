@@ -624,14 +624,15 @@ UefiMain (
     // Added by Leon
     // For Hardware read fail
     //
-    extern VOID SBC_HardWareInfoReadFailed(VOID);
-    SBC_HardWareInfoReadFailed();
+
 
     sys_start_time = SBC_PerfNowTicks();
 
     SBC_TIME_BLOCKS_NS (driver_load_ns,
         { retval = SBC_DrveriInit(); });
 
+    extern VOID SBC_HardWareInfoReadFailed(VOID);
+    SBC_HardWareInfoReadFailed(); 
 
     ret = SBC_DeleteFile(EFI_BOOT_SSBL_PATH);
     
@@ -745,7 +746,7 @@ UefiMain (
                      SYS_LOG_CSC_NAME,
                      0,
                      L"Detetion",
-                     L"SBC_VENDOR_SP TPM Version found \n");
+                     L"SBC_VENDOR_SP TPM Version Not found \n");
 
         goto errdone;
     }

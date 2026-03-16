@@ -122,13 +122,14 @@ EFI_STATUS SBC_NvramGetVar(VOID *varname, VOID *payload, VOID *sz_pl)
 
     [[maybe_unused]] UINTN var_len = *(UINTN *)sz_pl;
 
-    Print(L"GetVar Name : %s, Var Size : %d \n", (CHAR16 *)varname, var_len);
+    //Print(L"GetVar Name : %s, Var Size : %d \n", (CHAR16 *)varname, var_len);
     Status = gRT->GetVariable((CHAR16 *)varname, &gSpImVendorGuid,
                               &Attributes, &DataSize, NULL);
     if (Status != EFI_BUFFER_TOO_SMALL) {
         Print(L"Nvram GetVar error %r \n", Status);
         return Status;  
     }
+    Print(L"GetVar Name : %s, Data Size : %d \n", (CHAR16 *)varname, DataSize);
 
     // 2단계: 버퍼 할당 후 실제 읽기
     Buffer = AllocatePool(DataSize);
@@ -144,6 +145,8 @@ EFI_STATUS SBC_NvramGetVar(VOID *varname, VOID *payload, VOID *sz_pl)
         Print(L"\nAttr=0x%08x\n", Attributes);
     }
 
+
+    *(UINTN *)sz_pl = DataSize;
     CopyMem(payload, Buffer, DataSize);
 
     if (Buffer) FreePool(Buffer);

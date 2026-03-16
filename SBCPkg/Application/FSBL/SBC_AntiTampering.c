@@ -3513,6 +3513,7 @@ SBCStatus  SBC_FSBLIntgCheck([[gnu::unused]]EFI_HANDLE *h_image , VOID *blkio, V
 
 #else
     UINTN   startlba = 0;
+    UINT32   imglen = 0UL;
 
     switch (mode) {
     case BOOT_MODE_NORMAL:
