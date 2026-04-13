@@ -587,6 +587,11 @@ errdone:
     return ret;
 }
 #endif
+
+
+    
+
+
 static SBCStatus _update_behavior_for_km(void *priv)
 {
     //BOOLEAN skip_protsw = FALSE;
@@ -622,6 +627,9 @@ static SBCStatus _update_behavior_for_km(void *priv)
     case SB_PROC_ST_NRMA:
         dprint("Base Answer re-encrypt and write in Update Mode");
 
+        extern SBCStatus SBC_OSID_KeyStore(void *context);
+
+        SBC_OSID_KeyStore((void *)bp);
         // Base answer re-encrypt using Migration Key 
 
         // Base Answer decrypt 
@@ -638,6 +646,10 @@ static SBCStatus _update_behavior_for_km(void *priv)
                             "mismatched known answer");
             goto errdone;
         }
+
+
+        // OSID Store 
+
 
 
 #ifdef _HANDLE_PROTSW_

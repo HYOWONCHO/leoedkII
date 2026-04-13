@@ -2202,9 +2202,11 @@ SBCStatus SBC_GenDeviceID(UINT8 *devid)
 //  SBC_external_mem_print_bin("MemoryDevice SN", info.mmsn, info.mmsnl);
     SBC_mem_print_bin("MemoryDevice SN", info.mmsn, info.mmsnl);
 
+#ifndef _RUN_GCS_
     _nvme_get_serial(&info);
 //  SBC_external_mem_print_bin("NVME SN", info.nvmesn,info.nvmesnl);
     SBC_mem_print_bin("NVME SN", info.nvmesn,info.nvmesnl);
+#endif
 
     //_read_fsbl_image(&rdlv);
     SBC_EFI_FSBL_Load(&rdlv);
