@@ -1608,6 +1608,7 @@ SBCStatus SBC_BaseAnswerExtractFromDisk(VOID *blkio, base_ansid_t *p)
   // Copy Length
 
   offset = SYS_CONF_RES_OFS;
+  dprint("Offset : 0x%x", offset);
   CopyMem((void *)&p->msglen, (void *)&loadbuf[offset], 4);
   SBC_RET_VALIDATE_ERRCODEMSG((p->msglen > 0), SBCBSANSWNOTFND, "Base Answer Not Foudn");
   offset += 4;
