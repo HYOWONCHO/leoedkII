@@ -1,4 +1,5 @@
 #!/usr/bin/env bash
+
 set -euo pipefail
 
 VAR_NAME="d4fe1500-6c3c-4ad5-9ea1-22d2976c56d9-SBC_ForcedFaultRejct"
