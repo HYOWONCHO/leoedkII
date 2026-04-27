@@ -631,8 +631,6 @@ UefiMain (
     SBC_TIME_BLOCKS_NS (driver_load_ns,
         { retval = SBC_DrveriInit(); });
 
-    extern VOID SBC_HardWareInfoReadFailed(VOID);
-    SBC_HardWareInfoReadFailed(); 
 
     ret = SBC_DeleteFile(EFI_BOOT_SSBL_PATH);
     
@@ -800,7 +798,8 @@ UefiMain (
                  0,
                  L"Detetion",
                  L"SBC_VENDOR_SP Block I/O Init Fail");
-      goto errdone;
+      SBC_ShutdownSystem(); 
+      //goto errdone;
     }
 
     tmp_prtheader = &h_rawprtheader;
@@ -826,6 +825,9 @@ UefiMain (
     btproc.prevmode = h_rawprtheader.prevmode;
 
     dprint("Prev. Mode is %d", btproc.prevmode);
+
+    //extern VOID SBC_HardWareInfoReadFailed(VOID *handle);
+    //SBC_HardWareInfoReadFailed((VOID *)&btproc); 
 
 
     
@@ -877,7 +879,7 @@ UefiMain (
                  SYS_LOG_CSC_NAME,
                  8,
                  SYS_LOG_EVT_DETECTION,
-                 L"SBC_tamper_ FSBL signature verification faied\n");
+                 L"SBC_tamper_ FSBL signature verification failed\n");
           retval = EFI_INVALID_PARAMETER;
           if (h_rawprtheader.bootmode  == BOOT_MODE_NORMAL) {
               btproc.b_forced = TRUE;
@@ -939,7 +941,7 @@ UefiMain (
                      SYS_LOG_CSC_NAME,
                      8,
                      SYS_LOG_EVT_DETECTION,
-                     L"SBC_tamper_ SSBL signature verification faied");
+                     L"SBC_tamper_ SSBL signature verification failed");
 
           btproc.bootst = SB_PROC_ST_ABNRAM;
           if (h_rawprtheader.bootmode  == BOOT_MODE_NORMAL) {
@@ -1089,7 +1091,7 @@ UefiMain (
                      SYS_LOG_CSC_NAME,
                      8,
                      SYS_LOG_EVT_DETECTION,
-                     L"SBC_tamper_ SSBL signature verification faied");
+                     L"SBC_tamper_ SSBL signature verification failed");
             btproc.bootst = SB_PROC_ST_ABNRAM;
           if (h_rawprtheader.bootmode == BOOT_MODE_NORMAL) {
               btproc.b_forced = TRUE;
@@ -1162,7 +1164,7 @@ UefiMain (
                      SYS_LOG_CSC_NAME,
                      8,
                      SYS_LOG_EVT_DETECTION,
-                     L"SBC_tamper_ SSBL signature verification faied");
+                     L"SBC_tamper_ SSBL signature verification failed");
             btproc.bootst = SB_PROC_ST_ABNRAM;
             //btproc.b_forced = TRUE;
             retval = EFI_INVALID_PARAMETER;
@@ -1292,6 +1294,7 @@ errdone:
     default:
         break;
     }
+
 
     SBC_ShutdownSystem();
 #else 

@@ -2284,7 +2284,7 @@ errdone:
 
     if (ret != SBCOK) {
       ZeroMem(mrgmsg, sizeof mrgmsg);
-      UnicodeSPrint(mrgmsg, sizeof mrgmsg, L"SBC_tamper_SSBL On SSBL, signature verification faied\n");
+      UnicodeSPrint(mrgmsg, sizeof mrgmsg, L"SBC_tamper_SSBL On SSBL, signature verification failed\n");
       sbc_err_sysprn(SBC_LOG_CMN_PRIO_ERR, 2,
              L"AT_BOOT",
              L"FSBL",
@@ -2516,7 +2516,7 @@ errdone:
 
     if (ret != SBCOK) {
       ZeroMem(mrgmsg, sizeof mrgmsg);
-      UnicodeSPrint(mrgmsg, sizeof mrgmsg, L"SBC_tamper_OS signature verification faied\n");
+      UnicodeSPrint(mrgmsg, sizeof mrgmsg, L"SBC_tamper_OS signature verification failed\n");
       sbc_err_sysprn(SBC_LOG_CMN_PRIO_ERR, 2,
              L"AT_BOOT",
              L"FSBL",
@@ -2828,7 +2828,10 @@ SBCStatus SBC_GenDeviceID(UINT8 *devid)
 //  SBC_external_mem_print_bin("MemoryDevice SN", info.mmsn, info.mmsnl);
 //  SBC_mem_print_bin("MemoryDevice SN", info.mmsn, info.mmsnl);
 
+#ifndef _RUN_GCS_
     _nvme_get_serial(&info);
+#endif
+
 //  SBC_external_mem_print_bin("NVME SN", info.nvmesn,info.nvmesnl);
 //  SBC_mem_print_bin("NVME SN", info.nvmesn,info.nvmesnl);
 

@@ -18,7 +18,7 @@
   VERSION_STRING                 = 1.0
   ENTRY_POINT                    = UefiMain
 
-  DEFINE UINT_TEST_ON            = TRUE
+#  DEFINE UINT_TEST_ON            = TRUE
 
 
 [Sources]

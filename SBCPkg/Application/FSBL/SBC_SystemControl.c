@@ -29,6 +29,7 @@
 
 
 
+
 SBCStatus SBC_BootKeyModeChange(UINT32 newbm, UINT32 newkey, VOID *priv)
 {
     SBCStatus ret = SBCOK;
@@ -505,8 +506,10 @@ errdone:
     return ret;
 }
 
-VOID SBC_HardWareInfoReadFailed(VOID)
+VOID SBC_HardWareInfoReadFailed(VOID *handle)
 {
+
+#if 0
     EFI_STATUS retval = EFI_SUCCESS;
     CHAR16 *str_varid = L"SBC_ForcedFaultRejct";
     UINT8 nv_env[sizeof(UINT32)] = { 0, };
@@ -533,6 +536,27 @@ VOID SBC_HardWareInfoReadFailed(VOID)
     if (nv_env[nv_len - 1] == 1) {
         SBC_ShutdownSystem();
     }
+#else
+    SBCStatus ret = SBCOK;
+    boot_proc_t *proc = (boot_proc_t *)handle;
+    UINT8 fault_flag = 0;
+
+    ret = SBC_RawAlignedReadBlockIO(proc->blkhnd, 
+                                    0x100,
+                                    1,
+                                    &fault_flag);
+
+    if (ret != SBCOK) {
+        SBC_ShutdownSystem();
+    }
+
+
+    dprint("SBC_ForcedFaultReject : %d \n", fault_flag);
+    if (fault_flag == 1) {
+        SBC_ShutdownSystem();
+    }
+#endif
+
 
 }
 
