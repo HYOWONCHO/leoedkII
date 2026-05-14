@@ -592,6 +592,115 @@ SBC_DeleteFileOnMyBootFs(
 );
 
 
+#ifdef _RUN_GCS_
+
+#include <Library/IoLib.h>
+#include <Library/DebugLib.h>
+
+
+#define SBC_IA32_APIC_BASE_MSR          0x1B
+#define SBC_APIC_BASE_ENABLE            BIT11
+#define SBC_APIC_BASE_MASK              0xFFFFF000ULL
+
+#define SBC_APIC_SVR                    0x0F0
+#define SBC_APIC_LVTT                   0x320
+#define SBC_APIC_TMICT                  0x380
+#define SBC_APIC_TMCCT                  0x390
+#define SBC_APIC_TDCR                   0x3E0
+
+#define SBC_APIC_SOFTWARE_ENABLE        BIT8
+#define SBC_APIC_TIMER_MASKED           BIT16
+#define SBC_APIC_TIMER_PERIODIC         BIT17
+
+#define SBC_APIC_TIMER_VECTOR           0xEF
+#define SBC_APIC_SPURIOUS_VECTOR        0xFF
+#define SBC_APIC_TIMER_DIVIDE_BY_16     0x3
+#define SBC_APIC_TIMER_INIT_COUNT       0xFFFFFFFFU
+
+STATIC UINTN
+SBC_EFI_GetApicBase(
+    VOID
+)
+{
+    UINT64 ApicBaseMsr;
+
+    ApicBaseMsr = AsmReadMsr64(SBC_IA32_APIC_BASE_MSR);
+
+    if ((ApicBaseMsr & SBC_APIC_BASE_ENABLE) == 0) {
+        return 0;
+    }
+
+    return (UINTN)(ApicBaseMsr & SBC_APIC_BASE_MASK);
+}
+
+STATIC BOOLEAN
+SBC_EFI_InitLocalApicTimer(
+    VOID
+)
+{
+    UINTN  ApicBase;
+    UINT32 Value;
+    UINT32 InitCount;
+    UINT32 CurrentCount;
+
+    ApicBase = SBC_EFI_GetApicBase();
+    if (ApicBase == 0) {
+        DEBUG((DEBUG_ERROR, "[FSBL] invalid Local APIC base\n"));
+        return FALSE;
+    }
+
+    /*
+     * Enable Local APIC by setting Software Enable bit in SVR.
+     */
+    Value = MmioRead32(ApicBase + SBC_APIC_SVR);
+    Value |= SBC_APIC_SOFTWARE_ENABLE;
+    Value = (Value & ~0xFFU) | SBC_APIC_SPURIOUS_VECTOR;
+    MmioWrite32(ApicBase + SBC_APIC_SVR, Value);
+
+    /*
+     * Set APIC timer divide configuration.
+     */
+    MmioWrite32(
+        ApicBase + SBC_APIC_TDCR,
+        SBC_APIC_TIMER_DIVIDE_BY_16
+    );
+
+    /*
+     * Configure APIC timer as periodic and masked.
+     * Masked means it will not generate interrupt.
+     * TimerLib only needs the counter value.
+     */
+    MmioWrite32(
+        ApicBase + SBC_APIC_LVTT,
+        SBC_APIC_TIMER_MASKED |
+        SBC_APIC_TIMER_PERIODIC |
+        SBC_APIC_TIMER_VECTOR
+    );
+
+    /*
+     * This is the key point.
+     * InternalX86GetInitTimerCount() reads this register.
+     */
+    MmioWrite32(
+        ApicBase + SBC_APIC_TMICT,
+        SBC_APIC_TIMER_INIT_COUNT
+    );
+
+    InitCount = MmioRead32(ApicBase + SBC_APIC_TMICT);
+    CurrentCount = MmioRead32(ApicBase + SBC_APIC_TMCCT);
+
+    DEBUG((
+        DEBUG_INFO,
+        "[FSBL] APIC timer init: ApicBase=0x%lx, InitCount=0x%x, CurrentCount=0x%x\n",
+        (UINT64)ApicBase,
+        InitCount,
+        CurrentCount
+    ));
+
+    return (InitCount != 0);
+}
+#endif
+
 EFI_STATUS
 EFIAPI
 UefiMain (
@@ -624,7 +733,9 @@ UefiMain (
     // Added by Leon
     // For Hardware read fail
     //
-
+#ifdef _RUN_GCS_
+    SBC_EFI_InitLocalApicTimer();
+#endif
 
     sys_start_time = SBC_PerfNowTicks();
 
@@ -958,7 +1069,7 @@ UefiMain (
                      SYS_LOG_APP_NAME,
                      SYS_LOG_CSC_NAME,
                      8,
-                     SYS_LOG_EVT_VALDIATION,
+                     SYS_LOG_EVT_VALIDATION,
                      L"SBC_tamper_SSBL signature verification suuccess");
 
         ret =  SBC_DeviceIdKyeVerify(h_blkio, diceid.devid, diceid.osid);
@@ -985,7 +1096,7 @@ UefiMain (
              SYS_LOG_APP_NAME,
              SYS_LOG_CSC_NAME,
              8,
-             SYS_LOG_EVT_VALDIATION,
+             SYS_LOG_EVT_VALIDATION,
              L"SBC_Integrity_All boot components passed signature verification \n");
 
         ret = SBC_RunSsblNormalScenario(
@@ -1034,7 +1145,7 @@ UefiMain (
                      SYS_LOG_APP_NAME,
                      SYS_LOG_CSC_NAME,
                      8,
-                     SYS_LOG_EVT_VALDIATION,
+                     SYS_LOG_EVT_VALIDATION,
                      L"SBC_tamper_SSBL signature verification suuccess");
 
       ret =  SBC_DeviceIdKyeVerify(h_blkio, diceid.devid, diceid.osid);
@@ -1065,7 +1176,7 @@ UefiMain (
              SYS_LOG_APP_NAME,
              SYS_LOG_CSC_NAME,
              8,
-             SYS_LOG_EVT_VALDIATION,
+             SYS_LOG_EVT_VALIDATION,
              L"SBC_Integrity_All boot components passed signature verification \n");
 #endif     
 
@@ -1107,7 +1218,7 @@ UefiMain (
                      SYS_LOG_APP_NAME,
                      SYS_LOG_CSC_NAME,
                      8,
-                     SYS_LOG_EVT_VALDIATION,
+                     SYS_LOG_EVT_VALIDATION,
                      L"SBC_tamper_SSBL signature verification suuccess");
 #if 1
       ret =  SBC_DeviceIdKyeVerify(h_blkio, diceid.devid, diceid.migid);
@@ -1128,6 +1239,21 @@ UefiMain (
       }
 #endif
 
+      // added by heappy at 20260429 
+      // whenever update, check the bsaseanswer integrity check 
+//    ret = SBC_BaseAnswerValidate(h_blkio, baseansr.value, baseansr.length, diceid.osid, BASE_ANS_KEY_STR);
+//    if (ret != SBCOK) {
+//        sbc_err_sysprn(SBC_LOG_CMN_PRIO_ERR, 2,
+//                       SYS_LOG_HOST_BOOT,
+//                       SYS_LOG_APP_NAME,
+//                       SYS_LOG_CSC_NAME,
+//                       8,
+//                       L"Detection",
+//                       L"SBC_tamper_OSID derived answer mismatched known answer");
+//        btproc.bootst = SB_PROC_ST_ABNRAM;
+//        goto errdone;
+//    }
+
 
 
       sbc_err_sysprn(SBC_LOG_CMN_PRIO_INFO, 2,
@@ -1135,7 +1261,7 @@ UefiMain (
              SYS_LOG_APP_NAME,
              SYS_LOG_CSC_NAME,
              8,
-             SYS_LOG_EVT_VALDIATION,
+             SYS_LOG_EVT_VALIDATION,
              L"SBC_Integrity_All boot components passed signature verification \n");
 #endif     
       ret = SBC_BootModeNormalAndpUdate(h_blkio, ImageHandle, currbank_id);
@@ -1178,7 +1304,7 @@ UefiMain (
                      SYS_LOG_APP_NAME,
                      SYS_LOG_CSC_NAME,
                      8,
-                     SYS_LOG_EVT_VALDIATION,
+                     SYS_LOG_EVT_VALIDATION,
                      L"SBC_tamper_SSBL signature verification suuccess");
 
      ret =  SBC_DeviceIdKyeVerify(h_blkio, diceid.devid, diceid.migid);
@@ -1205,7 +1331,7 @@ UefiMain (
              SYS_LOG_APP_NAME,
              SYS_LOG_CSC_NAME,
              8,
-             SYS_LOG_EVT_VALDIATION,
+             SYS_LOG_EVT_VALIDATION,
              L"SBC_Integrity_All boot components passed signature verification \n");
 #endif  
 
@@ -1285,7 +1411,7 @@ errdone:
                  SYS_LOG_APP_NAME,
                  SYS_LOG_CSC_NAME,
                  8,
-                 SYS_LOG_EVT_VALDIATION,
+                 SYS_LOG_EVT_VALIDATION,
                  L"SBC_tamper_Factory firmware integrity is compromised and System Shutdown\n");
         }
 

@@ -69,8 +69,17 @@ typedef struct _fhnd_img_t {
     UINTN   fsbladdr;        // Address pointing to where the LSBL image is.
     UINT32  ssbln;
     UINTN   ssbladdr;        // Address pointing to where the LSBL image is.
-
 }fhnd_img_t;
+
+
+
+
+typedef struct _migkey_buf_t {
+    atlv_t base_fsbl;
+    atlv_t base_ssbl;
+    atlv_t new_ssbl;
+    atlv_t new_fsbl;
+}migkey_buf_t;
 #pragma pack()
 /*! \}*/
 
@@ -319,4 +328,5 @@ SBCStatus  SBC_Vmlinuz_Verify(VOID *blkhnd, VOID *ansr, UINTN normbank, UINTN bm
 
 SBCStatus SBC_DeviceSecuirtyKeyCreate(VOID *key);
 SBCStatus SBC_ReadFwBootSrvInformation(UINT16 *flbpath, VOID *blobinfo, VOID *szinfo);
+int sbc_fsbl_create_migration_key(void  *p);
 #endif

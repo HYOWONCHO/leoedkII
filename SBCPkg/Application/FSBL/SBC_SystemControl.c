@@ -420,7 +420,7 @@ SBCStatus SBC_SecureBootUpdateScenario(VOID *priv)
              SYS_LOG_APP_NAME,
              SYS_LOG_CSC_NAME,
              8,
-             SYS_LOG_EVT_VALDIATION,
+             SYS_LOG_EVT_VALIDATION,
              L"SBC_tamper_Updated boot firmware invalid and initiating rollback to factory version\n");
 
         
@@ -438,7 +438,7 @@ SBCStatus SBC_SecureBootUpdateScenario(VOID *priv)
              SYS_LOG_APP_NAME,
              SYS_LOG_CSC_NAME,
              8,
-             SYS_LOG_EVT_VALDIATION,
+             SYS_LOG_EVT_VALIDATION,
              L"SBC_Integrity_Boot mode is FACTORY mode and Reboot\n");
 
 
@@ -450,7 +450,7 @@ SBCStatus SBC_SecureBootUpdateScenario(VOID *priv)
                    SYS_LOG_APP_NAME,
                    SYS_LOG_CSC_NAME,
                    1,
-                   SYS_LOG_EVT_VALDIATION,
+                   SYS_LOG_EVT_VALIDATION,
                    L"SBC_VENDOR_FP FSBL Change Boot Mode based on "
                    L"Normal Mode Ab-normal state");
 
@@ -487,7 +487,7 @@ SBCStatus SBC_SecureBootUpdateScenario(VOID *priv)
                        SYS_LOG_APP_NAME,
                        SYS_LOG_CSC_NAME,
                        1,
-                       SYS_LOG_EVT_VALDIATION,
+                       SYS_LOG_EVT_VALIDATION,
                        L"SBC_VENDOR_FP FSBL Shutdown from Abnormal of Normal or Update Boot Mode");
         goto errdone;
     }
@@ -497,7 +497,7 @@ SBCStatus SBC_SecureBootUpdateScenario(VOID *priv)
                    SYS_LOG_APP_NAME,
                    SYS_LOG_CSC_NAME,
                    1,
-                   SYS_LOG_EVT_VALDIATION,
+                   SYS_LOG_EVT_VALIDATION,
                    L"SBC_VENDOR_FP FSBL Reset from Abnormal of Normal or Update Boot Mode");
 
     SBC_RebootSystem();

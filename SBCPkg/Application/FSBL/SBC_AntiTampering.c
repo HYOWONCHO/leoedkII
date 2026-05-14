@@ -841,20 +841,97 @@ errdone:
 
 }
 
+int sbc_create_rawfs_secret_key(void *buf) 
+{
+//  atlv_t *info = (atlv_t *)buf;
+//  hw_uniqueinfo_t info;
+//
+//  ZeroMem((void *)&info, sizeof info);
+//
+//  _baseboard_sn(&info);
+//  _memorydevice_sn(&info);
+//  _nvme_get_serial(&info);
+//
+//  info->length = info.mbsnl + info.mmsnl + info.nvmesnl;
+//  info->data = sbc_atlv_alloc_copy(NULL, info->length);
+//  SBC_RET_VALIDATE_ERRCODEMSG((info->data != NULL),
+//                              SBCNULLP,
+//                              "Key buff create Null");
+//
+//  CopyMem(&data[0])
+
+
+    return SBCOK;
+}
+
+int sbc_fsbl_create_migration_key(void  *p) 
+{
+    int ret = SBCOK;
+    boot_proc_t *bp = (boot_proc_t *)p;
+    //mig_key_t mig;
+
+
+    SBC_RET_VALIDATE_ERRCODEMSG((bp != NULL), SBCNULLP, "Handle Nill");
+
+    switch(bp->bm) {
+    case BOOT_MODE_UPDATE:
+
+        break;
+    case BOOT_MODE_RECOVERY:
+        break;
+    default:
+        eprint("Unknown boot mode on Migration Key");
+        break;
+    }
+
+
+
+errdone:
+    return ret;
+
+}
+
+#ifdef _RUN_GCS_
+#define GCS_STORAGE_SN_LEN  16
+
+static SBCStatus sbc_set_nvme_serial(hw_uniqueinfo_t *p,
+                                     const UINT8 *serial,
+                                     UINTN serial_len)
+{
+    if (p == NULL || serial == NULL || serial_len == 0)
+        return SBCNULLP;
+
+    p->nvmesnl = serial_len;
+
+    CopyMem(p->nvmesn, serial, serial_len);
+
+    return SBCOK;
+}
+#endif
 
 SBCStatus _nvme_get_serial(hw_uniqueinfo_t *p)
 {
+
+
+#ifdef _RUN_GCS_
+    static CONST UINT8 gcs_storage_sn[GCS_STORAGE_SN_LEN] = {
+        0x4C, 0x49, 0x47, 0x44, 0x65, 0x66, 0x65, 0x6E,
+        0x73, 0x65, 0x26, 0x41, 0x65, 0x72, 0x6F, 0x73
+    }; 
+    dprint("FSBL GCS SATA Serial number !!!");
+    return sbc_set_nvme_serial(p, gcs_storage_sn, sizeof(gcs_storage_sn));
+#else
+
     SBCStatus                 ret = SBCFAIL;
     EFI_STATUS                Status;
     EFI_HANDLE                *HandleBuffer;
     UINTN                     HandleCount;
-    UINTN                     Index;
+    UINTN                     Index; 
     EFI_NVM_EXPRESS_PASS_THRU_PROTOCOL *NvmePassThru;
     EFI_NVM_EXPRESS_COMMAND                   Command;
     EFI_NVM_EXPRESS_PASS_THRU_COMMAND_PACKET  CommandPacket;
     EFI_NVM_EXPRESS_COMPLETION                Completion;
     NVME_ADMIN_CONTROLLER_DATA                ControllerData;
-
 
     // Locate handles that support the NVMe Pass Thru Protocol.
     Status = gBS->LocateHandleBuffer(
@@ -961,6 +1038,9 @@ errdone:
         FreePool(HandleBuffer);
     }
     return ret;
+#endif
+
+
 }
 
 static SBCStatus _baseboard_sn(hw_uniqueinfo_t *p)
@@ -1998,7 +2078,7 @@ SBCStatus  SBC_BaseAnswerValidate(VOID *blkhnd, UINT8 *answer, UINTN answerl, UI
 #endif
 
     if (SBC_AESGcmDecrypt(&aesctx) != SBCOK) {
-      //Print(L"Base Answer Decrypt fail \n");
+      eprint("Base Answer Decrypt fail \n");
       ret = SBCFAIL;
       goto errdone;
     }
@@ -2821,19 +2901,17 @@ SBCStatus SBC_GenDeviceID(UINT8 *devid)
 
 
     _baseboard_sn(&info);
-//  SBC_external_mem_print_bin("BaseBoard SN", info.mbsn,info.mbsnl);
-//  SBC_mem_print_bin("BaseBoard SN", info.mbsn,info.mbsnl);
+    SBC_external_mem_print_bin("BaseBoard SN", info.mbsn,info.mbsnl);
+    //SBC_mem_print_bin("BaseBoard SN", info.mbsn,info.mbsnl);
 
     _memorydevice_sn(&info);
-//  SBC_external_mem_print_bin("MemoryDevice SN", info.mmsn, info.mmsnl);
-//  SBC_mem_print_bin("MemoryDevice SN", info.mmsn, info.mmsnl);
+    SBC_external_mem_print_bin("MemoryDevice SN", info.mmsn, info.mmsnl);
+    //SBC_mem_print_bin("MemoryDevice SN", info.mmsn, info.mmsnl);
 
-#ifndef _RUN_GCS_
+
     _nvme_get_serial(&info);
-#endif
-
-//  SBC_external_mem_print_bin("NVME SN", info.nvmesn,info.nvmesnl);
-//  SBC_mem_print_bin("NVME SN", info.nvmesn,info.nvmesnl);
+    SBC_external_mem_print_bin("NVME SN", info.nvmesn,info.nvmesnl);
+    //SBC_mem_print_bin("NVME SN", info.nvmesn,info.nvmesnl);
 
     //_read_fsbl_image(&rdlv);
     efi_boot_fsbl_load(&rdlv);
@@ -2851,7 +2929,7 @@ SBCStatus SBC_GenDeviceID(UINT8 *devid)
       goto errdone;
     }
 
-    //SBC_external_mem_print_bin("FSBL File Hash", (UINT8 *)devidhsah, 32);
+    SBC_external_mem_print_bin("FSBL File Hash", (UINT8 *)devidhsah, 32);
 
 
     rdlv.length = SBC_AT_HASH_LEN;

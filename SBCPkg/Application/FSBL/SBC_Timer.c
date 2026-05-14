@@ -6,6 +6,7 @@
 
 UINTN _PerfDeltaTicks(UINTN T0, UINTN T1)
 {
+#if 0
     UINT64 Start, End;
     (void)GetPerformanceCounterProperties(&Start, &End);
 
@@ -18,15 +19,18 @@ UINTN _PerfDeltaTicks(UINTN T0, UINTN T1)
         // rollover
         return (T0 - End) + (Start - T1) + 1;
     }
+#else
+    return 0;
+#endif
 }
 
 UINTN SBC_PerfNowTicks(VOID)
 {
-    return GetPerformanceCounter();
+    return 0; //GetPerformanceCounter();
 }
 
 UINTN SBC_PerfTicksTons(UINTN ticks)
 {
-    return GetTimeInNanoSecond(ticks);
+    return 0;  //GetTimeInNanoSecond(ticks);
 }
 

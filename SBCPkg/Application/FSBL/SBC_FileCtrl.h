@@ -92,37 +92,37 @@ typedef struct _rawprt_hdr_t {
 
 #pragma pack(pop)
 
-#define BOOT_FW_SRTOFS                      0x00000200
+#define BOOT_FW_SRTOFS                      0x00000200U
 
-#define BOOT_FSBL_OFS                       0x00000000      /**< FSBL Offset */
-#define BOOT_SSBL_OFS                       0x00400000      /**< SSB Offset */
-#define BOOT_OS_OFS                         0x00800000      /**< Operating System Offset */
-#define BOOT_SW_OFS                         0x01C00000      /**< Boot Software offset */
+#define BOOT_FSBL_OFS                       0x00000000U      /**< FSBL Offset */
+#define BOOT_SSBL_OFS                       0x00400000U      /**< SSB Offset */
+#define BOOT_OS_OFS                         0x00800000U      /**< Operating System Offset */
+#define BOOT_SW_OFS                         0x01C00000U      /**< Boot Software offset */
 
 
-#define BOOT_SECTOR1_OFS                    (0x00000000 | BOOT_FW_SRTOFS)
-#define BOOT_SECTOR2_OFS                    (0x08000000 | BOOT_FW_SRTOFS)
-#define BOOT_SECTOR3_OFS                    (0x10000000 | BOOT_FW_SRTOFS)
+#define BOOT_SECTOR1_OFS                    (0x00000000U | BOOT_FW_SRTOFS)
+#define BOOT_SECTOR2_OFS                    (0x08000000U | BOOT_FW_SRTOFS)
+#define BOOT_SECTOR3_OFS                    (0x10000000U | BOOT_FW_SRTOFS)
 
-#define BOOT_IMG_LENB                       0x00000004
-#define BOOT_FSBL_MAX                       0x00400000      /**< 4M */
+#define BOOT_IMG_LENB                       0x00000004U
+#define BOOT_FSBL_MAX                       0x00400000U      /**< 4M */
 #define BOOT_FSBL_IMGMAX                    (BOOT_FSBL_MAX - BOOT_IMG_LENB)
 
 
-#define BOOT_SSBL_MAX                       0x00400000      /**< 4M */
+#define BOOT_SSBL_MAX                       0x00400000U      /**< 4M */
 #define BOOT_SSBL_IMGMAX                    (BOOT_SSBL_MAX - BOOT_IMG_LENB)
 
 
-#define BOOT_OS_IMG_MB                      20
+#define BOOT_OS_IMG_MB                      20U
 #define BOOT_OS_MAX                         (BOOT_OS_IMG_MB << 20)      /**< 20 M */
 #define BOOT_OS_IMGMAX                      (BOOT_OS_MAX - BOOT_IMG_LENB)
 
-#define BOOT_SW_IMG_MB                      100
+#define BOOT_SW_IMG_MB                      100U
 #define BOOT_SW_MAX                         (BOOT_SW_IMG_MB << 20)      /**<  100 M */
 #define BOOT_SW_IMGMAX                      (BOOT_SW_MAX - BOOT_IMG_LENB)
 
 
-#define BOOT_FW_IMG_MB                      128
+#define BOOT_FW_IMG_MB                      128U
 #define BOOT_FW_IMGMAX                      (BOOT_FW_IMG_MB << 20)
 
 
@@ -155,14 +155,14 @@ typedef union _boot_fw_inf_t {
 
 #define LEN_DFLT_OFS                    0x04
 
-#define SYS_CONF_START_OFS              (0x18000000 | BOOT_FW_SRTOFS)
-#define SYS_CONF_OSID_OFS               0x00000000
-#define SYS_CONF_RES_OFS                0x00000040          /**< Reference offset */
-#define SYS_CONF_ROOT_CA_OFS            0x00000080
-#define SYS_CONF_DEVID_CRT_OFS          0x00000880
-#define SYS_CONF_FWID_CRT_OFS           0x00001080
-#define SYS_CONF_OSID_CRT_OFS           0x00001880
-#define SYS_CONF_SW_LIST_OFS            0x00002080
+#define SYS_CONF_START_OFS              (0x18000000U | BOOT_FW_SRTOFS)
+#define SYS_CONF_OSID_OFS               0x00000000U
+#define SYS_CONF_RES_OFS                0x00000040U          /**< Reference offset */
+#define SYS_CONF_ROOT_CA_OFS            0x00000080U
+#define SYS_CONF_DEVID_CRT_OFS          0x00000880U
+#define SYS_CONF_FWID_CRT_OFS           0x00001080U
+#define SYS_CONF_OSID_CRT_OFS           0x00001880U
+#define SYS_CONF_SW_LIST_OFS            0x00002080U
 
 
 #define SYS_OSID_LEN                    4
@@ -626,4 +626,88 @@ SBC_DeleteFileOnHandle(
     IN EFI_HANDLE FsHandle,
     IN CHAR16    *FilePath
     );
+
+
+/**
+ * @brief Load a file from any available EFI filesystem.
+ *
+ * This function automatically searches all handles that support
+ * EFI_SIMPLE_FILE_SYSTEM_PROTOCOL and attempts to open/read
+ * the specified file path.
+ *
+ * If the file is successfully found, the file contents are allocated
+ * into memory and returned through @p OutLv.
+ *
+ * The caller is responsible for freeing OutLv->value using FreePool().
+ *
+ * @param[in]  FilePath
+ *     Absolute EFI file path.
+ *
+ *     Example:
+ *     - L"\\EFI\\BOOT\\SSBL.efi"
+ *     - L"\\EFI\\BOOT\\grubx64.efi"
+ *
+ * @param[out] OutLv
+ *     Output buffer structure.
+ *
+ *     - value  : Allocated file buffer
+ *     - length : File size in bytes
+ *
+ * @retval SBCOK
+ *     File successfully loaded.
+ *
+ * @retval SBCNULLP
+ *     Invalid parameter.
+ *
+ * @retval SBCNOTFND
+ *     File not found on any filesystem.
+ *
+ * @retval SBCIO
+ *     File read error occurred.
+ *
+ * @retval SBCFAIL
+ *     General failure.
+ *
+ * @note
+ * The caller must release the allocated buffer:
+ *
+ * @code
+ * if (Lv.value != NULL) {
+ *     FreePool(Lv.value);
+ *     Lv.value = NULL;
+ *     Lv.length = 0;
+ * }
+ * @endcode
+ *
+ * @par Example
+ *
+ * @code
+ * LV_t Lv;
+ * SBCStatus Ret;
+ *
+ * Ret = SBC_LoadFile(
+ *           L"\\EFI\\BOOT\\SSBL.efi",
+ *           &Lv
+ *       );
+ *
+ * if (Ret != SBCOK) {
+ *     eprint("SBC_LoadFile failed");
+ *     return Ret;
+ * }
+ *
+ * dprint("File loaded successfully");
+ * dprint("File Size : %ld bytes", Lv.length);
+ *
+ * // Use Lv.value ...
+ *
+ * FreePool(Lv.value);
+ * Lv.value  = NULL;
+ * Lv.length = 0;
+ * @endcode
+ */
+SBCStatus
+SBC_LoadFile(
+    IN  CHAR16 *FilePath,
+    OUT LV_t   *OutLv
+);
 #endif

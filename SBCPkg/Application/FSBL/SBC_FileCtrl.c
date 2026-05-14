@@ -13,6 +13,7 @@
 #include <string.h>
 
 #include <Library/DevicePathLib.h>
+#include <Protocol/DevicePath.h>
 
 #include "SBC_Util.h"
 #include "SBC_FileCtrl.h"
@@ -4156,7 +4157,122 @@ SBC_ReadFileOnHandle(
     return SBCOK;
 }
 
+STATIC BOOLEAN SBC_EFI_IsUsbDevicePath(
+    IN EFI_DEVICE_PATH_PROTOCOL *DevicePath
+)
+{
+    EFI_DEVICE_PATH_PROTOCOL *Node;
 
+    if (DevicePath == NULL) {
+        return FALSE;
+    }
 
+    for (Node = DevicePath;
+         !IsDevicePathEnd(Node);
+         Node = NextDevicePathNode(Node)) {
 
+        if (DevicePathType(Node) != MESSAGING_DEVICE_PATH) {
+            continue;
+        }
 
+        switch (DevicePathSubType(Node)) {
+        case MSG_USB_DP:
+        case MSG_USB_CLASS_DP:
+        case MSG_USB_WWID_DP:
+            return TRUE;
+
+        default:
+            break;
+        }
+    }
+
+    return FALSE;
+}
+
+STATIC BOOLEAN SBC_EFI_IsUsbFsHandle(
+    IN EFI_HANDLE FsHandle
+)
+{
+    EFI_STATUS Status;
+    EFI_DEVICE_PATH_PROTOCOL *DevicePath = NULL;
+
+    if (FsHandle == NULL) {
+        return FALSE;
+    }
+
+    Status = gBS->HandleProtocol(
+                    FsHandle,
+                    &gEfiDevicePathProtocolGuid,
+                    (VOID **)&DevicePath
+             );
+
+    if (EFI_ERROR(Status) || DevicePath == NULL) {
+        return FALSE;
+    }
+
+    return SBC_EFI_IsUsbDevicePath(DevicePath);
+}
+
+SBCStatus
+SBC_EFI_LoadFile(
+    IN  CHAR16 *FilePath,
+    OUT LV_t   *OutLv
+    ) 
+{
+    EFI_STATUS Status;
+    EFI_HANDLE *HandleBuffer = NULL;
+    UINTN HandleCount = 0;
+    UINTN Index;
+    SBCStatus Ret = SBCNOTFND;
+
+    if (FilePath == NULL || OutLv == NULL) {
+        return SBCNULLP;
+    }
+
+    OutLv->value  = NULL;
+    OutLv->length = 0;
+
+    Status = gBS->LocateHandleBuffer(
+        ByProtocol,
+        &gEfiSimpleFileSystemProtocolGuid,
+        NULL,
+        &HandleCount,
+        &HandleBuffer
+        );
+
+    if (EFI_ERROR(Status) || HandleBuffer == NULL || HandleCount == 0) {
+        eprint("LocateHandleBuffer failed: %r", Status);
+        return SBCFAIL;
+    }
+
+    for (Index = 0; Index < HandleCount; Index++) {
+        if (SBC_EFI_IsUsbFsHandle(HandleBuffer[Index])) {
+            dprint("Skip USB filesystem handle");
+            continue;
+        }
+
+        Ret = SBC_ReadFileOnHandle(
+            HandleBuffer[Index],
+            FilePath,
+            OutLv
+            );
+
+        if (Ret == SBCOK) {
+            break;
+        }
+
+        if (Ret == SBCNOTFND) {
+            continue;
+        }
+
+        /*
+         * Some filesystem handles may not be readable or may not contain
+         * the requested file. Keep searching other handles.
+         */
+        continue;
+    }
+
+    FreePool(HandleBuffer);
+
+    return Ret;
+}
