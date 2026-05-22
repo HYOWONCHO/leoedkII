@@ -197,43 +197,43 @@ typedef struct _rawprt_hdr_t {
 
 #pragma pack(pop)
 
-#define BOOT_BLKIO_DFTSZ                    0x00000200
+#define BOOT_BLKIO_DFTSZ                    0x00000200U
 
-#define BOOT_FW_SRTOFS                      0x00000200
+#define BOOT_FW_SRTOFS                      0x00000200U
 
-#define BOOT_FSBL_OFS                       0x00000000      /**< FSBL Offset */
-#define BOOT_SSBL_OFS                       0x00400000      /**< SSB Offset */
-#define BOOT_OS_OFS                         0x00800000      /**< Operating System Offset */
-#define BOOT_SW_OFS                         0x01C00000      /**< Boot Software offset */
+#define BOOT_FSBL_OFS                       0x00000000U      /**< FSBL Offset */
+#define BOOT_SSBL_OFS                       0x00400000U      /**< SSB Offset */
+#define BOOT_OS_OFS                         0x00800000U      /**< Operating System Offset */
+#define BOOT_SW_OFS                         0x01C00000U      /**< Boot Software offset */
 
 
-#define BOOT_SECTOR1_OFS                    (0x00000000 | BOOT_FW_SRTOFS)
-#define BOOT_SECTOR2_OFS                    (0x08000000 | BOOT_FW_SRTOFS)
-#define BOOT_SECTOR3_OFS                    (0x10000000 | BOOT_FW_SRTOFS)
+#define BOOT_SECTOR1_OFS                    (0x00000000U | BOOT_FW_SRTOFS)
+#define BOOT_SECTOR2_OFS                    (0x08000000U | BOOT_FW_SRTOFS)
+#define BOOT_SECTOR3_OFS                    (0x10000000U | BOOT_FW_SRTOFS)
 
-#define BOOT_IMG_LENB                       0x00000004
-#define BOOT_FSBL_MAX                       0x00400000      /**< 4M */
+#define BOOT_IMG_LENB                       0x00000004U
+#define BOOT_FSBL_MAX                       0x00400000U      /**< 4M */
 #define BOOT_FSBL_IMGMAX                    (BOOT_FSBL_MAX - BOOT_IMG_LENB)
 
 
-#define BOOT_SSBL_MAX                       0x00400000      /**< 4M */
+#define BOOT_SSBL_MAX                       0x00400000U      /**< 4M */
 #define BOOT_SSBL_IMGMAX                    (BOOT_SSBL_MAX - BOOT_IMG_LENB)
 
 
-#define BOOT_OS_IMG_MB                      20
+#define BOOT_OS_IMG_MB                      20U
 #define BOOT_OS_MAX                         (BOOT_OS_IMG_MB << 20)      /**< 20 M */
 #define BOOT_OS_IMGMAX                      (BOOT_OS_MAX - BOOT_IMG_LENB)
 
-#define BOOT_SW_IMG_MB                      100
+#define BOOT_SW_IMG_MB                      100U
 #define BOOT_SW_MAX                         (BOOT_SW_IMG_MB << 20)      /**<  100 M */
 #define BOOT_SW_IMGMAX                      (BOOT_SW_MAX - BOOT_IMG_LENB)
 
 
-#define BOOT_FW_IMG_MB                      128
+#define BOOT_FW_IMG_MB                      128U
 #define BOOT_FW_IMGMAX                      (BOOT_FW_IMG_MB << 20)
 
 /*! \brief Addresss of Protected Software    */
-#define BOOT_FW_PROT_SW_POS                 (0x01C00000 | BOOT_FW_SRTOFS)       
+#define BOOT_FW_PROT_SW_POS                 (0x01C00000U | BOOT_FW_SRTOFS)
 
 
 #define BOOT_FW_LBA_BLOCKS                  (BOOT_FW_IMGMAX / SBC_RAWPRT_DFLT_BLK_SZ)

@@ -460,7 +460,25 @@ SBCStatus SBC_SecureBootUpdateScenario(VOID *priv)
 
     switch (p->prevmode) {
     case 0:
+
+        sbc_err_sysprn(SBC_LOG_CMN_PRIO_INFO, 2,
+                       SYS_LOG_HOST_BOOT,
+                       SYS_LOG_APP_NAME,
+                       SYS_LOG_CSC_NAME,
+                       8,
+                       SYS_LOG_EVT_VALIDATION,
+                       L"SBC_tamper_Updated boot firmware invalid and initiating rollback to factory version\n"); 
+
+
         next_bm = BOOT_MODE_FACTORY;
+
+        sbc_err_sysprn(SBC_LOG_CMN_PRIO_INFO, 2,
+                       SYS_LOG_HOST_BOOT,
+                       SYS_LOG_APP_NAME,
+                       SYS_LOG_CSC_NAME,
+                       8,
+                       SYS_LOG_EVT_VALIDATION,
+                       L"SBC_Integrity_Boot mode is FACTORY mode and Reboot\n");
         break;
 
     case 1:

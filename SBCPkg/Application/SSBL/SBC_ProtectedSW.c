@@ -591,8 +591,8 @@ SBCStatus SBC_RecryptoProtectedSW(VOID *handle, UINTN ofs,  UINT8* sw_secret_key
 
 
     dprint("Key info ");
-    SBC_mem_print_bin("Migration Key", sw_mig_key, SBC_AT_HASH_LEN);
-    SBC_mem_print_bin("Security Key", sw_secret_key, SBC_AT_HASH_LEN);
+    SBC_mem_print_bin("Hash Migration Key", sw_mig_key, SBC_AT_HASH_LEN);
+    SBC_mem_print_bin("Security Key (OSID)", sw_secret_key, SBC_AT_HASH_LEN);
 
     {
         UINT8 hash_check[SBC_AT_HASH_LEN] = {0, };

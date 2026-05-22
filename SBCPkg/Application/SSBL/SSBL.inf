@@ -131,6 +131,7 @@
     *_*_*_CC_FLAGS = -D_TEST_BED_
     *_*_*_CC_FLAGS = -D_DEBUG_PRINT_ON_
     *_*_*_CC_FLAGS = -D_LOG_RECODING_
+    *_*_*_CC_FLAGS = -D_RUN_GCS_
 
 
     

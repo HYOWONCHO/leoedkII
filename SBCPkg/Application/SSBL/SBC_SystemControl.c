@@ -548,7 +548,7 @@ static SBCStatus SBC_ProtSwReEncDec(VOID *handle)
 
     ret = SBC_ProtSWReCrypto((VOID *)bp, 
                             enckey,
-                            deckey,
+                            deckey, // migration key
                             NULL, NULL);
 
     if(ret != SBCOK) {
@@ -1689,6 +1689,7 @@ static void _update_reset_check_and_behavior(VOID *priv)
     dprint("Key mode : %d", bp->km);
     switch(bp->km) {
     case KEY_MODE_NORMAL:
+    case KEY_MODE_UPDATE: // added by leon at 260428
         //dprint("Boot State : %d", bp->bootst);
         switch(bp->bootst) {
         case SB_PROC_ST_NRMA:

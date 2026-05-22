@@ -94,10 +94,35 @@ VOID SBC_AntiTamperDeinit(VOID *priv)
 {
 
 }
+#ifdef _RUN_GCS_
+    #define GCS_STORAGE_SN_LEN  16
+
+static SBCStatus sbc_set_nvme_serial(hw_uniqueinfo_t *p,
+                                     const UINT8 *serial,
+                                     UINTN serial_len) {
+    if (p == NULL || serial == NULL || serial_len == 0) return SBCNULLP;
+
+    p->nvmesnl = serial_len;
+
+    CopyMem(p->nvmesn, serial, serial_len);
+
+    return SBCOK;
+}
+#endif
+
+SBCStatus _nvme_get_serial(hw_uniqueinfo_t *p) {
 
 
-SBCStatus _nvme_get_serial(hw_uniqueinfo_t *p)
-{
+#ifdef _RUN_GCS_
+    static CONST UINT8 gcs_storage_sn[GCS_STORAGE_SN_LEN] = {
+        0x4C, 0x49, 0x47, 0x44, 0x65, 0x66, 0x65, 0x6E, 
+        0x73, 0x65, 0x26, 0x41, 0x65, 0x72, 0x6F, 0x73 
+    };
+
+    dprint("SSBL GCS SATA Serial number !!!"); 
+    return sbc_set_nvme_serial(p, gcs_storage_sn, sizeof(gcs_storage_sn));
+#else
+
     SBCStatus                 ret = SBCFAIL;
     EFI_STATUS                Status;
     EFI_HANDLE                *HandleBuffer;
@@ -109,30 +134,29 @@ SBCStatus _nvme_get_serial(hw_uniqueinfo_t *p)
     EFI_NVM_EXPRESS_COMPLETION                Completion;
     NVME_ADMIN_CONTROLLER_DATA                ControllerData;
 
-
     // Locate handles that support the NVMe Pass Thru Protocol.
     Status = gBS->LocateHandleBuffer(
-                        ByProtocol,
-                        &gEfiNvmExpressPassThruProtocolGuid,
-                        NULL,
-                        &HandleCount,
-                        &HandleBuffer);
+        ByProtocol,
+        &gEfiNvmExpressPassThruProtocolGuid,
+        NULL,
+        &HandleCount,
+        &HandleBuffer);
     if (EFI_ERROR(Status)) {
-       dprint("Error: No NVMe devices found - %r\n", Status);
+        //Print(L"Error: No NVMe devices found - %r\n", Status);
         ret = SBCFAIL;
         goto errdone;
     }
 
-    //Print(L"Found %u NVMe device(s).\n", HandleCount);
+    ////Print(L"Found %u NVMe device(s).\n", HandleCount);
 
     for (Index = 0; Index < HandleCount; Index++) {
         // Get the NVMe Pass Thru Protocol from the current handle.
         Status = gBS->HandleProtocol(
-                           HandleBuffer[Index],
-                           &gEfiNvmExpressPassThruProtocolGuid,
-                           (VOID**)&NvmePassThru);
+            HandleBuffer[Index],
+            &gEfiNvmExpressPassThruProtocolGuid,
+            (VOID **)&NvmePassThru);
         if (EFI_ERROR(Status)) {
-           dprint("Error: Could not access NVMe Pass Thru on device %u - %r\n", Index, Status);
+            //Print(L"Error: Could not access NVMe Pass Thru on device %u - %r\n", Index, Status);
             continue;
         }
 
@@ -141,7 +165,7 @@ SBCStatus _nvme_get_serial(hw_uniqueinfo_t *p)
         UINT32 BufferSize = 4096;
         VOID *Buffer = AllocatePool(BufferSize);
         if (Buffer == NULL) {
-           dprint("Error: Failed to allocate memory for device %u\n", Index);
+            //Print(L"Error: Failed to allocate memory for device %u\n", Index);
             continue;
         }
         SetMem(Buffer, BufferSize, 0);
@@ -150,9 +174,9 @@ SBCStatus _nvme_get_serial(hw_uniqueinfo_t *p)
         // Opcode 0x06 is the Identify command. Setting NSID to 0 indicates we want controller data.
         // The lower 8 bits of Cdw10 (called CNS) must be set to 1 for Identify Controller.
 
-        ZeroMem (&CommandPacket, sizeof (EFI_NVM_EXPRESS_PASS_THRU_COMMAND_PACKET));
-        ZeroMem (&Command, sizeof (EFI_NVM_EXPRESS_COMMAND));
-        ZeroMem (&Completion, sizeof (EFI_NVM_EXPRESS_COMPLETION));
+        ZeroMem(&CommandPacket, sizeof(EFI_NVM_EXPRESS_PASS_THRU_COMMAND_PACKET));
+        ZeroMem(&Command, sizeof(EFI_NVM_EXPRESS_COMMAND));
+        ZeroMem(&Completion, sizeof(EFI_NVM_EXPRESS_COMPLETION));
 
         //Command.Cdw0.Opcode = 0x06; // Identify Command opcode
         Command.Cdw0.Opcode = NVME_ADMIN_IDENTIFY_CMD;
@@ -161,23 +185,23 @@ SBCStatus _nvme_get_serial(hw_uniqueinfo_t *p)
         CommandPacket.NvmeCmd        = &Command;
         CommandPacket.NvmeCompletion = &Completion;
         CommandPacket.TransferBuffer = &ControllerData;
-        CommandPacket.TransferLength = sizeof (ControllerData);
-        CommandPacket.CommandTimeout = EFI_TIMER_PERIOD_SECONDS (5);
+        CommandPacket.TransferLength = sizeof(ControllerData);
+        CommandPacket.CommandTimeout = EFI_TIMER_PERIOD_SECONDS(5);
         CommandPacket.QueueType      = NVME_ADMIN_QUEUE;
 
 
-                //
+        //
         // Set bit 0 (Cns bit) to 1 to identify a controller
         //
         Command.Cdw10 = 1;
         Command.Flags = CDW10_VALID;
         Status = NvmePassThru->PassThru(
-                       NvmePassThru,
-                       0,           // NamespaceId is 0 for controller command.
-                       &CommandPacket,
-                       NULL);
+            NvmePassThru,
+            0,           // NamespaceId is 0 for controller command.
+            &CommandPacket,
+            NULL);
         if (EFI_ERROR(Status)) {
-           dprint("Error: NVMe Identify command failed on device %u - %r\n", Index, Status);
+            //Print(L"Error: NVMe Identify command failed on device %u - %r\n", Index, Status);
             FreePool(Buffer);
             continue;
         }
@@ -195,13 +219,11 @@ SBCStatus _nvme_get_serial(hw_uniqueinfo_t *p)
 
         // Trim trailing spaces from the serial number.
         for (INTN i = 19; i >= 0; i--) {
-            if (Serial[i] == ' ')
-                Serial[i] = '\0';
-            else
-                break;
+            if (Serial[i] == ' ') Serial[i] = '\0';
+            else break;
         }
 
-       //dprint("NVMe Device %u Serial Number: %a\n", Index, Serial);
+        //Print(L"NVMe Device %u Serial Number: %a\n", Index, Serial);
         //SBC_mem_print_bin("NVME DEV SN", (UINT8 *)Serial, 32);
         p->nvmesnl = strlen(Serial);
         CopyMem(p->nvmesn, Serial, p->nvmesnl);
@@ -215,6 +237,9 @@ errdone:
         FreePool(HandleBuffer);
     }
     return ret;
+#endif
+
+
 }
 
 static SBCStatus _baseboard_sn(hw_uniqueinfo_t *p)
@@ -2202,11 +2227,10 @@ SBCStatus SBC_GenDeviceID(UINT8 *devid)
 //  SBC_external_mem_print_bin("MemoryDevice SN", info.mmsn, info.mmsnl);
     SBC_mem_print_bin("MemoryDevice SN", info.mmsn, info.mmsnl);
 
-#ifndef _RUN_GCS_
+
     _nvme_get_serial(&info);
 //  SBC_external_mem_print_bin("NVME SN", info.nvmesn,info.nvmesnl);
     SBC_mem_print_bin("NVME SN", info.nvmesn,info.nvmesnl);
-#endif
 
     //_read_fsbl_image(&rdlv);
     SBC_EFI_FSBL_Load(&rdlv);
@@ -2920,6 +2944,13 @@ SBCStatus SBC_GenMigrationKey(void *priv, void *outmsg)
 
     dprint("Existing FSBL (%d) & SSBL (%d) Length", len_fsbl, len_ssbl);
 
+    if (len_fsbl <= 0 || len_ssbl <= 0) {
+
+        eprint("Invalid migration key bootloader length");
+        ret = SBCZEROL;
+        goto errdone;
+    }
+
     msglen += (len_fsbl + len_ssbl);
 
     dprint();
@@ -2932,21 +2963,36 @@ SBCStatus SBC_GenMigrationKey(void *priv, void *outmsg)
     //Step 2. Read Current Image and Hash compute
     //pvs_sw_bank means that "Previously Firware location"
 
-    if (p->prevmode == 1 && p->bm == BOOT_MODE_UPDATE) {
-        startaddr = (BOOT_SECTOR1_OFS | (BOOT_FW_IMGMAX *  (p->pvs_sw_bnk - 1)));
-    } else {
-        startaddr = (BOOT_SECTOR1_OFS | (BOOT_FW_IMGMAX *  (p->curr_sw_bnk - 1)));
+
+    int bank = (p->prevmode == 1 && p->bm == BOOT_MODE_UPDATE)
+               ? p->pvs_sw_bnk
+               : p->curr_sw_bnk;
+
+    startaddr = BOOT_SECTOR1_OFS + (BOOT_FW_IMGMAX * (bank - 1));
+
+//  if (p->prevmode == 1 && p->bm == BOOT_MODE_UPDATE) {
+//      startaddr = (BOOT_SECTOR1_OFS | (BOOT_FW_IMGMAX *  (p->pvs_sw_bnk - 1)));
+//  } else {
+//      startaddr = (BOOT_SECTOR1_OFS | (BOOT_FW_IMGMAX *  (p->curr_sw_bnk - 1)));
+//  }
+
+
+    startlba = (startaddr >> SBC_RAWPRT_DFLT_SHIFT);
+
+    imglen = ALIGN_VALUE(sizeof *fwinf, SBC_RAWPRT_DFLT_BLK_SZ);
+
+    dprint("Start Address : 0x%04x", startaddr);
+
+    ret = SBC_RawPrtReadBlock(p->blkhnd, (void *)fwinf->value, (UINT32 *)&imglen, startlba);
+    SBC_RET_VALIDATE_ERRCODEMSG((ret == SBCOK), ret, "Raw Partition read fail");
+
+    dprint("FSBL len : %d , SSBL Length : %d \n", fwinf->mbr.fsbln, fwinf->mbr.ssbln);
+    if (fwinf->mbr.fsbln <= 0 || fwinf->mbr.ssbln <= 0) {
+
+        eprint("Into RawFS, Invalid migration key bootloader length");
+        ret = SBCZEROL;
+        goto errdone;
     }
-        startlba = (startaddr >> SBC_RAWPRT_DFLT_SHIFT);
-        imglen = ALIGN_VALUE(sizeof *fwinf, SBC_RAWPRT_DFLT_BLK_SZ);
-
-        dprint("Start Address : 0x%04x", startaddr);
-
-        ret = SBC_RawPrtReadBlock(p->blkhnd, (void *)fwinf->value, (UINT32 *)&imglen, startlba);
-        SBC_RET_VALIDATE_ERRCODEMSG((ret == SBCOK), ret, "Raw Partition read fail");
-
-        dprint("FSBL len : %d , SSBL Length : %d \n", fwinf->mbr.fsbln, fwinf->mbr.ssbln);
-
 // Commented by Leon at 20251212
 // From now on, use the prevmode in Raw-partition
 //  if (((fwinf->mbr.fsbln == 0) && (fwinf->mbr.ssbln == 0))) {
@@ -2954,23 +3000,35 @@ SBCStatus SBC_GenMigrationKey(void *priv, void *outmsg)
 //      p->is_factory = TRUE;
 //  }
 
-        // Added by Leon at 20251212
+    // Added by Leon at 20251212
 
-        dprint("===== Migration Key information ======");
-        dprint("p->prevmode : \t %d", p->prevmode);
-        dprint("p->bootst : \t 0x%lx", p->bootst);
-        dprint("p->bm : \t %d", p->bm);
-        if (p->prevmode == 0 &&
-            ((p->bootst == SB_PROC_ST_ABNRAM && p->bm == BOOT_MODE_NORMAL) ||
-             (p->bm == BOOT_MODE_UPDATE)))  {
-            dprint("Read the image from Factory Bank because prev mode is 0");
-            p->is_factory = TRUE;
-        }
+    dprint("===== Migration Key information ======");
+    dprint("p->prevmode : \t %d", p->prevmode);
+    dprint("p->bootst : \t 0x%lx", p->bootst);
+    dprint("p->bm : \t %d", p->bm);
+    if (p->prevmode == 0 &&
+        ((p->bootst == SB_PROC_ST_ABNRAM && p->bm == BOOT_MODE_NORMAL) ||
+         (p->bm == BOOT_MODE_UPDATE)))  {
+        dprint("Read the image from Factory Bank because prev mode is 0");
+        p->is_factory = TRUE;
+    }
 
 
 
-        if (p->prevmode == 0 && p->bm == BOOT_MODE_RECOVERY) {
+
+    // comment by leon at 260428
+    //if (p->prevmode == 0 && p->bm == BOOT_MODE_RECOVERY) {
+    if (p->bm == BOOT_MODE_RECOVERY) {
+        // comment by leon at 20260428
             startaddr = (BOOT_SECTOR1_OFS | (BOOT_FW_IMGMAX *  (p->curr_sw_bnk - 1)));
+
+//          int rcv_bank = (p->prevmode == 1)
+//              ? p->pvs_sw_bnk
+//              : p->curr_sw_bnk;
+//
+//          startaddr = BOOT_SECTOR1_OFS + (BOOT_FW_IMGMAX * (rcv_bank - 1));
+
+
             startlba = (startaddr >> SBC_RAWPRT_DFLT_SHIFT);
             imglen = ALIGN_VALUE(sizeof *fwinf, SBC_RAWPRT_DFLT_BLK_SZ);
 
@@ -2981,37 +3039,37 @@ SBCStatus SBC_GenMigrationKey(void *priv, void *outmsg)
 
             p->is_factory = FALSE;
 
-        }
-        //
-        // If previoulsy firmwrae not existense, it's compute using FACTORY image
-        //
-        //if (fwinf->mbr.fsbln == 0) {
-        if (p->is_factory == TRUE) {
-            startaddr = BOOT_SECTOR3_OFS; //(BOOT_SECTOR1_OFS | (BOOT_FW_IMGMAX *  (p->pvs_sw_bnk - 1)));
-            startlba = (startaddr >> SBC_RAWPRT_DFLT_SHIFT);
-            imglen = ALIGN_VALUE(sizeof *fwinf, SBC_RAWPRT_DFLT_BLK_SZ);
+    }
+    //
+    // If previoulsy firmwrae not existense, it's compute using FACTORY image
+    //
+    //if (fwinf->mbr.fsbln == 0) {
+    if (p->is_factory == TRUE) {
+        startaddr = BOOT_SECTOR3_OFS; //(BOOT_SECTOR1_OFS | (BOOT_FW_IMGMAX *  (p->pvs_sw_bnk - 1)));
+        startlba = (startaddr >> SBC_RAWPRT_DFLT_SHIFT);
+        imglen = ALIGN_VALUE(sizeof *fwinf, SBC_RAWPRT_DFLT_BLK_SZ);
 
-            dprint("B. It's load from FACTORY bank because previously firmware is not existense");
-            ret = SBC_RawPrtReadBlock(p->blkhnd, (void *)fwinf->value, (UINT32 *)&imglen, startlba);
-            SBC_RET_VALIDATE_ERRCODEMSG((ret == SBCOK), ret, "Raw Partition read fail");
+        dprint("B. It's load from FACTORY bank because previously firmware is not existense");
+        ret = SBC_RawPrtReadBlock(p->blkhnd, (void *)fwinf->value, (UINT32 *)&imglen, startlba);
+        SBC_RET_VALIDATE_ERRCODEMSG((ret == SBCOK), ret, "Raw Partition read fail");
 
-            dprint("Factory FSBL len : %d , SSBL Length : %d \n", fwinf->mbr.fsbln, fwinf->mbr.ssbln);
-        }
+        dprint("Factory FSBL len : %d , SSBL Length : %d \n", fwinf->mbr.fsbln, fwinf->mbr.ssbln);
+    }
 
-        msglen += (fwinf->mbr.fsbln + fwinf->mbr.ssbln);
+    msglen += (fwinf->mbr.fsbln + fwinf->mbr.ssbln);
 
-        msg = AllocateZeroPool(msglen);
-        SBC_RET_VALIDATE_ERRCODEMSG((msg != NULL), SBCNULLP, "Not enough resource");
+    msg = AllocateZeroPool(msglen);
+    SBC_RET_VALIDATE_ERRCODEMSG((msg != NULL), SBCNULLP, "Not enough resource");
 
 
-        CopyMem((void *)&msg[cpyofs], info.mbsn, info.mbsnl);
-        cpyofs += info.mbsnl;
+    CopyMem((void *)&msg[cpyofs], info.mbsn, info.mbsnl);
+    cpyofs += info.mbsnl;
 
-        CopyMem((void *)&msg[cpyofs], info.mmsn, info.mmsnl);
-        cpyofs += info.mmsnl;
+    CopyMem((void *)&msg[cpyofs], info.mmsn, info.mmsnl);
+    cpyofs += info.mmsnl;
 
-        CopyMem((void *)&msg[cpyofs], info.nvmesn, info.nvmesnl);
-        cpyofs += info.nvmesnl;
+    CopyMem((void *)&msg[cpyofs], info.nvmesn, info.nvmesnl);
+    cpyofs += info.nvmesnl;
 
 //  //
 //  // Un-used FSBL  ( into the Raw-partiiont) - Currenrtly
@@ -3026,163 +3084,166 @@ SBCStatus SBC_GenMigrationKey(void *priv, void *outmsg)
 //  SBC_RET_VALIDATE_ERRCODEMSG((ret == SBCOK), SBCNULLP, "Raw Partition SSBL File HASH Fail");
 //  cpyofs += ATP_IDENT_KEY_STG;
 
-        //
-        // Read the FSBL file
-        //
+    //
+    // Read the FSBL file
+    //
 
-        SBC_FindEfiFileSystemProtocol(&f_hndl);
+    SBC_FindEfiFileSystemProtocol(&f_hndl);
 
-        fbuf = AllocateZeroPool(len_fsbl);
-        lv.value = fbuf;
-        lv.length = len_fsbl;
+    fbuf = AllocateZeroPool(len_fsbl);
+    lv.value = fbuf;
+    lv.length = len_fsbl;
 
-        if (p->bm == BOOT_MODE_UPDATE) {
+    if (p->bm == BOOT_MODE_UPDATE) {
 
-            dprint("Migrattion Key Create by Update");
+        dprint("Migrattion Key Create by Update");
 
-            //
-            // Un-used FSBL  ( into the Raw-partiiont) - Currenrtly
-            //
-            ret = SBC_HashCompute(NULL, fwinf->mbr.fsblimg, fwinf->mbr.fsbln, (void *)&msg[cpyofs]);
-            SBC_mem_print_bin(" FSBL File Hash", (UINT8 *)&msg[cpyofs], ATP_IDENT_KEY_STG);
-            SBC_RET_VALIDATE_ERRCODEMSG((ret == SBCOK), SBCNULLP, "Raw Partition FSBL HASH Fail");
-            cpyofs += ATP_IDENT_KEY_STG;
-
-            ret = SBC_HashCompute(NULL, fwinf->mbr.ssblimg, fwinf->mbr.ssbln, (void *)&msg[cpyofs]);
-            SBC_mem_print_bin(" SSBL File Hash", (UINT8 *)&msg[cpyofs], ATP_IDENT_KEY_STG);
-            SBC_RET_VALIDATE_ERRCODEMSG((ret == SBCOK), SBCNULLP, "Raw Partition SSBL File HASH Fail");
-            cpyofs += ATP_IDENT_KEY_STG;
-
-
-            //ret = SBC_ReadFile(f_hndl[0], EFI_BOOT_FSBL_PATH, &lv);
-            SBC_EFI_FSBL_Load(&fsbl_lv);
-            SBC_RET_VALIDATE_ERRCODEMSG((ret == SBCOK), SBCNULLP, "FSBL File Reaed Fail");
-
-            //ret = SBC_HashCompute(NULL, lv.value, lv.length, temp_hash);
-            ret = SBC_HashCompute(NULL, fsbl_lv.value, fsbl_lv.length, temp_hash);
-            SBC_RET_VALIDATE_ERRCODEMSG((ret == SBCOK), SBCNULLP, "FSBL File HASH Fail");
-
-            SBC_mem_print_bin(" FSBL File Hash", (UINT8 *)temp_hash, ATP_IDENT_KEY_STG);
-            CopyMem((void *)&msg[cpyofs], temp_hash, ATP_IDENT_KEY_STG);
-            cpyofs += ATP_IDENT_KEY_STG;
-
-            if (fbuf != NULL) {
-                //lv.value = NULL;
-                FreePool(fbuf);
-            }
-
-            //
-            // Read the SSBL flie
-            //
-            fbuf = AllocateZeroPool(len_ssbl);
-            lv.value = fbuf;
-            lv.length = len_ssbl;
-
-            //ret = SBC_ReadFile(f_hndl[0], EFI_BOOT_SSBL_PATH, &lv);
-            SBC_EFI_SSBL_Load(NULL, &ssbl_lv);
-            SBC_RET_VALIDATE_ERRCODEMSG((ret == SBCOK), SBCNULLP, "SSBL File Reaed Fail");
-
-            ZeroMem((void *)temp_hash, 32);
-            //ret = SBC_HashCompute(NULL, lv.value, lv.length, temp_hash);
-            ret = SBC_HashCompute(NULL, ssbl_lv.value, ssbl_lv.length, temp_hash);
-            SBC_RET_VALIDATE_ERRCODEMSG((ret == SBCOK), SBCNULLP, "SSBL File HASH Fail");
-            SBC_mem_print_bin(" SSBL File Hash", (UINT8 *)temp_hash, ATP_IDENT_KEY_STG);
-            CopyMem((void *)&msg[cpyofs], temp_hash, ATP_IDENT_KEY_STG);
-            cpyofs += ATP_IDENT_KEY_STG;
-
-            if (fbuf != NULL) {
-                //dprint(); 
-                FreePool(fbuf);
-                //dprint();
-            }
-            //dprint();
-
-
-        }
-
-        if (p->bm == BOOT_MODE_RECOVERY) {
-
-            dprint("Migrattion Key Create by Reccovery");
-            //ret = SBC_ReadFile(f_hndl[0], EFI_BOOT_FSBL_PATH, &lv);
-            SBC_EFI_FSBL_Load(&fsbl_lv);
-            SBC_RET_VALIDATE_ERRCODEMSG((ret == SBCOK), SBCNULLP, "FSBL File Reaed Fail");
-
-
-            //ret = SBC_HashCompute(NULL, lv.value, lv.length, temp_hash);
-            ret = SBC_HashCompute(NULL, fsbl_lv.value, fsbl_lv.length, temp_hash);
-            SBC_RET_VALIDATE_ERRCODEMSG((ret == SBCOK), SBCNULLP, "FSBL File HASH Fail");
-
-            SBC_mem_print_bin(" FSBL File Hash", (UINT8 *)temp_hash, ATP_IDENT_KEY_STG);
-            CopyMem((void *)&msg[cpyofs], temp_hash, ATP_IDENT_KEY_STG);
-            cpyofs += ATP_IDENT_KEY_STG;
-
-            if (fbuf != NULL) {
-                //lv.value = NULL;
-                FreePool(fbuf);
-            }
-
-            //
-            // Read the SSBL flie
-            //
-            fbuf = AllocateZeroPool(len_ssbl);
-            lv.value = fbuf;
-            lv.length = len_ssbl;
-
-            //ret = SBC_ReadFile(f_hndl[0], EFI_BOOT_SSBL_PATH, &lv);
-            SBC_EFI_SSBL_Load(NULL, &ssbl_lv);
-            SBC_RET_VALIDATE_ERRCODEMSG((ret == SBCOK), SBCNULLP, "SSBL File Reaed Fail");
-
-            ZeroMem((void *)temp_hash, 32);
-            //ret = SBC_HashCompute(NULL, lv.value, lv.length, temp_hash);
-            ret = SBC_HashCompute(NULL, ssbl_lv.value, ssbl_lv.length, temp_hash);
-            SBC_RET_VALIDATE_ERRCODEMSG((ret == SBCOK), SBCNULLP, "SSBL File HASH Fail");
-            SBC_mem_print_bin(" SSBL File Hash", (UINT8 *)temp_hash, ATP_IDENT_KEY_STG);
-            CopyMem((void *)&msg[cpyofs], temp_hash, ATP_IDENT_KEY_STG);
-            cpyofs += ATP_IDENT_KEY_STG;
-
-            if (fbuf != NULL) {
-                dprint();
-                FreePool(fbuf);
-                dprint();
-            }
-            //dprint();
-
-            //
-            // Un-used FSBL  ( into the Raw-partiiont) - Currenrtly
-            //
-            ret = SBC_HashCompute(NULL, fwinf->mbr.fsblimg, fwinf->mbr.fsbln, (void *)&msg[cpyofs]);
-            SBC_mem_print_bin(" FSBL File Hash", (UINT8 *)&msg[cpyofs], ATP_IDENT_KEY_STG);
-            SBC_RET_VALIDATE_ERRCODEMSG((ret == SBCOK), SBCNULLP, "Raw Partition FSBL HASH Fail");
-            cpyofs += ATP_IDENT_KEY_STG;
-
-            ret = SBC_HashCompute(NULL, fwinf->mbr.ssblimg, fwinf->mbr.ssbln, (void *)&msg[cpyofs]);
-            SBC_mem_print_bin(" SSBL File Hash", (UINT8 *)&msg[cpyofs], ATP_IDENT_KEY_STG);
-            SBC_RET_VALIDATE_ERRCODEMSG((ret == SBCOK), SBCNULLP, "Raw Partition SSBL File HASH Fail");
-            cpyofs += ATP_IDENT_KEY_STG;
-
-        }
-
-
-
+        // Existing Boot Loader 
+        // (/EFI/BOOT/BOOTX64.efi || [prevmode == 1] ? previsouly bank : Factory bank )
 
         //
-        // Final message digest
+        // Un-used FSBL  ( into the Raw-partiiont) - Currenrtly
         //
-        ret = SBC_HashCompute(NULL, (UINT8 *)&msg[0], cpyofs, outmsg);
+        ret = SBC_HashCompute(NULL, fwinf->mbr.fsblimg, fwinf->mbr.fsbln, (void *)&msg[cpyofs]);
+        SBC_mem_print_bin(" FSBL File Hash", (UINT8 *)&msg[cpyofs], ATP_IDENT_KEY_STG);
+        SBC_RET_VALIDATE_ERRCODEMSG((ret == SBCOK), SBCNULLP, "Raw Partition FSBL HASH Fail");
+        cpyofs += ATP_IDENT_KEY_STG;
+
+        ret = SBC_HashCompute(NULL, fwinf->mbr.ssblimg, fwinf->mbr.ssbln, (void *)&msg[cpyofs]);
+        SBC_mem_print_bin(" SSBL File Hash", (UINT8 *)&msg[cpyofs], ATP_IDENT_KEY_STG);
         SBC_RET_VALIDATE_ERRCODEMSG((ret == SBCOK), SBCNULLP, "Raw Partition SSBL File HASH Fail");
-    errdone:
+        cpyofs += ATP_IDENT_KEY_STG;
 
-        if (fwinf != NULL) {
-            FreePool(fwinf);
+
+        //ret = SBC_ReadFile(f_hndl[0], EFI_BOOT_FSBL_PATH, &lv);
+        SBC_EFI_FSBL_Load(&fsbl_lv);
+        SBC_RET_VALIDATE_ERRCODEMSG((ret == SBCOK), SBCNULLP, "FSBL File Reaed Fail");
+
+        //ret = SBC_HashCompute(NULL, lv.value, lv.length, temp_hash);
+        ret = SBC_HashCompute(NULL, fsbl_lv.value, fsbl_lv.length, temp_hash);
+        SBC_RET_VALIDATE_ERRCODEMSG((ret == SBCOK), SBCNULLP, "FSBL File HASH Fail");
+
+        SBC_mem_print_bin(" FSBL File Hash", (UINT8 *)temp_hash, ATP_IDENT_KEY_STG);
+        CopyMem((void *)&msg[cpyofs], temp_hash, ATP_IDENT_KEY_STG);
+        cpyofs += ATP_IDENT_KEY_STG;
+
+        if (fbuf != NULL) {
+            //lv.value = NULL;
+            FreePool(fbuf);
         }
 
-        if (msg != NULL) {
-            FreePool(msg);
+        //
+        // Read the SSBL flie
+        //
+        fbuf = AllocateZeroPool(len_ssbl);
+        lv.value = fbuf;
+        lv.length = len_ssbl;
+
+        //ret = SBC_ReadFile(f_hndl[0], EFI_BOOT_SSBL_PATH, &lv);
+        SBC_EFI_SSBL_Load(NULL, &ssbl_lv);
+        SBC_RET_VALIDATE_ERRCODEMSG((ret == SBCOK), SBCNULLP, "SSBL File Reaed Fail");
+
+        ZeroMem((void *)temp_hash, 32);
+        //ret = SBC_HashCompute(NULL, lv.value, lv.length, temp_hash);
+        ret = SBC_HashCompute(NULL, ssbl_lv.value, ssbl_lv.length, temp_hash);
+        SBC_RET_VALIDATE_ERRCODEMSG((ret == SBCOK), SBCNULLP, "SSBL File HASH Fail");
+        SBC_mem_print_bin(" SSBL File Hash", (UINT8 *)temp_hash, ATP_IDENT_KEY_STG);
+        CopyMem((void *)&msg[cpyofs], temp_hash, ATP_IDENT_KEY_STG);
+        cpyofs += ATP_IDENT_KEY_STG;
+
+        if (fbuf != NULL) {
+            //dprint(); 
+            FreePool(fbuf);
+            //dprint();
         }
+        //dprint();
 
 
-        return ret;
     }
+
+    if (p->bm == BOOT_MODE_RECOVERY) {
+
+        dprint("Migrattion Key Create by Reccovery");
+        //ret = SBC_ReadFile(f_hndl[0], EFI_BOOT_FSBL_PATH, &lv);
+        SBC_EFI_FSBL_Load(&fsbl_lv);
+        SBC_RET_VALIDATE_ERRCODEMSG((ret == SBCOK), SBCNULLP, "FSBL File Reaed Fail");
+
+
+        //ret = SBC_HashCompute(NULL, lv.value, lv.length, temp_hash);
+        ret = SBC_HashCompute(NULL, fsbl_lv.value, fsbl_lv.length, temp_hash);
+        SBC_RET_VALIDATE_ERRCODEMSG((ret == SBCOK), SBCNULLP, "FSBL File HASH Fail");
+
+        SBC_mem_print_bin(" FSBL File Hash", (UINT8 *)temp_hash, ATP_IDENT_KEY_STG);
+        CopyMem((void *)&msg[cpyofs], temp_hash, ATP_IDENT_KEY_STG);
+        cpyofs += ATP_IDENT_KEY_STG;
+
+        if (fbuf != NULL) {
+            //lv.value = NULL;
+            FreePool(fbuf);
+        }
+
+        //
+        // Read the SSBL flie
+        //
+        fbuf = AllocateZeroPool(len_ssbl);
+        lv.value = fbuf;
+        lv.length = len_ssbl;
+
+        //ret = SBC_ReadFile(f_hndl[0], EFI_BOOT_SSBL_PATH, &lv);
+        SBC_EFI_SSBL_Load(NULL, &ssbl_lv);
+        SBC_RET_VALIDATE_ERRCODEMSG((ret == SBCOK), SBCNULLP, "SSBL File Reaed Fail");
+
+        ZeroMem((void *)temp_hash, 32);
+        //ret = SBC_HashCompute(NULL, lv.value, lv.length, temp_hash);
+        ret = SBC_HashCompute(NULL, ssbl_lv.value, ssbl_lv.length, temp_hash);
+        SBC_RET_VALIDATE_ERRCODEMSG((ret == SBCOK), SBCNULLP, "SSBL File HASH Fail");
+        SBC_mem_print_bin(" SSBL File Hash", (UINT8 *)temp_hash, ATP_IDENT_KEY_STG);
+        CopyMem((void *)&msg[cpyofs], temp_hash, ATP_IDENT_KEY_STG);
+        cpyofs += ATP_IDENT_KEY_STG;
+
+        if (fbuf != NULL) {
+            dprint();
+            FreePool(fbuf);
+            dprint();
+        }
+        //dprint();
+
+        //
+        // Un-used FSBL  ( into the Raw-partiiont) - Currenrtly
+        //
+        ret = SBC_HashCompute(NULL, fwinf->mbr.fsblimg, fwinf->mbr.fsbln, (void *)&msg[cpyofs]);
+        SBC_mem_print_bin(" FSBL File Hash", (UINT8 *)&msg[cpyofs], ATP_IDENT_KEY_STG);
+        SBC_RET_VALIDATE_ERRCODEMSG((ret == SBCOK), SBCNULLP, "Raw Partition FSBL HASH Fail");
+        cpyofs += ATP_IDENT_KEY_STG;
+
+        ret = SBC_HashCompute(NULL, fwinf->mbr.ssblimg, fwinf->mbr.ssbln, (void *)&msg[cpyofs]);
+        SBC_mem_print_bin(" SSBL File Hash", (UINT8 *)&msg[cpyofs], ATP_IDENT_KEY_STG);
+        SBC_RET_VALIDATE_ERRCODEMSG((ret == SBCOK), SBCNULLP, "Raw Partition SSBL File HASH Fail");
+        cpyofs += ATP_IDENT_KEY_STG;
+
+    }
+
+
+
+
+    //
+    // Final message digest
+    //
+    ret = SBC_HashCompute(NULL, (UINT8 *)&msg[0], cpyofs, outmsg);
+    SBC_RET_VALIDATE_ERRCODEMSG((ret == SBCOK), SBCNULLP, "Raw Partition SSBL File HASH Fail");
+errdone:
+
+    if (fwinf != NULL) {
+        FreePool(fwinf);
+    }
+
+    if (msg != NULL) {
+        FreePool(msg);
+    }
+
+
+    return ret;
+}
 
 
 #if 0

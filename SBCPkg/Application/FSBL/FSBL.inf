@@ -125,7 +125,7 @@
   *_*_*_CC_FLAGS = -D_DEBUG_PRINT_ON_
   *_*_*_CC_FLAGS = -D_FORCED_SHUTDOWN_
   *_*_*_CC_FLAGS = -D_LOG_RECODING_
-  *_*_*_CC_FLAGS = -D_RUN_GCS_
+  #*_*_*_CC_FLAGS = -D_RUN_GCS_
 
   #*_*_*_CC_FLAGS = -D_SBC_TPM_
   #*_*_*_CC_FLAGS = -D_SHELL_CMD_LINE_
