@@ -87,10 +87,10 @@ SBCStatus SBC_RngGeneration(UINT8 *seed, UINTN szseed, UINTN szrng, UINT8 *rngda
 SBCStatus  SBC_HKdfSha256(kdf_t *k, LV_t  *out)
 {
     SBCStatus ret = SBCOK;
-    UINT8 *salt = NULL;
-    UINT8 *info = NULL;
+    [[maybe_unused]]  UINT8 *salt = NULL;
+    [[maybe_unused]]  UINT8 *info = NULL;
 
-    UINT8 prkout[KDF_KEY_MAXL] = {0,}; // It is result of Pseudo Random Key 
+    [[maybe_unused]] UINT8 prkout[KDF_KEY_MAXL] = {0,}; // It is result of Pseudo Random Key 
     BOOLEAN status;
 
     SBC_RET_VALIDATE_ERRCODEMSG((k != NULL),SBCNULLP, "kdf_t Nill");

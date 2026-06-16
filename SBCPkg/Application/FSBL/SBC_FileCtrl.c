@@ -17,6 +17,11 @@
 
 #include "SBC_Util.h"
 #include "SBC_FileCtrl.h"
+#include "SBC_UnitTest.h"
+#include "SBC_AntiTampering.h"
+#include "SBC_CryptAES.h"
+#include "SBC_Kdf.h"
+
 
 //static UINT32 _get_rw_blkcnt(UINT32 bytes)
 //{
@@ -4275,4 +4280,93 @@ SBC_EFI_LoadFile(
     FreePool(HandleBuffer);
 
     return Ret;
+}
+
+SBCStatus SBC_OSID_KeyStore(void *context) 
+{
+    boot_proc_t *bp = (boot_proc_t *)context;
+    SBCStatus ret = SBCOK;
+    UINT8 *enckey[SYS_OSID_KEY_LEN] = { 0, };
+//  UINT32 osidlen = 0UL;
+//  UINT8 *osid_buf = NULL;
+    UINT8 auth_iv[SBC_AT_IV_LEN] = { 0, };
+    UINT8 auth_tag[SBC_AT_TAG_LEN] = { 0, };
+    SBC_AESContext aesctx;
+    SBC_AESGcmCtx  ctx;
+    UINT8 encbuf[SBC_AT_SYSCONF_CRT_MAX] = { 0, };
+    UINT8 cpybuf[SBC_AT_SYSCONF_CRT_MAX] = { 0, };
+    UINT32 id_len = 0;
+    UINT32 cpy_offset = 0;
+
+    atp_ident_t *key = ((atp_ident_t *)bp->keyinfo);
+
+//  UINTN osid_ofs = SYS_CONF_START_OFS + SYS_CONF_OSID_OFS;
+
+    SBC_mem_print_bin("OSID Store Plain", (UINT8 *)key->osid, 16); 
+
+    ret = SBC_DeviceSecuirtyKeyCreate((VOID *)enckey);
+    SBC_RET_VALIDATE_ERRCODEMSG((ret == SBCOK),
+                                ret,
+                                "Security Key Create fail");
+
+    SBC_RngGeneration(key->osid,        // Seed
+                      SYS_OSID_KEY_LEN,
+                      SBC_AT_IV_LEN,
+                      auth_iv);
+
+    aesctx.gcm = &ctx;
+    aesctx.algoid = SBC_CIPHER_AES_GCM;
+    SBC_AESGcmSetContext((void *)aesctx.gcm,
+                         (void *)enckey,
+                         (void *)auth_iv,
+                         (void *)auth_tag);
+
+    ctx.msg.value = (UINT8 *)key->osid;
+    ctx.msg.length = SYS_OSID_KEY_LEN;
+    ctx.out.value = encbuf;
+    ctx.out.length = ctx.msg.length;
+
+    ret = SBC_AESGcmEncrypt(&aesctx);
+    SBC_RET_VALIDATE_ERRCODEMSG((ret == SBCOK),
+                                ret,
+                                "Firmware ID Encrypt fail");
+
+    cpy_offset = 0;
+    id_len = ctx.out.length;
+    CopyMem(&cpybuf[cpy_offset], &id_len, 4);
+    cpy_offset += 4;
+
+    CopyMem(&cpybuf[cpy_offset],
+            encbuf,
+            id_len);
+
+    cpy_offset += id_len;
+    SBC_mem_print_bin("OSID encrypt", (UINT8 *)encbuf, id_len);
+    // IV copy
+    SBC_mem_print_bin("OSID IV", (UINT8 *)auth_iv, SBC_AT_IV_LEN);
+    CopyMem(&cpybuf[cpy_offset],
+            auth_iv,
+            SBC_AT_IV_LEN);
+    cpy_offset += SBC_AT_IV_LEN;
+
+    // Tag copy
+    CopyMem(&cpybuf[cpy_offset],
+            auth_tag,
+            SBC_AT_TAG_LEN);
+
+    SBC_mem_print_bin("OSID TAG", (UINT8 *)auth_tag, SBC_AT_TAG_LEN);
+    cpy_offset += SBC_AT_TAG_LEN;
+
+
+    ret = SBC_RawAlignedWriteBlockIO(bp->blkhnd,
+                                     SYS_CONF_START_OFS + SYS_CONF_OSID_OFS,
+                                     cpy_offset,
+                                     cpybuf);
+
+
+errdone:
+
+
+    return ret;
+
 }

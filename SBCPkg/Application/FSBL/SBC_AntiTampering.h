@@ -169,6 +169,31 @@ typedef struct _t_baseansr {
 }baseansr_t;
 #pragma pack()
 
+/**
+ * @def SBC_AT_IV_LEN
+ * @brief Length of the AES-GCM initialization vector (IV) in bytes.
+ *
+ * The IV is a 12-byte nonce required for AES-GCM encryption to ensure
+ * uniqueness of each encryption operation.
+ */
+#define SBC_AT_IV_LEN               12
+
+/**
+ * @def SBC_AT_TAG_LEN
+ * @brief Length of the AES-GCM authentication tag (in bytes).
+ *
+ * The authentication tag (TAG) is a 16-byte value appended to the ciphertext
+ * to verify data integrity and authenticity during decryption.
+ */
+#define SBC_AT_TAG_LEN              16
+
+
+/**
+ * @brief SBC_AT_SYSCONF_CRT_MAX
+ * @brief Length of the CA and CRT buffer size of System Setting Repository 
+ */
+#define SBC_AT_SYSCONF_CRT_MAX      2048
+
 
 /*!
  * \fn VOID SBC_AntiTamperingInit(VOID *priv)

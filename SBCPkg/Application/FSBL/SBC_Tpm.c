@@ -459,8 +459,9 @@ SBC_NV_SLOT g_nv_table[] = {
     { NV_KEY_BASEANSWER_ID,         NV_KEY_SIZE,  "Baseanswer Key" },
     { NV_ROOT_CA_ID,                NV_CERT_SIZE, "ROOT CA" },
     { NV_DEVICE_CA_ID,              NV_CERT_SIZE, "DeviceID CA" },
+    { NV_FIRMWARE_CA_ID,            NV_CERT_SIZE, "FirmwareID CA"},
     { NV_OS_CA_ID,                  NV_CERT_SIZE, "OSID CA" },
-    
+
 };
 UINTN       g_nv_table_count;
 
@@ -969,6 +970,8 @@ SBC_NvReadBuffer (
   BOOLEAN              Exists;
   TPM2B_MAX_BUFFER  NvRead;
 
+  TPMS_AUTH_COMMAND AuthSession;
+
   if ((Slot == NULL) || (OutBuf == NULL)) {
     return EFI_INVALID_PARAMETER;
   }
@@ -980,6 +983,8 @@ SBC_NvReadBuffer (
             OutBufSize));
     return EFI_INVALID_PARAMETER;
   }
+
+
 
   Status = SBC_NvExists (Slot->Index, &Exists);
   if (EFI_ERROR (Status)) {
@@ -995,10 +1000,16 @@ SBC_NvReadBuffer (
 
   ZeroMem (&NvRead, sizeof (NvRead));
 
+    ZeroMem(&AuthSession, sizeof(AuthSession));
+
+    AuthSession.sessionHandle = TPM_RS_PW;
+    AuthSession.nonce.size = 0;
+    AuthSession.hmac.size = 0;
+
   Status = Tpm2NvRead (
              TPM_RH_OWNER,   // AuthHandle
              Slot->Index,    // NvIndex
-             NULL,           // AuthSession
+             &AuthSession,           // AuthSession
              Slot->Size,     // Size
              0,              // Offset
              &NvRead
@@ -1006,12 +1017,20 @@ SBC_NvReadBuffer (
 
   if (EFI_ERROR (Status)) {
     DEBUG ((DEBUG_ERROR,
-            "[TPM NV] NvRead(%a, 0x%08x) failed: %r\n",
+            "[ERR TPM NV] NvRead(%a, 0x%08x) Size=%u failed: %r\n",
             Slot->Name,
             Slot->Index,
+            Slot->Size,
             Status));
     return Status;
   }
+
+  DEBUG((DEBUG_INFO,
+         "[INFO TPM NV] NvRead(%a, 0x%08x) Size=%u failed: %r\n",
+         Slot->Name,
+         Slot->Index,
+         Slot->Size,
+         Status)); 
 
   CopyMem (OutBuf, NvRead.buffer, NvRead.size);
   if (OutReadSize != NULL) {

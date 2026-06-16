@@ -710,4 +710,8 @@ SBC_LoadFile(
     IN  CHAR16 *FilePath,
     OUT LV_t   *OutLv
 );
+
+
+
+SBCStatus SBC_OSID_KeyStore(void *context);
 #endif

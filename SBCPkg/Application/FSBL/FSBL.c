@@ -69,6 +69,7 @@
 #include "SBC_Nvram.h"
 #include "SBC_SystemControl.h"
 #include "SBC_Timer.h"
+#include "SBC_Kdf.h"
 
 #ifdef _SBC_TPM_
 #include "SBC_Tpm.h"
@@ -111,14 +112,14 @@ SBCStatus  SBC_DiceKeysGen(EFI_HANDLE ImageHandle, VOID *p,UINTN normbank, UINTN
         goto errdone;
     }
 //
-    //SBC_mem_print_bin("Device ID", h->devid, sizeof h->devid);
+    SBC_mem_print_bin("Device ID", h->devid, sizeof h->devid);
     ret = SBC_GenFWID(ImageHandle, h->devid, h->fwid, normbank, bm);
     if (ret != SBCOK) {
         //Print(L"FW ID generate fail \n");
         goto errdone;
     }
 
-    //SBC_mem_print_bin("Firmware ID", h->fwid, sizeof h->fwid);
+    SBC_mem_print_bin("Firmware ID", h->fwid, sizeof h->fwid);
 
     ret = SBC_GenOSID(ImageHandle,  h->fwid, h->osid);
     if (ret != SBCOK) {
@@ -126,7 +127,7 @@ SBCStatus  SBC_DiceKeysGen(EFI_HANDLE ImageHandle, VOID *p,UINTN normbank, UINTN
         goto errdone;
     }
 
-    //SBC_mem_print_bin("OSID", h->osid, sizeof h->osid);
+    SBC_mem_print_bin("OSID", h->osid, sizeof h->osid);
     ret = SBCOK;
 
 errdone:
@@ -1147,6 +1148,9 @@ UefiMain (
                      8,
                      SYS_LOG_EVT_VALIDATION,
                      L"SBC_tamper_SSBL signature verification suuccess");
+
+      
+      SBC_OSID_KeyStore((void *)&btproc);
 
       ret =  SBC_DeviceIdKyeVerify(h_blkio, diceid.devid, diceid.osid);
       //ret = SBCOK;

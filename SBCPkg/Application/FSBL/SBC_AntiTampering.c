@@ -193,9 +193,9 @@ SBCStatus _ssbl_image_load(VOID *blkhnd, LV_t *lv,  UINTN normbank, UINTN bm)
 
     // If imglen is zero, assumed that image not existense in Raw partition
     if (imglen <= 0) {
-      eprint("Boot Mode (%d) Image not existense", bm);
-      ret = SBCZEROL;
-      goto errdone;
+        eprint("Boot Mode (%d) Image not existense", bm);
+        ret = SBCZEROL;
+        goto errdone;
     }
     dprint("SSBL image len : %ld", imglen);
     real_imglen = imglen;
@@ -1494,14 +1494,28 @@ SBCStatus SBC_DeviceSecuirtyKeyCreate(VOID *key)
     CopyMem((void *)&computebuf[cnt], info.nvmesn, info.nvmesnl);
     cnt += info.nvmesnl;
 
-    dprint("Security Key Message : %a", computebuf);
-    //SBC_external_mem_print_bin("Security Key", computebuf, cnt);
+    //dprint("Security Key Message : %a", computebuf);
+    SBC_external_mem_print_bin("Security Key", computebuf, cnt);
+
+
 
     ret = SBC_HashCompute(NULL,
                           computebuf, 
                           32,
                           key);
 
+    SBC_BuildHexFormattedMessage(
+        (CONST VOID *)key, 32,
+        L"SBC_RawFS_Key Create security key  (%s)\n",
+        mrgmsg, sizeof mrgmsg); 
+
+    sbc_err_sysprn(SBC_LOG_CMN_PRIO_INFO, 2,
+                   SYS_LOG_HOST_BOOT,
+                   SYS_LOG_APP_NAME,
+                   SYS_LOG_CSC_NAME,
+                   8,
+                   L"Information",
+                   mrgmsg); 
 
     SBC_RET_VALIDATE_ERRCODEMSG((ret == SBCOK),
                                 ret, 

@@ -18,6 +18,31 @@
 #include <IndustryStandard/Tpm20.h>
 
 
+/* VT100 colors (change as you like) */
+#ifndef C_RST
+    #define C_RST   "\033[0m"
+#endif
+#ifndef C_DIM
+    #define C_DIM   "\033[2m"
+#endif
+#ifndef C_HEX
+    #define C_HEX   "\033[36m"  /* cyan */
+#endif
+#ifndef C_ASC
+    #define C_ASC   "\033[33m"  /* yellow */
+#endif
+#ifndef C_OFF
+    #define C_OFF   "\033[90m"  /* bright black */
+#endif
+#ifndef C_GRN
+    #define C_GRN   "\033[35m"  /* bright black */
+#endif
+#ifndef C_BLU
+    #define C_BLU   "\033[37m"  /* bright black */
+#endif
+
+
+
 #ifndef SBC_TPMA_NV_AUTHREAD
 #define SBC_TPMA_NV_AUTHREAD     (1 << 18)
 #endif
@@ -42,17 +67,18 @@
 
 #define NV_ROOT_CA_ID               0x01500101   /* 512 bytes */
 #define NV_DEVICE_CA_ID             0x01500102
-#define NV_OS_CA_ID                 0x01500103
+#define NV_FIRMWARE_CA_ID           0x01500103
+#define NV_OS_CA_ID                 0x01500104
 
 #define NV_KEY_SIZE     64 
-#define NV_CERT_SIZE    1024
+#define NV_CERT_SIZE    768
 
 /**
   NV slot descriptor (UEFI side).
 
-  name  : logical name (ASCII)
-  index : NV index handle (0x01XXXXXX range)
-  size  : expected data size
+ *name  : logical name (ASCII) 
+ * index : NV index handle (0x01XXXXXX range) size  : expected
+ * data sizes
 **/
 typedef struct {
   TPMI_RH_NV_INDEX Index;
