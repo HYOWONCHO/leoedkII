@@ -1,31 +1,54 @@
 #!/bin/bash
 
-# If --inf option is given → edit SSBL.inf
-if [ "$1" = "--inf" ]; then
-    INF_FILE="./SSBL.inf" 
+SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
+ROOT_DIR="$SCRIPT_DIR/../../../"
 
-    if [ ! -f "$INF_FILE" ]; then
-        echo "[ERROR] SSBL.inf not found: $INF_FILE"
+edit_file()
+{
+    local file="$1"
+    local name="$2"
+
+    if [ ! -f "$file" ]; then
+        echo "[ERROR] $name not found: $file"
         exit 1
     fi
 
-    echo "[INFO] Editing SSBL INF file: $INF_FILE"
+    echo "[INFO] Editing $name: $file"
     echo "[INFO] Save and quit (:wq) to continue..."
     sleep 1
 
-    vi "$INF_FILE" || {
+    gedit "$file" || {
         echo "[ERROR] vi closed unexpectedly"
         exit 1
     }
-fi
+}
 
-# Build FSBL
-pushd "$(dirname "$0")/../../../" > /dev/null || {
+while [ $# -gt 0 ]; do
+    case "$1" in
+        --inf)
+            edit_file "$SCRIPT_DIR/SSBL.inf" "SSBL.inf"
+            ;;
+
+        --ver)
+            edit_file "$ROOT_DIR/sbc_v.txt" "sbc_v.txt"
+            ;;
+
+        *)
+            echo "[ERROR] Unknown option: $1"
+            echo "Usage: $0 [--inf] [--ver]"
+            exit 1
+            ;;
+    esac
+
+    shift
+done
+
+pushd "$ROOT_DIR" > /dev/null || {
     echo "[ERROR] Failed to change directory to project root"
     exit 1
 }
 
-echo "[INFO] Building FSBL..."
+echo "[INFO] Building SSBL..."
 ./leo_build.sh --build-ssbl
 ret=$?
 
@@ -35,4 +58,3 @@ popd > /dev/null || {
 }
 
 exit $ret
-

@@ -862,83 +862,90 @@ SBC_NvFindSlotByName (
   @retval Others                 Error from NV operations.
 **/
 EFI_STATUS
-SBC_NvWriteChecked (
-  IN CONST SBC_NV_SLOT *Slot,
-  IN CONST UINT8       *Data,
-  IN UINT16             Size,
-  IN UINT32             ExpectedCrc
-  )
-{
-  EFI_STATUS           Status;
-  TPM2B_MAX_BUFFER  NvWrite;
-  UINT32               Crc;
+SBC_NvWriteChecked(
+    IN CONST SBC_NV_SLOT *Slot,
+    IN CONST UINT8       *Data,
+    IN UINT16             Size,
+    IN UINT32             ExpectedCrc
+    ) {
+    EFI_STATUS           Status;
+    TPM2B_MAX_BUFFER  NvWrite;
+    UINT32               Crc;
+    TPMS_AUTH_COMMAND AuthSession;
 
-  if ((Slot == NULL) || (Data == NULL)) {
-    return EFI_INVALID_PARAMETER;
-  }
+    if ((Slot == NULL) || (Data == NULL)) {
+        return EFI_INVALID_PARAMETER;
+    }
 
-  if (Size != Slot->Size) {
-    DEBUG ((DEBUG_ERROR,
-            "[TPM NV] Size mismatch: slot=%u, input=%u\n",
-            Slot->Size, Size));
-    return EFI_INVALID_PARAMETER;
-  }
+    if (Size != Slot->Size) {
+        DEBUG((DEBUG_ERROR,
+               "[TPM NV] Size mismatch: slot=%u, input=%u\n",
+               Slot->Size, Size));
+        return EFI_INVALID_PARAMETER;
+    }
 
-  if (Size > sizeof (NvWrite.buffer)) {
-    DEBUG ((DEBUG_ERROR,
-            "[TPM NV] NV buffer too small: slot=%u, max=%u\n",
-            Size, (UINT32)sizeof (NvWrite.buffer)));
-    return EFI_INVALID_PARAMETER;
-  }
+    if (Size > sizeof(NvWrite.buffer)) {
+        DEBUG((DEBUG_ERROR,
+               "[TPM NV] NV buffer too small: slot=%u, max=%u\n",
+               Size,(UINT32)sizeof(NvWrite.buffer)));
+        return EFI_INVALID_PARAMETER;
+    }
 
-  // Compute CRC
-  //Crc = crc32_calc (Data, Size);
-  Crc = CalculateCrc32((VOID *)Data, Size);
-  DEBUG ((DEBUG_INFO,
-          "[TPM NV] CRC32(%a) = 0x%08x\n",
-          Slot->Name,
-          Crc));
+    // Compute CRC
+    //Crc = crc32_calc (Data, Size);
+    Crc = CalculateCrc32((VOID *)Data, Size);
+    DEBUG((DEBUG_INFO,
+           "[TPM NV] CRC32(%a) = 0x%08x\n",
+           Slot->Name,
+           Crc));
 
-  if ((ExpectedCrc != 0) && (Crc != ExpectedCrc)) {
-    DEBUG ((DEBUG_ERROR,
-            "[TPM NV] CRC mismatch: expected=0x%08x, calc=0x%08x\n",
-            ExpectedCrc, Crc));
-    return EFI_COMPROMISED_DATA;
-  }
+    if ((ExpectedCrc != 0) && (Crc != ExpectedCrc)) {
+        DEBUG((DEBUG_ERROR,
+               "[TPM NV] CRC mismatch: expected=0x%08x, calc=0x%08x\n",
+               ExpectedCrc, Crc));
+        return EFI_COMPROMISED_DATA;
+    }
 
-  // Ensure NV index exists
-  Status = SBC_NvEnsureDefined (Slot->Index, Slot->Size);
-  if (EFI_ERROR (Status)) {
-    return Status;
-  }
+    // Ensure NV index exists
+    Status = SBC_NvEnsureDefined(Slot->Index, Slot->Size);
+    if (EFI_ERROR(Status)) {
+        return Status;
+    }
 
-  ZeroMem (&NvWrite, sizeof (NvWrite));
-  NvWrite.size = Size;
-  CopyMem (NvWrite.buffer, Data, Size);
+    ZeroMem(&NvWrite, sizeof(NvWrite));
+    NvWrite.size = Size;
+    CopyMem(NvWrite.buffer, Data, Size);
 
-  Status = Tpm2NvWrite (
-             TPM_RH_OWNER,    // AuthHandle (OWNERWRITE)
-             Slot->Index,     // NvIndex
-             NULL,            // AuthSession
-             &NvWrite,
-             0                // Offset
-           );
 
-  if (EFI_ERROR (Status)) {
-    DEBUG ((DEBUG_ERROR,
-            "[TPM NV] NvWrite(%a, 0x%08x) failed: %r\n",
-            Slot->Name,
-            Slot->Index,
-            Status));
-    return Status;
-  }
 
-  DEBUG ((DEBUG_INFO,
-          "[TPM NV] NvWrite %a (0x%08x) size=%u OK\n",
-          Slot->Name,
-          Slot->Index,
-          Size));
-  return EFI_SUCCESS;
+    ZeroMem(&AuthSession, sizeof(AuthSession));
+    AuthSession.sessionHandle = TPM_RS_PW;
+    AuthSession.nonce.size = 0;
+    AuthSession.hmac.size = 0;
+
+    Status = Tpm2NvWrite(
+        TPM_RH_OWNER,    // AuthHandle (OWNERWRITE)
+        Slot->Index,     // NvIndex
+        &AuthSession,            // AuthSession
+        &NvWrite,
+        0                // Offset
+        );
+
+    if (EFI_ERROR(Status)) {
+        DEBUG((DEBUG_ERROR,
+               "[TPM NV] NvWrite(%a, 0x%08x) failed: %r\n",
+               Slot->Name,
+               Slot->Index,
+               Status));
+        return Status;
+    }
+
+    DEBUG((DEBUG_INFO,
+           "[TPM NV] NvWrite %a (0x%08x) size=%u OK\n",
+           Slot->Name,
+           Slot->Index,
+           Size));
+    return EFI_SUCCESS;
 }
 
 /* ============================================================
