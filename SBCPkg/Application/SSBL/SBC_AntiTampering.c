@@ -648,9 +648,10 @@ SBCStatus  SBC_FirmwareIdKyeVerify(VOID *priv)
 
 #ifndef _SBC_TPM_
     blkio = bp->blkhnd;
-    fwid = ((atp_ident_t *)bp->keyinfo)->fwid;
+
 #endif
 
+    fwid = ((atp_ident_t *)bp->keyinfo)->fwid; 
     // Generate the Public Key
     ret = SBC_DICESeedKeyPair(fwid, &key_pair);
     SBC_RET_VALIDATE_ERRCODEMSG((ret == SBCOK), SBCINVPARAM, "Firmware ID Key-pair gen fail");
@@ -871,8 +872,11 @@ SBCStatus  SBC_OSIdKyeVerify(VOID *priv)
     bp = (boot_proc_t *)priv;
 #ifndef _SBC_TPM_
     blkio = bp->blkhnd;
-    osid = ((atp_ident_t *)bp->keyinfo)->osid;
+
 #endif
+
+
+    osid = ((atp_ident_t *)bp->keyinfo)->osid; 
     // Generate the Public Key
     ret = SBC_DICESeedKeyPair(osid, &key_pair);
     SBC_RET_VALIDATE_ERRCODEMSG((ret == SBCOK), SBCINVPARAM, "OS ID Key-pair gen fail");
@@ -1699,9 +1703,9 @@ SBCStatus  SBC_SSBL_Verify(VOID *blkhnd, VOID *ansr, UINTN normbank, UINT16 bm)
     UINT32          bsinfolen = 0;
     fsbl_bsinfo_t   bsinfo; 
     UINT32          bsptrcnt = 0;
-    UINT8           HashValue[256];
-    UINT32          HashSize =0;
-    UINT32          fsbl_len =0;
+
+
+
     VOID            *EcPubKey = NULL;
     UINTN           HandleCount;
 
@@ -1709,6 +1713,12 @@ SBCStatus  SBC_SSBL_Verify(VOID *blkhnd, VOID *ansr, UINTN normbank, UINT16 bm)
             .length = 0,
             .value = NULL
       };
+
+#if 0
+    UINT32          fsbl_len = 0; 
+    UINT32          HashSize = 0;
+    UINT8           HashValue[256];
+#endif
 
     HandleCount  = SBC_FindEfiFileSystemProtocol(&hndl);
 
@@ -1757,7 +1767,12 @@ SBCStatus  SBC_SSBL_Verify(VOID *blkhnd, VOID *ansr, UINTN normbank, UINT16 bm)
     bsinfolen = bsinfo.m.siglen + bsinfo.m.fwinfolen + bsinfo.m.certlen  + bsinfo.m.banswlen;
 
       
-    fsbl_len =  last_of_fsbl = rdlv.length - FSBL_BNIFO_SIZE - bsinfolen;
+    last_of_fsbl = rdlv.length - FSBL_BNIFO_SIZE - bsinfolen;
+    // commented by Heappy
+    //fsbl_len =  last_of_fsbl;
+
+
+
     //fsbl_len = last_of_fsbl - bsinfo.m.siglen;
     infostart = &((UINT8 *)rdlv.value)[last_of_fsbl];
 
@@ -1860,39 +1875,6 @@ SBCStatus  SBC_SSBL_Verify(VOID *blkhnd, VOID *ansr, UINTN normbank, UINT16 bm)
 
     ((LV_t *)ansr)->length = bsinfo.m.banswlen;
     CopyMem(((LV_t *)ansr)->value, info.baseansw, bsinfo.m.banswlen);
-
-//    switch (bootmode) {
-//    case BOOT_MODE_FACTORY:
-//      break;
-//    default:
-//      // Base Answer Validate
-//      ret = SBC_BaseAnswerValidate(blkhnd, (UINT8 *)info.baseansw, bsinfo.m.banswlen );
-////    switch (ret) {
-////    case SBCBSANSWNOTFND:
-////      ((LV_t *)ansr)->value = AllocateZeroPool(bsinfo.m.banswlen);
-////      if (((LV_t *)ansr)->value == NULL) {
-////        ret = SBCNULLP;
-////       dprint("Base Answer object create fail \n");
-////        goto errdone;
-////      }
-////      CopyMem(((LV_t *)ansr)->value, info.baseansw, bsinfo.m.banswlen);
-////      //goto errdone;
-////      break;
-////    case SBCOK:
-////      break;
-////    default:
-////      goto errdone;
-////      break;
-////    }
-//      break;
-//    }
-
-
-
-
-
-
-    //ret = SBCOK;
 
 errdone:
 

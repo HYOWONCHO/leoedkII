@@ -495,70 +495,80 @@ SBCStatus SBC_GetFileSize(
     return SBCNOTFND;
 }
 
-EFI_STATUS SBC_ReadFile(EFI_HANDLE ImageHandle, CHAR16 *FileNames, LV_t *out)
+EFI_STATUS
+SBC_ReadFile(
+  EFI_HANDLE ImageHandle,
+  CHAR16 *FileNames,
+  LV_t *out
+)
 {
   EFI_STATUS Status;
-  EFI_SIMPLE_FILE_SYSTEM_PROTOCOL *FileSystem;
-  EFI_FILE_PROTOCOL *RootDir, *File;
-//UINTN BufferSize = 128;
-//CHAR8 Buffer[128];
+  EFI_SIMPLE_FILE_SYSTEM_PROTOCOL *FileSystem = NULL;
+  EFI_FILE_PROTOCOL *RootDir = NULL;
+  EFI_FILE_PROTOCOL *File = NULL;
+  UINTN ReadSize;
 
+  if (ImageHandle == NULL || FileNames == NULL || out == NULL || out->value == NULL) {
+    return EFI_INVALID_PARAMETER;
+  }
 
-  //TODO
-  // out buffer nill check
-    //DEBUG((DEBUG_ERROR,"Image Handle : %p \r\n", ImageHandle));
-    //DEBUG((DEBUG_ERROR,"Read File : %s \r\n", (CHAR8 *)FileNames));
+  if (out->length == 0) {
+    return EFI_BUFFER_TOO_SMALL;
+  }
 
-  //dprint("Read File : %s", FileNames);
+  ReadSize = (UINTN)out->length;
 
-  // Locate file system
-  Status = gBS->HandleProtocol(ImageHandle,
-                               &gEfiSimpleFileSystemProtocolGuid,
-                               (VOID **)&FileSystem);
-  if(EFI_ERROR(Status)) {
-    DEBUG((DEBUG_ERROR, " %a:%d Locate File Systam fail (%r) \r\n",
+  Status = gBS->HandleProtocol(
+                  ImageHandle,
+                  &gEfiSimpleFileSystemProtocolGuid,
+                  (VOID **)&FileSystem
+                  );
+  if (EFI_ERROR(Status)) {
+    DEBUG((DEBUG_ERROR, "%a:%d HandleProtocol fail (%r)\r\n",
            __FUNCTION__, __LINE__, Status));
     return Status;
   }
 
-  // Open the roor directory
   Status = FileSystem->OpenVolume(FileSystem, &RootDir);
   if (EFI_ERROR(Status)) {
-        DEBUG((DEBUG_ERROR, " %a:%d OpenVolume File Systam fail (%r) \r\n",
+    DEBUG((DEBUG_ERROR, "%a:%d OpenVolume fail (%r)\r\n",
            __FUNCTION__, __LINE__, Status));
     return Status;
   }
 
-  // Open the file
-  Status = RootDir->Open(RootDir, &File, FileNames, EFI_FILE_MODE_READ, 0);
+  Status = RootDir->Open(
+                     RootDir,
+                     &File,
+                     FileNames,
+                     EFI_FILE_MODE_READ,
+                     0
+                     );
   if (EFI_ERROR(Status)) {
-      DEBUG((DEBUG_ERROR, " %a:%d RootDir->Open fail (%r) \r\n",
-     __FUNCTION__, __LINE__, Status));
-    return Status;
+    DEBUG((DEBUG_ERROR, "%a:%d RootDir->Open fail (%r)\r\n",
+           __FUNCTION__, __LINE__, Status));
+    goto Exit;
   }
 
-  // Read the file
-  Status = File->Read(File, (UINTN *)&out->length, out->value);
+  Status = File->Read(File, &ReadSize, out->value);
   if (EFI_ERROR(Status)) {
-      DEBUG((DEBUG_ERROR, " %a:%d File->Read fail (%r) \r\n",
-              __FUNCTION__, __LINE__, Status));
-      //Print(L"File Content: %a\n", Buffer);
-      return Status;
+    DEBUG((DEBUG_ERROR, "%a:%d File->Read fail (%r)\r\n",
+           __FUNCTION__, __LINE__, Status));
+    goto Exit;
   }
 
-  //out->length = BufferSize;
-  //CopyMem(out->value, Buffer, out->length);
+  out->length = (UINT32)ReadSize;
 
-  //SBC_external_mem_print_bin((CHAR8 *)FileNames, (UINT8 *)out->value, (UINTN)out->length);
+Exit:
+  if (File != NULL) {
+    File->Close(File);
+  }
 
-  // Close the file
-  File->Close(File);
-  RootDir->Close(RootDir);
+  if (RootDir != NULL) {
+    RootDir->Close(RootDir);
+  }
+
   return Status;
-
-
 }
-
 //extern EFI_HANDLE sbcImgHandle;
 EFI_STATUS SBC_IsFlieAccess(EFI_HANDLE ImageHandle, CHAR16 *FileNames)
 {
@@ -592,6 +602,12 @@ errdone:
     if (File != NULL) {
         File->Close(File);
     }
+
+    if (RootDir != NULL) {
+        RootDir->Close(RootDir);
+    }
+
+
     return retval; 
     
 }
