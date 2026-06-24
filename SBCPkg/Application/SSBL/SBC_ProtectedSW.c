@@ -311,7 +311,7 @@ SBCStatus SBC_FindProtectedSw(VOID *handle, CHAR8 name[256], CHAR8 *ver, UINTN *
             ret = SBCOK;
             if( sw_node_off != NULL ) {
                 CopyMem(sw_node_off, &path->sw_node_off, sizeof *sw_node_off);
-                //dprint("copy node off  : %lx", sw_node_off);
+                dprint("copy node off  : %lx", sw_node_off);
             }
 
             if( ver != NULL ) {
@@ -475,17 +475,20 @@ SBCStatus SBC_ReadProtectedSwSlotOffset(VOID *handle, UINTN *check, CHAR8 *sw_na
     if (slot == AT_RP_SW_NODE_SLOT0 && node.sw0 == 1) {
         *check = 1;
         *offset = node.sw0_off;
+        dprint("sw000_off=%lx (%lx)\n", node.sw1_off,  *offset); 
         goto errdone;
     } 
     else if(slot == AT_RP_SW_NODE_SLOT1 && node.sw1 == 1) {
         *check = 1;
         *offset = node.sw1_off;
+        dprint("sw111_off=%lx (%lx)\n", node.sw1_off,  *offset); 
         goto errdone;
     }
 
     //ret = SBCFAIL;
 
 errdone:
+    
 
     return ret;
 }
@@ -906,7 +909,7 @@ SBCStatus SBC_ProtSWReCrypto(VOID *handle, UINT8 *key, UINT8 *migkey, UINT8 *dec
     UINTN sw_list_line = 0ULL;
     UINTN x = 0;
     UINTN check = 0;
-    UINTN sw_off;
+    UINTN sw_off = 0UL;
 
     SBC_RET_VALIDATE_ERRCODEMSG((p != NULL), SBCNULLP, "Invalid Handle Object");
 
@@ -918,12 +921,14 @@ SBCStatus SBC_ProtSWReCrypto(VOID *handle, UINT8 *key, UINT8 *migkey, UINT8 *dec
         SBC_RET_VALIDATE_ERRCODEMSG(!(ret != SBCOK), ret, "Protected SW Name obtain fail");
 
         // Software Slot 0
-        dprint("Read Protected Sw Slot 0 Offset ");
+        dprint("Read Protected Sw Slot 0 name %a", gstr_sw_name);
         ret = SBC_ReadProtectedSwSlotOffset(handle,
                                             &check,
                                             gstr_sw_name,
                                             AT_RP_SW_NODE_SLOT0,
                                             &sw_off);
+
+        dprint("Read Protected Sw Slot 0 Offse address : %lx \n", sw_off);
         if( ret == SBCOK  && check) {
             ret = SBC_RecryptoProtectedSW(handle,
                                           sw_off,
@@ -937,12 +942,13 @@ SBCStatus SBC_ProtSWReCrypto(VOID *handle, UINT8 *key, UINT8 *migkey, UINT8 *dec
         check = 0ULL;
 
         // Software Slot 1
-        dprint("Read Protected Sw Slot 1 Offset ");
+        dprint("Read Protected Sw Slot 1 name %a", gstr_sw_name);
         ret = SBC_ReadProtectedSwSlotOffset(handle,
                                             &check,
                                             gstr_sw_name,
                                             AT_RP_SW_NODE_SLOT1,
                                             &sw_off);
+        dprint("Read Protected Sw Slot 1 Offse address : %lx \n", sw_off);
         if( ret == SBCOK  && check ) {
             ret = SBC_RecryptoProtectedSW(handle,
                                           sw_off,
@@ -951,6 +957,8 @@ SBCStatus SBC_ProtSWReCrypto(VOID *handle, UINT8 *key, UINT8 *migkey, UINT8 *dec
 
             SBC_RET_VALIDATE_ERRCODEMSG(!(ret != SBCOK), ret, "Failed to Re-crypto for Software Slot 2");
         }
+
+        sw_off = 0UL;
     }
 
 errdone:

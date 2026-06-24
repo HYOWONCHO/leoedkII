@@ -40,7 +40,7 @@
   SBC_ProtectedSW.c
   SBC_Nvram.c
   SBC_Timer.c
-  SBC_Tpm.c
+  #SBC_Tpm.c
 
   #SBC_UseCaseUpdateTest.c
 
@@ -72,8 +72,8 @@
   DevicePathLib
   IoLib
   UefiBootManagerLib
-  Tpm2CommandLib
-  Tpm2DeviceLib
+  #Tpm2CommandLib
+  #Tpm2DeviceLib
   
   #ShellLib
   #ShellCommandLib
@@ -134,8 +134,8 @@
     *_*_*_CC_FLAGS = -D_TEST_BED_
     *_*_*_CC_FLAGS = -D_DEBUG_PRINT_ON_
     *_*_*_CC_FLAGS = -D_LOG_RECODING_
-    #*_*_*_CC_FLAGS = -D_RUN_GCS_
-    *_*_*_CC_FLAGS = -D_SBC_TPM_
+    *_*_*_CC_FLAGS = -D_RUN_GCS_
+    #*_*_*_CC_FLAGS = -D_SBC_TPM_
 
 
     

@@ -616,7 +616,7 @@ SBCStatus  SBC_FirmwareIdKyeVerify(VOID *priv)
     at_key_t rcv_key_pair;
 
     VOID *ctx = NULL;
-    BOOLEAN retval;
+
 
     UINT8 pubkey[64] = {0,};
     UINTN pubkeyl = 0;

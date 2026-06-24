@@ -21,6 +21,7 @@
 #include "SBC_AntiTampering.h"
 #include "SBC_CryptAES.h"
 #include "SBC_Kdf.h"
+#include "SBC_Tpm.h"
 
 
 //static UINT32 _get_rw_blkcnt(UINT32 bytes)
@@ -4363,6 +4364,28 @@ SBCStatus SBC_OSID_KeyStore(void *context)
                                      cpy_offset,
                                      cpybuf);
 
+    SBC_RET_VALIDATE_ERRCODEMSG((ret == SBCOK),
+                                ret,
+                                "SBC_RawAlignedWriteBlockIO fail");
+#ifdef _SBC_TPM_
+    SBC_NV_SLOT *slot = SBC_NvFindSlotByName("OS ID Key");
+    if (slot == NULL) {
+        eprint("TPM Slot information find fail");
+        ret = SBCNULLP;
+        goto errdone;
+    }
+    EFI_STATUS retval = SBC_NvWriteChecked(slot,
+                                          cpybuf,
+                                          slot->Size,
+                                          0);
+
+    if (EFI_ERROR(retval)) {
+        eprint("TPM NV Write Buffer fail (%r)", retval);
+        ret = SBCFAIL;
+        goto errdone;
+    }
+
+#endif
 
 errdone:
 

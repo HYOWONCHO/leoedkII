@@ -907,9 +907,21 @@ SBC_NvWriteChecked (
     return EFI_COMPROMISED_DATA;
   }
 
+  DEBUG((DEBUG_INFO,
+         "[INFO TPM NV] NvWrite (%a, 0x%08x) Size=%u\n",
+         Slot->Name,
+         Slot->Index,
+         Slot->Size)); 
+
   // Ensure NV index exists
   Status = SBC_NvEnsureDefined (Slot->Index, Slot->Size);
   if (EFI_ERROR (Status)) {
+      DEBUG((DEBUG_INFO,
+             "[ERROR TPM NV] SBC_NvEnsureDefined(%a, 0x%08x) Size=%u failed: %r\n",
+             Slot->Name,
+             Slot->Index,
+             Slot->Size,
+             Status)); 
     return Status;
   }
 
@@ -933,19 +945,22 @@ SBC_NvWriteChecked (
            );
 
   if (EFI_ERROR (Status)) {
-    DEBUG ((DEBUG_ERROR,
-            "[TPM NV] NvWrite(%a, 0x%08x) failed: %r\n",
-            Slot->Name,
-            Slot->Index,
-            Status));
+      DEBUG((DEBUG_INFO,
+             "[ERROR TPM NV] NvWrite(%a, 0x%08x) Size=%u failed: %r\n",
+             Slot->Name,
+             Slot->Index,
+             Slot->Size,
+             Status)); 
     return Status;
   }
 
-  DEBUG ((DEBUG_INFO,
-          "[TPM NV] NvWrite %a (0x%08x) size=%u OK\n",
-          Slot->Name,
-          Slot->Index,
-          Size));
+  DEBUG((DEBUG_INFO,
+         "[INFO TPM NV] NvWrite(%a, 0x%08x) Size=%u success: %r\n",
+         Slot->Name,
+         Slot->Index,
+         Slot->Size,
+         Status)); 
+
   return EFI_SUCCESS;
 }
 
@@ -1034,7 +1049,7 @@ SBC_NvReadBuffer (
   }
 
   DEBUG((DEBUG_INFO,
-         "[INFO TPM NV] NvRead(%a, 0x%08x) Size=%u failed: %r\n",
+         "[INFO TPM NV] NvRead(%a, 0x%08x) Size=%u success: %r\n",
          Slot->Name,
          Slot->Index,
          Slot->Size,
