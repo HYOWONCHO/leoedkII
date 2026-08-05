@@ -1,0 +1,123 @@
+\doxysection{sw\+\_\+node\+\_\+t Struct Reference}
+\hypertarget{structsw__node__t}{}\label{structsw__node__t}\index{sw\_node\_t@{sw\_node\_t}}
+
+
+Software node status and offset descriptor.  
+
+
+
+
+{\ttfamily \#include $<$SBC\+\_\+\+Protected\+SW.\+h$>$}
+
+\doxysubsubsection*{Data Fields}
+\begin{DoxyCompactItemize}
+\item 
+UINT8 \mbox{\hyperlink{structsw__node__t_a989b8dca8517f58a43de50f920e341f5}{pos}}
+\begin{DoxyCompactList}\small\item\em Logical position or index of the node in the software table. \end{DoxyCompactList}\item 
+UINT8 \mbox{\hyperlink{structsw__node__t_ae9e8e0f39d802a3973b08e0ac0c07e3b}{reserved}} \mbox{[}12\mbox{]}
+\begin{DoxyCompactList}\small\item\em Reserved for future use or alignment. \end{DoxyCompactList}\item 
+UINT8 \mbox{\hyperlink{structsw__node__t_a46eb5a395d575579b99aadf76a32d8c0}{status}}
+\begin{DoxyCompactList}\small\item\em Current operational status of the software node. \end{DoxyCompactList}\item 
+UINT8 \mbox{\hyperlink{structsw__node__t_abe8fcf4ed5a99bbea08056c191acb787}{sw0}}
+\begin{DoxyCompactList}\small\item\em Identifier or flag for the primary software slot (SW0). \end{DoxyCompactList}\item 
+UINTN \mbox{\hyperlink{structsw__node__t_acd63f7fa88ab3b298a00898f7423b5be}{sw0\+\_\+off}}
+\begin{DoxyCompactList}\small\item\em Storage offset or address of the primary (SW0) image. \end{DoxyCompactList}\item 
+UINT8 \mbox{\hyperlink{structsw__node__t_a416d41ff9324177231d673c31495c6f8}{sw1}}
+\begin{DoxyCompactList}\small\item\em Identifier or flag for the secondary software slot (SW1). \end{DoxyCompactList}\item 
+UINTN \mbox{\hyperlink{structsw__node__t_aab35168efcb080b6e0c54d5833b55fec}{sw1\+\_\+off}}
+\begin{DoxyCompactList}\small\item\em Storage offset or address of the secondary (SW1) image. \end{DoxyCompactList}\end{DoxyCompactItemize}
+
+
+\doxysubsection{Detailed Description}
+Software node status and offset descriptor. 
+
+\doxysubsection{Field Documentation}
+\Hypertarget{structsw__node__t_a989b8dca8517f58a43de50f920e341f5}\label{structsw__node__t_a989b8dca8517f58a43de50f920e341f5} 
+\index{sw\_node\_t@{sw\_node\_t}!pos@{pos}}
+\index{pos@{pos}!sw\_node\_t@{sw\_node\_t}}
+\doxysubsubsection{\texorpdfstring{pos}{pos}}
+{\footnotesize\ttfamily sw\+\_\+node\+\_\+t\+::pos}
+
+
+
+Logical position or index of the node in the software table. 
+
+Node position index.
+
+Used to distinguish between multiple nodes in a protected software map. \Hypertarget{structsw__node__t_ae9e8e0f39d802a3973b08e0ac0c07e3b}\label{structsw__node__t_ae9e8e0f39d802a3973b08e0ac0c07e3b} 
+\index{sw\_node\_t@{sw\_node\_t}!reserved@{reserved}}
+\index{reserved@{reserved}!sw\_node\_t@{sw\_node\_t}}
+\doxysubsubsection{\texorpdfstring{reserved}{reserved}}
+{\footnotesize\ttfamily sw\+\_\+node\+\_\+t\+::reserved}
+
+
+
+Reserved for future use or alignment. 
+
+Reserved (alignment or future use).
+
+Typically initialized to zero. \Hypertarget{structsw__node__t_a46eb5a395d575579b99aadf76a32d8c0}\label{structsw__node__t_a46eb5a395d575579b99aadf76a32d8c0} 
+\index{sw\_node\_t@{sw\_node\_t}!status@{status}}
+\index{status@{status}!sw\_node\_t@{sw\_node\_t}}
+\doxysubsubsection{\texorpdfstring{status}{status}}
+{\footnotesize\ttfamily sw\+\_\+node\+\_\+t\+::status}
+
+
+
+Current operational status of the software node. 
+
+Software node status (active/inactive).
+
+Indicates whether the node is active, inactive, invalid, or under update. (Implementation-\/specific encoding, e.\+g., 0 = inactive, 1 = active, etc.) \Hypertarget{structsw__node__t_abe8fcf4ed5a99bbea08056c191acb787}\label{structsw__node__t_abe8fcf4ed5a99bbea08056c191acb787} 
+\index{sw\_node\_t@{sw\_node\_t}!sw0@{sw0}}
+\index{sw0@{sw0}!sw\_node\_t@{sw\_node\_t}}
+\doxysubsubsection{\texorpdfstring{sw0}{sw0}}
+{\footnotesize\ttfamily sw\+\_\+node\+\_\+t\+::sw0}
+
+
+
+Identifier or flag for the primary software slot (SW0). 
+
+Primary software slot identifier.
+
+Represents the first software partition or firmware image slot. \Hypertarget{structsw__node__t_acd63f7fa88ab3b298a00898f7423b5be}\label{structsw__node__t_acd63f7fa88ab3b298a00898f7423b5be} 
+\index{sw\_node\_t@{sw\_node\_t}!sw0\_off@{sw0\_off}}
+\index{sw0\_off@{sw0\_off}!sw\_node\_t@{sw\_node\_t}}
+\doxysubsubsection{\texorpdfstring{sw0\_off}{sw0\_off}}
+{\footnotesize\ttfamily sw\+\_\+node\+\_\+t\+::sw0\+\_\+off}
+
+
+
+Storage offset or address of the primary (SW0) image. 
+
+Offset of primary (SW0) image.
+
+Indicates the absolute or relative offset within storage media where the SW0 image is located. \Hypertarget{structsw__node__t_a416d41ff9324177231d673c31495c6f8}\label{structsw__node__t_a416d41ff9324177231d673c31495c6f8} 
+\index{sw\_node\_t@{sw\_node\_t}!sw1@{sw1}}
+\index{sw1@{sw1}!sw\_node\_t@{sw\_node\_t}}
+\doxysubsubsection{\texorpdfstring{sw1}{sw1}}
+{\footnotesize\ttfamily sw\+\_\+node\+\_\+t\+::sw1}
+
+
+
+Identifier or flag for the secondary software slot (SW1). 
+
+Secondary software slot identifier.
+
+Represents a backup or alternate software image slot. \Hypertarget{structsw__node__t_aab35168efcb080b6e0c54d5833b55fec}\label{structsw__node__t_aab35168efcb080b6e0c54d5833b55fec} 
+\index{sw\_node\_t@{sw\_node\_t}!sw1\_off@{sw1\_off}}
+\index{sw1\_off@{sw1\_off}!sw\_node\_t@{sw\_node\_t}}
+\doxysubsubsection{\texorpdfstring{sw1\_off}{sw1\_off}}
+{\footnotesize\ttfamily sw\+\_\+node\+\_\+t\+::sw1\+\_\+off}
+
+
+
+Storage offset or address of the secondary (SW1) image. 
+
+Offset of secondary (SW1) image.
+
+Indicates the absolute or relative offset within storage media where the SW1 image is located. 
+
+The documentation for this struct was generated from the following file\+:\begin{DoxyCompactItemize}
+\item 
+SBC\+\_\+\+Protected\+SW.\+h\end{DoxyCompactItemize}

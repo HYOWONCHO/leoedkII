@@ -1,0 +1,74 @@
+\doxysubsection{Call Ordering}
+\hypertarget{group__cmocka__call__order}{}\label{group__cmocka__call__order}\index{Call Ordering@{Call Ordering}}
+Collaboration diagram for Call Ordering\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=297pt]{group__cmocka__call__order}
+\end{center}
+\end{figure}
+\doxysubsubsubsection*{Macros}
+\begin{DoxyCompactItemize}
+\item 
+\Hypertarget{group__cmocka__call__order_ga247f5b7faba315b80a9bb4b2a8824e80}\label{group__cmocka__call__order_ga247f5b7faba315b80a9bb4b2a8824e80} 
+\#define {\bfseries expect\+\_\+function\+\_\+call}(function)~    \+\_\+expect\+\_\+function\+\_\+call(\#function, \+\_\+\+\_\+\+FILE\+\_\+\+\_\+, \+\_\+\+\_\+\+LINE\+\_\+\+\_\+, 1)
+\item 
+\Hypertarget{group__cmocka__call__order_ga68094d605c49fe790190b3ee613522b4}\label{group__cmocka__call__order_ga68094d605c49fe790190b3ee613522b4} 
+\#define {\bfseries expect\+\_\+function\+\_\+call\+\_\+any}(function)~    \+\_\+expect\+\_\+function\+\_\+call(\#function, \+\_\+\+\_\+\+FILE\+\_\+\+\_\+, \+\_\+\+\_\+\+LINE\+\_\+\+\_\+, -\/1)
+\item 
+\Hypertarget{group__cmocka__call__order_gafe9bec12f39aef833757377a65948869}\label{group__cmocka__call__order_gafe9bec12f39aef833757377a65948869} 
+\#define {\bfseries expect\+\_\+function\+\_\+calls}(function,  times)~    \+\_\+expect\+\_\+function\+\_\+call(\#function, \+\_\+\+\_\+\+FILE\+\_\+\+\_\+, \+\_\+\+\_\+\+LINE\+\_\+\+\_\+, times)
+\item 
+\Hypertarget{group__cmocka__call__order_gabaf804f96e99492efe8e1dddc34cd326}\label{group__cmocka__call__order_gabaf804f96e99492efe8e1dddc34cd326} 
+\#define {\bfseries function\+\_\+called}()~\+\_\+function\+\_\+called(\+\_\+\+\_\+func\+\_\+\+\_\+, \+\_\+\+\_\+\+FILE\+\_\+\+\_\+, \+\_\+\+\_\+\+LINE\+\_\+\+\_\+)
+\item 
+\Hypertarget{group__cmocka__call__order_ga7caada40dc8863175475ea21dff26fdf}\label{group__cmocka__call__order_ga7caada40dc8863175475ea21dff26fdf} 
+\#define {\bfseries ignore\+\_\+function\+\_\+calls}(function)~    \+\_\+expect\+\_\+function\+\_\+call(\#function, \+\_\+\+\_\+\+FILE\+\_\+\+\_\+, \+\_\+\+\_\+\+LINE\+\_\+\+\_\+, -\/2)
+\end{DoxyCompactItemize}
+
+
+\doxysubsubsection{Detailed Description}
+It is often beneficial to make sure that functions are called in an order. This is independent of mock returns and parameter checking as both of the aforementioned do not check the order in which they are called from different functions.
+
+
+\begin{DoxyItemize}
+\item {\bfseries{expect\+\_\+function\+\_\+call(function)}} -\/ The expect\+\_\+function\+\_\+call() macro pushes an expectation onto the stack of expected calls.
+
+
+\item {\bfseries{function\+\_\+called()}} -\/ pops a value from the stack of expected calls. function\+\_\+called() is invoked within the mock object that uses it. 
+\end{DoxyItemize}
+
+expect\+\_\+function\+\_\+call() and function\+\_\+called() are intended to be used in pairs. Cmocka will fail a test if there are more or less expected calls created (e.\+g. expect\+\_\+function\+\_\+call()) than consumed with function\+\_\+called(). There are provisions such as ignore\+\_\+function\+\_\+calls() which allow this restriction to be circumvented in tests where mock calls for the code under test are not the focus of the test.
+
+The following example illustrates how a unit test instructs cmocka to expect a function\+\_\+called() from a particular mock, {\bfseries{chef\+\_\+sing()}}\+:
+
+
+\begin{DoxyCode}{0}
+\DoxyCodeLine{\textcolor{keywordtype}{void}\ chef\_sing(\textcolor{keywordtype}{void});}
+\DoxyCodeLine{}
+\DoxyCodeLine{\textcolor{keywordtype}{void}\ code\_under\_test()}
+\DoxyCodeLine{\{}
+\DoxyCodeLine{\ \ chef\_sing();}
+\DoxyCodeLine{\}}
+\DoxyCodeLine{}
+\DoxyCodeLine{\textcolor{keywordtype}{void}\ some\_test(\textcolor{keywordtype}{void}\ **state)}
+\DoxyCodeLine{\{}
+\DoxyCodeLine{\ \ \ \ expect\_function\_call(chef\_sing);}
+\DoxyCodeLine{\ \ \ \ code\_under\_test();}
+\DoxyCodeLine{\}}
+
+\end{DoxyCode}
+
+
+The implementation of the mock then must check whether it was meant to be called by invoking {\bfseries{function\+\_\+called()}}\+:
+
+
+\begin{DoxyCode}{0}
+\DoxyCodeLine{\textcolor{keywordtype}{void}\ chef\_sing()}
+\DoxyCodeLine{\{}
+\DoxyCodeLine{\ \ \ \ function\_called();}
+\DoxyCodeLine{\}}
+
+\end{DoxyCode}
+ 

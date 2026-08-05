@@ -1,0 +1,21 @@
+<map id="SBC_ProtSWDecrypt" name="SBC_ProtSWDecrypt">
+<area shape="rect" id="Node000001" title=" " alt="" coords="5,55,164,80"/>
+<area shape="rect" id="Node000002" href="$SBC__ProtectedSW_8c.html#ae9d0525852cfae1df12cda21bccbce6d" title="Retrieve the number of protected software entries." alt="" coords="256,5,407,31"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="148,52,253,31,254,36,149,57"/>
+<area shape="rect" id="Node000004" href="$SBC__ProtectedSW_8c.html#a197c1a9743d7bd540aadbb4d88ebb487" title="Retrieve the storage offset of a specific protected software slot (SW0/SW1)." alt="" coords="212,55,451,80"/>
+<area shape="poly" id="edge3_Node000001_Node000004" title=" " alt="" coords="164,65,198,65,198,70,164,70"/>
+<area shape="rect" id="Node000005" href="$SBC__ProtectedSW_8c.html#a17776e78948216d2a4a9a475f66d8637" title="Re&#45;encrypt (re&#45;crypto) a protected software image using a new key set." alt="" coords="231,104,432,129"/>
+<area shape="poly" id="edge5_Node000001_Node000005" title=" " alt="" coords="149,77,254,99,253,104,148,83"/>
+<area shape="rect" id="Node000003" href="$SBC__FileCtrl_8c.html#a0bffd54719b02c63355534614cdb450b" title="Read arbitrary bytes to a Block I/O device." alt="" coords="501,5,719,31"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="407,15,487,15,487,21,407,21"/>
+<area shape="poly" id="edge4_Node000004_Node000003" title=" " alt="" coords="403,52,524,31,524,36,404,57"/>
+<area shape="poly" id="edge9_Node000005_Node000003" title=" " alt="" coords="419,101,449,89,464,78,472,65,482,52,497,40,511,33,513,38,500,44,486,56,477,68,468,81,452,94,422,106"/>
+<area shape="rect" id="Node000006" href="$SBC__Log_8c.html#a4eef09d3e49bf44a244bdc81ebee42f6" title="Print binary data in hexadecimal format for debugging." alt="" coords="499,55,721,80"/>
+<area shape="poly" id="edge6_Node000005_Node000006" title=" " alt="" coords="403,101,524,80,524,85,404,107"/>
+<area shape="rect" id="Node000007" href="$SBC__Hashing_8c.html#ae8bb2fa9f36321b9eb37b1e8ed51a4cc" title=" " alt="" coords="535,104,685,129"/>
+<area shape="poly" id="edge7_Node000005_Node000007" title=" " alt="" coords="432,114,522,114,522,119,432,119"/>
+<area shape="rect" id="Node000008" href="$SBC__Log_8c.html#a69cb7fed1bea1977ffcc81ccc1a16648" title="Print binary data in hexadecimal format for debugging." alt="" coords="531,153,689,179"/>
+<area shape="poly" id="edge8_Node000005_Node000008" title=" " alt="" coords="404,127,524,148,524,153,403,132"/>
+<area shape="rect" id="Node000009" href="$SBC__FileCtrl_8c.html#abffb6a3e7fe13fbd929362326a36db93" title="Write arbitrary bytes to a Block I/O device." alt="" coords="499,203,721,228"/>
+<area shape="poly" id="edge10_Node000005_Node000009" title=" " alt="" coords="359,127,422,157,500,187,532,197,530,202,498,193,420,162,356,132"/>
+</map>

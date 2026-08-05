@@ -1,0 +1,167 @@
+\doxysection{SBC\+\_\+\+Anti\+Tampering.\+h}
+\hypertarget{FSBL_2SBC__AntiTampering_8h_source}{}\label{FSBL_2SBC__AntiTampering_8h_source}\index{Application/FSBL/SBC\_AntiTampering.h@{Application/FSBL/SBC\_AntiTampering.h}}
+
+\begin{DoxyCode}{0}
+\DoxyCodeLine{00001\ \textcolor{preprocessor}{\#ifndef\ \_SBC\_ANTITAMPERING\_}}
+\DoxyCodeLine{00002\ \textcolor{preprocessor}{\#define\ \_SBC\_ANTITAMPERING\_}}
+\DoxyCodeLine{00003\ }
+\DoxyCodeLine{00004\ }
+\DoxyCodeLine{00005\ \textcolor{preprocessor}{\#define\ KERNEL\_DIR\_FILE\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ L"{}\(\backslash\)\(\backslash\)EFI\(\backslash\)\(\backslash\)BOOT\(\backslash\)\(\backslash\)kernel\_path.txt"{}}}
+\DoxyCodeLine{00006\ }
+\DoxyCodeLine{00007\ \textcolor{preprocessor}{\#ifndef\ \_FSBL\_TEST\_}}
+\DoxyCodeLine{00008\ \textcolor{preprocessor}{\#\ \ \ define\ OSID\_KERNEL\_PATH\ \ \ \ \ \ \ \ \ \ \ \ L"{}\(\backslash\)\(\backslash\)vmlinuz"{}\ \ \ \ \ \ \ \ \ \ \ \ }}
+\DoxyCodeLine{00009\ \textcolor{preprocessor}{\#else}}
+\DoxyCodeLine{00010\ \textcolor{preprocessor}{\#\ \ \ define\ OSID\_KERNEL\_PATH\ \ \ \ \ \ \ \ \ \ \ \ L"{}\(\backslash\)\(\backslash\)vmlinuz"{}\ }}
+\DoxyCodeLine{00011\ \textcolor{preprocessor}{\#endif}}
+\DoxyCodeLine{00012\ }
+\DoxyCodeLine{00013\ \textcolor{preprocessor}{\#ifndef\ \_FSBL\_TEST\_}}
+\DoxyCodeLine{00014\ \textcolor{preprocessor}{\#\ \ \ define\ OSID\_KERNEL\_PATH\ \ \ \ \ \ \ \ \ \ \ \ L"{}\(\backslash\)\(\backslash\)vmlinuz"{}\ \ \ \ \ \ \ \ \ }}
+\DoxyCodeLine{00015\ \textcolor{preprocessor}{\#\ \ \ define\ EFI\_BOOT\_FSBL\_PATH\ \ \ \ \ \ \ \ \ \ L"{}\(\backslash\)\(\backslash\)EFI\(\backslash\)\(\backslash\)BOOT\(\backslash\)\(\backslash\)bootx64.efi"{}}}
+\DoxyCodeLine{00016\ \textcolor{preprocessor}{\#\ \ \ define\ EFI\_BOOT\_SSBL\_PATH\ \ \ \ \ \ \ \ \ \ L"{}\(\backslash\)\(\backslash\)EFI\(\backslash\)\(\backslash\)BOOT\(\backslash\)\(\backslash\)SSBL.efi"{}}}
+\DoxyCodeLine{00017\ \textcolor{preprocessor}{\#\ \ \ define\ STR\_FSBL\_F\_NAME\ \ \ \ \ \ \ \ \ \ \ \ \ EFI\_BOOT\_FSBL\_PATH}}
+\DoxyCodeLine{00018\ \textcolor{preprocessor}{\#\ \ \ define\ STR\_SSBL\_F\_NAME\ \ \ \ \ \ \ \ \ \ \ \ \ EFI\_BOOT\_SSBL\_PATH}}
+\DoxyCodeLine{00019\ \textcolor{preprocessor}{\#else}}
+\DoxyCodeLine{00020\ \textcolor{preprocessor}{\#\ \ \ define\ OSID\_KERNEL\_PATH\ \ \ \ \ \ \ \ \ \ \ \ L"{}\(\backslash\)\(\backslash\)vmlinuz"{}\ \ \ \ \ \ \ \ \ }}
+\DoxyCodeLine{00021\ \textcolor{preprocessor}{\#\ \ \ define\ EFI\_BOOT\_FSBL\_PATH\ \ \ \ \ \ \ \ \ \ L"{}\(\backslash\)\(\backslash\)EFI\(\backslash\)\(\backslash\)BOOT\(\backslash\)\(\backslash\)FSBL.efi.bin"{}}}
+\DoxyCodeLine{00022\ \textcolor{preprocessor}{\#\ \ \ define\ EFI\_BOOT\_SSBL\_PATH\ \ \ \ \ \ \ \ \ \ L"{}\(\backslash\)\(\backslash\)EFI\(\backslash\)\(\backslash\)BOOT\(\backslash\)\(\backslash\)SSBL.efi.bin"{}}}
+\DoxyCodeLine{00023\ \textcolor{preprocessor}{\#\ \ \ define\ STR\_FSBL\_F\_NAME\ \ \ \ \ \ \ \ \ \ \ \ \ EFI\_BOOT\_FSBL\_PATH}}
+\DoxyCodeLine{00024\ \textcolor{preprocessor}{\#\ \ \ define\ STR\_SSBL\_F\_NAME\ \ \ \ \ \ \ \ \ \ \ \ \ EFI\_BOOT\_SSBL\_PATH}}
+\DoxyCodeLine{00025\ \textcolor{preprocessor}{\#endif}}
+\DoxyCodeLine{00026\ }
+\DoxyCodeLine{00027\ \textcolor{preprocessor}{\#define\ SBC\_AT\_IV\_LEN\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ 12}}
+\DoxyCodeLine{00028\ \textcolor{preprocessor}{\#define\ SBC\_AT\_HASH\_LEN\ \ \ \ \ \ \ \ \ \ \ \ \ 32}}
+\DoxyCodeLine{00029\ \textcolor{preprocessor}{\#define\ SBC\_BLKDEV\_BLKSZ\ \ \ \ \ \ \ \ \ \ \ \ 512}}
+\DoxyCodeLine{00030\ }
+\DoxyCodeLine{00038\ \textcolor{preprocessor}{\#define\ ATP\_IDENT\_KEY\_STG\ \ \ \ \ \ \ \ \ \ 32}}
+\DoxyCodeLine{00039\ \textcolor{preprocessor}{\#pragma\ pack(1)}}
+\DoxyCodeLine{00045\ \textcolor{keyword}{typedef}\ \textcolor{keyword}{struct\ }\{}
+\DoxyCodeLine{00046\ \ \ \ \ UINT8\ \ \ \ \ \ \ \ \ \ \ devid[\mbox{\hyperlink{group__DigestSystem_ga9cfb9654f5feaa1727c7f41f0fe36678}{ATP\_IDENT\_KEY\_STG}}];\ \ \ }
+\DoxyCodeLine{00047\ \ \ \ \ UINT8\ \ \ \ \ \ \ \ \ \ \ fwid[\mbox{\hyperlink{group__DigestSystem_ga9cfb9654f5feaa1727c7f41f0fe36678}{ATP\_IDENT\_KEY\_STG}}];\ \ \ \ }
+\DoxyCodeLine{00048\ \ \ \ \ UINT8\ \ \ \ \ \ \ \ \ \ \ osid[\mbox{\hyperlink{group__DigestSystem_ga9cfb9654f5feaa1727c7f41f0fe36678}{ATP\_IDENT\_KEY\_STG}}];\ \ \ \ }
+\DoxyCodeLine{00049\ \ \ \ \ UINT8\ \ \ \ \ \ \ \ \ \ \ migid[\mbox{\hyperlink{group__DigestSystem_ga9cfb9654f5feaa1727c7f41f0fe36678}{ATP\_IDENT\_KEY\_STG}}];\ \ \ \ }
+\DoxyCodeLine{00050\ \}\mbox{\hyperlink{structatp__ident__t}{atp\_ident\_t}};}
+\DoxyCodeLine{00051\ \textcolor{preprocessor}{\#pragma\ pack()}}
+\DoxyCodeLine{00052\ }
+\DoxyCodeLine{00053\ }
+\DoxyCodeLine{00054\ \textcolor{preprocessor}{\#pragma\ pack(1)}}
+\DoxyCodeLine{00055\ \textcolor{keyword}{typedef}\ \textcolor{keyword}{struct\ }\mbox{\hyperlink{struct__hw__unique__info__t}{\_hw\_unique\_info\_t}}\ \{}
+\DoxyCodeLine{00056\ \ \ \ \ UINT8\ \ \ \mbox{\hyperlink{group__BaseAnswer_gab2a4829e852de8d49f13f97ea374aaca}{mbsn}}[64];\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ }
+\DoxyCodeLine{00057\ \ \ \ \ UINTN\ \ \ \mbox{\hyperlink{group__BaseAnswer_ga8eb12b00f77918b7230e7ffcf03c8329}{mbsnl}};}
+\DoxyCodeLine{00058\ \ \ \ \ UINT8\ \ \ \mbox{\hyperlink{group__BaseAnswer_ga4586c34fa33818438b3971beafbdbc7d}{mmsn}}[64];\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ }
+\DoxyCodeLine{00059\ \ \ \ \ UINTN\ \ \ \mbox{\hyperlink{group__BaseAnswer_ga762b14d86a405365c138e9063bba75c9}{mmsnl}};}
+\DoxyCodeLine{00060\ \ \ \ \ UINT8\ \ \ \mbox{\hyperlink{group__BaseAnswer_ga6cb00e154cdfb934992094ecc12f1286}{nvmesn}}[64];\ \ \ \ \ \ \ \ \ \ \ \ \ }
+\DoxyCodeLine{00061\ \ \ \ \ UINTN\ \ \ \mbox{\hyperlink{group__BaseAnswer_gaa0f8cb9b3a933e07287ed532b36bcd5b}{nvmesnl}};\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ }
+\DoxyCodeLine{00062\ \ \ \ \ \textcolor{comment}{//at\_key\_t\ *key;}}
+\DoxyCodeLine{00063\ \}\mbox{\hyperlink{structhw__uniqueinfo__t}{hw\_uniqueinfo\_t}};}
+\DoxyCodeLine{00064\ }
+\DoxyCodeLine{00065\ \textcolor{keyword}{typedef}\ \textcolor{keyword}{struct\ }\mbox{\hyperlink{struct__fhnd__img__t}{\_fhnd\_img\_t}}\ \{}
+\DoxyCodeLine{00066\ \ \ \ \ UINT32\ \ \mbox{\hyperlink{group__BaseAnswer_gae848b9ee565c9b51d1a0cb218edf97f2}{fsbln}};}
+\DoxyCodeLine{00067\ \ \ \ \ UINTN\ \ \ \mbox{\hyperlink{group__BaseAnswer_gafabb23d18c6896833f6aecbb9d2dfa6e}{fsbladdr}};\ \ \ \ \ \ \ \ \textcolor{comment}{//\ Address\ pointing\ to\ where\ the\ LSBL\ image\ is.}}
+\DoxyCodeLine{00068\ \ \ \ \ UINT32\ \ \mbox{\hyperlink{group__BaseAnswer_ga89b102e2dafab21c1a098957f4ad8fe9}{ssbln}};}
+\DoxyCodeLine{00069\ \ \ \ \ UINTN\ \ \ \mbox{\hyperlink{group__BaseAnswer_gaca0cb0fc51a9b2e73c28828298468bbf}{ssbladdr}};\ \ \ \ \ \ \ \ \textcolor{comment}{//\ Address\ pointing\ to\ where\ the\ LSBL\ image\ is.}}
+\DoxyCodeLine{00070\ }
+\DoxyCodeLine{00071\ \}\mbox{\hyperlink{structfhnd__img__t}{fhnd\_img\_t}};}
+\DoxyCodeLine{00072\ \textcolor{preprocessor}{\#pragma\ pack()}}
+\DoxyCodeLine{00080\ \textcolor{preprocessor}{\#define\ BASE\_ANSW\_DEFLEN\ \ \ \ \ \ \ \ \ \ \ \ 16}}
+\DoxyCodeLine{00081\ \textcolor{preprocessor}{\#define\ BASE\_ANS\_MAX\_LEN\ \ \ \ \ \ \ \ \ \ \ \ 256}}
+\DoxyCodeLine{00082\ \textcolor{preprocessor}{\#define\ BASE\_ANS\_KEY\_STR\ \ \ \ \ \ \ \ \ \ \ \ 32\ \ \ \ \ \ }}
+\DoxyCodeLine{00083\ \textcolor{preprocessor}{\#define\ BASE\_ANS\_IV\_KEY\_STR\ \ \ \ \ \ \ \ \ 12\ \ \ \ \ \ }}
+\DoxyCodeLine{00084\ \textcolor{preprocessor}{\#define\ BASE\_ANS\_TAG\_LEN\ \ \ \ \ \ \ \ \ \ \ \ 16\ \ \ \ \ \ }}
+\DoxyCodeLine{00085\ \textcolor{preprocessor}{\#define\ BASE\_ANS\_BLK\_LBA\ \ \ \ \ \ \ \ \ \ \ \ 0}}
+\DoxyCodeLine{00086\ \textcolor{preprocessor}{\#define\ BASE\_ANS\_SAT\_OFFSET\ \ \ \ \ \ \ \ \ 0x100\ }\textcolor{comment}{//\ 256}}
+\DoxyCodeLine{00087\ \textcolor{preprocessor}{\#define\ BASE\_ANS\_STREAM\_LEN\ \ \ \ \ \ \ \ \ 512}}
+\DoxyCodeLine{00088\ \textcolor{preprocessor}{\#define\ BASE\_ANS\_BLK\_LEN\ \ \ \ \ \ \ \ \ \ \ \ 512}}
+\DoxyCodeLine{00089\ }
+\DoxyCodeLine{00090\ }
+\DoxyCodeLine{00091\ \textcolor{preprocessor}{\#pragma\ pack(1)}}
+\DoxyCodeLine{00097\ \textcolor{keyword}{typedef}\ \textcolor{keyword}{struct\ }\mbox{\hyperlink{struct__base__ansid__t}{\_base\_ansid\_t}}\ \{}
+\DoxyCodeLine{00098\ \ \ \ \ UINT32\ \ msglen;\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ }
+\DoxyCodeLine{00099\ \ \ \ \ UINT8\ \ \ \mbox{\hyperlink{group__BaseAnswer_gadedbe78df2bd342da74a4dd7c0cabd8d}{encmsg}}[\mbox{\hyperlink{group__BaseAnswer_ga2fdd5e105fc2a8a8189513cb1679313a}{BASE\_ANS\_MAX\_LEN}}];\ \ \ \ \ \ \ \ \ \ \ }
+\DoxyCodeLine{00100\ \ \ \ \ UINT8\ \ \ \mbox{\hyperlink{group__BaseAnswer_ga4e92af58bc7c11dade4e1ca77ba28327}{key}}[\mbox{\hyperlink{group__BaseAnswer_gad15de8430dc7d4a984b05fd62370946a}{BASE\_ANS\_KEY\_STR}}];\ \ \ \ \ \ \ \ \ \ \ \ \ \ }
+\DoxyCodeLine{00101\ \ \ \ \ UINT8\ \ \ \mbox{\hyperlink{group__BaseAnswer_gac722b0f0e630f50acec6929cebe0a528}{iv}}[\mbox{\hyperlink{group__BaseAnswer_ga837d78946cde3f9d1e30b39c6c65a2f6}{BASE\_ANS\_IV\_KEY\_STR}}];\ \ \ \ \ \ \ \ \ \ \ \ }
+\DoxyCodeLine{00102\ \ \ \ \ UINT8\ \ \ \mbox{\hyperlink{group__BaseAnswer_ga04bdfd7daa90387f7aaf3fffec89674d}{tag}}[\mbox{\hyperlink{group__BaseAnswer_gae1b76ef4123c7c8856c94d52b6c1e448}{BASE\_ANS\_TAG\_LEN}}];\ \ \ \ \ \ \ \ \ \ \ \ \ \ }
+\DoxyCodeLine{00103\ \}\mbox{\hyperlink{structbase__ansid__t}{base\_ansid\_t}};}
+\DoxyCodeLine{00104\ }
+\DoxyCodeLine{00105\ \textcolor{preprocessor}{\#pragma\ pack()}}
+\DoxyCodeLine{00112\ \textcolor{preprocessor}{\#define\ SBC\_INTG\_BLOCK\_LAB\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ 4}}
+\DoxyCodeLine{00113\ \textcolor{preprocessor}{\#define\ SBC\_INTG\_CRET\_SKIP\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ 0x20}}
+\DoxyCodeLine{00114\ }
+\DoxyCodeLine{00115\ }
+\DoxyCodeLine{00118\ \textcolor{preprocessor}{\#define\ FSBL\_BNIFO\_SIZE\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ 8}}
+\DoxyCodeLine{00119\ }
+\DoxyCodeLine{00120\ \textcolor{preprocessor}{\#pragma\ pack(1)}}
+\DoxyCodeLine{00121\ \textcolor{keyword}{typedef}\ \textcolor{keyword}{union\ }\mbox{\hyperlink{union__t__fsbl__bsifo}{\_t\_fsbl\_bsifo}}\ \{}
+\DoxyCodeLine{00122\ }
+\DoxyCodeLine{00123\ \ \ \ \ \textcolor{keyword}{struct\ }\{}
+\DoxyCodeLine{00124\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{group__BaseAnswer_ga6c526a9091383e0c2ee32c77165abf60}{UINT32}}\ \mbox{\hyperlink{group__BaseAnswer_ga13bfa8208d32a997346268a5f226efb0}{siglen}}:8;\ \ \ \ \ \ \ \ \ \ \ \ }
+\DoxyCodeLine{00125\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{group__BaseAnswer_ga6c526a9091383e0c2ee32c77165abf60}{UINT32}}\ \mbox{\hyperlink{group__BaseAnswer_ga2fd4aa8d94d92c0632f89e512932e817}{fwinfolen}}:8;\ \ \ \ \ \ \ \ \ }
+\DoxyCodeLine{00126\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{group__BaseAnswer_ga6c526a9091383e0c2ee32c77165abf60}{UINT32}}\ \mbox{\hyperlink{group__BaseAnswer_gaf9f2d299935e1bd9c864f44ef30adb73}{certlen}}:16;\ \ \ \ \ \ \ \ \ \ }
+\DoxyCodeLine{00127\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{group__BaseAnswer_ga6c526a9091383e0c2ee32c77165abf60}{UINT32}}\ \mbox{\hyperlink{group__BaseAnswer_gab3674e94cab01c88bde522407719c6d3}{banswlen}}:8;\ \ \ \ \ \ \ \ \ \ }
+\DoxyCodeLine{00128\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{group__BaseAnswer_ga6c526a9091383e0c2ee32c77165abf60}{UINT32}}\ \mbox{\hyperlink{group__BaseAnswer_ga67704b7bf35684d38e6432a0c8bfdaa6}{bsinfv}}:8;\ \ \ \ \ \ \ \ \ \ \ \ }
+\DoxyCodeLine{00129\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{group__BaseAnswer_ga6c526a9091383e0c2ee32c77165abf60}{UINT32}}\ \mbox{\hyperlink{group__BaseAnswer_gac714ebae8f1f35847726d9993331a0df}{reserv1}}:8;}
+\DoxyCodeLine{00130\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{group__BaseAnswer_ga6c526a9091383e0c2ee32c77165abf60}{UINT32}}\ \mbox{\hyperlink{group__BaseAnswer_ga680f64568482adcba1359389c4e33dfc}{reserv2}}:8;}
+\DoxyCodeLine{00131\ \ \ \ \ \}m;}
+\DoxyCodeLine{00132\ }
+\DoxyCodeLine{00133\ \ \ \ \ \mbox{\hyperlink{group__BaseAnswer_ga6c526a9091383e0c2ee32c77165abf60}{UINT8}}\ \ \ \mbox{\hyperlink{group__BaseAnswer_ga6c526a9091383e0c2ee32c77165abf60}{value}}[FSBL\_BNIFO\_SIZE];}
+\DoxyCodeLine{00134\ \}\mbox{\hyperlink{unionfsbl__bsinfo__t}{fsbl\_bsinfo\_t}};}
+\DoxyCodeLine{00135\ }
+\DoxyCodeLine{00136\ \textcolor{keyword}{typedef}\ \textcolor{keyword}{struct\ }\mbox{\hyperlink{struct__t__fsbl__bsinfo__ptr}{\_t\_fsbl\_bsinfo\_ptr}}\ \{}
+\DoxyCodeLine{00137\ \ \ \ \ VOID\ *\mbox{\hyperlink{group__BaseAnswer_gaea59191559e79df5853841ea91dd110c}{baseansw}};}
+\DoxyCodeLine{00138\ \ \ \ \ VOID\ *\mbox{\hyperlink{group__BaseAnswer_gab6bb624fd84dc1e2893a9b6cf6a859cb}{fwinfo}};}
+\DoxyCodeLine{00139\ \ \ \ \ VOID\ *\mbox{\hyperlink{group__BaseAnswer_gae80c2856ca5a25153c1bfac2dbb26c67}{certi}};}
+\DoxyCodeLine{00140\ \ \ \ \ VOID\ *\mbox{\hyperlink{group__BaseAnswer_ga56e42485b39f826c7938f025cbba9425}{signature}};}
+\DoxyCodeLine{00141\ \}\mbox{\hyperlink{structfsbl__bsinfo__ptr__t}{fsbl\_bsinfo\_ptr\_t}};}
+\DoxyCodeLine{00142\ }
+\DoxyCodeLine{00143\ \textcolor{keyword}{typedef}\ \textcolor{keyword}{struct\ }\mbox{\hyperlink{struct__t__mig__key}{\_t\_mig\_key}}\ \{}
+\DoxyCodeLine{00144\ \ \ \ \ UINT8\ \mbox{\hyperlink{group__BaseAnswer_gad6bfafc8c67b427e4067fbeaac594b33}{key}}[SBC\_AT\_HASH\_LEN];}
+\DoxyCodeLine{00145\ \ \ \ \ UINT32\ \mbox{\hyperlink{group__BaseAnswer_ga86ab4178923e3bfbd033440928b955bf}{fsbl\_pres\_bank}};}
+\DoxyCodeLine{00146\ \ \ \ \ UINT32\ \mbox{\hyperlink{group__BaseAnswer_ga2de527544721885d9ac03437b66ed50f}{ssbl\_pres\_bank}};}
+\DoxyCodeLine{00147\ \ \ \ \ UINT32\ \mbox{\hyperlink{group__BaseAnswer_ga119996c5e9c5e9a0211bb637ce3bfb5f}{os\_pres\_bank}};}
+\DoxyCodeLine{00148\ \}\mbox{\hyperlink{structmig__key__t}{mig\_key\_t}};}
+\DoxyCodeLine{00149\ }
+\DoxyCodeLine{00150\ \textcolor{keyword}{typedef}\ \textcolor{keyword}{struct\ }\mbox{\hyperlink{struct__t__baseansr}{\_t\_baseansr}}\ \{}
+\DoxyCodeLine{00151\ \ \ \ \ \textcolor{comment}{//UINT32\ \ len;}}
+\DoxyCodeLine{00152\ \ \ \ \ \textcolor{comment}{//VOID\ \ \ \ *key;}}
+\DoxyCodeLine{00153\ \ \ \ \ VOID\ \ \ \ *\mbox{\hyperlink{group__BaseAnswer_ga1f93dbb5c9d5324a5ba2c0049855bc08}{iohndl}};}
+\DoxyCodeLine{00154\ \ \ \ \ VOID\ \ \ \ *\mbox{\hyperlink{group__BaseAnswer_gaf2abd520386d17965c62c46e9682776b}{iv}};}
+\DoxyCodeLine{00155\ \ \ \ \ VOID\ \ \ \ *\mbox{\hyperlink{group__BaseAnswer_ga8024af23e093a4ee3ca4f9b126a63a19}{tag}};}
+\DoxyCodeLine{00156\ \ \ \ \ VOID\ \ \ \ *\mbox{\hyperlink{group__BaseAnswer_ga4fb074d53c8d9b96a64ff0bf6c1efce0}{msg}};\ \ \ \ \ \ \ \ \ \ \ }
+\DoxyCodeLine{00157\ \ \ \ \ UINTN\ \ \ \mbox{\hyperlink{group__BaseAnswer_ga9e360efc460a4ae6b22d87fe261f363d}{msglen}};}
+\DoxyCodeLine{00158\ \}\mbox{\hyperlink{structbaseansr__t}{baseansr\_t}};}
+\DoxyCodeLine{00159\ \textcolor{preprocessor}{\#pragma\ pack()}}
+\DoxyCodeLine{00160\ }
+\DoxyCodeLine{00161\ }
+\DoxyCodeLine{00169\ VOID\ \mbox{\hyperlink{group__BaseAnswer_ga7a2c3409b2aac9fb4c88dc6117d54689}{SBC\_AntiTamperingInit}}(VOID\ *priv);}
+\DoxyCodeLine{00170\ }
+\DoxyCodeLine{00186\ SBCStatus\ \mbox{\hyperlink{group__BaseAnswer_gae8a785ace6ba8fb538bba6a21b694bd9}{SBC\_GenDeviceID}}(UINT8\ *devid);}
+\DoxyCodeLine{00187\ }
+\DoxyCodeLine{00202\ SBCStatus\ \mbox{\hyperlink{group__BaseAnswer_ga37ecf55c15dac92a487353d6783ad001}{SBC\_BaseAnswerEncryptStore}}(VOID\ *blkhnd,\ UINT8*\ msg,\ UINT32\ msgl,\ UINT8\ *key,\ UINT32\ keyl);}
+\DoxyCodeLine{00203\ }
+\DoxyCodeLine{00204\ }
+\DoxyCodeLine{00216\ SBCStatus\ \ \mbox{\hyperlink{group__BaseAnswer_ga57fdd7473af18155214cbb37f170ecb6}{SBC\_BaseAnswerValidate}}(VOID\ *blkhnd,\ UINT8\ *answer,\ UINTN\ answerl,\ UINT8\ *key,\ UINTN\ keylen);}
+\DoxyCodeLine{00217\ }
+\DoxyCodeLine{00230\ SBCStatus\ SBC\_GenFWID(EFI\_HANDLE\ *h\_image,\ UINT8\ *devid,\ UINT8\ *fwid,\ UINTN\ normbank,\ UINTN\ bm);}
+\DoxyCodeLine{00231\ }
+\DoxyCodeLine{00232\ SBCStatus\ \mbox{\hyperlink{group__BaseAnswer_ga771842561f61acb4ca58e01f53849ce4}{SBC\_GenOSID}}(EFI\_HANDLE\ *h\_image,\ UINT8\ *fwid,\ UINT8\ *osid);}
+\DoxyCodeLine{00233\ }
+\DoxyCodeLine{00234\ }
+\DoxyCodeLine{00235\ SBCStatus\ \ \mbox{\hyperlink{group__BaseAnswer_ga6fc4f3638ff1e63bf4790c05ff6025ce}{SBC\_FSBLIntgCheck}}(EFI\_HANDLE\ *h\_image\ ,\ VOID\ *blkio,\ VOID\ *cert,\ UINTN\ certlen,\ UINTN\ nrombank,\ UINTN\ mode);}
+\DoxyCodeLine{00236\ }
+\DoxyCodeLine{00252\ SBCStatus\ \ \mbox{\hyperlink{group__BaseAnswer_ga32539efbcb50a39a50a0272e65b29653}{SBC\_FSBL\_Verify}}(VOID\ *blkhnd,\ VOID\ *ansr,\ UINTN\ normbank,\ UINTN\ bm,\ UINT16\ *fblpath);}
+\DoxyCodeLine{00253\ }
+\DoxyCodeLine{00254\ SBCStatus\ \ SBC\_BlkIoHandleInit(OUT\ VOID\ **hblk,\ OUT\ VOID\ *hdr);}
+\DoxyCodeLine{00255\ }
+\DoxyCodeLine{00266\ SBCStatus\ \mbox{\hyperlink{group__BaseAnswer_ga9872dc2256381ca4a01bafd27548d540}{SBC\_GenMigrationKey}}(\textcolor{keywordtype}{void}\ *priv,\ \textcolor{keywordtype}{void}\ *outmsg);}
+\DoxyCodeLine{00267\ }
+\DoxyCodeLine{00281\ SBCStatus\ \ \mbox{\hyperlink{group__BaseAnswer_gadac983e333f364bf0976a9ceca1f9630}{SBC\_DeviceIdKyeVerify}}(VOID\ *blkio,\ UINT8\ *devid,\ UINT8\ *deckey);}
+\DoxyCodeLine{00282\ }
+\DoxyCodeLine{00298\ SBCStatus\ \ \mbox{\hyperlink{group__BaseAnswer_ga3ea832a71eedfaf6ac74391d417c26f7}{SBC\_SSBL\_Verify}}(VOID\ *blkhnd,\ VOID\ *ansr,\ \ UINTN\ nrombank,\ UINTN\ bm,\ CHAR16\ *fname);}
+\DoxyCodeLine{00299\ }
+\DoxyCodeLine{00315\ SBCStatus\ \ \mbox{\hyperlink{group__BaseAnswer_ga625caf0507cd90e8696a3882a9a7a1e5}{SBC\_Vmlinuz\_Verify}}(VOID\ *blkhnd,\ VOID\ *ansr,\ UINTN\ normbank,\ UINTN\ bm,\ UINT16\ *fblpath);}
+\DoxyCodeLine{00316\ }
+\DoxyCodeLine{00317\ }
+\DoxyCodeLine{00318\ SBCStatus\ \mbox{\hyperlink{group__BaseAnswer_gabc62c881d2dc4feb5a902de829dd27b4}{SBC\_DeviceSecuirtyKeyCreate}}(VOID\ *key);}
+\DoxyCodeLine{00319\ SBCStatus\ SBC\_ReadFwBootSrvInformation(UINT16\ *flbpath,\ VOID\ *blobinfo,\ VOID\ *szinfo);}
+\DoxyCodeLine{00320\ \textcolor{preprocessor}{\#endif}}
+
+\end{DoxyCode}

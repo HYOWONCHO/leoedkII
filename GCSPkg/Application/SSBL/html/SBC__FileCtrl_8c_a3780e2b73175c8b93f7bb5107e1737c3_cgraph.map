@@ -1,0 +1,7 @@
+<map id="SBC_GetFileSize" name="SBC_GetFileSize">
+<area shape="rect" id="Node000001" title="Retrieve the size of a specified file in the UEFI file system." alt="" coords="5,31,137,56"/>
+<area shape="rect" id="Node000002" href="$SBC__FileCtrl_8c.html#a625970cd7adf01d1d72b97eb372a7f20" title="Locates all handles that support the EFI Simple File System Protocol." alt="" coords="185,5,416,31"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="137,33,172,30,173,35,138,39"/>
+<area shape="rect" id="Node000003" href="$SBC__FileCtrl_8c.html#a0aa11f24c9d4caea2c159f6d571f604c" title="Checks if a specified file is accessible in the EFI file system." alt="" coords="231,55,370,80"/>
+<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="138,48,218,56,217,61,137,53"/>
+</map>

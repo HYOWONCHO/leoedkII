@@ -1,0 +1,911 @@
+\doxysection{SBC\+\_\+\+File\+Ctrl.\+c File Reference}
+\hypertarget{SBC__FileCtrl_8c}{}\label{SBC__FileCtrl_8c}\index{SBC\_FileCtrl.c@{SBC\_FileCtrl.c}}
+
+
+Data is write and read from/to the specified File or in SBC Raw-\/partition.  
+
+
+{\ttfamily \#include $<$Uefi.\+h$>$}\newline
+{\ttfamily \#include $<$Library/\+Uefi\+Boot\+Services\+Table\+Lib.\+h$>$}\newline
+{\ttfamily \#include $<$Library/\+Uefi\+Runtime\+Services\+Table\+Lib.\+h$>$}\newline
+{\ttfamily \#include $<$Library/\+Uefi\+Lib.\+h$>$}\newline
+{\ttfamily \#include $<$Library/\+Base\+Memory\+Lib.\+h$>$}\newline
+{\ttfamily \#include $<$Library/\+Memory\+Allocation\+Lib.\+h$>$}\newline
+{\ttfamily \#include $<$Guid/\+File\+Info.\+h$>$}\newline
+{\ttfamily \#include $<$Protocol/\+Block\+Io.\+h$>$}\newline
+{\ttfamily \#include $<$Protocol/\+Device\+Path\+To\+Text.\+h$>$}\newline
+{\ttfamily \#include $<$Library/\+Handle\+Parsing\+Lib.\+h$>$}\newline
+{\ttfamily \#include $<$Library/\+Shell\+Lib.\+h$>$}\newline
+{\ttfamily \#include $<$string.\+h$>$}\newline
+{\ttfamily \#include $<$Library/\+Device\+Path\+Lib.\+h$>$}\newline
+{\ttfamily \#include $<$Library/\+Base\+Crypt\+Lib.\+h$>$}\newline
+{\ttfamily \#include "{}SBC\+\_\+\+Util.\+h"{}}\newline
+{\ttfamily \#include "{}SBC\+\_\+\+File\+Ctrl.\+h"{}}\newline
+{\ttfamily \#include "{}SBC\+\_\+\+Boot\+Proc.\+h"{}}\newline
+{\ttfamily \#include "{}SBC\+\_\+\+Protected\+SW.\+h"{}}\newline
+{\ttfamily \#include "{}SBC\+\_\+\+Crypt\+AES.\+h"{}}\newline
+{\ttfamily \#include "{}SBC\+\_\+\+Kdf.\+h"{}}\newline
+{\ttfamily \#include "{}SBC\+\_\+\+Anti\+Tampering.\+h"{}}\newline
+{\ttfamily \#include "{}SBC\+\_\+\+Config.\+h"{}}\newline
+Include dependency graph for SBC\+\_\+\+File\+Ctrl.\+c\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=350pt]{SBC__FileCtrl_8c__incl}
+\end{center}
+\end{figure}
+\doxysubsubsection*{Macros}
+\begin{DoxyCompactItemize}
+\item 
+\Hypertarget{SBC__FileCtrl_8c_ac66dd37b76ee78d04436553e539dc52a}\label{SBC__FileCtrl_8c_ac66dd37b76ee78d04436553e539dc52a} 
+\#define {\bfseries SBC\+\_\+\+MAGIC\+\_\+\+ID}~0x\+AA55\+AA55
+\item 
+\Hypertarget{SBC__FileCtrl_8c_ac9994a5b05ee02930cc058ce4ae73dbc}\label{SBC__FileCtrl_8c_ac9994a5b05ee02930cc058ce4ae73dbc} 
+\#define {\bfseries SBC\+\_\+\+MAGIC\+\_\+\+LEN}~0x04
+\end{DoxyCompactItemize}
+\doxysubsubsection*{Functions}
+\begin{DoxyCompactItemize}
+\item 
+\Hypertarget{SBC__FileCtrl_8c_accffebc71d673db5d3073fe7f67892b5}\label{SBC__FileCtrl_8c_accffebc71d673db5d3073fe7f67892b5} 
+static UINT32 {\bfseries \+\_\+sbc\+\_\+bm\+\_\+lookup\+\_\+key} (CHAR8 \texorpdfstring{$\ast$}{*}key)
+\item 
+\Hypertarget{SBC__FileCtrl_8c_aa29742ddbf1fe76751f1ab7c933ae9af}\label{SBC__FileCtrl_8c_aa29742ddbf1fe76751f1ab7c933ae9af} 
+void {\bfseries \+\_\+sfc\+\_\+init\+\_\+info\+\_\+parse} (IN VOID \texorpdfstring{$\ast$}{*}inbuf, OUT VOID \texorpdfstring{$\ast$}{*}outbuf)
+\item 
+SBCStatus {\bfseries SBC\+\_\+\+Blk\+Io\+Handle\+Init} (OUT VOID \texorpdfstring{$\ast$}{*}\texorpdfstring{$\ast$}{*}hblk, OUT VOID \texorpdfstring{$\ast$}{*}hdr)
+\item 
+\Hypertarget{SBC__FileCtrl_8c_ab773f890c281cbc3a1d11a8b292453cd}\label{SBC__FileCtrl_8c_ab773f890c281cbc3a1d11a8b292453cd} 
+SBCStatus {\bfseries SBC\+\_\+\+Check\+Available\+Blk\+IODev} (VOID)
+\item 
+SBCStatus \mbox{\hyperlink{SBC__FileCtrl_8c_aa5924feab7d38005c67cb1a8242a32d9}{SBC\+\_\+\+Create\+Directory}} (EFI\+\_\+\+HANDLE h, CHAR16 \texorpdfstring{$\ast$}{*}fname)
+\begin{DoxyCompactList}\small\item\em Create a new directory in the UEFI file system. \end{DoxyCompactList}\item 
+SBCStatus \mbox{\hyperlink{SBC__FileCtrl_8c_ad423242268f0c0c9dcfdea5dd805cdad}{SBC\+\_\+\+Create\+File}} (EFI\+\_\+\+HANDLE h, CHAR16 \texorpdfstring{$\ast$}{*}fname)
+\begin{DoxyCompactList}\small\item\em Create a new file in the UEFI file system. \end{DoxyCompactList}\item 
+\Hypertarget{SBC__FileCtrl_8c_a431b840a84a8a7c066d324d3207d78ef}\label{SBC__FileCtrl_8c_a431b840a84a8a7c066d324d3207d78ef} 
+VOID {\bfseries SBC\+\_\+\+File\+Ctrl\+Test\+Main} (VOID)
+\item 
+UINTN \mbox{\hyperlink{SBC__FileCtrl_8c_ac368d49b64fe97802029056b3d91797e}{SBC\+\_\+\+File\+Sys\+Find\+Hndl}} (EFI\+\_\+\+HANDLE \texorpdfstring{$\ast$}{*}handle)
+\begin{DoxyCompactList}\small\item\em Locate available EFI file system handles. \end{DoxyCompactList}\item 
+UINTN \mbox{\hyperlink{SBC__FileCtrl_8c_a625970cd7adf01d1d72b97eb372a7f20}{SBC\+\_\+\+Find\+Efi\+File\+System\+Protocol}} (EFI\+\_\+\+HANDLE \texorpdfstring{$\ast$}{*}\texorpdfstring{$\ast$}{*}handle)
+\begin{DoxyCompactList}\small\item\em Locates all handles that support the EFI Simple File System Protocol. \end{DoxyCompactList}\item 
+SBCStatus \mbox{\hyperlink{SBC__FileCtrl_8c_aa6cce7b71dc832b2dcae5709d1b801f0}{SBC\+\_\+\+Find\+File\+Buf\+Hndl}} (UINT16 \texorpdfstring{$\ast$}{*}f\+\_\+path, UINTN \texorpdfstring{$\ast$}{*}hndlcnt, VOID \texorpdfstring{$\ast$}{*}\texorpdfstring{$\ast$}{*}hndl)
+\begin{DoxyCompactList}\small\item\em Searches for a valid EFI handle that can access the specified file. \end{DoxyCompactList}\item 
+SBCStatus \mbox{\hyperlink{SBC__FileCtrl_8c_a3780e2b73175c8b93f7bb5107e1737c3}{SBC\+\_\+\+Get\+File\+Size}} (CHAR16 \texorpdfstring{$\ast$}{*}File\+Name, UINTN \texorpdfstring{$\ast$}{*}File\+Size)
+\begin{DoxyCompactList}\small\item\em Retrieve the size of a specified file in the UEFI file system. \end{DoxyCompactList}\item 
+\Hypertarget{SBC__FileCtrl_8c_a7a1dce0c61f3e3bdb0ff04b62049d456}\label{SBC__FileCtrl_8c_a7a1dce0c61f3e3bdb0ff04b62049d456} 
+SBCStatus {\bfseries SBC\+\_\+\+Get\+Raw\+Prt\+Image\+Length} (VOID \texorpdfstring{$\ast$}{*}priv, UINTN lba, UINT32 \texorpdfstring{$\ast$}{*}rdlen, UINTN offset)
+\item 
+BOOLEAN \mbox{\hyperlink{SBC__FileCtrl_8c_a4f19c610998701a2873aed86f939a75d}{SBC\+\_\+\+Is\+Dir\+Exist}} (EFI\+\_\+\+HANDLE Image\+Handle, CHAR16 \texorpdfstring{$\ast$}{*}Directory\+Name)
+\begin{DoxyCompactList}\small\item\em Checks whether a specified directory exists in the EFI file system. \end{DoxyCompactList}\item 
+EFI\+\_\+\+STATUS \mbox{\hyperlink{SBC__FileCtrl_8c_a0aa11f24c9d4caea2c159f6d571f604c}{SBC\+\_\+\+Is\+Flie\+Access}} (EFI\+\_\+\+HANDLE Image\+Handle, CHAR16 \texorpdfstring{$\ast$}{*}File\+Names)
+\begin{DoxyCompactList}\small\item\em Checks if a specified file is accessible in the EFI file system. \end{DoxyCompactList}\item 
+SBCStatus \mbox{\hyperlink{SBC__FileCtrl_8c_a97a56b26ac9301048e3c4180424b71b7}{SBC\+\_\+\+Load\+System\+Setting}} (VOID \texorpdfstring{$\ast$}{*}blkio, VOID \texorpdfstring{$\ast$}{*}blob)
+\begin{DoxyCompactList}\small\item\em Loads system configuration data from a block I/O device into a memory blob. \end{DoxyCompactList}\item 
+EFI\+\_\+\+STATUS \mbox{\hyperlink{SBC__FileCtrl_8c_add44ff709b980a8f9296abd14fdd230b}{SBC\+\_\+\+Log\+Write\+File}} (EFI\+\_\+\+HANDLE Image\+Handle, CHAR16 \texorpdfstring{$\ast$}{*}File\+Names, \mbox{\hyperlink{struct__lv__t}{LV\+\_\+t}} \texorpdfstring{$\ast$}{*}out)
+\begin{DoxyCompactList}\small\item\em Appends log data to a file in the EFI file system. \end{DoxyCompactList}\item 
+\Hypertarget{SBC__FileCtrl_8c_a9518c6e643559194a676f92a643cd560}\label{SBC__FileCtrl_8c_a9518c6e643559194a676f92a643cd560} 
+SBCStatus {\bfseries SBC\+\_\+\+Protected\+SWRead} (VOID \texorpdfstring{$\ast$}{*}blkio, VOID \texorpdfstring{$\ast$}{*}\texorpdfstring{$\ast$}{*}buf, UINT32 \texorpdfstring{$\ast$}{*}len, UINT32 bnkid)
+\item 
+SBCStatus \mbox{\hyperlink{SBC__FileCtrl_8c_a8ad5f95682e55c8e052753cd2ee05ea4}{SBC\+\_\+\+Protected\+SWWrite}} (VOID \texorpdfstring{$\ast$}{*}blkio, VOID \texorpdfstring{$\ast$}{*}buf, UINT32 \texorpdfstring{$\ast$}{*}len, UINT32 bnkid)
+\begin{DoxyCompactList}\small\item\em Protected SW blob write to Raw Partition. \end{DoxyCompactList}\item 
+SBCStatus \mbox{\hyperlink{SBC__FileCtrl_8c_aea7ec89395443df013700e8fc37c71c6}{SBC\+\_\+\+Prot\+Sw\+Load\+Raw\+Prt}} (VOID \texorpdfstring{$\ast$}{*}handle, UINT8 \texorpdfstring{$\ast$}{*}shared\+\_\+secret, UINT8 \texorpdfstring{$\ast$}{*}decbuf, UINTN \texorpdfstring{$\ast$}{*}rdlen, UINTN rd\+\_\+ofs)
+\begin{DoxyCompactList}\small\item\em Loads and decrypts protected software data from a raw partition. \end{DoxyCompactList}\item 
+SBCStatus \mbox{\hyperlink{SBC__FileCtrl_8c_a0bffd54719b02c63355534614cdb450b}{SBC\+\_\+\+Raw\+Aligned\+Read\+Block\+IO}} (VOID \texorpdfstring{$\ast$}{*}blk, UINTN off, UINTN sz, VOID \texorpdfstring{$\ast$}{*}buf)
+\begin{DoxyCompactList}\small\item\em Read arbitrary bytes to a Block I/O device. \end{DoxyCompactList}\item 
+SBCStatus \mbox{\hyperlink{SBC__FileCtrl_8c_abffb6a3e7fe13fbd929362326a36db93}{SBC\+\_\+\+Raw\+Aligned\+Write\+Block\+IO}} (VOID \texorpdfstring{$\ast$}{*}blk, UINTN off, UINTN sz, CONST VOID \texorpdfstring{$\ast$}{*}buf)
+\begin{DoxyCompactList}\small\item\em Write arbitrary bytes to a Block I/O device. \end{DoxyCompactList}\item 
+SBCStatus \mbox{\hyperlink{SBC__FileCtrl_8c_a14e0c5b72f6cc01c3e358ef27b16f700}{SBC\+\_\+\+Raw\+Prt\+Block\+Write}} (VOID \texorpdfstring{$\ast$}{*}blkio, UINT8 \texorpdfstring{$\ast$}{*}wrbuf, UINT32 wrlen, UINT32 wrlba)
+\begin{DoxyCompactList}\small\item\em Write the data in Raw Partition block at the specified LBA. \end{DoxyCompactList}\item 
+\Hypertarget{SBC__FileCtrl_8c_a32b573dd2cdec275b2244b41403fd8a3}\label{SBC__FileCtrl_8c_a32b573dd2cdec275b2244b41403fd8a3} 
+SBCStatus {\bfseries SBC\+\_\+\+Raw\+Prt\+Head\+Read} (VOID \texorpdfstring{$\ast$}{*}h, VOID \texorpdfstring{$\ast$}{*}out)
+\item 
+SBCStatus \mbox{\hyperlink{SBC__FileCtrl_8c_ab797adf8022e6bb64ba91bf55f9ae70b}{SBC\+\_\+\+Raw\+Prt\+Read\+Block}} (VOID \texorpdfstring{$\ast$}{*}blkhnd, VOID \texorpdfstring{$\ast$}{*}rdbuf, UINT32 \texorpdfstring{$\ast$}{*}rdlen, UINTN rlba)
+\begin{DoxyCompactList}\small\item\em Read a raw data block from a physical storage device (LBA-\/based). \end{DoxyCompactList}\item 
+UINT32 \mbox{\hyperlink{SBC__FileCtrl_8c_a628ab578804897888390b1e69b1f34ba}{SBC\+\_\+\+Read\+Boot\+Mode}} (VOID)
+\begin{DoxyCompactList}\small\item\em (Deprecated) Read system boot mode value. \end{DoxyCompactList}\item 
+EFI\+\_\+\+STATUS \mbox{\hyperlink{SBC__FileCtrl_8c_ac0aa9ae2f07a26de56eb5b3b0b76b06c}{SBC\+\_\+\+Read\+File}} (EFI\+\_\+\+HANDLE Image\+Handle, CHAR16 \texorpdfstring{$\ast$}{*}File\+Names, \mbox{\hyperlink{struct__lv__t}{LV\+\_\+t}} \texorpdfstring{$\ast$}{*}out)
+\begin{DoxyCompactList}\small\item\em Read a file from a UEFI file system into a memory buffer. \end{DoxyCompactList}\item 
+\Hypertarget{SBC__FileCtrl_8c_a16b7424dc7911038cae492abe2c1e999}\label{SBC__FileCtrl_8c_a16b7424dc7911038cae492abe2c1e999} 
+SBCStatus {\bfseries SBC\+\_\+\+Read\+Raw\+Prt\+Header\+Info} (VOID \texorpdfstring{$\ast$}{*}blkhnd, VOID \texorpdfstring{$\ast$}{*}rdbuf, UINT32 \texorpdfstring{$\ast$}{*}rdlen)
+\item 
+\Hypertarget{SBC__FileCtrl_8c_a2aa10373e7da7136e8b180d81a6fa32a}\label{SBC__FileCtrl_8c_a2aa10373e7da7136e8b180d81a6fa32a} 
+SBCStatus {\bfseries SBC\+\_\+\+Store\+Raw\+Prt} (VOID \texorpdfstring{$\ast$}{*}handle, UINT8 \texorpdfstring{$\ast$}{*}shared\+\_\+secret, UINT8 \texorpdfstring{$\ast$}{*}encbuf, UINTN \texorpdfstring{$\ast$}{*}wrlen, UINTN wr\+\_\+ofs)
+\item 
+EFI\+\_\+\+STATUS \mbox{\hyperlink{SBC__FileCtrl_8c_a29d59ff755a7a1d58e934a80e124373b}{SBC\+\_\+\+Write\+File}} (EFI\+\_\+\+HANDLE Image\+Handle, CHAR16 \texorpdfstring{$\ast$}{*}File\+Names, \mbox{\hyperlink{struct__lv__t}{LV\+\_\+t}} \texorpdfstring{$\ast$}{*}out)
+\begin{DoxyCompactList}\small\item\em Writes the user data in specified file. \end{DoxyCompactList}\item 
+\Hypertarget{SBC__FileCtrl_8c_af5e31c62e4188d68a4edf640d19765d2}\label{SBC__FileCtrl_8c_af5e31c62e4188d68a4edf640d19765d2} 
+VOID {\bfseries SBCGet\+Blk\+Io\+Handle\+Parse} (VOID)
+\item 
+\Hypertarget{SBC__FileCtrl_8c_a833a6b3e6af201a16b6594d1ddeaa7fa}\label{SBC__FileCtrl_8c_a833a6b3e6af201a16b6594d1ddeaa7fa} 
+EFI\+\_\+\+STATUS {\bfseries SBCGet\+Dir\+File} (VOID)
+\end{DoxyCompactItemize}
+
+
+\doxysubsection{Detailed Description}
+Data is write and read from/to the specified File or in SBC Raw-\/partition. 
+
+Copyright (C) 2024 by Security Platform Inc. \texorpdfstring{$\ast$}{*} This file is part of the SBC Project. \texorpdfstring{$\ast$}{*}
+\begin{DoxyItemize}
+\item This software contains confidential and proprietary information of \texorpdfstring{$\ast$}{*} Security Platform Inc. Unauthorized reproduction, distribution, or \texorpdfstring{$\ast$}{*} disclosure of this software, in whole or in part, is strictly prohibited. \texorpdfstring{$\ast$}{*}
+\end{DoxyItemize}
+
+\begin{DoxyAuthor}{Author}
+LEON 
+\end{DoxyAuthor}
+\begin{DoxyVersion}{Version}
+1.\+0 
+\end{DoxyVersion}
+\begin{DoxyDate}{Date}
+2025-\/10-\/31
+\end{DoxyDate}
+\begin{DoxyCopyright}{Copyright}
+(c) 2025 Security Platform Inc. All rights reserved. 
+\end{DoxyCopyright}
+
+
+\doxysubsection{Function Documentation}
+\Hypertarget{SBC__FileCtrl_8c_aa5924feab7d38005c67cb1a8242a32d9}\label{SBC__FileCtrl_8c_aa5924feab7d38005c67cb1a8242a32d9} 
+\index{SBC\_FileCtrl.c@{SBC\_FileCtrl.c}!SBC\_CreateDirectory@{SBC\_CreateDirectory}}
+\index{SBC\_CreateDirectory@{SBC\_CreateDirectory}!SBC\_FileCtrl.c@{SBC\_FileCtrl.c}}
+\doxysubsubsection{\texorpdfstring{SBC\_CreateDirectory()}{SBC\_CreateDirectory()}}
+{\footnotesize\ttfamily SBCStatus SBC\+\_\+\+Create\+Directory (\begin{DoxyParamCaption}\item[{EFI\+\_\+\+HANDLE}]{h,  }\item[{CHAR16 \texorpdfstring{$\ast$}{*}}]{fname }\end{DoxyParamCaption})}
+
+
+
+Create a new directory in the UEFI file system. 
+
+
+\begin{DoxyParams}[1]{Parameters}
+\mbox{\texttt{ in}}  & {\em h} & Handle to a valid EFI file system. Typically obtained via \doxylink{SBC__FileCtrl_8c_ac368d49b64fe97802029056b3d91797e}{SBC\+\_\+\+File\+Sys\+Find\+Hndl()}. \\
+\hline
+\mbox{\texttt{ in}}  & {\em fname} & Unicode (CHAR16) string representing the file path and name to be created (e.\+g., L"{}\textbackslash{}\textbackslash{}\+LOG\textbackslash{}\textbackslash{}bootlog.\+txt"{}).\\
+\hline
+\end{DoxyParams}
+
+\begin{DoxyRetVals}{Return values}
+{\em SBCOK} & The file was successfully created. \\
+\hline
+{\em SBCFAIL} & Failed to create the file due to a write or access error. \\
+\hline
+{\em SBCNULLP} & One or more input pointers are NULL. \\
+\hline
+{\em SBCIO} & A device or I/O error occurred while creating the file. \\
+\hline
+{\em SBCINVPARAM} & Invalid file name or handle. \\
+\hline
+\end{DoxyRetVals}
+\Hypertarget{SBC__FileCtrl_8c_ad423242268f0c0c9dcfdea5dd805cdad}\label{SBC__FileCtrl_8c_ad423242268f0c0c9dcfdea5dd805cdad} 
+\index{SBC\_FileCtrl.c@{SBC\_FileCtrl.c}!SBC\_CreateFile@{SBC\_CreateFile}}
+\index{SBC\_CreateFile@{SBC\_CreateFile}!SBC\_FileCtrl.c@{SBC\_FileCtrl.c}}
+\doxysubsubsection{\texorpdfstring{SBC\_CreateFile()}{SBC\_CreateFile()}}
+{\footnotesize\ttfamily SBCStatus SBC\+\_\+\+Create\+File (\begin{DoxyParamCaption}\item[{EFI\+\_\+\+HANDLE}]{h,  }\item[{CHAR16 \texorpdfstring{$\ast$}{*}}]{fname }\end{DoxyParamCaption})}
+
+
+
+Create a new file in the UEFI file system. 
+
+
+\begin{DoxyParams}[1]{Parameters}
+\mbox{\texttt{ in}}  & {\em h} & Handle to a valid EFI file system. Typically obtained via \doxylink{SBC__FileCtrl_8c_ac368d49b64fe97802029056b3d91797e}{SBC\+\_\+\+File\+Sys\+Find\+Hndl()}. \\
+\hline
+\mbox{\texttt{ in}}  & {\em fname} & Unicode (CHAR16) string representing the file path and name to be created (e.\+g., L"{}\textbackslash{}\textbackslash{}\+LOG\textbackslash{}\textbackslash{}bootlog.\+txt"{}).\\
+\hline
+\end{DoxyParams}
+
+\begin{DoxyRetVals}{Return values}
+{\em SBCOK} & The file was successfully created. \\
+\hline
+{\em SBCFAIL} & Failed to create the file due to a write or access error. \\
+\hline
+{\em SBCNULLP} & One or more input pointers are NULL. \\
+\hline
+{\em SBCIO} & A device or I/O error occurred while creating the file. \\
+\hline
+{\em SBCINVPARAM} & Invalid file name or handle. \\
+\hline
+\end{DoxyRetVals}
+\Hypertarget{SBC__FileCtrl_8c_ac368d49b64fe97802029056b3d91797e}\label{SBC__FileCtrl_8c_ac368d49b64fe97802029056b3d91797e} 
+\index{SBC\_FileCtrl.c@{SBC\_FileCtrl.c}!SBC\_FileSysFindHndl@{SBC\_FileSysFindHndl}}
+\index{SBC\_FileSysFindHndl@{SBC\_FileSysFindHndl}!SBC\_FileCtrl.c@{SBC\_FileCtrl.c}}
+\doxysubsubsection{\texorpdfstring{SBC\_FileSysFindHndl()}{SBC\_FileSysFindHndl()}}
+{\footnotesize\ttfamily UINTN SBC\+\_\+\+File\+Sys\+Find\+Hndl (\begin{DoxyParamCaption}\item[{EFI\+\_\+\+HANDLE \texorpdfstring{$\ast$}{*}}]{handle }\end{DoxyParamCaption})}
+
+
+
+Locate available EFI file system handles. 
+
+
+\begin{DoxyParams}[1]{Parameters}
+\mbox{\texttt{ out}}  & {\em handle} & Pointer to a buffer that receives an array of EFI handles. Each handle represents a file system that can be opened using {\ttfamily EFI\+\_\+\+SIMPLE\+\_\+\+FILE\+\_\+\+SYSTEM\+\_\+\+PROTOCOL}. The caller must allocate a buffer large enough to hold all handles, typically using {\ttfamily Locate\+Handle\+Buffer()} or dynamic allocation.\\
+\hline
+\end{DoxyParams}
+\begin{DoxyReturn}{Returns}
+The number of valid file system handles found. ~\newline
+ Returns 0 if no file system handles were located or an error occurred. 
+\end{DoxyReturn}
+Here is the caller graph for this function\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=350pt]{SBC__FileCtrl_8c_ac368d49b64fe97802029056b3d91797e_icgraph}
+\end{center}
+\end{figure}
+\Hypertarget{SBC__FileCtrl_8c_a625970cd7adf01d1d72b97eb372a7f20}\label{SBC__FileCtrl_8c_a625970cd7adf01d1d72b97eb372a7f20} 
+\index{SBC\_FileCtrl.c@{SBC\_FileCtrl.c}!SBC\_FindEfiFileSystemProtocol@{SBC\_FindEfiFileSystemProtocol}}
+\index{SBC\_FindEfiFileSystemProtocol@{SBC\_FindEfiFileSystemProtocol}!SBC\_FileCtrl.c@{SBC\_FileCtrl.c}}
+\doxysubsubsection{\texorpdfstring{SBC\_FindEfiFileSystemProtocol()}{SBC\_FindEfiFileSystemProtocol()}}
+{\footnotesize\ttfamily UINTN SBC\+\_\+\+Find\+Efi\+File\+System\+Protocol (\begin{DoxyParamCaption}\item[{EFI\+\_\+\+HANDLE \texorpdfstring{$\ast$}{*}\texorpdfstring{$\ast$}{*}}]{handle }\end{DoxyParamCaption})}
+
+
+
+Locates all handles that support the EFI Simple File System Protocol. 
+
+This function queries the UEFI firmware to find all handles that implement the {\ttfamily g\+Efi\+Simple\+File\+System\+Protocol\+Guid}. These handles can be used to access EFI-\/compatible file systems such as FAT32 partitions.
+
+
+\begin{DoxyParams}[1]{Parameters}
+\mbox{\texttt{ out}}  & {\em handle} & Pointer to a buffer that receives the array of EFI handles. The buffer is allocated by the UEFI boot services.\\
+\hline
+\end{DoxyParams}
+\begin{DoxyReturn}{Returns}
+UINTN
+\begin{DoxyItemize}
+\item Number of handles found that support the Simple File System Protocol.
+\item Returns 0 if no handles are found or if an error occurs.
+\end{DoxyItemize}
+\end{DoxyReturn}
+\begin{DoxyNote}{Note}
+
+\begin{DoxyItemize}
+\item The caller must ensure that {\ttfamily handle} is a valid pointer to receive the handle array.
+\item The returned handle array must be freed using {\ttfamily Free\+Pool()} when no longer needed.
+\item This function is typically used during boot-\/time file access (e.\+g., loading FSBL/\+SSBL).
+\end{DoxyItemize}
+\end{DoxyNote}
+\begin{DoxyWarning}{Warning}
+If the protocol is not found, the function logs an error and returns 0. 
+\end{DoxyWarning}
+Here is the caller graph for this function\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=350pt]{SBC__FileCtrl_8c_a625970cd7adf01d1d72b97eb372a7f20_icgraph}
+\end{center}
+\end{figure}
+\Hypertarget{SBC__FileCtrl_8c_aa6cce7b71dc832b2dcae5709d1b801f0}\label{SBC__FileCtrl_8c_aa6cce7b71dc832b2dcae5709d1b801f0} 
+\index{SBC\_FileCtrl.c@{SBC\_FileCtrl.c}!SBC\_FindFileBufHndl@{SBC\_FindFileBufHndl}}
+\index{SBC\_FindFileBufHndl@{SBC\_FindFileBufHndl}!SBC\_FileCtrl.c@{SBC\_FileCtrl.c}}
+\doxysubsubsection{\texorpdfstring{SBC\_FindFileBufHndl()}{SBC\_FindFileBufHndl()}}
+{\footnotesize\ttfamily SBCStatus SBC\+\_\+\+Find\+File\+Buf\+Hndl (\begin{DoxyParamCaption}\item[{UINT16 \texorpdfstring{$\ast$}{*}}]{f\+\_\+path,  }\item[{UINTN \texorpdfstring{$\ast$}{*}}]{hndlcnt,  }\item[{VOID \texorpdfstring{$\ast$}{*}\texorpdfstring{$\ast$}{*}}]{hndl }\end{DoxyParamCaption})}
+
+
+
+Searches for a valid EFI handle that can access the specified file. 
+
+This function iterates through a list of EFI handles and checks which one can successfully access the file specified by {\ttfamily f\+\_\+path}. The index of the valid handle is returned via {\ttfamily hndlcnt}.
+
+
+\begin{DoxyParams}[1]{Parameters}
+\mbox{\texttt{ in}}  & {\em f\+\_\+path} & Pointer to the UTF-\/16 file path to search for. \\
+\hline
+\mbox{\texttt{ in,out}}  & {\em hndlcnt} & Pointer to the number of handles to check. On success, updated with the index of the valid handle. \\
+\hline
+\mbox{\texttt{ in}}  & {\em hndl} & Pointer to an array of EFI handles to search.\\
+\hline
+\end{DoxyParams}
+\begin{DoxyReturn}{Returns}
+SBCStatus
+\begin{DoxyItemize}
+\item SBCOK\+: A valid handle was found that can access the file.
+\item SBCNOTFND\+: No handle could access the file.
+\item SBCNULLP\+: Null pointer input detected.
+\end{DoxyItemize}
+\end{DoxyReturn}
+\begin{DoxyNote}{Note}
+
+\begin{DoxyItemize}
+\item The function uses {\ttfamily SBC\+\_\+\+Is\+Flie\+Access()} to test file accessibility for each handle.
+\item On success, {\ttfamily \texorpdfstring{$\ast$}{*}hndlcnt} is updated to the index of the first valid handle.
+\item The caller must ensure that {\ttfamily hndl} points to a valid array of EFI handles.
+\end{DoxyItemize}
+\end{DoxyNote}
+\begin{DoxyWarning}{Warning}
+The function stops at the first successful access and does not check all handles. 
+\end{DoxyWarning}
+Here is the call graph for this function\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=341pt]{SBC__FileCtrl_8c_aa6cce7b71dc832b2dcae5709d1b801f0_cgraph}
+\end{center}
+\end{figure}
+Here is the caller graph for this function\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=350pt]{SBC__FileCtrl_8c_aa6cce7b71dc832b2dcae5709d1b801f0_icgraph}
+\end{center}
+\end{figure}
+\Hypertarget{SBC__FileCtrl_8c_a3780e2b73175c8b93f7bb5107e1737c3}\label{SBC__FileCtrl_8c_a3780e2b73175c8b93f7bb5107e1737c3} 
+\index{SBC\_FileCtrl.c@{SBC\_FileCtrl.c}!SBC\_GetFileSize@{SBC\_GetFileSize}}
+\index{SBC\_GetFileSize@{SBC\_GetFileSize}!SBC\_FileCtrl.c@{SBC\_FileCtrl.c}}
+\doxysubsubsection{\texorpdfstring{SBC\_GetFileSize()}{SBC\_GetFileSize()}}
+{\footnotesize\ttfamily SBCStatus SBC\+\_\+\+Get\+File\+Size (\begin{DoxyParamCaption}\item[{CHAR16 \texorpdfstring{$\ast$}{*}}]{File\+Name,  }\item[{UINTN \texorpdfstring{$\ast$}{*}}]{File\+Size }\end{DoxyParamCaption})}
+
+
+
+Retrieve the size of a specified file in the UEFI file system. 
+
+
+\begin{DoxyParams}[1]{Parameters}
+\mbox{\texttt{ in}}  & {\em File\+Name} & Unicode (CHAR16) string representing the full or relative path of the file whose size is to be determined. Example\+: L"{}\textbackslash{}\textbackslash{}\+EFI\textbackslash{}\textbackslash{}\+BOOT\textbackslash{}\textbackslash{}bootx64.\+efi"{} \\
+\hline
+\mbox{\texttt{ out}}  & {\em File\+Size} & Pointer to a variable that receives the size of the file, in bytes.\\
+\hline
+\end{DoxyParams}
+
+\begin{DoxyRetVals}{Return values}
+{\em SBCOK} & The file size was successfully retrieved. \\
+\hline
+{\em SBCFAIL} & The file could not be found or opened. \\
+\hline
+{\em SBCNULLP} & One or more input pointers are NULL. \\
+\hline
+{\em SBCIO} & A device or I/O error occurred during access. \\
+\hline
+{\em SBCINVPARAM} & Invalid file handle or parameter. \\
+\hline
+\end{DoxyRetVals}
+Here is the call graph for this function\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=350pt]{SBC__FileCtrl_8c_a3780e2b73175c8b93f7bb5107e1737c3_cgraph}
+\end{center}
+\end{figure}
+Here is the caller graph for this function\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=350pt]{SBC__FileCtrl_8c_a3780e2b73175c8b93f7bb5107e1737c3_icgraph}
+\end{center}
+\end{figure}
+\Hypertarget{SBC__FileCtrl_8c_a4f19c610998701a2873aed86f939a75d}\label{SBC__FileCtrl_8c_a4f19c610998701a2873aed86f939a75d} 
+\index{SBC\_FileCtrl.c@{SBC\_FileCtrl.c}!SBC\_IsDirExist@{SBC\_IsDirExist}}
+\index{SBC\_IsDirExist@{SBC\_IsDirExist}!SBC\_FileCtrl.c@{SBC\_FileCtrl.c}}
+\doxysubsubsection{\texorpdfstring{SBC\_IsDirExist()}{SBC\_IsDirExist()}}
+{\footnotesize\ttfamily BOOLEAN SBC\+\_\+\+Is\+Dir\+Exist (\begin{DoxyParamCaption}\item[{EFI\+\_\+\+HANDLE}]{Image\+Handle,  }\item[{CHAR16 \texorpdfstring{$\ast$}{*}}]{Directory\+Name }\end{DoxyParamCaption})}
+
+
+
+Checks whether a specified directory exists in the EFI file system. 
+
+This function attempts to open a directory from the root of the EFI volume using the Simple File System Protocol. If the directory exists and is valid, it returns TRUE.
+
+
+\begin{DoxyParams}[1]{Parameters}
+\mbox{\texttt{ in}}  & {\em Image\+Handle} & EFI image handle used to locate the file system protocol. \\
+\hline
+\mbox{\texttt{ in}}  & {\em Directory\+Name} & Pointer to the UTF-\/16 string representing the directory path.\\
+\hline
+\end{DoxyParams}
+\begin{DoxyReturn}{Returns}
+BOOLEAN
+\begin{DoxyItemize}
+\item TRUE\+: Directory exists and is valid.
+\item FALSE\+: Directory does not exist or is not accessible.
+\end{DoxyItemize}
+\end{DoxyReturn}
+\begin{DoxyNote}{Note}
+
+\begin{DoxyItemize}
+\item The function uses {\ttfamily EFI\+\_\+\+FILE\+\_\+\+MODE\+\_\+\+READ} and {\ttfamily EFI\+\_\+\+FILE\+\_\+\+DIRECTORY} flags to open the target directory.
+\item It verifies the directory by checking the {\ttfamily EFI\+\_\+\+FILE\+\_\+\+DIRECTORY} attribute in the file info.
+\item All opened handles are properly closed before returning.
+\end{DoxyItemize}
+\end{DoxyNote}
+\begin{DoxyWarning}{Warning}
+The caller must ensure that {\ttfamily Directory\+Name} is a valid null-\/terminated CHAR16 string. If memory allocation for file info fails, the function will return FALSE. 
+\end{DoxyWarning}
+\Hypertarget{SBC__FileCtrl_8c_a0aa11f24c9d4caea2c159f6d571f604c}\label{SBC__FileCtrl_8c_a0aa11f24c9d4caea2c159f6d571f604c} 
+\index{SBC\_FileCtrl.c@{SBC\_FileCtrl.c}!SBC\_IsFlieAccess@{SBC\_IsFlieAccess}}
+\index{SBC\_IsFlieAccess@{SBC\_IsFlieAccess}!SBC\_FileCtrl.c@{SBC\_FileCtrl.c}}
+\doxysubsubsection{\texorpdfstring{SBC\_IsFlieAccess()}{SBC\_IsFlieAccess()}}
+{\footnotesize\ttfamily EFI\+\_\+\+STATUS SBC\+\_\+\+Is\+Flie\+Access (\begin{DoxyParamCaption}\item[{EFI\+\_\+\+HANDLE}]{Image\+Handle,  }\item[{CHAR16 \texorpdfstring{$\ast$}{*}}]{File\+Names }\end{DoxyParamCaption})}
+
+
+
+Checks if a specified file is accessible in the EFI file system. 
+
+This function attempts to open a file in read mode using the EFI Simple File System Protocol. It verifies whether the file exists and is readable from the given image handle.
+
+
+\begin{DoxyParams}[1]{Parameters}
+\mbox{\texttt{ in}}  & {\em Image\+Handle} & EFI image handle used to locate the file system protocol. \\
+\hline
+\mbox{\texttt{ in}}  & {\em File\+Names} & Pointer to the filename (UTF-\/16 string) to be accessed.\\
+\hline
+\end{DoxyParams}
+\begin{DoxyReturn}{Returns}
+EFI\+\_\+\+STATUS
+\begin{DoxyItemize}
+\item EFI\+\_\+\+SUCCESS\+: File was found and is accessible.
+\item EFI\+\_\+\+NOT\+\_\+\+FOUND\+: File does not exist.
+\item EFI\+\_\+\+INVALID\+\_\+\+PARAMETER\+: Invalid input parameters.
+\item Other EFI error codes depending on protocol or volume access failure.
+\end{DoxyItemize}
+\end{DoxyReturn}
+\begin{DoxyNote}{Note}
+
+\begin{DoxyItemize}
+\item The function uses {\ttfamily Handle\+Protocol} to locate the file system and attempts to open the volume and file.
+\item If the file is successfully opened, it is immediately closed and {\ttfamily EFI\+\_\+\+SUCCESS} is returned.
+\item This function does not read or process the file contents.
+\end{DoxyItemize}
+\end{DoxyNote}
+\begin{DoxyWarning}{Warning}
+The caller must ensure that {\ttfamily File\+Names} points to a valid null-\/terminated CHAR16 string. 
+\end{DoxyWarning}
+Here is the caller graph for this function\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=350pt]{SBC__FileCtrl_8c_a0aa11f24c9d4caea2c159f6d571f604c_icgraph}
+\end{center}
+\end{figure}
+\Hypertarget{SBC__FileCtrl_8c_a97a56b26ac9301048e3c4180424b71b7}\label{SBC__FileCtrl_8c_a97a56b26ac9301048e3c4180424b71b7} 
+\index{SBC\_FileCtrl.c@{SBC\_FileCtrl.c}!SBC\_LoadSystemSetting@{SBC\_LoadSystemSetting}}
+\index{SBC\_LoadSystemSetting@{SBC\_LoadSystemSetting}!SBC\_FileCtrl.c@{SBC\_FileCtrl.c}}
+\doxysubsubsection{\texorpdfstring{SBC\_LoadSystemSetting()}{SBC\_LoadSystemSetting()}}
+{\footnotesize\ttfamily SBCStatus SBC\+\_\+\+Load\+System\+Setting (\begin{DoxyParamCaption}\item[{VOID \texorpdfstring{$\ast$}{*}}]{blkio,  }\item[{VOID \texorpdfstring{$\ast$}{*}}]{blob }\end{DoxyParamCaption})}
+
+
+
+Loads system configuration data from a block I/O device into a memory blob. 
+
+This function reads system settings or configuration data from a secure storage region (typically a raw partition) using the provided block I/O handle, and stores the result into the specified memory blob.
+
+
+\begin{DoxyParams}[1]{Parameters}
+\mbox{\texttt{ in}}  & {\em blkio} & Pointer to the block I/O interface used to access the storage device. \\
+\hline
+\mbox{\texttt{ out}}  & {\em blob} & Pointer to the memory buffer where the loaded configuration will be stored.\\
+\hline
+\end{DoxyParams}
+\begin{DoxyReturn}{Returns}
+SBCStatus
+\begin{DoxyItemize}
+\item SBCOK\+: System settings successfully loaded.
+\item SBCNULLP\+: Null pointer input detected.
+\item SBCFAIL\+: Read or parse operation failed.
+\item SBCDECFAIL\+: Decryption of system settings failed.
+\end{DoxyItemize}
+\end{DoxyReturn}
+\begin{DoxyNote}{Note}
+
+\begin{DoxyItemize}
+\item The caller must ensure that {\ttfamily blob} points to a valid memory region with sufficient size.
+\item This function may internally perform decryption or integrity checks depending on the system design.
+\item Used during boot initialization to retrieve platform configuration, security policies, or provisioning data.
+\end{DoxyItemize}
+\end{DoxyNote}
+\begin{DoxyWarning}{Warning}
+The function assumes that the system settings are stored in a known offset and format. If the format is corrupted or the key is invalid, the operation may fail. 
+\end{DoxyWarning}
+Here is the call graph for this function\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=350pt]{SBC__FileCtrl_8c_a97a56b26ac9301048e3c4180424b71b7_cgraph}
+\end{center}
+\end{figure}
+Here is the caller graph for this function\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=350pt]{SBC__FileCtrl_8c_a97a56b26ac9301048e3c4180424b71b7_icgraph}
+\end{center}
+\end{figure}
+\Hypertarget{SBC__FileCtrl_8c_add44ff709b980a8f9296abd14fdd230b}\label{SBC__FileCtrl_8c_add44ff709b980a8f9296abd14fdd230b} 
+\index{SBC\_FileCtrl.c@{SBC\_FileCtrl.c}!SBC\_LogWriteFile@{SBC\_LogWriteFile}}
+\index{SBC\_LogWriteFile@{SBC\_LogWriteFile}!SBC\_FileCtrl.c@{SBC\_FileCtrl.c}}
+\doxysubsubsection{\texorpdfstring{SBC\_LogWriteFile()}{SBC\_LogWriteFile()}}
+{\footnotesize\ttfamily EFI\+\_\+\+STATUS SBC\+\_\+\+Log\+Write\+File (\begin{DoxyParamCaption}\item[{EFI\+\_\+\+HANDLE}]{Image\+Handle,  }\item[{CHAR16 \texorpdfstring{$\ast$}{*}}]{File\+Names,  }\item[{\mbox{\hyperlink{struct__lv__t}{LV\+\_\+t}} \texorpdfstring{$\ast$}{*}}]{out }\end{DoxyParamCaption})}
+
+
+
+Appends log data to a file in the EFI file system. 
+
+This function locates the EFI Simple File System Protocol, opens the specified file, moves the file pointer to the end, and writes the contents of the provided buffer.
+
+
+\begin{DoxyParams}[1]{Parameters}
+\mbox{\texttt{ in}}  & {\em Image\+Handle} & EFI image handle used to locate the file system. \\
+\hline
+\mbox{\texttt{ in}}  & {\em File\+Names} & Pointer to the UTF-\/16 string representing the target file name. \\
+\hline
+\mbox{\texttt{ in}}  & {\em out} & Pointer to an LV\+\_\+t structure containing the data to be written.\\
+\hline
+\end{DoxyParams}
+\begin{DoxyReturn}{Returns}
+EFI\+\_\+\+STATUS
+\begin{DoxyItemize}
+\item EFI\+\_\+\+SUCCESS\+: Data was successfully written to the file.
+\item EFI\+\_\+\+INVALID\+\_\+\+PARAMETER\+: Input buffer is null or invalid.
+\item EFI\+\_\+\+NOT\+\_\+\+FOUND / other EFI errors\+: File system or file access failed.
+\end{DoxyItemize}
+\end{DoxyReturn}
+\begin{DoxyNote}{Note}
+
+\begin{DoxyItemize}
+\item The file is opened in read/write mode. If it does not exist, this function will fail unless modified to create it.
+\item The file pointer is moved to the end before writing, so this function appends data.
+\item The caller must ensure that {\ttfamily out-\/\texorpdfstring{$>$}{>}value} points to valid data and {\ttfamily out-\/\texorpdfstring{$>$}{>}length} is non-\/zero.
+\end{DoxyItemize}
+\end{DoxyNote}
+\begin{DoxyWarning}{Warning}
+This function does not perform file creation or truncation. It assumes the file already exists. 
+\end{DoxyWarning}
+\Hypertarget{SBC__FileCtrl_8c_a8ad5f95682e55c8e052753cd2ee05ea4}\label{SBC__FileCtrl_8c_a8ad5f95682e55c8e052753cd2ee05ea4} 
+\index{SBC\_FileCtrl.c@{SBC\_FileCtrl.c}!SBC\_ProtectedSWWrite@{SBC\_ProtectedSWWrite}}
+\index{SBC\_ProtectedSWWrite@{SBC\_ProtectedSWWrite}!SBC\_FileCtrl.c@{SBC\_FileCtrl.c}}
+\doxysubsubsection{\texorpdfstring{SBC\_ProtectedSWWrite()}{SBC\_ProtectedSWWrite()}}
+{\footnotesize\ttfamily SBCStatus SBC\+\_\+\+Protected\+SWWrite (\begin{DoxyParamCaption}\item[{VOID \texorpdfstring{$\ast$}{*}}]{blkio,  }\item[{VOID \texorpdfstring{$\ast$}{*}}]{buf,  }\item[{UINT32 \texorpdfstring{$\ast$}{*}}]{len,  }\item[{UINT32}]{bnkid }\end{DoxyParamCaption})}
+
+
+
+Protected SW blob write to Raw Partition. 
+
+\textbackslash{}
+
+
+\begin{DoxyParams}{Parameters}
+{\em blkio} & Pointer to the block I/O interface or handle. \\
+\hline
+{\em buf} & Pointer to the buffer containing data to be written \\
+\hline
+{\em len} & Length of the data to write, in bytes. \\
+\hline
+{\em bnkid} & Protected SW Bank Index in Raw Partition\\
+\hline
+\end{DoxyParams}
+
+\begin{DoxyRetVals}{Return values}
+{\em SBCOK} & The file was successfully created. \\
+\hline
+{\em SBCFAIL} & Failed to create the file due to a write or access error. \\
+\hline
+{\em SBCNULLP} & One or more input pointers are NULL. \\
+\hline
+{\em SBCIO} & A device or I/O error occurred while creating the file. \\
+\hline
+{\em SBCINVPARAM} & Invalid file name or handle. \\
+\hline
+\end{DoxyRetVals}
+Here is the call graph for this function\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=350pt]{SBC__FileCtrl_8c_a8ad5f95682e55c8e052753cd2ee05ea4_cgraph}
+\end{center}
+\end{figure}
+\Hypertarget{SBC__FileCtrl_8c_aea7ec89395443df013700e8fc37c71c6}\label{SBC__FileCtrl_8c_aea7ec89395443df013700e8fc37c71c6} 
+\index{SBC\_FileCtrl.c@{SBC\_FileCtrl.c}!SBC\_ProtSwLoadRawPrt@{SBC\_ProtSwLoadRawPrt}}
+\index{SBC\_ProtSwLoadRawPrt@{SBC\_ProtSwLoadRawPrt}!SBC\_FileCtrl.c@{SBC\_FileCtrl.c}}
+\doxysubsubsection{\texorpdfstring{SBC\_ProtSwLoadRawPrt()}{SBC\_ProtSwLoadRawPrt()}}
+{\footnotesize\ttfamily SBCStatus SBC\+\_\+\+Prot\+Sw\+Load\+Raw\+Prt (\begin{DoxyParamCaption}\item[{VOID \texorpdfstring{$\ast$}{*}}]{handle,  }\item[{UINT8 \texorpdfstring{$\ast$}{*}}]{shared\+\_\+secret,  }\item[{UINT8 \texorpdfstring{$\ast$}{*}}]{decbuf,  }\item[{UINTN \texorpdfstring{$\ast$}{*}}]{rdlen,  }\item[{UINTN}]{rd\+\_\+ofs }\end{DoxyParamCaption})}
+
+
+
+Loads and decrypts protected software data from a raw partition. 
+
+
+\begin{DoxyParams}[1]{Parameters}
+\mbox{\texttt{ in}}  & {\em handle} & Pointer to the boot context ({\ttfamily \doxylink{structboot__proc__t}{boot\+\_\+proc\+\_\+t}}) containing block I/O handle. \\
+\hline
+\mbox{\texttt{ in}}  & {\em shared\+\_\+secret} & Pointer to the shared secret key used for AES-\/\+GCM decryption. \\
+\hline
+\mbox{\texttt{ out}}  & {\em decbuf} & Buffer to store the decrypted data. \\
+\hline
+\mbox{\texttt{ out}}  & {\em rdlen} & Pointer to variable that receives the length of decrypted data. \\
+\hline
+\mbox{\texttt{ in}}  & {\em rd\+\_\+ofs} & Offset in the raw partition from which to begin reading.\\
+\hline
+\end{DoxyParams}
+\begin{DoxyReturn}{Returns}
+SBCStatus
+\begin{DoxyItemize}
+\item SBCOK\+: Decryption succeeded and data loaded.
+\item SBCENCFAIL\+: Decryption failed.
+\item SBCNULLP\+: Null pointer or memory allocation failure.
+\item SBCFAIL\+: I/O or internal error during read or decrypt. 
+\end{DoxyItemize}
+\end{DoxyReturn}
+Here is the call graph for this function\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=350pt]{SBC__FileCtrl_8c_aea7ec89395443df013700e8fc37c71c6_cgraph}
+\end{center}
+\end{figure}
+\Hypertarget{SBC__FileCtrl_8c_a0bffd54719b02c63355534614cdb450b}\label{SBC__FileCtrl_8c_a0bffd54719b02c63355534614cdb450b} 
+\index{SBC\_FileCtrl.c@{SBC\_FileCtrl.c}!SBC\_RawAlignedReadBlockIO@{SBC\_RawAlignedReadBlockIO}}
+\index{SBC\_RawAlignedReadBlockIO@{SBC\_RawAlignedReadBlockIO}!SBC\_FileCtrl.c@{SBC\_FileCtrl.c}}
+\doxysubsubsection{\texorpdfstring{SBC\_RawAlignedReadBlockIO()}{SBC\_RawAlignedReadBlockIO()}}
+{\footnotesize\ttfamily SBCStatus SBC\+\_\+\+Raw\+Aligned\+Read\+Block\+IO (\begin{DoxyParamCaption}\item[{VOID \texorpdfstring{$\ast$}{*}}]{blk,  }\item[{UINTN}]{off,  }\item[{UINTN}]{sz,  }\item[{VOID \texorpdfstring{$\ast$}{*}}]{buf }\end{DoxyParamCaption})}
+
+
+
+Read arbitrary bytes to a Block I/O device. 
+
+\begin{DoxyAuthor}{Author}
+leoc (9/24/25)
+\end{DoxyAuthor}
+
+\begin{DoxyParams}{Parameters}
+{\em blk} & Pointer to EFI\+\_\+\+BLOCK\+\_\+\+IO\+\_\+\+PROTOCOL \\
+\hline
+{\em off} & Byte offset from the start to media to begin reading \\
+\hline
+{\em sz} & Number of bytes to read. \\
+\hline
+{\em buf} & Source bufferw to read\\
+\hline
+\end{DoxyParams}
+
+\begin{DoxyRetVals}{Return values}
+{\em SBCOK} & The file was successfully created. \\
+\hline
+{\em SBCFAIL} & Failed to create the file due to a write or access error. \\
+\hline
+{\em SBCNULLP} & One or more input pointers are NULL. \\
+\hline
+{\em SBCIO} & A device or I/O error occurred while creating the file. \\
+\hline
+{\em SBCINVPARAM} & Invalid file name or handle. \\
+\hline
+\end{DoxyRetVals}
+Here is the caller graph for this function\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=350pt]{SBC__FileCtrl_8c_a0bffd54719b02c63355534614cdb450b_icgraph}
+\end{center}
+\end{figure}
+\Hypertarget{SBC__FileCtrl_8c_abffb6a3e7fe13fbd929362326a36db93}\label{SBC__FileCtrl_8c_abffb6a3e7fe13fbd929362326a36db93} 
+\index{SBC\_FileCtrl.c@{SBC\_FileCtrl.c}!SBC\_RawAlignedWriteBlockIO@{SBC\_RawAlignedWriteBlockIO}}
+\index{SBC\_RawAlignedWriteBlockIO@{SBC\_RawAlignedWriteBlockIO}!SBC\_FileCtrl.c@{SBC\_FileCtrl.c}}
+\doxysubsubsection{\texorpdfstring{SBC\_RawAlignedWriteBlockIO()}{SBC\_RawAlignedWriteBlockIO()}}
+{\footnotesize\ttfamily SBCStatus SBC\+\_\+\+Raw\+Aligned\+Write\+Block\+IO (\begin{DoxyParamCaption}\item[{VOID \texorpdfstring{$\ast$}{*}}]{blk,  }\item[{UINTN}]{off,  }\item[{UINTN}]{sz,  }\item[{CONST VOID \texorpdfstring{$\ast$}{*}}]{buf }\end{DoxyParamCaption})}
+
+
+
+Write arbitrary bytes to a Block I/O device. 
+
+\begin{DoxyAuthor}{Author}
+leoc (9/24/25)
+\end{DoxyAuthor}
+
+\begin{DoxyParams}{Parameters}
+{\em blk} & Pointer to EFI\+\_\+\+BLOCK\+\_\+\+IO\+\_\+\+PROTOCOL \\
+\hline
+{\em off} & Byte offset from the start to media to begin writting \\
+\hline
+{\em sz} & Number of bytes to write. \\
+\hline
+{\em buf} & Source bufferw to write\\
+\hline
+\end{DoxyParams}
+
+\begin{DoxyRetVals}{Return values}
+{\em SBCOK} & The file was successfully created. \\
+\hline
+{\em SBCFAIL} & Failed to create the file due to a write or access error. \\
+\hline
+{\em SBCNULLP} & One or more input pointers are NULL. \\
+\hline
+{\em SBCIO} & A device or I/O error occurred while creating the file. \\
+\hline
+{\em SBCINVPARAM} & Invalid file name or handle. \\
+\hline
+\end{DoxyRetVals}
+Here is the caller graph for this function\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=350pt]{SBC__FileCtrl_8c_abffb6a3e7fe13fbd929362326a36db93_icgraph}
+\end{center}
+\end{figure}
+\Hypertarget{SBC__FileCtrl_8c_a14e0c5b72f6cc01c3e358ef27b16f700}\label{SBC__FileCtrl_8c_a14e0c5b72f6cc01c3e358ef27b16f700} 
+\index{SBC\_FileCtrl.c@{SBC\_FileCtrl.c}!SBC\_RawPrtBlockWrite@{SBC\_RawPrtBlockWrite}}
+\index{SBC\_RawPrtBlockWrite@{SBC\_RawPrtBlockWrite}!SBC\_FileCtrl.c@{SBC\_FileCtrl.c}}
+\doxysubsubsection{\texorpdfstring{SBC\_RawPrtBlockWrite()}{SBC\_RawPrtBlockWrite()}}
+{\footnotesize\ttfamily SBCStatus SBC\+\_\+\+Raw\+Prt\+Block\+Write (\begin{DoxyParamCaption}\item[{VOID \texorpdfstring{$\ast$}{*}}]{blkio,  }\item[{UINT8 \texorpdfstring{$\ast$}{*}}]{wrbuf,  }\item[{UINT32}]{wrlen,  }\item[{UINT32}]{wrlba }\end{DoxyParamCaption})}
+
+
+
+Write the data in Raw Partition block at the specified LBA. 
+
+
+\begin{DoxyParams}{Parameters}
+{\em blkio} & Context handle for Block IO \\
+\hline
+{\em wrbuf} & Pointer to the buffer containing data to be written \\
+\hline
+{\em wrlen} & Length of the data to write, in bytes. \\
+\hline
+{\em wrlba} & Logicl Block Address where the data should be written\\
+\hline
+\end{DoxyParams}
+
+\begin{DoxyRetVals}{Return values}
+{\em SBCOK} & The file was successfully created. \\
+\hline
+{\em SBCFAIL} & Failed to create the file due to a write or access error. \\
+\hline
+{\em SBCNULLP} & One or more input pointers are NULL. \\
+\hline
+{\em SBCIO} & A device or I/O error occurred while creating the file. \\
+\hline
+{\em SBCINVPARAM} & Invalid file name or handle. \\
+\hline
+\end{DoxyRetVals}
+Here is the caller graph for this function\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=350pt]{SBC__FileCtrl_8c_a14e0c5b72f6cc01c3e358ef27b16f700_icgraph}
+\end{center}
+\end{figure}
+\Hypertarget{SBC__FileCtrl_8c_ab797adf8022e6bb64ba91bf55f9ae70b}\label{SBC__FileCtrl_8c_ab797adf8022e6bb64ba91bf55f9ae70b} 
+\index{SBC\_FileCtrl.c@{SBC\_FileCtrl.c}!SBC\_RawPrtReadBlock@{SBC\_RawPrtReadBlock}}
+\index{SBC\_RawPrtReadBlock@{SBC\_RawPrtReadBlock}!SBC\_FileCtrl.c@{SBC\_FileCtrl.c}}
+\doxysubsubsection{\texorpdfstring{SBC\_RawPrtReadBlock()}{SBC\_RawPrtReadBlock()}}
+{\footnotesize\ttfamily SBCStatus SBC\+\_\+\+Raw\+Prt\+Read\+Block (\begin{DoxyParamCaption}\item[{VOID \texorpdfstring{$\ast$}{*}}]{blkhnd,  }\item[{VOID \texorpdfstring{$\ast$}{*}}]{rdbuf,  }\item[{UINT32 \texorpdfstring{$\ast$}{*}}]{rdlen,  }\item[{UINTN}]{rlba }\end{DoxyParamCaption})}
+
+
+
+Read a raw data block from a physical storage device (LBA-\/based). 
+
+
+\begin{DoxyParams}[1]{Parameters}
+\mbox{\texttt{ in}}  & {\em blkhnd} & Pointer to an EFI\+\_\+\+BLOCK\+\_\+\+IO\+\_\+\+PROTOCOL handle or equivalent block device handle from which to read data. \\
+\hline
+\mbox{\texttt{ out}}  & {\em rdbuf} & Pointer to a buffer that receives the data read from the device. The buffer must be large enough to hold the number of bytes specified by {\ttfamily rdlen}. \\
+\hline
+\mbox{\texttt{ in,out}}  & {\em rdlen} & Pointer to a 32-\/bit variable specifying the requested read size (in bytes). On return, it may be updated to reflect the actual number of bytes read. \\
+\hline
+\mbox{\texttt{ in}}  & {\em rlba} & Logical Block Address (LBA) on the device from which to begin reading.\\
+\hline
+\end{DoxyParams}
+
+\begin{DoxyRetVals}{Return values}
+{\em SBCOK} & Data was successfully read from the device. \\
+\hline
+{\em SBCFAIL} & Read operation failed or incomplete. \\
+\hline
+{\em SBCNULLP} & One or more input pointers are NULL. \\
+\hline
+{\em SBCIO} & I/O or hardware access error occurred. \\
+\hline
+{\em SBCINVPARAM} & Invalid parameter (e.\+g., unaligned buffer or invalid LBA). \\
+\hline
+\end{DoxyRetVals}
+Here is the caller graph for this function\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=350pt]{SBC__FileCtrl_8c_ab797adf8022e6bb64ba91bf55f9ae70b_icgraph}
+\end{center}
+\end{figure}
+\Hypertarget{SBC__FileCtrl_8c_a628ab578804897888390b1e69b1f34ba}\label{SBC__FileCtrl_8c_a628ab578804897888390b1e69b1f34ba} 
+\index{SBC\_FileCtrl.c@{SBC\_FileCtrl.c}!SBC\_ReadBootMode@{SBC\_ReadBootMode}}
+\index{SBC\_ReadBootMode@{SBC\_ReadBootMode}!SBC\_FileCtrl.c@{SBC\_FileCtrl.c}}
+\doxysubsubsection{\texorpdfstring{SBC\_ReadBootMode()}{SBC\_ReadBootMode()}}
+{\footnotesize\ttfamily UINT32 SBC\+\_\+\+Read\+Boot\+Mode (\begin{DoxyParamCaption}\item[{VOID}]{ }\end{DoxyParamCaption})}
+
+
+
+(Deprecated) Read system boot mode value. 
+
+\begin{DoxyRefDesc}{Deprecated}
+\item[\mbox{\hyperlink{deprecated__deprecated000010}{Deprecated}}]This function is currently {\bfseries{not in use}}. Boot mode management has been replaced or integrated into the secure boot initialization sequence.\end{DoxyRefDesc}
+
+
+\begin{DoxyReturn}{Returns}
+The boot mode value (implementation-\/specific). ~\newline
+ Returns 0 if unused or not implemented. 
+\end{DoxyReturn}
+Here is the call graph for this function\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=350pt]{SBC__FileCtrl_8c_a628ab578804897888390b1e69b1f34ba_cgraph}
+\end{center}
+\end{figure}
+\Hypertarget{SBC__FileCtrl_8c_ac0aa9ae2f07a26de56eb5b3b0b76b06c}\label{SBC__FileCtrl_8c_ac0aa9ae2f07a26de56eb5b3b0b76b06c} 
+\index{SBC\_FileCtrl.c@{SBC\_FileCtrl.c}!SBC\_ReadFile@{SBC\_ReadFile}}
+\index{SBC\_ReadFile@{SBC\_ReadFile}!SBC\_FileCtrl.c@{SBC\_FileCtrl.c}}
+\doxysubsubsection{\texorpdfstring{SBC\_ReadFile()}{SBC\_ReadFile()}}
+{\footnotesize\ttfamily EFI\+\_\+\+STATUS SBC\+\_\+\+Read\+File (\begin{DoxyParamCaption}\item[{EFI\+\_\+\+HANDLE}]{Image\+Handle,  }\item[{CHAR16 \texorpdfstring{$\ast$}{*}}]{File\+Names,  }\item[{\mbox{\hyperlink{struct__lv__t}{LV\+\_\+t}} \texorpdfstring{$\ast$}{*}}]{out }\end{DoxyParamCaption})}
+
+
+
+Read a file from a UEFI file system into a memory buffer. 
+
+This function locates and opens a file specified by {\ttfamily File\+Names} using the provided UEFI image handle {\ttfamily Image\+Handle}. ~\newline
+ It reads the file contents into the buffer described by {\ttfamily out}, which includes the pointer and length fields for the loaded data.
+
+
+\begin{DoxyParams}[1]{Parameters}
+\mbox{\texttt{ in}}  & {\em Image\+Handle} & Handle to the current loaded image. ~\newline
+ Used to locate the EFI\+\_\+\+SIMPLE\+\_\+\+FILE\+\_\+\+SYSTEM\+\_\+\+PROTOCOL for accessing the underlying filesystem. \\
+\hline
+\mbox{\texttt{ in}}  & {\em File\+Names} & Unicode (CHAR16) string representing the full or relative path of the file to be read (e.\+g., L"{}\textbackslash{}\textbackslash{}\+EFI\textbackslash{}\textbackslash{}\+BOOT\textbackslash{}\textbackslash{}bootx64.\+efi"{}). \\
+\hline
+\mbox{\texttt{ out}}  & {\em out} & Pointer to an LV\+\_\+t structure that receives the file data and its size. The buffer is allocated internally and must be released by the caller using Free\+Pool().\\
+\hline
+\end{DoxyParams}
+
+\begin{DoxyRetVals}{Return values}
+{\em EFI\+\_\+\+SUCCESS} & The file was successfully read into memory. \\
+\hline
+{\em EFI\+\_\+\+NOT\+\_\+\+FOUND} & The specified file could not be located. \\
+\hline
+{\em EFI\+\_\+\+INVALID\+\_\+\+PARAMETER} & One or more parameters are invalid or NULL. \\
+\hline
+{\em EFI\+\_\+\+OUT\+\_\+\+OF\+\_\+\+RESOURCES} & Memory allocation failed while reading the file. \\
+\hline
+{\em EFI\+\_\+\+DEVICE\+\_\+\+ERROR} & A device or I/O error occurred during the read operation. \\
+\hline
+\end{DoxyRetVals}
+Here is the caller graph for this function\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=350pt]{SBC__FileCtrl_8c_ac0aa9ae2f07a26de56eb5b3b0b76b06c_icgraph}
+\end{center}
+\end{figure}
+\Hypertarget{SBC__FileCtrl_8c_a29d59ff755a7a1d58e934a80e124373b}\label{SBC__FileCtrl_8c_a29d59ff755a7a1d58e934a80e124373b} 
+\index{SBC\_FileCtrl.c@{SBC\_FileCtrl.c}!SBC\_WriteFile@{SBC\_WriteFile}}
+\index{SBC\_WriteFile@{SBC\_WriteFile}!SBC\_FileCtrl.c@{SBC\_FileCtrl.c}}
+\doxysubsubsection{\texorpdfstring{SBC\_WriteFile()}{SBC\_WriteFile()}}
+{\footnotesize\ttfamily EFI\+\_\+\+STATUS SBC\+\_\+\+Write\+File (\begin{DoxyParamCaption}\item[{EFI\+\_\+\+HANDLE}]{Image\+Handle,  }\item[{CHAR16 \texorpdfstring{$\ast$}{*}}]{File\+Names,  }\item[{\mbox{\hyperlink{struct__lv__t}{LV\+\_\+t}} \texorpdfstring{$\ast$}{*}}]{out }\end{DoxyParamCaption})}
+
+
+
+Writes the user data in specified file. 
+
+\begin{DoxyAuthor}{Author}
+leonc (10/31/25)
+\end{DoxyAuthor}
+
+\begin{DoxyParams}{Parameters}
+{\em Image\+Handle} & Pointer to EFH\+\_\+\+HANDLE \\
+\hline
+{\em File\+Names} & Pointer to the File path string \\
+\hline
+{\em out} & Pointer to the buffer containing data to be written\\
+\hline
+\end{DoxyParams}
+\begin{DoxyReturn}{Returns}
+On Success, return the SBCOK, otherwise, return the apporiate value. 
+\end{DoxyReturn}

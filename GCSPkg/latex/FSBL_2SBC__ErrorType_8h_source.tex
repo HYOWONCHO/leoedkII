@@ -1,0 +1,41 @@
+\doxysection{SBC\+\_\+\+Error\+Type.\+h}
+\hypertarget{FSBL_2SBC__ErrorType_8h_source}{}\label{FSBL_2SBC__ErrorType_8h_source}\index{Application/FSBL/SBC\_ErrorType.h@{Application/FSBL/SBC\_ErrorType.h}}
+
+\begin{DoxyCode}{0}
+\DoxyCodeLine{00001\ \textcolor{preprocessor}{\#ifndef\ \_\_SBCErrorType}}
+\DoxyCodeLine{00002\ \textcolor{preprocessor}{\#define\ \_\_SBCErrorType}}
+\DoxyCodeLine{00003\ }
+\DoxyCodeLine{00004\ \textcolor{preprocessor}{\#include\ <Library/UefiLib.h>}}
+\DoxyCodeLine{00005\ \textcolor{preprocessor}{\#include\ "{}SBC\_TypeDefs.h"{}}}
+\DoxyCodeLine{00006\ \textcolor{preprocessor}{\#include\ "{}SBC\_Log.h"{}}}
+\DoxyCodeLine{00007\ }
+\DoxyCodeLine{00008\ \textcolor{keyword}{typedef}\ \textcolor{keyword}{enum}\ \{}
+\DoxyCodeLine{00009\ \ \ \ SBCOK\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ =\ 0,}
+\DoxyCodeLine{00010\ \ \ \ SBCFAIL\ \ \ \ \ \ \ \ \ \ \ \ \ \ =\ 300,}
+\DoxyCodeLine{00011\ \ \ \ SBCINVPARAM\ \ \ \ \ \ \ \ \ \ =\ 301,\ \ \textcolor{comment}{/*<!\ Invalid\ parameter\ */}}
+\DoxyCodeLine{00012\ \ \ \ SBCNULLP\ \ \ \ \ \ \ \ \ \ \ \ \ =\ 302,\ \ \textcolor{comment}{/*<!\ NULL\ ptr*/}}
+\DoxyCodeLine{00013\ \ \ \ SBCZEROL\ \ \ \ \ \ \ \ \ \ \ \ \ =\ 303,\ \ \textcolor{comment}{/*<!\ Length\ is\ zero\ */}}
+\DoxyCodeLine{00014\ \ \ \ SBCNOTFND\ \ \ \ \ \ \ \ \ \ \ \ =\ 304,\ \ \textcolor{comment}{/*<!\ Not\ found*/}}
+\DoxyCodeLine{00015\ \ \ \ SBCBADFMT\ \ \ \ \ \ \ \ \ \ \ \ =\ 305,\ \ \textcolor{comment}{/*<!\ Bad\ format*/}}
+\DoxyCodeLine{00016\ \ \ \ SBCFMMTTYP\ \ \ \ \ \ \ \ \ \ \ =\ 306,\ \ \textcolor{comment}{/*<!\ Bad\ format\ type*/}}
+\DoxyCodeLine{00017\ \ \ \ SBCNOSPC\ \ \ \ \ \ \ \ \ \ \ \ \ =\ 307,\ \ \textcolor{comment}{/*<!\ Not\ enouth\ space\ for\ outptu*/}}
+\DoxyCodeLine{00018\ \ \ \ SBCIO\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ =\ 308,\ \ \textcolor{comment}{/*<!\ I/O\ error\ */}}
+\DoxyCodeLine{00019\ \ \ \ SBCFAULT\ \ \ \ \ \ \ \ \ \ \ \ \ =\ 309,\ \ \textcolor{comment}{/*<!\ Bad\ Address*/}}
+\DoxyCodeLine{00020\ \ \ \ SBCBUSY\ \ \ \ \ \ \ \ \ \ \ \ \ \ =\ 310,\ \ \textcolor{comment}{/*<!\ Busy\ Status*/}}
+\DoxyCodeLine{00021\ \ \ \ SBCTIME\ \ \ \ \ \ \ \ \ \ \ \ \ \ =\ 311,\ \ \textcolor{comment}{/*<!\ Timer\ expire*/}}
+\DoxyCodeLine{00022\ \ \ \ SBCCOMM\ \ \ \ \ \ \ \ \ \ \ \ \ \ =\ 312,\ \ \textcolor{comment}{/*<!\ Communication\ error\ */}}
+\DoxyCodeLine{00023\ \ \ \ SBCPROTO\ \ \ \ \ \ \ \ \ \ \ \ \ =\ 313,\ \ \textcolor{comment}{/*<!\ Protocol\ error*/}}
+\DoxyCodeLine{00024\ \ \ \ SBCNOTSUP\ \ \ \ \ \ \ \ \ \ \ \ =\ 314,\ \ \textcolor{comment}{/*<!\ Not\ Support*/}}
+\DoxyCodeLine{00025\ \ \ \ SBCENCFAIL\ \ \ \ \ \ \ \ \ \ \ =\ 315,}
+\DoxyCodeLine{00026\ \ \ \ SBCDECFAIL\ \ \ \ \ \ \ \ \ \ \ =\ 316,}
+\DoxyCodeLine{00027\ \ \ \ SBCBSANSWNOTFND\ \ \ \ \ \ =\ 317,}
+\DoxyCodeLine{00028\ \ \ \ SBCUNKNOWN}
+\DoxyCodeLine{00029\ \}SBCStatus;}
+\DoxyCodeLine{00030\ }
+\DoxyCodeLine{00031\ }
+\DoxyCodeLine{00032\ }
+\DoxyCodeLine{00033\ }
+\DoxyCodeLine{00034\ }
+\DoxyCodeLine{00035\ \textcolor{preprocessor}{\#endif}}
+
+\end{DoxyCode}

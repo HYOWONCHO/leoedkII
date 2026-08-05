@@ -1,0 +1,324 @@
+\doxysection{Application/\+SSBL/\+SBC\+\_\+\+Protected\+SW.c File Reference}
+\hypertarget{SBC__ProtectedSW_8c}{}\label{SBC__ProtectedSW_8c}\index{Application/SSBL/SBC\_ProtectedSW.c@{Application/SSBL/SBC\_ProtectedSW.c}}
+
+
+Handling of the Protected Software Module.  
+
+
+{\ttfamily \#include $<$Library/\+Print\+Lib.\+h$>$}\newline
+{\ttfamily \#include $<$Library/\+Base\+Memory\+Lib.\+h$>$}\newline
+{\ttfamily \#include $<$Library/\+Memory\+Allocation\+Lib.\+h$>$}\newline
+{\ttfamily \#include "{}SBC\+\_\+\+Protected\+SW.\+h"{}}\newline
+{\ttfamily \#include "{}SBC\+\_\+\+File\+Ctrl.\+h"{}}\newline
+{\ttfamily \#include "{}SBC\+\_\+\+Boot\+Proc.\+h"{}}\newline
+{\ttfamily \#include "{}SBC\+\_\+\+Anti\+Tampering.\+h"{}}\newline
+{\ttfamily \#include "{}SBC\+\_\+\+Crypt\+AES.\+h"{}}\newline
+{\ttfamily \#include "{}SBC\+\_\+\+Hashing.\+h"{}}\newline
+{\ttfamily \#include "{}SBC\+\_\+\+Config.\+h"{}}\newline
+Include dependency graph for SBC\+\_\+\+Protected\+SW.\+c\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=350pt]{SBC__ProtectedSW_8c__incl}
+\end{center}
+\end{figure}
+\doxysubsubsection*{Macros}
+\begin{DoxyCompactItemize}
+\item 
+\Hypertarget{SBC__ProtectedSW_8c_ab1cdb26a850f12196bea39d3424e96bb}\label{SBC__ProtectedSW_8c_ab1cdb26a850f12196bea39d3424e96bb} 
+\#define {\bfseries SBC\+\_\+\+PROT\+\_\+\+SYS\+\_\+\+DATA\+\_\+\+LEN}~4
+\end{DoxyCompactItemize}
+\doxysubsubsection*{Functions}
+\begin{DoxyCompactItemize}
+\item 
+\Hypertarget{SBC__ProtectedSW_8c_a57af23bc34e9e2fa9e53907f95c410da}\label{SBC__ProtectedSW_8c_a57af23bc34e9e2fa9e53907f95c410da} 
+SBCStatus {\bfseries SBC\+\_\+\+Find\+Protected\+Sw} (VOID \texorpdfstring{$\ast$}{*}handle, CHAR8 name\mbox{[}256\mbox{]}, CHAR8 \texorpdfstring{$\ast$}{*}ver, UINTN \texorpdfstring{$\ast$}{*}sw\+\_\+node\+\_\+off)
+\item 
+\Hypertarget{SBC__ProtectedSW_8c_a1ecc65efb67a63899439f57a200c1173}\label{SBC__ProtectedSW_8c_a1ecc65efb67a63899439f57a200c1173} 
+SBCStatus {\bfseries SBC\+\_\+\+Get\+Protected\+Sw\+Name} (VOID \texorpdfstring{$\ast$}{*}handle, UINTN st, CHAR8 \texorpdfstring{$\ast$}{*}sw\+\_\+name, UINTN sw\+\_\+name\+\_\+size)
+\item 
+SBCStatus \mbox{\hyperlink{SBC__ProtectedSW_8c_ad2abd02c58e6ce9d4f11517e7d2c3089}{SBC\+\_\+\+Load\+Sys\+File}} (VOID \texorpdfstring{$\ast$}{*}handle, UINTN offset, UINT8 \texorpdfstring{$\ast$}{*}deckey, UINT8 \texorpdfstring{$\ast$}{*}data)
+\begin{DoxyCompactList}\small\item\em Load and decrypt a protected system file from the secure partition. \end{DoxyCompactList}\item 
+SBCStatus \mbox{\hyperlink{SBC__ProtectedSW_8c_a6d40367e0a002e55377ab0859776f807}{SBC\+\_\+\+Prot\+SWDecrypt}} (VOID \texorpdfstring{$\ast$}{*}handle, UINT8 \texorpdfstring{$\ast$}{*}key, UINT8 \texorpdfstring{$\ast$}{*}migkey, UINT8 \texorpdfstring{$\ast$}{*}decbuf, UINT32 \texorpdfstring{$\ast$}{*}declen)
+\item 
+SBCStatus \mbox{\hyperlink{SBC__ProtectedSW_8c_ae9d0525852cfae1df12cda21bccbce6d}{SBC\+\_\+\+Prot\+SWGet\+Cnt}} (VOID \texorpdfstring{$\ast$}{*}handle, UINTN \texorpdfstring{$\ast$}{*}cnt)
+\begin{DoxyCompactList}\small\item\em Retrieve the number of protected software entries. \end{DoxyCompactList}\item 
+SBCStatus \mbox{\hyperlink{SBC__ProtectedSW_8c_a197c1a9743d7bd540aadbb4d88ebb487}{SBC\+\_\+\+Read\+Protected\+Sw\+Slot\+Offset}} (VOID \texorpdfstring{$\ast$}{*}handle, UINTN \texorpdfstring{$\ast$}{*}check, CHAR8 \texorpdfstring{$\ast$}{*}sw\+\_\+name, UINTN slot, UINTN \texorpdfstring{$\ast$}{*}offset)
+\begin{DoxyCompactList}\small\item\em Retrieve the storage offset of a specific protected software slot (SW0/\+SW1). \end{DoxyCompactList}\item 
+SBCStatus \mbox{\hyperlink{SBC__ProtectedSW_8c_a17776e78948216d2a4a9a475f66d8637}{SBC\+\_\+\+Recrypto\+Protected\+SW}} (VOID \texorpdfstring{$\ast$}{*}handle, UINTN ofs, UINT8 \texorpdfstring{$\ast$}{*}sw\+\_\+secret\+\_\+key, UINT8 \texorpdfstring{$\ast$}{*}sw\+\_\+mig\+\_\+key)
+\begin{DoxyCompactList}\small\item\em Re-\/encrypt (re-\/crypto) a protected software image using a new key set. \end{DoxyCompactList}\item 
+\Hypertarget{SBC__ProtectedSW_8c_ac88268cef8d21d42abf9ecfabef7808c}\label{SBC__ProtectedSW_8c_ac88268cef8d21d42abf9ecfabef7808c} 
+SBCStatus {\bfseries SBC\+\_\+\+Reda\+Prteocted\+Sw\+Size} (VOID \texorpdfstring{$\ast$}{*}handle, UINTN ofs, UINTN \texorpdfstring{$\ast$}{*}size)
+\item 
+\Hypertarget{SBC__ProtectedSW_8c_a17dd820ef2612f6876db3f9c94ced352}\label{SBC__ProtectedSW_8c_a17dd820ef2612f6876db3f9c94ced352} 
+SBCStatus {\bfseries SBC\+\_\+\+Update\+Protected\+SWList\+Version} (VOID \texorpdfstring{$\ast$}{*}handle, CHAR8 \texorpdfstring{$\ast$}{*}sw\+\_\+name, CHAR8 \texorpdfstring{$\ast$}{*}sw\+\_\+ver)
+\item 
+\Hypertarget{SBC__ProtectedSW_8c_a4223d95df38fbd7b6fe08712e00012ff}\label{SBC__ProtectedSW_8c_a4223d95df38fbd7b6fe08712e00012ff} 
+SBCStatus {\bfseries SBC\+\_\+\+Update\+Protecte\+SWSlot\+Info} (VOID \texorpdfstring{$\ast$}{*}handle, CHAR8 \texorpdfstring{$\ast$}{*}sw\+\_\+name)
+\item 
+\Hypertarget{SBC__ProtectedSW_8c_a94cd34cc0752b57960c170e93fc720e7}\label{SBC__ProtectedSW_8c_a94cd34cc0752b57960c170e93fc720e7} 
+SBCStatus {\bfseries SBC\+\_\+\+Write\+Prot\+Sw\+Node\+Blob} (VOID \texorpdfstring{$\ast$}{*}handle, UINTN swoff, UINT8 \texorpdfstring{$\ast$}{*}blob, UINTN blob\+\_\+len, UINT8 \texorpdfstring{$\ast$}{*}iv, UINT8 \texorpdfstring{$\ast$}{*}tag)
+\item 
+\Hypertarget{SBC__ProtectedSW_8c_a7b97c437ae79e667b05731dd927bd78e}\label{SBC__ProtectedSW_8c_a7b97c437ae79e667b05731dd927bd78e} 
+SBCStatus {\bfseries SBC\+\_\+\+Write\+Prot\+Sw\+Size} (VOID \texorpdfstring{$\ast$}{*}handle, UINTN sw\+\_\+off, UINTN size)
+\end{DoxyCompactItemize}
+\doxysubsubsection*{Variables}
+\begin{DoxyCompactItemize}
+\item 
+\Hypertarget{SBC__ProtectedSW_8c_a1b983779b7d8351fa5a7e83a368cd03e}\label{SBC__ProtectedSW_8c_a1b983779b7d8351fa5a7e83a368cd03e} 
+CHAR16 {\bfseries mrgmsg} \mbox{[}8192\mbox{]}
+\end{DoxyCompactItemize}
+
+
+\doxysubsection{Detailed Description}
+Handling of the Protected Software Module. 
+
+Copyright (C) 2024 by Security Platform Inc. \texorpdfstring{$\ast$}{*} This file is part of the SBC Project. \texorpdfstring{$\ast$}{*}
+\begin{DoxyItemize}
+\item This software contains confidential and proprietary information of \texorpdfstring{$\ast$}{*} Security Platform Inc. Unauthorized reproduction, distribution, or \texorpdfstring{$\ast$}{*} disclosure of this software, in whole or in part, is strictly prohibited. \texorpdfstring{$\ast$}{*}
+\end{DoxyItemize}
+
+\begin{DoxyAuthor}{Author}
+LEON 
+\end{DoxyAuthor}
+\begin{DoxyVersion}{Version}
+1.\+0 
+\end{DoxyVersion}
+\begin{DoxyDate}{Date}
+2025-\/10-\/31
+\end{DoxyDate}
+\begin{DoxyCopyright}{Copyright}
+(c) 2025 Security Platform Inc. All rights reserved.
+\end{DoxyCopyright}
+This file implements the initialization, authentication, and validation procedures for the Protected Software (SW) component used in the secure boot process.
+
+@changelog 
+
+\doxysubsection{Function Documentation}
+\Hypertarget{SBC__ProtectedSW_8c_ad2abd02c58e6ce9d4f11517e7d2c3089}\label{SBC__ProtectedSW_8c_ad2abd02c58e6ce9d4f11517e7d2c3089} 
+\index{SBC\_ProtectedSW.c@{SBC\_ProtectedSW.c}!SBC\_LoadSysFile@{SBC\_LoadSysFile}}
+\index{SBC\_LoadSysFile@{SBC\_LoadSysFile}!SBC\_ProtectedSW.c@{SBC\_ProtectedSW.c}}
+\doxysubsubsection{\texorpdfstring{SBC\_LoadSysFile()}{SBC\_LoadSysFile()}}
+{\footnotesize\ttfamily SBCStatus SBC\+\_\+\+Load\+Sys\+File (\begin{DoxyParamCaption}\item[{VOID \texorpdfstring{$\ast$}{*}}]{handle,  }\item[{UINTN}]{offset,  }\item[{UINT8 \texorpdfstring{$\ast$}{*}}]{deckey,  }\item[{UINT8 \texorpdfstring{$\ast$}{*}}]{data }\end{DoxyParamCaption})}
+
+
+
+Load and decrypt a protected system file from the secure partition. 
+
+
+\begin{DoxyParams}[1]{Parameters}
+\mbox{\texttt{ in}}  & {\em handle} & Pointer to the SBC protected system or partition context. Identifies the initialized secure storage interface. \\
+\hline
+\mbox{\texttt{ in}}  & {\em offset} & Offset (in bytes or blocks) within the secure partition where the target system file is located. \\
+\hline
+\mbox{\texttt{ in}}  & {\em deckey} & Pointer to the decryption key used to decrypt the file. Must be a valid AES key (e.\+g., 256 bits = SBC\+\_\+\+AT\+\_\+\+RP\+\_\+\+KEY\+\_\+\+LEN bytes). \\
+\hline
+\mbox{\texttt{ out}}  & {\em data} & Pointer to a caller-\/allocated buffer that receives the decrypted file contents.\\
+\hline
+\end{DoxyParams}
+
+\begin{DoxyRetVals}{Return values}
+{\em SBCOK} & File successfully loaded and decrypted. \\
+\hline
+{\em SBCFAIL} & Decryption or file read operation failed. \\
+\hline
+{\em SBCNULLP} & One or more input pointers are NULL. \\
+\hline
+{\em SBCINVPARAM} & Invalid offset or buffer parameters. \\
+\hline
+{\em SBCCRYPTO} & AES decryption or authentication tag verification failed. \\
+\hline
+{\em SBCIO} & I/O or partition read failure. \\
+\hline
+\end{DoxyRetVals}
+
+\begin{DoxyParams}[1]{Parameters}
+\mbox{\texttt{ in}}  & {\em handle} & Protected system or partition context handle  \\
+\hline
+\mbox{\texttt{ in}}  & {\em offset} & Offset of the target system file  \\
+\hline
+\mbox{\texttt{ in}}  & {\em deckey} & Decryption key (AES-\/256)  \\
+\hline
+\mbox{\texttt{ out}}  & {\em data} & Buffer to receive decrypted file contents \\
+\hline
+\end{DoxyParams}
+\Hypertarget{SBC__ProtectedSW_8c_a6d40367e0a002e55377ab0859776f807}\label{SBC__ProtectedSW_8c_a6d40367e0a002e55377ab0859776f807} 
+\index{SBC\_ProtectedSW.c@{SBC\_ProtectedSW.c}!SBC\_ProtSWDecrypt@{SBC\_ProtSWDecrypt}}
+\index{SBC\_ProtSWDecrypt@{SBC\_ProtSWDecrypt}!SBC\_ProtectedSW.c@{SBC\_ProtectedSW.c}}
+\doxysubsubsection{\texorpdfstring{SBC\_ProtSWDecrypt()}{SBC\_ProtSWDecrypt()}}
+{\footnotesize\ttfamily SBCStatus SBC\+\_\+\+Prot\+SWDecrypt (\begin{DoxyParamCaption}\item[{VOID \texorpdfstring{$\ast$}{*}}]{handle,  }\item[{UINT8 \texorpdfstring{$\ast$}{*}}]{key,  }\item[{UINT8 \texorpdfstring{$\ast$}{*}}]{migkey,  }\item[{UINT8 \texorpdfstring{$\ast$}{*}}]{decbuf,  }\item[{UINT32 \texorpdfstring{$\ast$}{*}}]{declen }\end{DoxyParamCaption})}
+
+
+\begin{DoxyParams}[1]{Parameters}
+\mbox{\texttt{ in}}  & {\em handle} & Protected SW context handle  \\
+\hline
+\mbox{\texttt{ in}}  & {\em key} & Decryption key (AES-\/256)  \\
+\hline
+\mbox{\texttt{ in}}  & {\em migkey} & Optional migration key  \\
+\hline
+\mbox{\texttt{ out}}  & {\em decbuf} & Decrypted data buffer  \\
+\hline
+\mbox{\texttt{ in,out}}  & {\em declen} & Buffer length / decrypted size \\
+\hline
+\end{DoxyParams}
+Here is the call graph for this function\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=350pt]{SBC__ProtectedSW_8c_a6d40367e0a002e55377ab0859776f807_cgraph}
+\end{center}
+\end{figure}
+\Hypertarget{SBC__ProtectedSW_8c_ae9d0525852cfae1df12cda21bccbce6d}\label{SBC__ProtectedSW_8c_ae9d0525852cfae1df12cda21bccbce6d} 
+\index{SBC\_ProtectedSW.c@{SBC\_ProtectedSW.c}!SBC\_ProtSWGetCnt@{SBC\_ProtSWGetCnt}}
+\index{SBC\_ProtSWGetCnt@{SBC\_ProtSWGetCnt}!SBC\_ProtectedSW.c@{SBC\_ProtectedSW.c}}
+\doxysubsubsection{\texorpdfstring{SBC\_ProtSWGetCnt()}{SBC\_ProtSWGetCnt()}}
+{\footnotesize\ttfamily SBCStatus SBC\+\_\+\+Prot\+SWGet\+Cnt (\begin{DoxyParamCaption}\item[{VOID \texorpdfstring{$\ast$}{*}}]{handle,  }\item[{UINTN \texorpdfstring{$\ast$}{*}}]{cnt }\end{DoxyParamCaption})}
+
+
+
+Retrieve the number of protected software entries. 
+
+
+\begin{DoxyParams}[1]{Parameters}
+\mbox{\texttt{ in}}  & {\em handle} & Pointer to the SBC protected software handle or context. This handle references the initialized partition or data structure containing software metadata. \\
+\hline
+\mbox{\texttt{ out}}  & {\em cnt} & Pointer to a variable that receives the number of registered software entries.\\
+\hline
+\end{DoxyParams}
+
+\begin{DoxyRetVals}{Return values}
+{\em SBCOK} & The count was successfully retrieved. \\
+\hline
+{\em SBCFAIL} & Failed to read software information or count. \\
+\hline
+{\em SBCNULLP} & One or more input pointers are NULL. \\
+\hline
+{\em SBCINVPARAM} & Invalid handle or uninitialized software context. \\
+\hline
+{\em SBCIO} & I/O or storage access error occurred. \\
+\hline
+\end{DoxyRetVals}
+Here is the caller graph for this function\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=348pt]{SBC__ProtectedSW_8c_ae9d0525852cfae1df12cda21bccbce6d_icgraph}
+\end{center}
+\end{figure}
+\Hypertarget{SBC__ProtectedSW_8c_a197c1a9743d7bd540aadbb4d88ebb487}\label{SBC__ProtectedSW_8c_a197c1a9743d7bd540aadbb4d88ebb487} 
+\index{SBC\_ProtectedSW.c@{SBC\_ProtectedSW.c}!SBC\_ReadProtectedSwSlotOffset@{SBC\_ReadProtectedSwSlotOffset}}
+\index{SBC\_ReadProtectedSwSlotOffset@{SBC\_ReadProtectedSwSlotOffset}!SBC\_ProtectedSW.c@{SBC\_ProtectedSW.c}}
+\doxysubsubsection{\texorpdfstring{SBC\_ReadProtectedSwSlotOffset()}{SBC\_ReadProtectedSwSlotOffset()}}
+{\footnotesize\ttfamily SBCStatus SBC\+\_\+\+Read\+Protected\+Sw\+Slot\+Offset (\begin{DoxyParamCaption}\item[{VOID \texorpdfstring{$\ast$}{*}}]{handle,  }\item[{UINTN \texorpdfstring{$\ast$}{*}}]{check,  }\item[{CHAR8 \texorpdfstring{$\ast$}{*}}]{sw\+\_\+name,  }\item[{UINTN}]{slot,  }\item[{UINTN \texorpdfstring{$\ast$}{*}}]{offset }\end{DoxyParamCaption})}
+
+
+
+Retrieve the storage offset of a specific protected software slot (SW0/\+SW1). 
+
+
+\begin{DoxyParams}[1]{Parameters}
+\mbox{\texttt{ in}}  & {\em handle} & Pointer to the SBC protected software context or partition handle. Identifies the initialized software list or raw partition. \\
+\hline
+\mbox{\texttt{ out}}  & {\em check} & Pointer to a variable used for validation or integrity checking. This may indicate whether the software entry or offset is valid. \\
+\hline
+\mbox{\texttt{ in}}  & {\em sw\+\_\+name} & ASCII string representing the software name to locate. (e.\+g., {\ttfamily "{}\+Secure\+OS"{}}, {\ttfamily "{}\+Loader"{}}, {\ttfamily "{}\+FSBL"{}}). \\
+\hline
+\mbox{\texttt{ in}}  & {\em slot} & Slot index to read (e.\+g., 0 = SW0, 1 = SW1). ~\newline
+ See AT\+\_\+\+RP\+\_\+\+SW\+\_\+\+NODE\+\_\+\+SLOT\+\_\+T for slot definitions. \\
+\hline
+\mbox{\texttt{ out}}  & {\em offset} & Pointer to a variable that receives the slot’s storage offset value.\\
+\hline
+\end{DoxyParams}
+
+\begin{DoxyRetVals}{Return values}
+{\em SBCOK} & The software slot offset was successfully read. \\
+\hline
+{\em SBCFAIL} & Failed to find the specified software entry or read offset. \\
+\hline
+{\em SBCNULLP} & One or more input pointers are NULL. \\
+\hline
+{\em SBCINVPARAM} & Invalid slot index or software name. \\
+\hline
+{\em SBCIO} & Storage access or partition read failure. \\
+\hline
+\end{DoxyRetVals}
+
+\begin{DoxyParams}[1]{Parameters}
+\mbox{\texttt{ in}}  & {\em handle} & Protected software context handle  \\
+\hline
+\mbox{\texttt{ out}}  & {\em check} & Integrity or validation flag pointer  \\
+\hline
+\mbox{\texttt{ in}}  & {\em sw\+\_\+name} & Software name to locate  \\
+\hline
+\mbox{\texttt{ in}}  & {\em slot} & Slot index (0 = SW0, 1 = SW1)  \\
+\hline
+\mbox{\texttt{ out}}  & {\em offset} & Slot offset value \\
+\hline
+\end{DoxyParams}
+Here is the caller graph for this function\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=350pt]{SBC__ProtectedSW_8c_a197c1a9743d7bd540aadbb4d88ebb487_icgraph}
+\end{center}
+\end{figure}
+\Hypertarget{SBC__ProtectedSW_8c_a17776e78948216d2a4a9a475f66d8637}\label{SBC__ProtectedSW_8c_a17776e78948216d2a4a9a475f66d8637} 
+\index{SBC\_ProtectedSW.c@{SBC\_ProtectedSW.c}!SBC\_RecryptoProtectedSW@{SBC\_RecryptoProtectedSW}}
+\index{SBC\_RecryptoProtectedSW@{SBC\_RecryptoProtectedSW}!SBC\_ProtectedSW.c@{SBC\_ProtectedSW.c}}
+\doxysubsubsection{\texorpdfstring{SBC\_RecryptoProtectedSW()}{SBC\_RecryptoProtectedSW()}}
+{\footnotesize\ttfamily SBCStatus SBC\+\_\+\+Recrypto\+Protected\+SW (\begin{DoxyParamCaption}\item[{VOID \texorpdfstring{$\ast$}{*}}]{handle,  }\item[{UINTN}]{ofs,  }\item[{UINT8 \texorpdfstring{$\ast$}{*}}]{sw\+\_\+secret\+\_\+key,  }\item[{UINT8 \texorpdfstring{$\ast$}{*}}]{sw\+\_\+mig\+\_\+key }\end{DoxyParamCaption})}
+
+
+
+Re-\/encrypt (re-\/crypto) a protected software image using a new key set. 
+
+
+\begin{DoxyParams}[1]{Parameters}
+\mbox{\texttt{ in}}  & {\em handle} & Pointer to the SBC protected software context or partition handle. Identifies the target partition containing the software data. \\
+\hline
+\mbox{\texttt{ in}}  & {\em ofs} & Offset or index of the software block to re-\/encrypt. Typically corresponds to the node offset within the partition. \\
+\hline
+\mbox{\texttt{ in}}  & {\em sw\+\_\+secret\+\_\+key} & Pointer to the main AES key (e.\+g., 256-\/bit key) used for re-\/encryption. Must be SBC\+\_\+\+AT\+\_\+\+RP\+\_\+\+KEY\+\_\+\+LEN bytes long. \\
+\hline
+\mbox{\texttt{ in}}  & {\em sw\+\_\+mig\+\_\+key} & Pointer to the migration key used for transitioning to a new key version or hierarchy. ~\newline
+ May be {\ttfamily NULL} if only a single key is used.\\
+\hline
+\end{DoxyParams}
+
+\begin{DoxyRetVals}{Return values}
+{\em SBCOK} & Re-\/encryption successfully completed. \\
+\hline
+{\em SBCFAIL} & Re-\/encryption failed due to data corruption or key mismatch. \\
+\hline
+{\em SBCNULLP} & One or more input pointers are NULL. \\
+\hline
+{\em SBCINVPARAM} & Invalid offset, key length, or partition context. \\
+\hline
+{\em SBCCRYPTO} & Cryptographic engine or AES-\/\+GCM processing error. \\
+\hline
+{\em SBCIO} & I/O failure during read or write to the secure partition. \\
+\hline
+\end{DoxyRetVals}
+
+\begin{DoxyParams}[1]{Parameters}
+\mbox{\texttt{ in}}  & {\em handle} & Protected software partition handle  \\
+\hline
+\mbox{\texttt{ in}}  & {\em ofs} & Offset of the software node to re-\/encrypt  \\
+\hline
+\mbox{\texttt{ in}}  & {\em sw\+\_\+secret\+\_\+key} & Primary software encryption key (AES-\/256)  \\
+\hline
+\mbox{\texttt{ in}}  & {\em sw\+\_\+mig\+\_\+key} & Migration key for key rotation (optional) \\
+\hline
+\end{DoxyParams}
+Here is the caller graph for this function\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=350pt]{SBC__ProtectedSW_8c_a17776e78948216d2a4a9a475f66d8637_icgraph}
+\end{center}
+\end{figure}

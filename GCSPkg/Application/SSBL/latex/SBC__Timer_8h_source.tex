@@ -1,0 +1,33 @@
+\doxysection{SBC\+\_\+\+Timer.\+h}
+\hypertarget{SBC__Timer_8h_source}{}\label{SBC__Timer_8h_source}
+\begin{DoxyCode}{0}
+\DoxyCodeLine{00001\ \textcolor{preprocessor}{\#ifndef\ \_SBC\_TIMER\_H\_}}
+\DoxyCodeLine{00002\ \textcolor{preprocessor}{\#define\ \_SBC\_TIMER\_H\_}}
+\DoxyCodeLine{00003\ }
+\DoxyCodeLine{00004\ }
+\DoxyCodeLine{00005\ }
+\DoxyCodeLine{00030\ \textcolor{preprocessor}{\#define\ SBC\_TIME\_BLOCKS\_NS(\_ns\_var\_,\ \_code\_block\_)\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \(\backslash\)}}
+\DoxyCodeLine{00031\ \textcolor{preprocessor}{\ \ \ \ (\{\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \(\backslash\)}}
+\DoxyCodeLine{00032\ \textcolor{preprocessor}{\ \ \ \ \ \ \ \ UINTN\ \_\_t0\ =\ SBC\_PerfNowTicks();\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \(\backslash\)}}
+\DoxyCodeLine{00033\ \textcolor{preprocessor}{\ \ \ \ \ \ \ \ \{\ \_code\_block\_;\ \}\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \(\backslash\)}}
+\DoxyCodeLine{00034\ \textcolor{preprocessor}{\ \ \ \ \ \ \ \ UINTN\ \_\_t1\ =\ SBC\_PerfNowTicks();\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \(\backslash\)}}
+\DoxyCodeLine{00035\ \textcolor{preprocessor}{\ \ \ \ \ \ \ \ (\_ns\_var\_)\ =\ SBC\_PerfTicksTons(\_PerfDeltaTicks(\_\_t0,\ \_\_t1));\ \ \ \ \ \ \ \ \(\backslash\)}}
+\DoxyCodeLine{00036\ \textcolor{preprocessor}{\ \ \ \ \})\ \ }}
+\DoxyCodeLine{00037\ }
+\DoxyCodeLine{00038\ }
+\DoxyCodeLine{00039\ }
+\DoxyCodeLine{00040\ UINTN\ \_PerfDeltaTicks(UINTN\ T0,\ UINTN\ T1);}
+\DoxyCodeLine{00041\ UINTN\ SBC\_PerfNowTicks(VOID);}
+\DoxyCodeLine{00042\ UINTN\ SBC\_PerfTicksTons(UINTN\ ticks);}
+\DoxyCodeLine{00043\ }
+\DoxyCodeLine{00044\ }
+\DoxyCodeLine{00045\ }
+\DoxyCodeLine{00046\ }
+\DoxyCodeLine{00047\ }
+\DoxyCodeLine{00048\ \textcolor{preprocessor}{\#endif}}
+\DoxyCodeLine{00049\ }
+\DoxyCodeLine{00050\ }
+\DoxyCodeLine{00051\ }
+\DoxyCodeLine{00052\ }
+
+\end{DoxyCode}

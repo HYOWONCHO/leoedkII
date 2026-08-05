@@ -1,0 +1,493 @@
+\doxysubsection{Checking Parameters}
+\hypertarget{group__cmocka__param}{}\label{group__cmocka__param}\index{Checking Parameters@{Checking Parameters}}
+Collaboration diagram for Checking Parameters\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=336pt]{group__cmocka__param}
+\end{center}
+\end{figure}
+\doxysubsubsubsection*{Macros}
+\begin{DoxyCompactItemize}
+\item 
+\#define \mbox{\hyperlink{group__cmocka__param_gae009bd026b303c0ba0fa19d723532367}{check\+\_\+expected}}(parameter)
+\item 
+\#define \mbox{\hyperlink{group__cmocka__param_gae009bd026b303c0ba0fa19d723532367}{check\+\_\+expected}}(parameter)
+\item 
+\#define \mbox{\hyperlink{group__cmocka__param_gaf76c5ffc9f06fe66a338178a91964bf3}{check\+\_\+expected\+\_\+ptr}}(parameter)
+\item 
+\#define \mbox{\hyperlink{group__cmocka__param_gaf76c5ffc9f06fe66a338178a91964bf3}{check\+\_\+expected\+\_\+ptr}}(parameter)
+\item 
+\Hypertarget{group__cmocka__param_ga8782b2b988f6b8b336f2b54905924d23}\label{group__cmocka__param_ga8782b2b988f6b8b336f2b54905924d23} 
+\#define {\bfseries expect\+\_\+any}(function,  parameter)~    expect\+\_\+any\+\_\+count(function, parameter, 1)
+\item 
+\Hypertarget{group__cmocka__param_ga8782b2b988f6b8b336f2b54905924d23}\label{group__cmocka__param_ga8782b2b988f6b8b336f2b54905924d23} 
+\#define {\bfseries expect\+\_\+any}(function,  parameter)~    expect\+\_\+any\+\_\+count(function, parameter, 1)
+\item 
+\Hypertarget{group__cmocka__param_gabe41bc72b51ed48e78c40ac2af5d9478}\label{group__cmocka__param_gabe41bc72b51ed48e78c40ac2af5d9478} 
+\#define {\bfseries expect\+\_\+any\+\_\+always}(function,  parameter)~        expect\+\_\+any\+\_\+count(function, parameter, WILL\+\_\+\+RETURN\+\_\+\+ALWAYS)
+\item 
+\Hypertarget{group__cmocka__param_gabe41bc72b51ed48e78c40ac2af5d9478}\label{group__cmocka__param_gabe41bc72b51ed48e78c40ac2af5d9478} 
+\#define {\bfseries expect\+\_\+any\+\_\+always}(function,  parameter)~        expect\+\_\+any\+\_\+count(function, parameter, WILL\+\_\+\+RETURN\+\_\+\+ALWAYS)
+\item 
+\Hypertarget{group__cmocka__param_gae613523137164d392a4f963562daeb5d}\label{group__cmocka__param_gae613523137164d392a4f963562daeb5d} 
+\#define {\bfseries expect\+\_\+any\+\_\+count}(function,  parameter,  count)~    \+\_\+expect\+\_\+any(\#function, \#parameter, \+\_\+\+\_\+\+FILE\+\_\+\+\_\+, \+\_\+\+\_\+\+LINE\+\_\+\+\_\+, count)
+\item 
+\Hypertarget{group__cmocka__param_gae613523137164d392a4f963562daeb5d}\label{group__cmocka__param_gae613523137164d392a4f963562daeb5d} 
+\#define {\bfseries expect\+\_\+any\+\_\+count}(function,  parameter,  count)~    \+\_\+expect\+\_\+any(\#function, \#parameter, \+\_\+\+\_\+\+FILE\+\_\+\+\_\+, \+\_\+\+\_\+\+LINE\+\_\+\+\_\+, count)
+\item 
+\#define \mbox{\hyperlink{group__cmocka__param_ga32d73ef854fe7d833b39fa0e4cbc4313}{expect\+\_\+check}}(function,  parameter,  check\+\_\+function,  check\+\_\+data)
+\item 
+\#define \mbox{\hyperlink{group__cmocka__param_ga32d73ef854fe7d833b39fa0e4cbc4313}{expect\+\_\+check}}(function,  parameter,  check\+\_\+function,  check\+\_\+data)
+\item 
+\Hypertarget{group__cmocka__param_ga70af2c4899fb6bfad0b84b7c9aa3f041}\label{group__cmocka__param_ga70af2c4899fb6bfad0b84b7c9aa3f041} 
+\#define {\bfseries expect\+\_\+in\+\_\+range}(function,  parameter,  minimum,  maximum)~    expect\+\_\+in\+\_\+range\+\_\+count(function, parameter, minimum, maximum, 1)
+\item 
+\Hypertarget{group__cmocka__param_ga70af2c4899fb6bfad0b84b7c9aa3f041}\label{group__cmocka__param_ga70af2c4899fb6bfad0b84b7c9aa3f041} 
+\#define {\bfseries expect\+\_\+in\+\_\+range}(function,  parameter,  minimum,  maximum)~    expect\+\_\+in\+\_\+range\+\_\+count(function, parameter, minimum, maximum, 1)
+\item 
+\#define \mbox{\hyperlink{group__cmocka__param_ga0add5bf1bff3e2ccc98e1ad5de82691c}{expect\+\_\+in\+\_\+range\+\_\+count}}(function,  parameter,  minimum,  maximum,  count)
+\item 
+\#define \mbox{\hyperlink{group__cmocka__param_ga0add5bf1bff3e2ccc98e1ad5de82691c}{expect\+\_\+in\+\_\+range\+\_\+count}}(function,  parameter,  minimum,  maximum,  count)
+\item 
+\Hypertarget{group__cmocka__param_ga91562e46f74db06f30cff32b0c135511}\label{group__cmocka__param_ga91562e46f74db06f30cff32b0c135511} 
+\#define {\bfseries expect\+\_\+in\+\_\+set}(function,  parameter,  value\+\_\+array)~    expect\+\_\+in\+\_\+set\+\_\+count(function, parameter, value\+\_\+array, 1)
+\item 
+\Hypertarget{group__cmocka__param_ga91562e46f74db06f30cff32b0c135511}\label{group__cmocka__param_ga91562e46f74db06f30cff32b0c135511} 
+\#define {\bfseries expect\+\_\+in\+\_\+set}(function,  parameter,  value\+\_\+array)~    expect\+\_\+in\+\_\+set\+\_\+count(function, parameter, value\+\_\+array, 1)
+\item 
+\#define \mbox{\hyperlink{group__cmocka__param_ga86ddf759ad47f735eeb45ab02af5ba09}{expect\+\_\+in\+\_\+set\+\_\+count}}(function,  parameter,  value\+\_\+array,  count)
+\item 
+\#define \mbox{\hyperlink{group__cmocka__param_ga86ddf759ad47f735eeb45ab02af5ba09}{expect\+\_\+in\+\_\+set\+\_\+count}}(function,  parameter,  value\+\_\+array,  count)
+\item 
+\Hypertarget{group__cmocka__param_gac7238d7575129c6834eea33e94f48cbf}\label{group__cmocka__param_gac7238d7575129c6834eea33e94f48cbf} 
+\#define {\bfseries expect\+\_\+memory}(function,  parameter,  memory,  size)~    expect\+\_\+memory\+\_\+count(function, parameter, memory, size, 1)
+\item 
+\Hypertarget{group__cmocka__param_gac7238d7575129c6834eea33e94f48cbf}\label{group__cmocka__param_gac7238d7575129c6834eea33e94f48cbf} 
+\#define {\bfseries expect\+\_\+memory}(function,  parameter,  memory,  size)~    expect\+\_\+memory\+\_\+count(function, parameter, memory, size, 1)
+\item 
+\#define \mbox{\hyperlink{group__cmocka__param_gae4e55b7867cde89fd250f32f8fb2ed06}{expect\+\_\+memory\+\_\+count}}(function,  parameter,  memory,  size,  count)
+\item 
+\#define \mbox{\hyperlink{group__cmocka__param_gae4e55b7867cde89fd250f32f8fb2ed06}{expect\+\_\+memory\+\_\+count}}(function,  parameter,  memory,  size,  count)
+\item 
+\Hypertarget{group__cmocka__param_ga98129ce6a55f668a788bd851762fb4c6}\label{group__cmocka__param_ga98129ce6a55f668a788bd851762fb4c6} 
+\#define {\bfseries expect\+\_\+not\+\_\+in\+\_\+range}(function,  parameter,  minimum,  maximum)~    expect\+\_\+not\+\_\+in\+\_\+range\+\_\+count(function, parameter, minimum, maximum, 1)
+\item 
+\Hypertarget{group__cmocka__param_ga98129ce6a55f668a788bd851762fb4c6}\label{group__cmocka__param_ga98129ce6a55f668a788bd851762fb4c6} 
+\#define {\bfseries expect\+\_\+not\+\_\+in\+\_\+range}(function,  parameter,  minimum,  maximum)~    expect\+\_\+not\+\_\+in\+\_\+range\+\_\+count(function, parameter, minimum, maximum, 1)
+\item 
+\#define \mbox{\hyperlink{group__cmocka__param_gaeb2494051abcdaf735fc287ebebbb4a3}{expect\+\_\+not\+\_\+in\+\_\+range\+\_\+count}}(function,  parameter,  minimum,  maximum,  count)
+\item 
+\#define \mbox{\hyperlink{group__cmocka__param_gaeb2494051abcdaf735fc287ebebbb4a3}{expect\+\_\+not\+\_\+in\+\_\+range\+\_\+count}}(function,  parameter,  minimum,  maximum,  count)
+\item 
+\Hypertarget{group__cmocka__param_gafc6725e85858b591a02d0acaf591a9c1}\label{group__cmocka__param_gafc6725e85858b591a02d0acaf591a9c1} 
+\#define {\bfseries expect\+\_\+not\+\_\+in\+\_\+set}(function,  parameter,  value\+\_\+array)~    expect\+\_\+not\+\_\+in\+\_\+set\+\_\+count(function, parameter, value\+\_\+array, 1)
+\item 
+\Hypertarget{group__cmocka__param_gafc6725e85858b591a02d0acaf591a9c1}\label{group__cmocka__param_gafc6725e85858b591a02d0acaf591a9c1} 
+\#define {\bfseries expect\+\_\+not\+\_\+in\+\_\+set}(function,  parameter,  value\+\_\+array)~    expect\+\_\+not\+\_\+in\+\_\+set\+\_\+count(function, parameter, value\+\_\+array, 1)
+\item 
+\#define \mbox{\hyperlink{group__cmocka__param_ga522bec5b0b5b603274370676e57f6dc0}{expect\+\_\+not\+\_\+in\+\_\+set\+\_\+count}}(function,  parameter,  value\+\_\+array,  count)
+\item 
+\#define \mbox{\hyperlink{group__cmocka__param_ga522bec5b0b5b603274370676e57f6dc0}{expect\+\_\+not\+\_\+in\+\_\+set\+\_\+count}}(function,  parameter,  value\+\_\+array,  count)
+\item 
+\Hypertarget{group__cmocka__param_gaf0df5d9ce099eb1adaa083d6b312e0a8}\label{group__cmocka__param_gaf0df5d9ce099eb1adaa083d6b312e0a8} 
+\#define {\bfseries expect\+\_\+not\+\_\+memory}(function,  parameter,  memory,  size)~    expect\+\_\+not\+\_\+memory\+\_\+count(function, parameter, memory, size, 1)
+\item 
+\Hypertarget{group__cmocka__param_gaf0df5d9ce099eb1adaa083d6b312e0a8}\label{group__cmocka__param_gaf0df5d9ce099eb1adaa083d6b312e0a8} 
+\#define {\bfseries expect\+\_\+not\+\_\+memory}(function,  parameter,  memory,  size)~    expect\+\_\+not\+\_\+memory\+\_\+count(function, parameter, memory, size, 1)
+\item 
+\#define \mbox{\hyperlink{group__cmocka__param_gaf5070a1bb6a92d1b3ad0d082bb2e153b}{expect\+\_\+not\+\_\+memory\+\_\+count}}(function,  parameter,  memory,  size,  count)
+\item 
+\#define \mbox{\hyperlink{group__cmocka__param_gaf5070a1bb6a92d1b3ad0d082bb2e153b}{expect\+\_\+not\+\_\+memory\+\_\+count}}(function,  parameter,  memory,  size,  count)
+\item 
+\Hypertarget{group__cmocka__param_ga2c2f33e4b6cc665e73b755f0ce8ac851}\label{group__cmocka__param_ga2c2f33e4b6cc665e73b755f0ce8ac851} 
+\#define {\bfseries expect\+\_\+not\+\_\+string}(function,  parameter,  string)~    expect\+\_\+not\+\_\+string\+\_\+count(function, parameter, string, 1)
+\item 
+\Hypertarget{group__cmocka__param_ga2c2f33e4b6cc665e73b755f0ce8ac851}\label{group__cmocka__param_ga2c2f33e4b6cc665e73b755f0ce8ac851} 
+\#define {\bfseries expect\+\_\+not\+\_\+string}(function,  parameter,  string)~    expect\+\_\+not\+\_\+string\+\_\+count(function, parameter, string, 1)
+\item 
+\#define \mbox{\hyperlink{group__cmocka__param_ga5c2e1017bdeeec2cd95071073b57886e}{expect\+\_\+not\+\_\+string\+\_\+count}}(function,  parameter,  string,  count)
+\item 
+\#define \mbox{\hyperlink{group__cmocka__param_ga5c2e1017bdeeec2cd95071073b57886e}{expect\+\_\+not\+\_\+string\+\_\+count}}(function,  parameter,  string,  count)
+\item 
+\Hypertarget{group__cmocka__param_ga4aeffd343fefec1d3ddc27d26dcf5490}\label{group__cmocka__param_ga4aeffd343fefec1d3ddc27d26dcf5490} 
+\#define {\bfseries expect\+\_\+not\+\_\+value}(function,  parameter,  value)~    expect\+\_\+not\+\_\+value\+\_\+count(function, parameter, value, 1)
+\item 
+\Hypertarget{group__cmocka__param_ga4aeffd343fefec1d3ddc27d26dcf5490}\label{group__cmocka__param_ga4aeffd343fefec1d3ddc27d26dcf5490} 
+\#define {\bfseries expect\+\_\+not\+\_\+value}(function,  parameter,  value)~    expect\+\_\+not\+\_\+value\+\_\+count(function, parameter, value, 1)
+\item 
+\#define \mbox{\hyperlink{group__cmocka__param_ga0c19667f9755002d13cf7cb6057fe65e}{expect\+\_\+not\+\_\+value\+\_\+count}}(function,  parameter,  value,  count)
+\item 
+\#define \mbox{\hyperlink{group__cmocka__param_ga0c19667f9755002d13cf7cb6057fe65e}{expect\+\_\+not\+\_\+value\+\_\+count}}(function,  parameter,  value,  count)
+\item 
+\Hypertarget{group__cmocka__param_ga892af0d501f603e14e3d26b3f09fd8aa}\label{group__cmocka__param_ga892af0d501f603e14e3d26b3f09fd8aa} 
+\#define {\bfseries expect\+\_\+string}(function,  parameter,  string)~    expect\+\_\+string\+\_\+count(function, parameter, string, 1)
+\item 
+\Hypertarget{group__cmocka__param_ga892af0d501f603e14e3d26b3f09fd8aa}\label{group__cmocka__param_ga892af0d501f603e14e3d26b3f09fd8aa} 
+\#define {\bfseries expect\+\_\+string}(function,  parameter,  string)~    expect\+\_\+string\+\_\+count(function, parameter, string, 1)
+\item 
+\#define \mbox{\hyperlink{group__cmocka__param_gaf2627293dce3a0e99d404bff7667ee92}{expect\+\_\+string\+\_\+count}}(function,  parameter,  string,  count)
+\item 
+\#define \mbox{\hyperlink{group__cmocka__param_gaf2627293dce3a0e99d404bff7667ee92}{expect\+\_\+string\+\_\+count}}(function,  parameter,  string,  count)
+\item 
+\Hypertarget{group__cmocka__param_ga2154830f7a9be7cfa625ef90fbc9d128}\label{group__cmocka__param_ga2154830f7a9be7cfa625ef90fbc9d128} 
+\#define {\bfseries expect\+\_\+value}(function,  parameter,  value)~    expect\+\_\+value\+\_\+count(function, parameter, value, 1)
+\item 
+\Hypertarget{group__cmocka__param_ga2154830f7a9be7cfa625ef90fbc9d128}\label{group__cmocka__param_ga2154830f7a9be7cfa625ef90fbc9d128} 
+\#define {\bfseries expect\+\_\+value}(function,  parameter,  value)~    expect\+\_\+value\+\_\+count(function, parameter, value, 1)
+\item 
+\#define \mbox{\hyperlink{group__cmocka__param_ga88b26660f9c9cdec0f28ee275fa8f749}{expect\+\_\+value\+\_\+count}}(function,  parameter,  value,  count)
+\item 
+\#define \mbox{\hyperlink{group__cmocka__param_ga88b26660f9c9cdec0f28ee275fa8f749}{expect\+\_\+value\+\_\+count}}(function,  parameter,  value,  count)
+\end{DoxyCompactItemize}
+
+
+\doxysubsubsection{Detailed Description}
+Functionality to store expected values for mock function parameters.
+
+In addition to storing the return values of mock functions, cmocka provides functionality to store expected values for mock function parameters using the expect\+\_\+\texorpdfstring{$\ast$}{*}() functions provided. A mock function parameter can then be validated using the check\+\_\+expected() macro.
+
+Successive calls to expect\+\_\+\texorpdfstring{$\ast$}{*}() macros for a parameter queues values to check the specified parameter. check\+\_\+expected() checks a function parameter against the next value queued using expect\+\_\+\texorpdfstring{$\ast$}{*}(), if the parameter check fails a test failure is signalled. In addition if check\+\_\+expected() is called and no more parameter values are queued a test failure occurs.
+
+The following test stub illustrates how to do this. First is the the function we call in the test driver\+:
+
+
+\begin{DoxyCode}{0}
+\DoxyCodeLine{\textcolor{keyword}{static}\ \textcolor{keywordtype}{void}\ test\_driver(\textcolor{keywordtype}{void}\ **state)}
+\DoxyCodeLine{\{}
+\DoxyCodeLine{\ \ \ \ expect\_string(chef\_cook,\ order,\ \textcolor{stringliteral}{"{}hotdog"{}});}
+\DoxyCodeLine{\}}
+
+\end{DoxyCode}
+
+
+Now the chef\+\_\+cook function can check if the parameter we got passed is the parameter which is expected by the test driver. This can be done the following way\+:
+
+
+\begin{DoxyCode}{0}
+\DoxyCodeLine{\textcolor{keywordtype}{int}\ chef\_cook(\textcolor{keyword}{const}\ \textcolor{keywordtype}{char}\ *order,\ \textcolor{keywordtype}{char}\ **dish\_out)}
+\DoxyCodeLine{\{}
+\DoxyCodeLine{\ \ \ \ check\_expected(order);}
+\DoxyCodeLine{\}}
+
+\end{DoxyCode}
+
+
+For a complete example please take a look \href{https://git.cryptomilk.org/projects/cmocka.git/tree/example/mock}{\texttt{ here}} 
+
+\doxysubsubsection{Macro Definition Documentation}
+\Hypertarget{group__cmocka__param_gae009bd026b303c0ba0fa19d723532367}\label{group__cmocka__param_gae009bd026b303c0ba0fa19d723532367} 
+\index{Checking Parameters@{Checking Parameters}!check\_expected@{check\_expected}}
+\index{check\_expected@{check\_expected}!Checking Parameters@{Checking Parameters}}
+\doxysubsubsubsection{\texorpdfstring{check\_expected}{check\_expected}\hspace{0.1cm}{\footnotesize\ttfamily [1/2]}}
+{\footnotesize\ttfamily \#define check\+\_\+expected(\begin{DoxyParamCaption}\item[{}]{parameter }\end{DoxyParamCaption})}
+
+{\bfseries Value\+:}
+\begin{DoxyCode}{0}
+\DoxyCodeLine{\ \ \ \ \_check\_expected(\_\_func\_\_,\ \#parameter,\ \_\_FILE\_\_,\ \_\_LINE\_\_,\ \(\backslash\)}
+\DoxyCodeLine{\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ cast\_to\_largest\_integral\_type(parameter))}
+
+\end{DoxyCode}
+\Hypertarget{group__cmocka__param_gae009bd026b303c0ba0fa19d723532367}\label{group__cmocka__param_gae009bd026b303c0ba0fa19d723532367} 
+\index{Checking Parameters@{Checking Parameters}!check\_expected@{check\_expected}}
+\index{check\_expected@{check\_expected}!Checking Parameters@{Checking Parameters}}
+\doxysubsubsubsection{\texorpdfstring{check\_expected}{check\_expected}\hspace{0.1cm}{\footnotesize\ttfamily [2/2]}}
+{\footnotesize\ttfamily \#define check\+\_\+expected(\begin{DoxyParamCaption}\item[{}]{parameter }\end{DoxyParamCaption})}
+
+{\bfseries Value\+:}
+\begin{DoxyCode}{0}
+\DoxyCodeLine{\ \ \ \ \_check\_expected(\_\_func\_\_,\ \#parameter,\ \_\_FILE\_\_,\ \_\_LINE\_\_,\ \(\backslash\)}
+\DoxyCodeLine{\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ cast\_to\_largest\_integral\_type(parameter))}
+
+\end{DoxyCode}
+\Hypertarget{group__cmocka__param_gaf76c5ffc9f06fe66a338178a91964bf3}\label{group__cmocka__param_gaf76c5ffc9f06fe66a338178a91964bf3} 
+\index{Checking Parameters@{Checking Parameters}!check\_expected\_ptr@{check\_expected\_ptr}}
+\index{check\_expected\_ptr@{check\_expected\_ptr}!Checking Parameters@{Checking Parameters}}
+\doxysubsubsubsection{\texorpdfstring{check\_expected\_ptr}{check\_expected\_ptr}\hspace{0.1cm}{\footnotesize\ttfamily [1/2]}}
+{\footnotesize\ttfamily \#define check\+\_\+expected\+\_\+ptr(\begin{DoxyParamCaption}\item[{}]{parameter }\end{DoxyParamCaption})}
+
+{\bfseries Value\+:}
+\begin{DoxyCode}{0}
+\DoxyCodeLine{\ \ \ \ \_check\_expected(\_\_func\_\_,\ \#parameter,\ \_\_FILE\_\_,\ \_\_LINE\_\_,\ \(\backslash\)}
+\DoxyCodeLine{\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ cast\_ptr\_to\_largest\_integral\_type(parameter))}
+
+\end{DoxyCode}
+\Hypertarget{group__cmocka__param_gaf76c5ffc9f06fe66a338178a91964bf3}\label{group__cmocka__param_gaf76c5ffc9f06fe66a338178a91964bf3} 
+\index{Checking Parameters@{Checking Parameters}!check\_expected\_ptr@{check\_expected\_ptr}}
+\index{check\_expected\_ptr@{check\_expected\_ptr}!Checking Parameters@{Checking Parameters}}
+\doxysubsubsubsection{\texorpdfstring{check\_expected\_ptr}{check\_expected\_ptr}\hspace{0.1cm}{\footnotesize\ttfamily [2/2]}}
+{\footnotesize\ttfamily \#define check\+\_\+expected\+\_\+ptr(\begin{DoxyParamCaption}\item[{}]{parameter }\end{DoxyParamCaption})}
+
+{\bfseries Value\+:}
+\begin{DoxyCode}{0}
+\DoxyCodeLine{\ \ \ \ \_check\_expected(\_\_func\_\_,\ \#parameter,\ \_\_FILE\_\_,\ \_\_LINE\_\_,\ \(\backslash\)}
+\DoxyCodeLine{\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ cast\_ptr\_to\_largest\_integral\_type(parameter))}
+
+\end{DoxyCode}
+\Hypertarget{group__cmocka__param_ga32d73ef854fe7d833b39fa0e4cbc4313}\label{group__cmocka__param_ga32d73ef854fe7d833b39fa0e4cbc4313} 
+\index{Checking Parameters@{Checking Parameters}!expect\_check@{expect\_check}}
+\index{expect\_check@{expect\_check}!Checking Parameters@{Checking Parameters}}
+\doxysubsubsubsection{\texorpdfstring{expect\_check}{expect\_check}\hspace{0.1cm}{\footnotesize\ttfamily [1/2]}}
+{\footnotesize\ttfamily \#define expect\+\_\+check(\begin{DoxyParamCaption}\item[{}]{function,  }\item[{}]{parameter,  }\item[{}]{check\+\_\+function,  }\item[{}]{check\+\_\+data }\end{DoxyParamCaption})}
+
+{\bfseries Value\+:}
+\begin{DoxyCode}{0}
+\DoxyCodeLine{\ \ \ \ \_expect\_check(\#function,\ \#parameter,\ \_\_FILE\_\_,\ \_\_LINE\_\_,\ check\_function,\ \(\backslash\)}
+\DoxyCodeLine{\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ cast\_to\_largest\_integral\_type(check\_data),\ NULL,\ 1)}
+
+\end{DoxyCode}
+\Hypertarget{group__cmocka__param_ga32d73ef854fe7d833b39fa0e4cbc4313}\label{group__cmocka__param_ga32d73ef854fe7d833b39fa0e4cbc4313} 
+\index{Checking Parameters@{Checking Parameters}!expect\_check@{expect\_check}}
+\index{expect\_check@{expect\_check}!Checking Parameters@{Checking Parameters}}
+\doxysubsubsubsection{\texorpdfstring{expect\_check}{expect\_check}\hspace{0.1cm}{\footnotesize\ttfamily [2/2]}}
+{\footnotesize\ttfamily \#define expect\+\_\+check(\begin{DoxyParamCaption}\item[{}]{function,  }\item[{}]{parameter,  }\item[{}]{check\+\_\+function,  }\item[{}]{check\+\_\+data }\end{DoxyParamCaption})}
+
+{\bfseries Value\+:}
+\begin{DoxyCode}{0}
+\DoxyCodeLine{\ \ \ \ \_expect\_check(\#function,\ \#parameter,\ \_\_FILE\_\_,\ \_\_LINE\_\_,\ check\_function,\ \(\backslash\)}
+\DoxyCodeLine{\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ cast\_to\_largest\_integral\_type(check\_data),\ NULL,\ 1)}
+
+\end{DoxyCode}
+\Hypertarget{group__cmocka__param_ga0add5bf1bff3e2ccc98e1ad5de82691c}\label{group__cmocka__param_ga0add5bf1bff3e2ccc98e1ad5de82691c} 
+\index{Checking Parameters@{Checking Parameters}!expect\_in\_range\_count@{expect\_in\_range\_count}}
+\index{expect\_in\_range\_count@{expect\_in\_range\_count}!Checking Parameters@{Checking Parameters}}
+\doxysubsubsubsection{\texorpdfstring{expect\_in\_range\_count}{expect\_in\_range\_count}\hspace{0.1cm}{\footnotesize\ttfamily [1/2]}}
+{\footnotesize\ttfamily \#define expect\+\_\+in\+\_\+range\+\_\+count(\begin{DoxyParamCaption}\item[{}]{function,  }\item[{}]{parameter,  }\item[{}]{minimum,  }\item[{}]{maximum,  }\item[{}]{count }\end{DoxyParamCaption})}
+
+{\bfseries Value\+:}
+\begin{DoxyCode}{0}
+\DoxyCodeLine{\ \ \ \ \_expect\_in\_range(\#function,\ \#parameter,\ \_\_FILE\_\_,\ \_\_LINE\_\_,\ minimum,\ \(\backslash\)}
+\DoxyCodeLine{\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ maximum,\ count)}
+
+\end{DoxyCode}
+\Hypertarget{group__cmocka__param_ga0add5bf1bff3e2ccc98e1ad5de82691c}\label{group__cmocka__param_ga0add5bf1bff3e2ccc98e1ad5de82691c} 
+\index{Checking Parameters@{Checking Parameters}!expect\_in\_range\_count@{expect\_in\_range\_count}}
+\index{expect\_in\_range\_count@{expect\_in\_range\_count}!Checking Parameters@{Checking Parameters}}
+\doxysubsubsubsection{\texorpdfstring{expect\_in\_range\_count}{expect\_in\_range\_count}\hspace{0.1cm}{\footnotesize\ttfamily [2/2]}}
+{\footnotesize\ttfamily \#define expect\+\_\+in\+\_\+range\+\_\+count(\begin{DoxyParamCaption}\item[{}]{function,  }\item[{}]{parameter,  }\item[{}]{minimum,  }\item[{}]{maximum,  }\item[{}]{count }\end{DoxyParamCaption})}
+
+{\bfseries Value\+:}
+\begin{DoxyCode}{0}
+\DoxyCodeLine{\ \ \ \ \_expect\_in\_range(\#function,\ \#parameter,\ \_\_FILE\_\_,\ \_\_LINE\_\_,\ minimum,\ \(\backslash\)}
+\DoxyCodeLine{\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ maximum,\ count)}
+
+\end{DoxyCode}
+\Hypertarget{group__cmocka__param_ga86ddf759ad47f735eeb45ab02af5ba09}\label{group__cmocka__param_ga86ddf759ad47f735eeb45ab02af5ba09} 
+\index{Checking Parameters@{Checking Parameters}!expect\_in\_set\_count@{expect\_in\_set\_count}}
+\index{expect\_in\_set\_count@{expect\_in\_set\_count}!Checking Parameters@{Checking Parameters}}
+\doxysubsubsubsection{\texorpdfstring{expect\_in\_set\_count}{expect\_in\_set\_count}\hspace{0.1cm}{\footnotesize\ttfamily [1/2]}}
+{\footnotesize\ttfamily \#define expect\+\_\+in\+\_\+set\+\_\+count(\begin{DoxyParamCaption}\item[{}]{function,  }\item[{}]{parameter,  }\item[{}]{value\+\_\+array,  }\item[{}]{count }\end{DoxyParamCaption})}
+
+{\bfseries Value\+:}
+\begin{DoxyCode}{0}
+\DoxyCodeLine{\ \ \ \ \_expect\_in\_set(\#function,\ \#parameter,\ \_\_FILE\_\_,\ \_\_LINE\_\_,\ value\_array,\ \(\backslash\)}
+\DoxyCodeLine{\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{sizeof}(value\_array)\ /\ \textcolor{keyword}{sizeof}((value\_array)[0]),\ count)}
+
+\end{DoxyCode}
+\Hypertarget{group__cmocka__param_ga86ddf759ad47f735eeb45ab02af5ba09}\label{group__cmocka__param_ga86ddf759ad47f735eeb45ab02af5ba09} 
+\index{Checking Parameters@{Checking Parameters}!expect\_in\_set\_count@{expect\_in\_set\_count}}
+\index{expect\_in\_set\_count@{expect\_in\_set\_count}!Checking Parameters@{Checking Parameters}}
+\doxysubsubsubsection{\texorpdfstring{expect\_in\_set\_count}{expect\_in\_set\_count}\hspace{0.1cm}{\footnotesize\ttfamily [2/2]}}
+{\footnotesize\ttfamily \#define expect\+\_\+in\+\_\+set\+\_\+count(\begin{DoxyParamCaption}\item[{}]{function,  }\item[{}]{parameter,  }\item[{}]{value\+\_\+array,  }\item[{}]{count }\end{DoxyParamCaption})}
+
+{\bfseries Value\+:}
+\begin{DoxyCode}{0}
+\DoxyCodeLine{\ \ \ \ \_expect\_in\_set(\#function,\ \#parameter,\ \_\_FILE\_\_,\ \_\_LINE\_\_,\ value\_array,\ \(\backslash\)}
+\DoxyCodeLine{\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{sizeof}(value\_array)\ /\ \textcolor{keyword}{sizeof}((value\_array)[0]),\ count)}
+
+\end{DoxyCode}
+\Hypertarget{group__cmocka__param_gae4e55b7867cde89fd250f32f8fb2ed06}\label{group__cmocka__param_gae4e55b7867cde89fd250f32f8fb2ed06} 
+\index{Checking Parameters@{Checking Parameters}!expect\_memory\_count@{expect\_memory\_count}}
+\index{expect\_memory\_count@{expect\_memory\_count}!Checking Parameters@{Checking Parameters}}
+\doxysubsubsubsection{\texorpdfstring{expect\_memory\_count}{expect\_memory\_count}\hspace{0.1cm}{\footnotesize\ttfamily [1/2]}}
+{\footnotesize\ttfamily \#define expect\+\_\+memory\+\_\+count(\begin{DoxyParamCaption}\item[{}]{function,  }\item[{}]{parameter,  }\item[{}]{memory,  }\item[{}]{size,  }\item[{}]{count }\end{DoxyParamCaption})}
+
+{\bfseries Value\+:}
+\begin{DoxyCode}{0}
+\DoxyCodeLine{\ \ \ \ \_expect\_memory(\#function,\ \#parameter,\ \_\_FILE\_\_,\ \_\_LINE\_\_,\ \(\backslash\)}
+\DoxyCodeLine{\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ (\textcolor{keyword}{const}\ \textcolor{keywordtype}{void}*)(memory),\ size,\ count)}
+
+\end{DoxyCode}
+\Hypertarget{group__cmocka__param_gae4e55b7867cde89fd250f32f8fb2ed06}\label{group__cmocka__param_gae4e55b7867cde89fd250f32f8fb2ed06} 
+\index{Checking Parameters@{Checking Parameters}!expect\_memory\_count@{expect\_memory\_count}}
+\index{expect\_memory\_count@{expect\_memory\_count}!Checking Parameters@{Checking Parameters}}
+\doxysubsubsubsection{\texorpdfstring{expect\_memory\_count}{expect\_memory\_count}\hspace{0.1cm}{\footnotesize\ttfamily [2/2]}}
+{\footnotesize\ttfamily \#define expect\+\_\+memory\+\_\+count(\begin{DoxyParamCaption}\item[{}]{function,  }\item[{}]{parameter,  }\item[{}]{memory,  }\item[{}]{size,  }\item[{}]{count }\end{DoxyParamCaption})}
+
+{\bfseries Value\+:}
+\begin{DoxyCode}{0}
+\DoxyCodeLine{\ \ \ \ \_expect\_memory(\#function,\ \#parameter,\ \_\_FILE\_\_,\ \_\_LINE\_\_,\ \(\backslash\)}
+\DoxyCodeLine{\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ (\textcolor{keyword}{const}\ \textcolor{keywordtype}{void}*)(memory),\ size,\ count)}
+
+\end{DoxyCode}
+\Hypertarget{group__cmocka__param_gaeb2494051abcdaf735fc287ebebbb4a3}\label{group__cmocka__param_gaeb2494051abcdaf735fc287ebebbb4a3} 
+\index{Checking Parameters@{Checking Parameters}!expect\_not\_in\_range\_count@{expect\_not\_in\_range\_count}}
+\index{expect\_not\_in\_range\_count@{expect\_not\_in\_range\_count}!Checking Parameters@{Checking Parameters}}
+\doxysubsubsubsection{\texorpdfstring{expect\_not\_in\_range\_count}{expect\_not\_in\_range\_count}\hspace{0.1cm}{\footnotesize\ttfamily [1/2]}}
+{\footnotesize\ttfamily \#define expect\+\_\+not\+\_\+in\+\_\+range\+\_\+count(\begin{DoxyParamCaption}\item[{}]{function,  }\item[{}]{parameter,  }\item[{}]{minimum,  }\item[{}]{maximum,  }\item[{}]{count }\end{DoxyParamCaption})}
+
+{\bfseries Value\+:}
+\begin{DoxyCode}{0}
+\DoxyCodeLine{\ \ \ \ \_expect\_not\_in\_range(\#function,\ \#parameter,\ \_\_FILE\_\_,\ \_\_LINE\_\_,\ \(\backslash\)}
+\DoxyCodeLine{\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ minimum,\ maximum,\ count)}
+
+\end{DoxyCode}
+\Hypertarget{group__cmocka__param_gaeb2494051abcdaf735fc287ebebbb4a3}\label{group__cmocka__param_gaeb2494051abcdaf735fc287ebebbb4a3} 
+\index{Checking Parameters@{Checking Parameters}!expect\_not\_in\_range\_count@{expect\_not\_in\_range\_count}}
+\index{expect\_not\_in\_range\_count@{expect\_not\_in\_range\_count}!Checking Parameters@{Checking Parameters}}
+\doxysubsubsubsection{\texorpdfstring{expect\_not\_in\_range\_count}{expect\_not\_in\_range\_count}\hspace{0.1cm}{\footnotesize\ttfamily [2/2]}}
+{\footnotesize\ttfamily \#define expect\+\_\+not\+\_\+in\+\_\+range\+\_\+count(\begin{DoxyParamCaption}\item[{}]{function,  }\item[{}]{parameter,  }\item[{}]{minimum,  }\item[{}]{maximum,  }\item[{}]{count }\end{DoxyParamCaption})}
+
+{\bfseries Value\+:}
+\begin{DoxyCode}{0}
+\DoxyCodeLine{\ \ \ \ \_expect\_not\_in\_range(\#function,\ \#parameter,\ \_\_FILE\_\_,\ \_\_LINE\_\_,\ \(\backslash\)}
+\DoxyCodeLine{\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ minimum,\ maximum,\ count)}
+
+\end{DoxyCode}
+\Hypertarget{group__cmocka__param_ga522bec5b0b5b603274370676e57f6dc0}\label{group__cmocka__param_ga522bec5b0b5b603274370676e57f6dc0} 
+\index{Checking Parameters@{Checking Parameters}!expect\_not\_in\_set\_count@{expect\_not\_in\_set\_count}}
+\index{expect\_not\_in\_set\_count@{expect\_not\_in\_set\_count}!Checking Parameters@{Checking Parameters}}
+\doxysubsubsubsection{\texorpdfstring{expect\_not\_in\_set\_count}{expect\_not\_in\_set\_count}\hspace{0.1cm}{\footnotesize\ttfamily [1/2]}}
+{\footnotesize\ttfamily \#define expect\+\_\+not\+\_\+in\+\_\+set\+\_\+count(\begin{DoxyParamCaption}\item[{}]{function,  }\item[{}]{parameter,  }\item[{}]{value\+\_\+array,  }\item[{}]{count }\end{DoxyParamCaption})}
+
+{\bfseries Value\+:}
+\begin{DoxyCode}{0}
+\DoxyCodeLine{\ \ \ \ \_expect\_not\_in\_set(\ \(\backslash\)}
+\DoxyCodeLine{\ \ \ \ \ \ \ \ \#function,\ \#parameter,\ \_\_FILE\_\_,\ \_\_LINE\_\_,\ value\_array,\ \(\backslash\)}
+\DoxyCodeLine{\ \ \ \ \ \ \ \ \textcolor{keyword}{sizeof}(value\_array)\ /\ \textcolor{keyword}{sizeof}((value\_array)[0]),\ count)}
+
+\end{DoxyCode}
+\Hypertarget{group__cmocka__param_ga522bec5b0b5b603274370676e57f6dc0}\label{group__cmocka__param_ga522bec5b0b5b603274370676e57f6dc0} 
+\index{Checking Parameters@{Checking Parameters}!expect\_not\_in\_set\_count@{expect\_not\_in\_set\_count}}
+\index{expect\_not\_in\_set\_count@{expect\_not\_in\_set\_count}!Checking Parameters@{Checking Parameters}}
+\doxysubsubsubsection{\texorpdfstring{expect\_not\_in\_set\_count}{expect\_not\_in\_set\_count}\hspace{0.1cm}{\footnotesize\ttfamily [2/2]}}
+{\footnotesize\ttfamily \#define expect\+\_\+not\+\_\+in\+\_\+set\+\_\+count(\begin{DoxyParamCaption}\item[{}]{function,  }\item[{}]{parameter,  }\item[{}]{value\+\_\+array,  }\item[{}]{count }\end{DoxyParamCaption})}
+
+{\bfseries Value\+:}
+\begin{DoxyCode}{0}
+\DoxyCodeLine{\ \ \ \ \_expect\_not\_in\_set(\ \(\backslash\)}
+\DoxyCodeLine{\ \ \ \ \ \ \ \ \#function,\ \#parameter,\ \_\_FILE\_\_,\ \_\_LINE\_\_,\ value\_array,\ \(\backslash\)}
+\DoxyCodeLine{\ \ \ \ \ \ \ \ \textcolor{keyword}{sizeof}(value\_array)\ /\ \textcolor{keyword}{sizeof}((value\_array)[0]),\ count)}
+
+\end{DoxyCode}
+\Hypertarget{group__cmocka__param_gaf5070a1bb6a92d1b3ad0d082bb2e153b}\label{group__cmocka__param_gaf5070a1bb6a92d1b3ad0d082bb2e153b} 
+\index{Checking Parameters@{Checking Parameters}!expect\_not\_memory\_count@{expect\_not\_memory\_count}}
+\index{expect\_not\_memory\_count@{expect\_not\_memory\_count}!Checking Parameters@{Checking Parameters}}
+\doxysubsubsubsection{\texorpdfstring{expect\_not\_memory\_count}{expect\_not\_memory\_count}\hspace{0.1cm}{\footnotesize\ttfamily [1/2]}}
+{\footnotesize\ttfamily \#define expect\+\_\+not\+\_\+memory\+\_\+count(\begin{DoxyParamCaption}\item[{}]{function,  }\item[{}]{parameter,  }\item[{}]{memory,  }\item[{}]{size,  }\item[{}]{count }\end{DoxyParamCaption})}
+
+{\bfseries Value\+:}
+\begin{DoxyCode}{0}
+\DoxyCodeLine{\ \ \ \ \_expect\_not\_memory(\#function,\ \#parameter,\ \_\_FILE\_\_,\ \_\_LINE\_\_,\ \(\backslash\)}
+\DoxyCodeLine{\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ (\textcolor{keyword}{const}\ \textcolor{keywordtype}{void}*)(memory),\ size,\ count)}
+
+\end{DoxyCode}
+\Hypertarget{group__cmocka__param_gaf5070a1bb6a92d1b3ad0d082bb2e153b}\label{group__cmocka__param_gaf5070a1bb6a92d1b3ad0d082bb2e153b} 
+\index{Checking Parameters@{Checking Parameters}!expect\_not\_memory\_count@{expect\_not\_memory\_count}}
+\index{expect\_not\_memory\_count@{expect\_not\_memory\_count}!Checking Parameters@{Checking Parameters}}
+\doxysubsubsubsection{\texorpdfstring{expect\_not\_memory\_count}{expect\_not\_memory\_count}\hspace{0.1cm}{\footnotesize\ttfamily [2/2]}}
+{\footnotesize\ttfamily \#define expect\+\_\+not\+\_\+memory\+\_\+count(\begin{DoxyParamCaption}\item[{}]{function,  }\item[{}]{parameter,  }\item[{}]{memory,  }\item[{}]{size,  }\item[{}]{count }\end{DoxyParamCaption})}
+
+{\bfseries Value\+:}
+\begin{DoxyCode}{0}
+\DoxyCodeLine{\ \ \ \ \_expect\_not\_memory(\#function,\ \#parameter,\ \_\_FILE\_\_,\ \_\_LINE\_\_,\ \(\backslash\)}
+\DoxyCodeLine{\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ (\textcolor{keyword}{const}\ \textcolor{keywordtype}{void}*)(memory),\ size,\ count)}
+
+\end{DoxyCode}
+\Hypertarget{group__cmocka__param_ga5c2e1017bdeeec2cd95071073b57886e}\label{group__cmocka__param_ga5c2e1017bdeeec2cd95071073b57886e} 
+\index{Checking Parameters@{Checking Parameters}!expect\_not\_string\_count@{expect\_not\_string\_count}}
+\index{expect\_not\_string\_count@{expect\_not\_string\_count}!Checking Parameters@{Checking Parameters}}
+\doxysubsubsubsection{\texorpdfstring{expect\_not\_string\_count}{expect\_not\_string\_count}\hspace{0.1cm}{\footnotesize\ttfamily [1/2]}}
+{\footnotesize\ttfamily \#define expect\+\_\+not\+\_\+string\+\_\+count(\begin{DoxyParamCaption}\item[{}]{function,  }\item[{}]{parameter,  }\item[{}]{string,  }\item[{}]{count }\end{DoxyParamCaption})}
+
+{\bfseries Value\+:}
+\begin{DoxyCode}{0}
+\DoxyCodeLine{\ \ \ \ \_expect\_not\_string(\#function,\ \#parameter,\ \_\_FILE\_\_,\ \_\_LINE\_\_,\ \(\backslash\)}
+\DoxyCodeLine{\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ (\textcolor{keyword}{const}\ \textcolor{keywordtype}{char}*)(\textcolor{keywordtype}{string}),\ count)}
+
+\end{DoxyCode}
+\Hypertarget{group__cmocka__param_ga5c2e1017bdeeec2cd95071073b57886e}\label{group__cmocka__param_ga5c2e1017bdeeec2cd95071073b57886e} 
+\index{Checking Parameters@{Checking Parameters}!expect\_not\_string\_count@{expect\_not\_string\_count}}
+\index{expect\_not\_string\_count@{expect\_not\_string\_count}!Checking Parameters@{Checking Parameters}}
+\doxysubsubsubsection{\texorpdfstring{expect\_not\_string\_count}{expect\_not\_string\_count}\hspace{0.1cm}{\footnotesize\ttfamily [2/2]}}
+{\footnotesize\ttfamily \#define expect\+\_\+not\+\_\+string\+\_\+count(\begin{DoxyParamCaption}\item[{}]{function,  }\item[{}]{parameter,  }\item[{}]{string,  }\item[{}]{count }\end{DoxyParamCaption})}
+
+{\bfseries Value\+:}
+\begin{DoxyCode}{0}
+\DoxyCodeLine{\ \ \ \ \_expect\_not\_string(\#function,\ \#parameter,\ \_\_FILE\_\_,\ \_\_LINE\_\_,\ \(\backslash\)}
+\DoxyCodeLine{\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ (\textcolor{keyword}{const}\ \textcolor{keywordtype}{char}*)(\textcolor{keywordtype}{string}),\ count)}
+
+\end{DoxyCode}
+\Hypertarget{group__cmocka__param_ga0c19667f9755002d13cf7cb6057fe65e}\label{group__cmocka__param_ga0c19667f9755002d13cf7cb6057fe65e} 
+\index{Checking Parameters@{Checking Parameters}!expect\_not\_value\_count@{expect\_not\_value\_count}}
+\index{expect\_not\_value\_count@{expect\_not\_value\_count}!Checking Parameters@{Checking Parameters}}
+\doxysubsubsubsection{\texorpdfstring{expect\_not\_value\_count}{expect\_not\_value\_count}\hspace{0.1cm}{\footnotesize\ttfamily [1/2]}}
+{\footnotesize\ttfamily \#define expect\+\_\+not\+\_\+value\+\_\+count(\begin{DoxyParamCaption}\item[{}]{function,  }\item[{}]{parameter,  }\item[{}]{value,  }\item[{}]{count }\end{DoxyParamCaption})}
+
+{\bfseries Value\+:}
+\begin{DoxyCode}{0}
+\DoxyCodeLine{\ \ \ \ \_expect\_not\_value(\#function,\ \#parameter,\ \_\_FILE\_\_,\ \_\_LINE\_\_,\ \(\backslash\)}
+\DoxyCodeLine{\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ cast\_to\_largest\_integral\_type(value),\ count)}
+
+\end{DoxyCode}
+\Hypertarget{group__cmocka__param_ga0c19667f9755002d13cf7cb6057fe65e}\label{group__cmocka__param_ga0c19667f9755002d13cf7cb6057fe65e} 
+\index{Checking Parameters@{Checking Parameters}!expect\_not\_value\_count@{expect\_not\_value\_count}}
+\index{expect\_not\_value\_count@{expect\_not\_value\_count}!Checking Parameters@{Checking Parameters}}
+\doxysubsubsubsection{\texorpdfstring{expect\_not\_value\_count}{expect\_not\_value\_count}\hspace{0.1cm}{\footnotesize\ttfamily [2/2]}}
+{\footnotesize\ttfamily \#define expect\+\_\+not\+\_\+value\+\_\+count(\begin{DoxyParamCaption}\item[{}]{function,  }\item[{}]{parameter,  }\item[{}]{value,  }\item[{}]{count }\end{DoxyParamCaption})}
+
+{\bfseries Value\+:}
+\begin{DoxyCode}{0}
+\DoxyCodeLine{\ \ \ \ \_expect\_not\_value(\#function,\ \#parameter,\ \_\_FILE\_\_,\ \_\_LINE\_\_,\ \(\backslash\)}
+\DoxyCodeLine{\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ cast\_to\_largest\_integral\_type(value),\ count)}
+
+\end{DoxyCode}
+\Hypertarget{group__cmocka__param_gaf2627293dce3a0e99d404bff7667ee92}\label{group__cmocka__param_gaf2627293dce3a0e99d404bff7667ee92} 
+\index{Checking Parameters@{Checking Parameters}!expect\_string\_count@{expect\_string\_count}}
+\index{expect\_string\_count@{expect\_string\_count}!Checking Parameters@{Checking Parameters}}
+\doxysubsubsubsection{\texorpdfstring{expect\_string\_count}{expect\_string\_count}\hspace{0.1cm}{\footnotesize\ttfamily [1/2]}}
+{\footnotesize\ttfamily \#define expect\+\_\+string\+\_\+count(\begin{DoxyParamCaption}\item[{}]{function,  }\item[{}]{parameter,  }\item[{}]{string,  }\item[{}]{count }\end{DoxyParamCaption})}
+
+{\bfseries Value\+:}
+\begin{DoxyCode}{0}
+\DoxyCodeLine{\ \ \ \ \_expect\_string(\#function,\ \#parameter,\ \_\_FILE\_\_,\ \_\_LINE\_\_,\ \(\backslash\)}
+\DoxyCodeLine{\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ (\textcolor{keyword}{const}\ \textcolor{keywordtype}{char}*)(\textcolor{keywordtype}{string}),\ count)}
+
+\end{DoxyCode}
+\Hypertarget{group__cmocka__param_gaf2627293dce3a0e99d404bff7667ee92}\label{group__cmocka__param_gaf2627293dce3a0e99d404bff7667ee92} 
+\index{Checking Parameters@{Checking Parameters}!expect\_string\_count@{expect\_string\_count}}
+\index{expect\_string\_count@{expect\_string\_count}!Checking Parameters@{Checking Parameters}}
+\doxysubsubsubsection{\texorpdfstring{expect\_string\_count}{expect\_string\_count}\hspace{0.1cm}{\footnotesize\ttfamily [2/2]}}
+{\footnotesize\ttfamily \#define expect\+\_\+string\+\_\+count(\begin{DoxyParamCaption}\item[{}]{function,  }\item[{}]{parameter,  }\item[{}]{string,  }\item[{}]{count }\end{DoxyParamCaption})}
+
+{\bfseries Value\+:}
+\begin{DoxyCode}{0}
+\DoxyCodeLine{\ \ \ \ \_expect\_string(\#function,\ \#parameter,\ \_\_FILE\_\_,\ \_\_LINE\_\_,\ \(\backslash\)}
+\DoxyCodeLine{\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ (\textcolor{keyword}{const}\ \textcolor{keywordtype}{char}*)(\textcolor{keywordtype}{string}),\ count)}
+
+\end{DoxyCode}
+\Hypertarget{group__cmocka__param_ga88b26660f9c9cdec0f28ee275fa8f749}\label{group__cmocka__param_ga88b26660f9c9cdec0f28ee275fa8f749} 
+\index{Checking Parameters@{Checking Parameters}!expect\_value\_count@{expect\_value\_count}}
+\index{expect\_value\_count@{expect\_value\_count}!Checking Parameters@{Checking Parameters}}
+\doxysubsubsubsection{\texorpdfstring{expect\_value\_count}{expect\_value\_count}\hspace{0.1cm}{\footnotesize\ttfamily [1/2]}}
+{\footnotesize\ttfamily \#define expect\+\_\+value\+\_\+count(\begin{DoxyParamCaption}\item[{}]{function,  }\item[{}]{parameter,  }\item[{}]{value,  }\item[{}]{count }\end{DoxyParamCaption})}
+
+{\bfseries Value\+:}
+\begin{DoxyCode}{0}
+\DoxyCodeLine{\ \ \ \ \_expect\_value(\#function,\ \#parameter,\ \_\_FILE\_\_,\ \_\_LINE\_\_,\ \(\backslash\)}
+\DoxyCodeLine{\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ cast\_to\_largest\_integral\_type(value),\ count)}
+
+\end{DoxyCode}
+\Hypertarget{group__cmocka__param_ga88b26660f9c9cdec0f28ee275fa8f749}\label{group__cmocka__param_ga88b26660f9c9cdec0f28ee275fa8f749} 
+\index{Checking Parameters@{Checking Parameters}!expect\_value\_count@{expect\_value\_count}}
+\index{expect\_value\_count@{expect\_value\_count}!Checking Parameters@{Checking Parameters}}
+\doxysubsubsubsection{\texorpdfstring{expect\_value\_count}{expect\_value\_count}\hspace{0.1cm}{\footnotesize\ttfamily [2/2]}}
+{\footnotesize\ttfamily \#define expect\+\_\+value\+\_\+count(\begin{DoxyParamCaption}\item[{}]{function,  }\item[{}]{parameter,  }\item[{}]{value,  }\item[{}]{count }\end{DoxyParamCaption})}
+
+{\bfseries Value\+:}
+\begin{DoxyCode}{0}
+\DoxyCodeLine{\ \ \ \ \_expect\_value(\#function,\ \#parameter,\ \_\_FILE\_\_,\ \_\_LINE\_\_,\ \(\backslash\)}
+\DoxyCodeLine{\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ cast\_to\_largest\_integral\_type(value),\ count)}
+
+\end{DoxyCode}

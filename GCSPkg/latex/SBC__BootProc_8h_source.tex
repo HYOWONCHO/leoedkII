@@ -1,0 +1,41 @@
+\doxysection{SBC\+\_\+\+Boot\+Proc.\+h}
+\hypertarget{SBC__BootProc_8h_source}{}\label{SBC__BootProc_8h_source}\index{Application/SSBL/SBC\_BootProc.h@{Application/SSBL/SBC\_BootProc.h}}
+
+\begin{DoxyCode}{0}
+\DoxyCodeLine{00001\ }
+\DoxyCodeLine{00011\ \textcolor{preprocessor}{\#ifndef\ \_\_SBC\_BOOT\_PROC\_H\_\_}}
+\DoxyCodeLine{00012\ \textcolor{preprocessor}{\#define\ \_\_SBC\_BOOT\_PROC\_H\_\_}}
+\DoxyCodeLine{00013\ }
+\DoxyCodeLine{00014\ }
+\DoxyCodeLine{00015\ }
+\DoxyCodeLine{00016\ \textcolor{comment}{//1f3f7e80-\/bd6b-\/4d83-\/93fa-\/9e614c313d3a}}
+\DoxyCodeLine{00017\ }
+\DoxyCodeLine{00018\ \textcolor{preprocessor}{\#define\ SB\_PROC\_ST\_MAGICID\ \ \ \ \ \ \ \ \ \ \ \ \ \ 0xABCD0000}}
+\DoxyCodeLine{00019\ }
+\DoxyCodeLine{00026\ \textcolor{keyword}{typedef}\ \textcolor{keyword}{enum}\ \_boot\_st\_t\ \{}
+\DoxyCodeLine{00027\ \ \ \ \ SB\_PROC\_ST\_NRMA\ \ \ =\ SB\_PROC\_ST\_MAGICID\ |\ 0,\ }
+\DoxyCodeLine{00028\ \ \ \ \ SB\_PROC\_ST\_ABNRAM,\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ }
+\DoxyCodeLine{00029\ \ \ \ \ SB\_PROC\_ST\_UNKNOWN\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ }
+\DoxyCodeLine{00030\ \}\ boot\_st\_t;}
+\DoxyCodeLine{00031\ }
+\DoxyCodeLine{00032\ }
+\DoxyCodeLine{00033\ \textcolor{preprocessor}{\#pragma\ pack(1)}}
+\DoxyCodeLine{00042\ \textcolor{keyword}{typedef}\ \textcolor{keyword}{struct\ }\mbox{\hyperlink{struct__boot__proc__t}{\_boot\_proc\_t}}\ \{}
+\DoxyCodeLine{00043\ \ \ \ \ VOID\ \ \ *\mbox{\hyperlink{struct__boot__proc__t_ab9a4c0184727d0dcf37e4fd0056bdb5f}{ldhndl}};\ \ \ \ \ \ \ }
+\DoxyCodeLine{00044\ \ \ \ \ VOID\ \ \ *\mbox{\hyperlink{struct__boot__proc__t_a1f6e5faf1263d8dddf07af9485cbeb96}{blkhnd}};\ \ \ \ \ \ \ }
+\DoxyCodeLine{00045\ \ \ \ \ VOID\ \ \ *\mbox{\hyperlink{struct__boot__proc__t_a1b9c4e5f4a3aa21c1b80f730d7bf855d}{rawprt\_hdr}};\ \ \ }
+\DoxyCodeLine{00046\ \ \ \ \ VOID\ \ \ *\mbox{\hyperlink{struct__boot__proc__t_a887580ccdf6a629fdf01b5b3fe942593}{baseansr}};\ \ \ \ \ }
+\DoxyCodeLine{00047\ \ \ \ \ VOID\ \ \ *\mbox{\hyperlink{struct__boot__proc__t_a586876e4dfcb42a79e6695533ac5ff05}{keyinfo}};\ \ \ \ \ \ }
+\DoxyCodeLine{00048\ \ \ \ \ VOID\ \ \ *\mbox{\hyperlink{struct__boot__proc__t_a0aac9d34c759dad8fe7e00556936f545}{diceid}};\ \ \ \ \ \ \ }
+\DoxyCodeLine{00049\ \ \ \ \ UINTN\ \ \ \mbox{\hyperlink{struct__boot__proc__t_a32953c645dce40cfc85197a27ecb6892}{pvs\_sw\_bnk}};\ \ \ }
+\DoxyCodeLine{00050\ \ \ \ \ UINTN\ \ \ \mbox{\hyperlink{struct__boot__proc__t_ab13a9133459104fddc35e74b9bb4eaca}{curr\_sw\_bnk}};\ \ }
+\DoxyCodeLine{00051\ \ \ \ \ UINT16\ \ \mbox{\hyperlink{struct__boot__proc__t_a9685cf77702eef0cdad4c0ec0e6e1817}{bm}};\ \ \ \ \ \ \ \ \ \ \ }
+\DoxyCodeLine{00052\ \ \ \ \ UINT16\ \ \mbox{\hyperlink{struct__boot__proc__t_a249ff9dfa7434ebf84a41588f8ae9e5c}{km}};\ \ \ \ \ \ \ \ \ \ \ }
+\DoxyCodeLine{00053\ \ \ \ \ UINT32\ \ \mbox{\hyperlink{struct__boot__proc__t_a6319d6bb110139a96facaa846c05a294}{bootst}};\ \ \ \ \ \ \ }
+\DoxyCodeLine{00054\ \ \ \ \ UINTN\ \ \ \mbox{\hyperlink{struct__boot__proc__t_aa8cbed8c67904d104e4fb809a71cf07a}{rcvmode}};\ \ \ \ \ \ }
+\DoxyCodeLine{00056\ \}\ \mbox{\hyperlink{structboot__proc__t}{boot\_proc\_t}};}
+\DoxyCodeLine{00057\ \textcolor{preprocessor}{\#pragma\ pack()}}
+\DoxyCodeLine{00058\ }
+\DoxyCodeLine{00059\ \textcolor{preprocessor}{\#endif}}
+
+\end{DoxyCode}

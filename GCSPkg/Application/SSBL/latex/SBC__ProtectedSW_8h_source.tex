@@ -1,0 +1,111 @@
+\doxysection{SBC\+\_\+\+Protected\+SW.\+h}
+\hypertarget{SBC__ProtectedSW_8h_source}{}\label{SBC__ProtectedSW_8h_source}
+\begin{DoxyCode}{0}
+\DoxyCodeLine{00001\ }
+\DoxyCodeLine{00011\ \textcolor{preprocessor}{\#ifndef\ SBC\_PROCTED\_SW\_H}}
+\DoxyCodeLine{00012\ \textcolor{preprocessor}{\#define\ SBC\_PROCTED\_SW\_H}}
+\DoxyCodeLine{00013\ }
+\DoxyCodeLine{00014\ \textcolor{preprocessor}{\#include\ "{}SBC\_ErrorType.h"{}}}
+\DoxyCodeLine{00015\ \textcolor{preprocessor}{\#include\ "{}SBC\_TypeDefs.h"{}}}
+\DoxyCodeLine{00016\ }
+\DoxyCodeLine{00024\ \textcolor{preprocessor}{\#define\ SW\_PATH\_STR\_LEN\ \ \ \ \ 256}}
+\DoxyCodeLine{00025\ }
+\DoxyCodeLine{00051\ \textcolor{keyword}{typedef}\ \textcolor{keyword}{struct\ }\{}
+\DoxyCodeLine{00052\ \ \ \ \ CHAR8\ name[SW\_PATH\_STR\_LEN];\ \ \ \ \ \ \ \ }
+\DoxyCodeLine{00053\ \ \ \ \ CHAR8\ ver[SW\_PATH\_STR\_LEN];\ \ \ \ \ \ \ \ \ }
+\DoxyCodeLine{00054\ \ \ \ \ UINTN\ \mbox{\hyperlink{structsw__path__t_a9bc8f93e08af0934bbf1af7fe3d20ef6}{sw\_node\_off}};\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ }
+\DoxyCodeLine{00055\ \}\ \mbox{\hyperlink{structsw__path__t}{sw\_path\_t}};}
+\DoxyCodeLine{00056\ }
+\DoxyCodeLine{00057\ }
+\DoxyCodeLine{00107\ \textcolor{keyword}{typedef}\ \textcolor{keyword}{struct\ }\{}
+\DoxyCodeLine{00108\ \ \ \ \ UINT8\ \ \mbox{\hyperlink{structsw__node__t_a46eb5a395d575579b99aadf76a32d8c0}{status}};\ \ \ \ \ \ \ \ }
+\DoxyCodeLine{00109\ \ \ \ \ UINT8\ \ \mbox{\hyperlink{structsw__node__t_a989b8dca8517f58a43de50f920e341f5}{pos}};\ \ \ \ \ \ \ \ \ \ \ }
+\DoxyCodeLine{00110\ \ \ \ \ UINT8\ \ \mbox{\hyperlink{structsw__node__t_abe8fcf4ed5a99bbea08056c191acb787}{sw0}};\ \ \ \ \ \ \ \ \ \ \ }
+\DoxyCodeLine{00111\ \ \ \ \ UINT8\ \ \mbox{\hyperlink{structsw__node__t_a416d41ff9324177231d673c31495c6f8}{sw1}};\ \ \ \ \ \ \ \ \ \ \ }
+\DoxyCodeLine{00112\ \ \ \ \ UINT8\ \ reserved[12];\ \ }
+\DoxyCodeLine{00113\ \ \ \ \ UINTN\ \ \mbox{\hyperlink{structsw__node__t_acd63f7fa88ab3b298a00898f7423b5be}{sw0\_off}};\ \ \ \ \ \ \ }
+\DoxyCodeLine{00114\ \ \ \ \ UINTN\ \ \mbox{\hyperlink{structsw__node__t_aab35168efcb080b6e0c54d5833b55fec}{sw1\_off}};\ \ \ \ \ \ \ }
+\DoxyCodeLine{00115\ \}\ \mbox{\hyperlink{structsw__node__t}{sw\_node\_t}};}
+\DoxyCodeLine{00116\ }
+\DoxyCodeLine{00133\ \textcolor{keyword}{typedef}\ \textcolor{keyword}{enum}\ \{}
+\DoxyCodeLine{00134\ \ \ \ \ AT\_RP\_SW\_NODE\_SLOT0\ =\ 0,\ \ }
+\DoxyCodeLine{00135\ \ \ \ \ AT\_RP\_SW\_NODE\_SLOT1\ =\ 1,\ \ }
+\DoxyCodeLine{00136\ \}\ AT\_RP\_SW\_NODE\_SLOT\_T;}
+\DoxyCodeLine{00137\ }
+\DoxyCodeLine{00138\ }
+\DoxyCodeLine{00146\ \textcolor{preprocessor}{\#define\ SBC\_AT\_RP\_SW\_NAME\_MAX\ \ \ \ \ \ \ \ \ \ \ 256}}
+\DoxyCodeLine{00147\ }
+\DoxyCodeLine{00155\ \textcolor{preprocessor}{\#define\ SBC\_AT\_RP\_SYS\_CONF\_MAX\_LEN\ \ \ \ \ \ (16\ *\ 1024)}}
+\DoxyCodeLine{00156\ }
+\DoxyCodeLine{00164\ \textcolor{preprocessor}{\#define\ SBC\_AT\_RP\_PROFILE\_MAX\_LEN\ \ \ \ \ \ \ 4096}}
+\DoxyCodeLine{00165\ }
+\DoxyCodeLine{00173\ \textcolor{preprocessor}{\#define\ SBC\_AT\_RP\_SW\_BLOCK\_LEN\ \ \ \ \ \ \ \ \ \ 1024}}
+\DoxyCodeLine{00174\ }
+\DoxyCodeLine{00185\ \textcolor{preprocessor}{\#define\ SBC\_AT\_RP\_SW\_PATH\_MAX\ \ \ \ \ \ \ \ \ \ \ 58\ \ }}
+\DoxyCodeLine{00194\ \textcolor{preprocessor}{\#define\ SBC\_AT\_RP\_CERT\_MAX\_LEN\ \ \ \ \ \ \ \ \ \ (2\ *\ 1024)}}
+\DoxyCodeLine{00195\ }
+\DoxyCodeLine{00203\ \textcolor{preprocessor}{\#define\ SBC\_AT\_RP\_AAD\_LENGTH\ \ \ \ \ \ \ \ \ \ \ \ 20}}
+\DoxyCodeLine{00204\ }
+\DoxyCodeLine{00212\ \textcolor{preprocessor}{\#define\ SBC\_AT\_RP\_TAG\_LEN\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ 16}}
+\DoxyCodeLine{00213\ }
+\DoxyCodeLine{00221\ \textcolor{preprocessor}{\#define\ SBC\_AT\_RP\_IV\_LEN\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ 12}}
+\DoxyCodeLine{00222\ }
+\DoxyCodeLine{00229\ \textcolor{preprocessor}{\#define\ SBC\_AT\_RP\_KEY\_LEN\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ 32}}
+\DoxyCodeLine{00230\ }
+\DoxyCodeLine{00238\ \textcolor{preprocessor}{\#define\ SBC\_AT\_RP\_RES\_LEN\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ 16}}
+\DoxyCodeLine{00239\ }
+\DoxyCodeLine{00240\ }
+\DoxyCodeLine{00257\ SBCStatus\ \mbox{\hyperlink{SBC__ProtectedSW_8c_ae9d0525852cfae1df12cda21bccbce6d}{SBC\_ProtSWGetCnt}}(VOID\ *handle,\ UINTN\ *cnt);}
+\DoxyCodeLine{00258\ }
+\DoxyCodeLine{00259\ }
+\DoxyCodeLine{00289\ SBCStatus\ \mbox{\hyperlink{SBC__ProtectedSW_8c_a6d40367e0a002e55377ab0859776f807}{SBC\_ProtSWDecrypt}}(}
+\DoxyCodeLine{00290\ \ \ \ \ VOID\ \ *handle,\ \ \ }
+\DoxyCodeLine{00291\ \ \ \ \ UINT8\ *key,\ \ \ \ \ \ }
+\DoxyCodeLine{00292\ \ \ \ \ UINT8\ *migkey,\ \ \ }
+\DoxyCodeLine{00293\ \ \ \ \ UINT8\ *decbuf,\ \ \ }
+\DoxyCodeLine{00294\ \ \ \ \ UINT32\ *declen\ \ \ }
+\DoxyCodeLine{00295\ );}
+\DoxyCodeLine{00296\ }
+\DoxyCodeLine{00318\ SBCStatus\ \mbox{\hyperlink{SBC__ProtectedSW_8c_a17776e78948216d2a4a9a475f66d8637}{SBC\_RecryptoProtectedSW}}(}
+\DoxyCodeLine{00319\ \ \ \ \ VOID\ \ *handle,\ \ \ \ \ \ \ \ \ }
+\DoxyCodeLine{00320\ \ \ \ \ UINTN\ \ ofs,\ \ \ \ \ \ \ \ \ \ \ \ }
+\DoxyCodeLine{00321\ \ \ \ \ UINT8\ *sw\_secret\_key,\ \ }
+\DoxyCodeLine{00322\ \ \ \ \ UINT8\ *sw\_mig\_key\ \ \ \ \ \ }
+\DoxyCodeLine{00323\ );}
+\DoxyCodeLine{00324\ }
+\DoxyCodeLine{00325\ }
+\DoxyCodeLine{00346\ SBCStatus\ \mbox{\hyperlink{SBC__ProtectedSW_8c_a197c1a9743d7bd540aadbb4d88ebb487}{SBC\_ReadProtectedSwSlotOffset}}(}
+\DoxyCodeLine{00347\ \ \ \ \ VOID\ \ *handle,\ \ \ }
+\DoxyCodeLine{00348\ \ \ \ \ UINTN\ *check,\ \ \ \ }
+\DoxyCodeLine{00349\ \ \ \ \ CHAR8\ *sw\_name,\ \ }
+\DoxyCodeLine{00350\ \ \ \ \ UINTN\ \ slot,\ \ \ \ \ }
+\DoxyCodeLine{00351\ \ \ \ \ UINTN\ *offset\ \ \ \ }
+\DoxyCodeLine{00352\ );}
+\DoxyCodeLine{00353\ }
+\DoxyCodeLine{00374\ SBCStatus\ \mbox{\hyperlink{SBC__ProtectedSW_8c_ad2abd02c58e6ce9d4f11517e7d2c3089}{SBC\_LoadSysFile}}(}
+\DoxyCodeLine{00375\ \ \ \ \ VOID\ \ *handle,\ \ \ }
+\DoxyCodeLine{00376\ \ \ \ \ UINTN\ \ offset,\ \ \ }
+\DoxyCodeLine{00377\ \ \ \ \ UINT8\ *deckey,\ \ \ }
+\DoxyCodeLine{00378\ \ \ \ \ UINT8\ *data\ \ \ \ \ \ }
+\DoxyCodeLine{00379\ );}
+\DoxyCodeLine{00380\ }
+\DoxyCodeLine{00381\ }
+\DoxyCodeLine{00382\ }
+\DoxyCodeLine{00383\ }
+\DoxyCodeLine{00384\ \textcolor{comment}{//}}
+\DoxyCodeLine{00385\ \textcolor{comment}{//SBCStatus\ SBC\_UpdateProtectedSWListVersion(VOID\ *handle,\ CHAR8\ *sw\_name,\ CHAR8\ *sw\_ver);}}
+\DoxyCodeLine{00386\ \textcolor{comment}{//}}
+\DoxyCodeLine{00387\ \textcolor{comment}{//SBCStatus\ SBC\_UpdateProtecteSWSlotInfo(VOID\ *handle,\ CHAR8\ *sw\_name);}}
+\DoxyCodeLine{00388\ \textcolor{comment}{//}}
+\DoxyCodeLine{00389\ \textcolor{comment}{//SBCStatus\ SBC\_FindProtectedSw(VOID\ *handle,\ CHAR8\ name[256],\ CHAR8\ *ver,\ UINTN\ *sw\_node\_off);}}
+\DoxyCodeLine{00390\ \textcolor{comment}{//}}
+\DoxyCodeLine{00391\ \textcolor{comment}{//SBCStatus\ SBC\_WriteProtSwNodeBlob(VOID\ *handle,\ UINTN\ swoff,\ UINT8\ *blob,\ UINTN\ blob\_len,\ UINT8\ *iv,\ UINT8\ *tag);}}
+\DoxyCodeLine{00392\ \textcolor{comment}{//}}
+\DoxyCodeLine{00393\ \textcolor{comment}{//SBCStatus\ SBC\_WriteProtSwSize(VOID\ *handle,\ UINTN\ sw\_off,\ UINTN\ size);}}
+\DoxyCodeLine{00394\ \textcolor{comment}{//}}
+\DoxyCodeLine{00395\ \textcolor{comment}{//SBCStatus\ SBC\_GetProtectedSwName(VOID\ *handle,\ UINTN\ st,\ CHAR8\ *sw\_name,\ UINTN\ sw\_name\_size);}}
+\DoxyCodeLine{00396\ \textcolor{comment}{//}}
+\DoxyCodeLine{00397\ \textcolor{preprocessor}{\#endif}}
+\DoxyCodeLine{00398\ }
+
+\end{DoxyCode}

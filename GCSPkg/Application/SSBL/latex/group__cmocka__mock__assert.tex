@@ -1,0 +1,102 @@
+\doxysubsection{Standard Assertions}
+\hypertarget{group__cmocka__mock__assert}{}\label{group__cmocka__mock__assert}\index{Standard Assertions@{Standard Assertions}}
+Collaboration diagram for Standard Assertions\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=331pt]{group__cmocka__mock__assert}
+\end{center}
+\end{figure}
+\doxysubsubsubsection*{Macros}
+\begin{DoxyCompactItemize}
+\item 
+\#define \mbox{\hyperlink{group__cmocka__mock__assert_ga1674f9bfd19db8683493dce46578d73f}{expect\+\_\+assert\+\_\+failure}}(function\+\_\+call)
+\end{DoxyCompactItemize}
+\doxysubsubsubsection*{Functions}
+\begin{DoxyCompactItemize}
+\item 
+void \mbox{\hyperlink{group__cmocka__mock__assert_ga7f1663184edbd6120732191c4bffada2}{mock\+\_\+assert}} (const int result, const char \texorpdfstring{$\ast$}{*}const expression, const char \texorpdfstring{$\ast$}{*}const file, const int line)
+\begin{DoxyCompactList}\small\item\em Function to replace assert(3) in tested code. \end{DoxyCompactList}\end{DoxyCompactItemize}
+
+
+\doxysubsubsection{Detailed Description}
+How to handle assert(3) of the standard C library.
+
+Runtime assert macros like the standard C library\textquotesingle{}s assert() should be redefined in modules being tested to use cmocka\textquotesingle{}s \doxylink{group__cmocka__mock__assert_ga7f1663184edbd6120732191c4bffada2}{mock\+\_\+assert()} function. Normally \doxylink{group__cmocka__mock__assert_ga7f1663184edbd6120732191c4bffada2}{mock\+\_\+assert()} signals a test failure. If a function is called using the expect\+\_\+assert\+\_\+failure() macro, any calls to \doxylink{group__cmocka__mock__assert_ga7f1663184edbd6120732191c4bffada2}{mock\+\_\+assert()} within the function will result in the execution of the test. If no calls to \doxylink{group__cmocka__mock__assert_ga7f1663184edbd6120732191c4bffada2}{mock\+\_\+assert()} occur during the function called via expect\+\_\+assert\+\_\+failure() a test failure is signalled. 
+
+\doxysubsubsection{Macro Definition Documentation}
+\Hypertarget{group__cmocka__mock__assert_ga1674f9bfd19db8683493dce46578d73f}\label{group__cmocka__mock__assert_ga1674f9bfd19db8683493dce46578d73f} 
+\index{Standard Assertions@{Standard Assertions}!expect\_assert\_failure@{expect\_assert\_failure}}
+\index{expect\_assert\_failure@{expect\_assert\_failure}!Standard Assertions@{Standard Assertions}}
+\doxysubsubsubsection{\texorpdfstring{expect\_assert\_failure}{expect\_assert\_failure}}
+{\footnotesize\ttfamily \#define expect\+\_\+assert\+\_\+failure(\begin{DoxyParamCaption}\item[{}]{function\+\_\+call }\end{DoxyParamCaption})}
+
+{\bfseries Value\+:}
+\begin{DoxyCode}{0}
+\DoxyCodeLine{\ \ \{\ \(\backslash\)}
+\DoxyCodeLine{\ \ \ \ \textcolor{keyword}{const}\ \textcolor{keywordtype}{int}\ result\ =\ setjmp(global\_expect\_assert\_env);\ \(\backslash\)}
+\DoxyCodeLine{\ \ \ \ global\_expecting\_assert\ =\ 1;\ \(\backslash\)}
+\DoxyCodeLine{\ \ \ \ if\ (result)\ \{\ \(\backslash\)}
+\DoxyCodeLine{\ \ \ \ \ \ print\_message(\textcolor{stringliteral}{"{}Expected\ assertion\ \%s\ occurred\(\backslash\)n"{}},\ \(\backslash\)}
+\DoxyCodeLine{\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ global\_last\_failed\_assert);\ \(\backslash\)}
+\DoxyCodeLine{\ \ \ \ \ \ global\_expecting\_assert\ =\ 0;\ \(\backslash\)}
+\DoxyCodeLine{\ \ \ \ \}\ \textcolor{keywordflow}{else}\ \{\ \(\backslash\)}
+\DoxyCodeLine{\ \ \ \ \ \ function\_call\ ;\ \(\backslash\)}
+\DoxyCodeLine{\ \ \ \ \ \ global\_expecting\_assert\ =\ 0;\ \(\backslash\)}
+\DoxyCodeLine{\ \ \ \ \ \ print\_error(\textcolor{stringliteral}{"{}Expected\ assert\ in\ \%s\(\backslash\)n"{}},\ \#function\_call);\ \(\backslash\)}
+\DoxyCodeLine{\ \ \ \ \ \ \_fail(\_\_FILE\_\_,\ \_\_LINE\_\_);\ \(\backslash\)}
+\DoxyCodeLine{\ \ \ \ \}\ \(\backslash\)}
+\DoxyCodeLine{\ \ \}}
+
+\end{DoxyCode}
+
+
+\doxysubsubsection{Function Documentation}
+\Hypertarget{group__cmocka__mock__assert_ga7f1663184edbd6120732191c4bffada2}\label{group__cmocka__mock__assert_ga7f1663184edbd6120732191c4bffada2} 
+\index{Standard Assertions@{Standard Assertions}!mock\_assert@{mock\_assert}}
+\index{mock\_assert@{mock\_assert}!Standard Assertions@{Standard Assertions}}
+\doxysubsubsubsection{\texorpdfstring{mock\_assert()}{mock\_assert()}}
+{\footnotesize\ttfamily void mock\+\_\+assert (\begin{DoxyParamCaption}\item[{const int}]{result,  }\item[{const char \texorpdfstring{$\ast$}{*}const}]{expression,  }\item[{const char \texorpdfstring{$\ast$}{*}const}]{file,  }\item[{const int}]{line }\end{DoxyParamCaption})}
+
+
+
+Function to replace assert(3) in tested code. 
+
+In conjuction with check\+\_\+assert() it\textquotesingle{}s possible to determine whether an assert condition has failed without stopping a test.
+
+
+\begin{DoxyParams}[1]{Parameters}
+\mbox{\texttt{ in}}  & {\em result} & The expression to assert.\\
+\hline
+\mbox{\texttt{ in}}  & {\em expression} & The expression as string.\\
+\hline
+\mbox{\texttt{ in}}  & {\em file} & The file \doxylink{group__cmocka__mock__assert_ga7f1663184edbd6120732191c4bffada2}{mock\+\_\+assert()} is called.\\
+\hline
+\mbox{\texttt{ in}}  & {\em line} & The line \doxylink{group__cmocka__mock__assert_ga7f1663184edbd6120732191c4bffada2}{mock\+\_\+assert()} is called.\\
+\hline
+\end{DoxyParams}
+
+\begin{DoxyCode}{0}
+\DoxyCodeLine{\textcolor{preprocessor}{\#ifdef\ UNIT\_TESTING}}
+\DoxyCodeLine{\textcolor{keyword}{extern}\ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{group__cmocka__mock__assert_ga7f1663184edbd6120732191c4bffada2}{mock\_assert}}(\textcolor{keyword}{const}\ \textcolor{keywordtype}{int}\ result,\ \textcolor{keyword}{const}\ \textcolor{keywordtype}{char}*\ \textcolor{keyword}{const}\ expression,}
+\DoxyCodeLine{\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ \textcolor{keywordtype}{char}\ *\ \textcolor{keyword}{const}\ file,\ \textcolor{keyword}{const}\ \textcolor{keywordtype}{int}\ line);}
+\DoxyCodeLine{}
+\DoxyCodeLine{\textcolor{preprocessor}{\#undef\ assert}}
+\DoxyCodeLine{\textcolor{preprocessor}{\#define\ assert(expression)\ \(\backslash\)}}
+\DoxyCodeLine{\textcolor{preprocessor}{\ \ \ \ mock\_assert((int)(expression),\ \#expression,\ \_\_FILE\_\_,\ \_\_LINE\_\_);}}
+\DoxyCodeLine{\textcolor{preprocessor}{\#endif}}
+\DoxyCodeLine{}
+\DoxyCodeLine{\textcolor{keywordtype}{void}\ increment\_value(\textcolor{keywordtype}{int}\ *\ \textcolor{keyword}{const}\ value)\ \{}
+\DoxyCodeLine{\ \ \ \ assert(value);}
+\DoxyCodeLine{\ \ \ \ (*value)\ ++;}
+\DoxyCodeLine{\}}
+
+\end{DoxyCode}
+
+
+\begin{DoxySeeAlso}{See also}
+assert(3) 
+
+expect\+\_\+assert\+\_\+failure 
+\end{DoxySeeAlso}

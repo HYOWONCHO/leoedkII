@@ -1,0 +1,162 @@
+\doxysection{Application/\+SSBL/\+SBC\+\_\+\+Hashing.c File Reference}
+\hypertarget{SSBL_2SBC__Hashing_8c}{}\label{SSBL_2SBC__Hashing_8c}\index{Application/SSBL/SBC\_Hashing.c@{Application/SSBL/SBC\_Hashing.c}}
+
+
+Performs the message hashing.  
+
+
+{\ttfamily \#include $<$Library/\+Base\+Lib.\+h$>$}\newline
+{\ttfamily \#include $<$Library/\+Base\+Crypt\+Lib.\+h$>$}\newline
+{\ttfamily \#include $<$Library/\+Print\+Lib.\+h$>$}\newline
+{\ttfamily \#include "{}SBC\+\_\+\+Util.\+h"{}}\newline
+{\ttfamily \#include "{}SBC\+\_\+\+Error\+Type.\+h"{}}\newline
+{\ttfamily \#include "{}SBC\+\_\+\+Hashing.\+h"{}}\newline
+{\ttfamily \#include "{}SBC\+\_\+\+Config.\+h"{}}\newline
+{\ttfamily \#include $<$string.\+h$>$}\newline
+Include dependency graph for SBC\+\_\+\+Hashing.\+c\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=350pt]{SSBL_2SBC__Hashing_8c__incl}
+\end{center}
+\end{figure}
+\doxysubsubsection*{Functions}
+\begin{DoxyCompactItemize}
+\item 
+SBCStatus \mbox{\hyperlink{SSBL_2SBC__Hashing_8c_ae8bb2fa9f36321b9eb37b1e8ed51a4cc}{SBC\+\_\+\+Hash\+Compute}} (VOID \texorpdfstring{$\ast$}{*}\texorpdfstring{$\ast$}{*}handle, UINT8 \texorpdfstring{$\ast$}{*}message, UINTN msglen, UINT8 \texorpdfstring{$\ast$}{*}digest)
+\item 
+SBCStatus \mbox{\hyperlink{SSBL_2SBC__Hashing_8c_a112e70906c00ee9c014ec6beda33d5bd}{SBC\+\_\+\+Hmac\+Compute}} (VOID \texorpdfstring{$\ast$}{*}handle, UINT8 \texorpdfstring{$\ast$}{*}mackey, UINTN keysz, UINT8 \texorpdfstring{$\ast$}{*}msg, UINTN msglen, UINT8 \texorpdfstring{$\ast$}{*}hmacvalue)
+\begin{DoxyCompactList}\small\item\em Computes the HMAC-\/\+SHA digest of a Message buffer. \end{DoxyCompactList}\end{DoxyCompactItemize}
+
+
+\doxysubsection{Detailed Description}
+Performs the message hashing. 
+
+Copyright (C) 2024 by Security Platform Inc. \texorpdfstring{$\ast$}{*} This file is part of the SBC Project. \texorpdfstring{$\ast$}{*}
+\begin{DoxyItemize}
+\item This software contains confidential and proprietary information of \texorpdfstring{$\ast$}{*} Security Platform Inc. Unauthorized reproduction, distribution, or \texorpdfstring{$\ast$}{*} disclosure of this software, in whole or in part, is strictly prohibited. \texorpdfstring{$\ast$}{*}
+\end{DoxyItemize}
+
+\begin{DoxyAuthor}{Author}
+LEON 
+\end{DoxyAuthor}
+\begin{DoxyVersion}{Version}
+1.\+0 
+\end{DoxyVersion}
+\begin{DoxyDate}{Date}
+2025-\/10-\/31
+\end{DoxyDate}
+\begin{DoxyCopyright}{Copyright}
+(c) 2025 Security Platform Inc. All rights reserved. 
+\end{DoxyCopyright}
+
+
+\doxysubsection{Function Documentation}
+\Hypertarget{SSBL_2SBC__Hashing_8c_ae8bb2fa9f36321b9eb37b1e8ed51a4cc}\label{SSBL_2SBC__Hashing_8c_ae8bb2fa9f36321b9eb37b1e8ed51a4cc} 
+\index{SBC\_Hashing.c@{SBC\_Hashing.c}!SBC\_HashCompute@{SBC\_HashCompute}}
+\index{SBC\_HashCompute@{SBC\_HashCompute}!SBC\_Hashing.c@{SBC\_Hashing.c}}
+\doxysubsubsection{\texorpdfstring{SBC\_HashCompute()}{SBC\_HashCompute()}}
+{\footnotesize\ttfamily SBCStatus SBC\+\_\+\+Hash\+Compute (\begin{DoxyParamCaption}\item[{VOID \texorpdfstring{$\ast$}{*}\texorpdfstring{$\ast$}{*}}]{handle,  }\item[{UINT8 \texorpdfstring{$\ast$}{*}}]{message,  }\item[{UINTN}]{msglen,  }\item[{UINT8 \texorpdfstring{$\ast$}{*}}]{digest }\end{DoxyParamCaption})}
+
+@brif Obtain the Hash of message
+
+
+\begin{DoxyParams}{Parameters}
+{\em \mbox{[}\+IN,OUT\mbox{]}} & handle Handle of hash operation context ( but not in use ) \\
+\hline
+{\em \mbox{[}\+IN\mbox{]}} & message Buffer containing the message of hash \\
+\hline
+{\em \mbox{[}\+IN\mbox{]}} & msglen Size of buffer in bytes \\
+\hline
+{\em \mbox{[}\+OUT\mbox{]}} & digest Buffer where the hash is to be written\\
+\hline
+\end{DoxyParams}
+\begin{DoxyReturn}{Returns}
+On success, return the SBCOK, otherwise appropriate value
+\end{DoxyReturn}
+Copyright (C) 2024 by Security Platform Inc. \texorpdfstring{$\ast$}{*} This file is part of the SBC Project. \texorpdfstring{$\ast$}{*}
+\begin{DoxyItemize}
+\item This software contains confidential and proprietary information of \texorpdfstring{$\ast$}{*} Security Platform Inc. Unauthorized reproduction, distribution, or \texorpdfstring{$\ast$}{*} disclosure of this software, in whole or in part, is strictly prohibited. \texorpdfstring{$\ast$}{*}
+\end{DoxyItemize}
+
+@brif Obtain the Hash of message
+
+
+\begin{DoxyParams}{Parameters}
+{\em \mbox{[}\+IN,OUT\mbox{]}} & handle Handle of hash operation context ( but not in use ) \\
+\hline
+{\em \mbox{[}\+IN\mbox{]}} & message Buffer containing the message of hash \\
+\hline
+{\em \mbox{[}\+IN\mbox{]}} & msglen Size of buffer in bytes \\
+\hline
+{\em \mbox{[}\+OUT\mbox{]}} & digest Buffer where the hash is to be written\\
+\hline
+\end{DoxyParams}
+
+\begin{DoxyRetVals}{Return values}
+{\em SBCOK} & Random data successfully generated. \\
+\hline
+{\em SBCFAIL} & Random generation failed due to entropy source error. \\
+\hline
+{\em SBCNULLP} & One or more input pointers are NULL. \\
+\hline
+{\em SBCINVPARAM} & Invalid size or parameter value. \\
+\hline
+{\em SBCCRYPTO} & Hardware RNG or entropy engine error. \\
+\hline
+\end{DoxyRetVals}
+\Hypertarget{SSBL_2SBC__Hashing_8c_a112e70906c00ee9c014ec6beda33d5bd}\label{SSBL_2SBC__Hashing_8c_a112e70906c00ee9c014ec6beda33d5bd} 
+\index{SBC\_Hashing.c@{SBC\_Hashing.c}!SBC\_HmacCompute@{SBC\_HmacCompute}}
+\index{SBC\_HmacCompute@{SBC\_HmacCompute}!SBC\_Hashing.c@{SBC\_Hashing.c}}
+\doxysubsubsection{\texorpdfstring{SBC\_HmacCompute()}{SBC\_HmacCompute()}}
+{\footnotesize\ttfamily SBCStatus SBC\+\_\+\+Hmac\+Compute (\begin{DoxyParamCaption}\item[{VOID \texorpdfstring{$\ast$}{*}}]{handle,  }\item[{UINT8 \texorpdfstring{$\ast$}{*}}]{mackey,  }\item[{UINTN}]{keysz,  }\item[{UINT8 \texorpdfstring{$\ast$}{*}}]{msg,  }\item[{UINTN}]{msglen,  }\item[{UINT8 \texorpdfstring{$\ast$}{*}}]{hmacvalue }\end{DoxyParamCaption})}
+
+
+
+Computes the HMAC-\/\+SHA digest of a Message buffer. 
+
+Computes the HMAC-\/\+SHA digest of a Message buffer
+
+\begin{DoxyAuthor}{Author}
+leoc (4/28/25)
+\end{DoxyAuthor}
+
+\begin{DoxyParams}{Parameters}
+{\em handle} & Pointer to the HMAC handle context \\
+\hline
+{\em mackey} & Pointer to user-\/suppiled key \\
+\hline
+{\em keysz} & Key size in bytes \\
+\hline
+{\em msg} & Pointer to the buffer containing the digest message \\
+\hline
+{\em msglen} & Message length in bytes \\
+\hline
+{\em hmacvalue} & Pointer to a buffer that receive the computed HMAC\\
+\hline
+\end{DoxyParams}
+\begin{DoxyReturn}{Returns}
+BOOLEAN
+\end{DoxyReturn}
+\begin{DoxyAuthor}{Author}
+leoc (4/28/25)
+\end{DoxyAuthor}
+
+\begin{DoxyParams}{Parameters}
+{\em handle} & Pointer to the HMAC handle context \\
+\hline
+{\em mackey} & Pointer to user-\/suppiled key \\
+\hline
+{\em keysz} & Key size in bytes \\
+\hline
+{\em msg} & Pointer to the buffer containing the digest message \\
+\hline
+{\em msglen} & Message length in bytes \\
+\hline
+{\em hmacvalue} & Pointer to a buffer that receive the computed HMAC\\
+\hline
+\end{DoxyParams}
+\begin{DoxyReturn}{Returns}
+BOOLEAN 
+\end{DoxyReturn}

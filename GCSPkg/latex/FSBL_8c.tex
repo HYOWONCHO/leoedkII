@@ -1,0 +1,198 @@
+\doxysection{Application/\+FSBL/\+FSBL.c File Reference}
+\hypertarget{FSBL_8c}{}\label{FSBL_8c}\index{Application/FSBL/FSBL.c@{Application/FSBL/FSBL.c}}
+{\ttfamily \#include $<$Uefi.\+h$>$}\newline
+{\ttfamily \#include $<$Library/\+Pcd\+Lib.\+h$>$}\newline
+{\ttfamily \#include $<$Library/\+Uefi\+Lib.\+h$>$}\newline
+{\ttfamily \#include $<$Library/\+Uefi\+Application\+Entry\+Point.\+h$>$}\newline
+{\ttfamily \#include $<$Library/\+Base\+Lib.\+h$>$}\newline
+{\ttfamily \#include $<$Library/\+Base\+Crypt\+Lib.\+h$>$}\newline
+{\ttfamily \#include $<$Library/\+Base\+Memory\+Lib.\+h$>$}\newline
+{\ttfamily \#include $<$malloc.\+h$>$}\newline
+{\ttfamily \#include $<$Register/\+Intel/\+Cpuid.\+h$>$}\newline
+{\ttfamily \#include $<$Library/\+Shell\+Lib.\+h$>$}\newline
+{\ttfamily \#include $<$Library/\+Memory\+Allocation\+Lib.\+h$>$}\newline
+{\ttfamily \#include $<$Protocol/\+Smbios.\+h$>$}\newline
+{\ttfamily \#include $<$Library/\+Device\+Path\+Lib.\+h$>$}\newline
+{\ttfamily \#include $<$string.\+h$>$}\newline
+{\ttfamily \#include $<$stdio.\+h$>$}\newline
+{\ttfamily \#include $<$stdlib.\+h$>$}\newline
+{\ttfamily \#include $<$Protocol/\+Block\+Io.\+h$>$}\newline
+{\ttfamily \#include $<$Protocol/\+Disk\+Info.\+h$>$}\newline
+{\ttfamily \#include $<$Protocol/\+Serial\+Io.\+h$>$}\newline
+{\ttfamily \#include $<$Library/\+Serial\+Port\+Lib.\+h$>$}\newline
+{\ttfamily \#include "{}leo\+\_\+test.\+h"{}}\newline
+{\ttfamily \#include $<$Library/\+Uefi\+Boot\+Services\+Table\+Lib.\+h$>$}\newline
+{\ttfamily \#include $<$Library/\+File\+Handle\+Lib.\+h$>$}\newline
+{\ttfamily \#include $<$Library/\+Unit\+Test\+Lib.\+h$>$}\newline
+{\ttfamily \#include $<$Library/\+Uefi\+Boot\+Manager\+Lib.\+h$>$}\newline
+{\ttfamily \#include $<$Library/\+Uefi\+Lib/\+Uefi\+Lib\+Internal.\+h$>$}\newline
+{\ttfamily \#include $<$openssl/objects.\+h$>$}\newline
+{\ttfamily \#include $<$openssl/bn.\+h$>$}\newline
+{\ttfamily \#include $<$openssl/ec.\+h$>$}\newline
+{\ttfamily \#include $<$stdarg.\+h$>$}\newline
+{\ttfamily \#include "{}SBC\+\_\+\+Log.\+h"{}}\newline
+{\ttfamily \#include "{}SBC\+\_\+\+Error\+Type.\+h"{}}\newline
+{\ttfamily \#include "{}SBC\+\_\+\+Crypt\+AES.\+h"{}}\newline
+{\ttfamily \#include "{}SBC\+\_\+\+File\+Ctrl.\+h"{}}\newline
+{\ttfamily \#include "{}SBC\+\_\+\+Type\+Defs.\+h"{}}\newline
+{\ttfamily \#include "{}SBC\+\_\+\+Ecc\+Sign\+Verify.\+h"{}}\newline
+{\ttfamily \#include "{}SBC\+\_\+\+Config.\+h"{}}\newline
+{\ttfamily \#include "{}SBC\+\_\+\+Anti\+Tampering.\+h"{}}\newline
+{\ttfamily \#include "{}SBC\+\_\+\+Util.\+h"{}}\newline
+{\ttfamily \#include "{}SBC\+\_\+\+Unit\+Test.\+h"{}}\newline
+{\ttfamily \#include "{}SBC\+\_\+\+Nvram.\+h"{}}\newline
+{\ttfamily \#include "{}SBC\+\_\+\+System\+Control.\+h"{}}\newline
+{\ttfamily \#include "{}SBC\+\_\+\+Timer.\+h"{}}\newline
+Include dependency graph for FSBL.\+c\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=350pt]{FSBL_8c__incl}
+\end{center}
+\end{figure}
+\doxysubsubsection*{Macros}
+\begin{DoxyCompactItemize}
+\item 
+\Hypertarget{FSBL_8c_a87faac5feeb9c6e4b50d65be88f8a32c}\label{FSBL_8c_a87faac5feeb9c6e4b50d65be88f8a32c} 
+\#define {\bfseries FTDI\+\_\+\+USB\+\_\+\+SERIAL\+\_\+\+DXE\+\_\+\+PATH}~L"{}\textbackslash{}\textbackslash{}\+EFI\textbackslash{}\textbackslash{}\+BOOT\textbackslash{}\textbackslash{}\+Ftdi\+Usb\+Serial\+Dxe.\+efi"{}
+\item 
+\Hypertarget{FSBL_8c_ac7f0f9f6ffff47ba9d8a9310580e6a63}\label{FSBL_8c_ac7f0f9f6ffff47ba9d8a9310580e6a63} 
+\#define {\bfseries SERIAL\+\_\+\+DXE\+\_\+\+PATH}~L"{}\textbackslash{}\textbackslash{}\+EFI\textbackslash{}\textbackslash{}\+BOOT\textbackslash{}\textbackslash{}\+Serial\+Dxe.\+efi"{}
+\item 
+\Hypertarget{FSBL_8c_a52903d5a10c8d7b43e246e5bf49129cf}\label{FSBL_8c_a52903d5a10c8d7b43e246e5bf49129cf} 
+\#define {\bfseries TERMINAL\+\_\+\+DXE\+\_\+\+PATH}~L"{}\textbackslash{}\textbackslash{}\+EFI\textbackslash{}\textbackslash{}\+BOOT\textbackslash{}\textbackslash{}\+Terminal\+Dxe.\+efi"{}
+\item 
+\Hypertarget{FSBL_8c_a8d7a26796dab88d6d6b8358ff9d355fe}\label{FSBL_8c_a8d7a26796dab88d6d6b8358ff9d355fe} 
+\#define {\bfseries XFS64\+\_\+\+PATH}~L"{}\textbackslash{}\textbackslash{}\+EFI\textbackslash{}\textbackslash{}\+BOOT\textbackslash{}\textbackslash{}xfs\+\_\+x64.\+efi"{}
+\end{DoxyCompactItemize}
+\doxysubsubsection*{Functions}
+\begin{DoxyCompactItemize}
+\item 
+\Hypertarget{FSBL_8c_aa03d56120094fd73a185360c0c56d059}\label{FSBL_8c_aa03d56120094fd73a185360c0c56d059} 
+static VOID {\bfseries \+\_\+get\+\_\+fw\+\_\+bankid} (UINT32 val, UINT32 \texorpdfstring{$\ast$}{*}cur, UINT32 \texorpdfstring{$\ast$}{*}prev)
+\item 
+\Hypertarget{FSBL_8c_ae48ac049fb8507f9844f8f2e3121d236}\label{FSBL_8c_ae48ac049fb8507f9844f8f2e3121d236} 
+static void {\bfseries factory\+\_\+md\+\_\+abnormal\+\_\+boot\+\_\+state} (VOID \texorpdfstring{$\ast$}{*}priv)
+\item 
+\Hypertarget{FSBL_8c_a4bb48a7b6c705c7c277bf419f4a9d082}\label{FSBL_8c_a4bb48a7b6c705c7c277bf419f4a9d082} 
+UINT32 {\bfseries Find\+Previously\+Bank} (UINT32 bankid)
+\item 
+\Hypertarget{FSBL_8c_a47c8525495283e1b8740ee2dc5674d0d}\label{FSBL_8c_a47c8525495283e1b8740ee2dc5674d0d} 
+UINTN {\bfseries Int\+To\+Unicode\+String\+Manual} (IN INT64 Value, OUT CHAR16 \texorpdfstring{$\ast$}{*}String\+Buffer, IN UINTN Buffer\+Size)
+\item 
+\Hypertarget{FSBL_8c_ae96359aba50c0cb922e3d1b4c997f6e6}\label{FSBL_8c_ae96359aba50c0cb922e3d1b4c997f6e6} 
+SBCStatus {\bfseries SBC\+\_\+\+Boot\+Mode\+Factory} (VOID \texorpdfstring{$\ast$}{*}blkhnd, VOID \texorpdfstring{$\ast$}{*}Image\+Handle)
+\item 
+\Hypertarget{FSBL_8c_acb5527156ae084ba03140d299599c43a}\label{FSBL_8c_acb5527156ae084ba03140d299599c43a} 
+SBCStatus {\bfseries SBC\+\_\+\+Boot\+Mode\+Normal\+Andp\+Udate} (VOID \texorpdfstring{$\ast$}{*}blkhnd, VOID \texorpdfstring{$\ast$}{*}Image\+Handle, UINTN nrombank)
+\item 
+\Hypertarget{FSBL_8c_a9ccc16e77b84f5968ef05451b1249356}\label{FSBL_8c_a9ccc16e77b84f5968ef05451b1249356} 
+SBCStatus {\bfseries SBC\+\_\+\+Dice\+Keys\+Gen} (EFI\+\_\+\+HANDLE Image\+Handle, VOID \texorpdfstring{$\ast$}{*}p, UINTN normbank, UINTN bm)
+\item 
+\Hypertarget{FSBL_8c_a641794515ce2eb604b9195ce5dcd4cb0}\label{FSBL_8c_a641794515ce2eb604b9195ce5dcd4cb0} 
+static EFI\+\_\+\+STATUS {\bfseries SBC\+\_\+\+Drveri\+Init} (VOID)
+\item 
+\Hypertarget{FSBL_8c_a0babd4ee5e13e681a5a365bbe8d9425d}\label{FSBL_8c_a0babd4ee5e13e681a5a365bbe8d9425d} 
+SBCStatus {\bfseries SBC\+\_\+\+GRUB\+\_\+\+Load\+And\+Start} (EFI\+\_\+\+HANDLE Image\+Handle)
+\item 
+EFI\+\_\+\+STATUS EFIAPI \mbox{\hyperlink{FSBL_8c_a401c46fee055ed7105ab8be52b809167}{SBC\+\_\+\+Log\+Custom\+Print}} (OUT CHAR16 \texorpdfstring{$\ast$}{*}Out\+Format, IN CONST CHAR16 \texorpdfstring{$\ast$}{*}Format,...)
+\item 
+\Hypertarget{FSBL_8c_a7fd6cbceaa8b84bb90b7cf2db55d6668}\label{FSBL_8c_a7fd6cbceaa8b84bb90b7cf2db55d6668} 
+VOID {\bfseries SBC\+\_\+\+Log\+InternalX} (IN CHAR8 \texorpdfstring{$\ast$}{*}fmt,...)
+\item 
+\Hypertarget{FSBL_8c_a481dc9b06036113f3b4e3cf855e922db}\label{FSBL_8c_a481dc9b06036113f3b4e3cf855e922db} 
+UINTN {\bfseries SBC\+\_\+\+Log\+Unicode\+SPrint} (OUT CHAR16 \texorpdfstring{$\ast$}{*}Start\+Of\+Buffer, IN UINTN Buffer\+Size, IN CONST CHAR16 \texorpdfstring{$\ast$}{*}Format\+String,...)
+\item 
+VOID \mbox{\hyperlink{FSBL_8c_a8379a88c70f2dbbb34bc12655938b3f1}{SBC\+\_\+\+Shutdown\+System}} (VOID)
+\begin{DoxyCompactList}\small\item\em Perform a controlled system shutdown. \end{DoxyCompactList}\item 
+\Hypertarget{FSBL_8c_aa182ee1f19a67179b6a02491033881f7}\label{FSBL_8c_aa182ee1f19a67179b6a02491033881f7} 
+SBCStatus {\bfseries SBC\+\_\+\+SSBL\+\_\+\+Load\+And\+Start} (EFI\+\_\+\+HANDLE Image\+Handle)
+\item 
+\Hypertarget{FSBL_8c_a4543a5a55cc1edd61839589f5a06ccb6}\label{FSBL_8c_a4543a5a55cc1edd61839589f5a06ccb6} 
+EFI\+\_\+\+STATUS EFIAPI {\bfseries Uefi\+Main} (IN EFI\+\_\+\+HANDLE Image\+Handle, IN EFI\+\_\+\+SYSTEM\+\_\+\+TABLE \texorpdfstring{$\ast$}{*}System\+Table)
+\end{DoxyCompactItemize}
+\doxysubsubsection*{Variables}
+\begin{DoxyCompactItemize}
+\item 
+\Hypertarget{FSBL_8c_a6f5f70c2db15c2b1724ee2536dc833f1}\label{FSBL_8c_a6f5f70c2db15c2b1724ee2536dc833f1} 
+VOID \texorpdfstring{$\ast$}{*} {\bfseries h\+\_\+blkio}
+\item 
+\Hypertarget{FSBL_8c_a65335964f560bf79075b1fd256ed3482}\label{FSBL_8c_a65335964f560bf79075b1fd256ed3482} 
+static BOOLEAN {\bfseries is\+\_\+boot\+\_\+status}
+\item 
+\Hypertarget{FSBL_8c_a1b983779b7d8351fa5a7e83a368cd03e}\label{FSBL_8c_a1b983779b7d8351fa5a7e83a368cd03e} 
+CHAR16 {\bfseries mrgmsg} \mbox{[}8192\mbox{]}
+\item 
+\Hypertarget{FSBL_8c_ab00ce8253e9b096926c90ac993634d82}\label{FSBL_8c_ab00ce8253e9b096926c90ac993634d82} 
+EFI\+\_\+\+HANDLE {\bfseries sbc\+Img\+Handle}
+\item 
+\Hypertarget{FSBL_8c_a308a696c087fd090a864259ac5b922bd}\label{FSBL_8c_a308a696c087fd090a864259ac5b922bd} 
+UINTN {\bfseries sys\+\_\+end\+\_\+time} = 0\+ULL
+\item 
+\Hypertarget{FSBL_8c_adf8bd0e5cba3760b6e1372d7a7dfe853}\label{FSBL_8c_adf8bd0e5cba3760b6e1372d7a7dfe853} 
+UINTN {\bfseries sys\+\_\+ns\+\_\+var} = 0\+ULL
+\item 
+\Hypertarget{FSBL_8c_afd46a029b850cf05bf719d97499f1e9b}\label{FSBL_8c_afd46a029b850cf05bf719d97499f1e9b} 
+UINTN {\bfseries sys\+\_\+start\+\_\+time} = 0\+ULL
+\item 
+\Hypertarget{FSBL_8c_a9c9eb8a4d874251c138e92b1634fb073}\label{FSBL_8c_a9c9eb8a4d874251c138e92b1634fb073} 
+static \mbox{\hyperlink{structrawprt__hdr__t}{rawprt\+\_\+hdr\+\_\+t}} \texorpdfstring{$\ast$}{*} {\bfseries tmp\+\_\+prtheader}
+\end{DoxyCompactItemize}
+
+
+\doxysubsection{Detailed Description}
+Brief Description of UEFI My\+Hello\+World Detailed Description of UEFI My\+Hello\+World Copyright for UEFI My\+Hello\+World License for UEFI My\+Hello\+World 
+
+\doxysubsection{Function Documentation}
+\Hypertarget{FSBL_8c_a401c46fee055ed7105ab8be52b809167}\label{FSBL_8c_a401c46fee055ed7105ab8be52b809167} 
+\index{FSBL.c@{FSBL.c}!SBC\_LogCustomPrint@{SBC\_LogCustomPrint}}
+\index{SBC\_LogCustomPrint@{SBC\_LogCustomPrint}!FSBL.c@{FSBL.c}}
+\doxysubsubsection{\texorpdfstring{SBC\_LogCustomPrint()}{SBC\_LogCustomPrint()}}
+{\footnotesize\ttfamily EFI\+\_\+\+STATUS EFIAPI SBC\+\_\+\+Log\+Custom\+Print (\begin{DoxyParamCaption}\item[{OUT CHAR16 \texorpdfstring{$\ast$}{*}}]{Out\+Format,  }\item[{IN CONST CHAR16 \texorpdfstring{$\ast$}{*}}]{Format,  }\item[{}]{... }\end{DoxyParamCaption})}
+
+가변 인자를 받아 포맷된 유니코드 문자열을 콘솔에 출력하는 사용자 정의 함수입니다. 이 함수는 //\+Print\+Lib의 //\+Print() 함수와 유사하게 작동하지만, 간단한 포맷 지정자 (d, s)만 지원합니다.
+
+
+\begin{DoxyParams}{Parameters}
+{\em Format} & 유니코드 포맷 문자열입니다 (예\+: L"{}\+Hello \%s, Value\+: \%d\textbackslash{}n"{}). \\
+\hline
+{\em ...} & 포맷 문자열에 해당하는 가변 인자들입니다.\\
+\hline
+\end{DoxyParams}
+
+\begin{DoxyRetVals}{Return values}
+{\em EFI\+\_\+\+STATUS} & 출력 작업의 상태입니다. \\
+\hline
+\end{DoxyRetVals}
+\Hypertarget{FSBL_8c_a8379a88c70f2dbbb34bc12655938b3f1}\label{FSBL_8c_a8379a88c70f2dbbb34bc12655938b3f1} 
+\index{FSBL.c@{FSBL.c}!SBC\_ShutdownSystem@{SBC\_ShutdownSystem}}
+\index{SBC\_ShutdownSystem@{SBC\_ShutdownSystem}!FSBL.c@{FSBL.c}}
+\doxysubsubsection{\texorpdfstring{SBC\_ShutdownSystem()}{SBC\_ShutdownSystem()}}
+{\footnotesize\ttfamily VOID SBC\+\_\+\+Shutdown\+System (\begin{DoxyParamCaption}\item[{VOID}]{ }\end{DoxyParamCaption})\hspace{0.3cm}{\ttfamily [extern]}}
+
+
+
+Perform a controlled system shutdown. 
+
+
+\begin{DoxyRetVals}{Return values}
+{\em None} & \\
+\hline
+\end{DoxyRetVals}
+Here is the call graph for this function\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=209pt]{FSBL_8c_a8379a88c70f2dbbb34bc12655938b3f1_cgraph}
+\end{center}
+\end{figure}
+Here is the caller graph for this function\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=350pt]{FSBL_8c_a8379a88c70f2dbbb34bc12655938b3f1_icgraph}
+\end{center}
+\end{figure}

@@ -1,0 +1,7 @@
+<map id="SBC_LogPrint" name="SBC_LogPrint">
+<area shape="rect" id="Node000001" title="Print a formatted log message with metadata and variable arguments." alt="" coords="5,31,116,56"/>
+<area shape="rect" id="Node000002" href="$SBC__Log_8c.html#a4af24e4ae4d853d01fba2ed243a73b44" title=" " alt="" coords="199,5,318,31"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="116,34,186,25,186,30,117,39"/>
+<area shape="rect" id="Node000003" href="$SBC__Log_8c.html#ab4d1be704d67bc13aa943a4c82d96168" title=" " alt="" coords="164,55,353,80"/>
+<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="117,47,151,52,150,57,116,53"/>
+</map>

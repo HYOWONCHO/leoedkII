@@ -1,0 +1,7 @@
+<map id="SBC_ReadBootMode" name="SBC_ReadBootMode">
+<area shape="rect" id="Node000001" title="(Deprecated) Read system boot mode value." alt="" coords="5,31,160,56"/>
+<area shape="rect" id="Node000002" href="$SBC__FileCtrl_8c.html#ac368d49b64fe97802029056b3d91797e" title="Locate available EFI file system handles." alt="" coords="208,5,371,31"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="160,31,194,27,195,32,161,36"/>
+<area shape="rect" id="Node000003" href="$SBC__FileCtrl_8c.html#ac0aa9ae2f07a26de56eb5b3b0b76b06c" title="Read a file from a UEFI file system into a memory buffer." alt="" coords="232,55,347,80"/>
+<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="161,50,218,56,217,62,160,55"/>
+</map>

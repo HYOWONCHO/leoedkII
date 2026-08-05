@@ -1,0 +1,221 @@
+\doxysection{SBC\+\_\+\+Log.\+h}
+\hypertarget{SSBL_2SBC__Log_8h_source}{}\label{SSBL_2SBC__Log_8h_source}\index{Application/SSBL/SBC\_Log.h@{Application/SSBL/SBC\_Log.h}}
+
+\begin{DoxyCode}{0}
+\DoxyCodeLine{00001\ }
+\DoxyCodeLine{00010\ \textcolor{preprocessor}{\#ifndef\ \_\_SBCLOG\_\_}}
+\DoxyCodeLine{00011\ \textcolor{preprocessor}{\#define\ \_\_SBCLOG\_\_}}
+\DoxyCodeLine{00012\ }
+\DoxyCodeLine{00013\ \textcolor{preprocessor}{\#include\ <Library/DebugLib.h>}}
+\DoxyCodeLine{00014\ }
+\DoxyCodeLine{00015\ \textcolor{preprocessor}{\#include\ "{}SBC\_Timer.h"{}}}
+\DoxyCodeLine{00016\ }
+\DoxyCodeLine{00017\ \textcolor{preprocessor}{\#ifndef\ ARG\_UNUSED}}
+\DoxyCodeLine{00018\ \textcolor{preprocessor}{\#\ \ \ define\ ARG\_UNUSED\ \ \ \_\_attribute\_\_\ ((unused))}}
+\DoxyCodeLine{00019\ \textcolor{preprocessor}{\#endif}}
+\DoxyCodeLine{00020\ }
+\DoxyCodeLine{00021\ \textcolor{comment}{//\ ANSI\ escape\ code\ for\ red\ foreground,\ bold}}
+\DoxyCodeLine{00022\ \textcolor{preprocessor}{\#define\ ANSI\_COLOR\_RED\_BOLD\ "{}\(\backslash\)x1b[1;31m"{}}}
+\DoxyCodeLine{00023\ \textcolor{comment}{//\ ANSI\ escape\ code\ for\ green\ foreground}}
+\DoxyCodeLine{00024\ \textcolor{preprocessor}{\#define\ ANSI\_COLOR\_GREEN\ \ \ \ "{}\(\backslash\)x1b[32m"{}}}
+\DoxyCodeLine{00025\ \textcolor{comment}{//\ ANSI\ escape\ code\ to\ reset\ color\ and\ attributes}}
+\DoxyCodeLine{00026\ \textcolor{preprocessor}{\#define\ ANSI\_COLOR\_RESET\ \ \ \ "{}\(\backslash\)x1b[0m"{}}}
+\DoxyCodeLine{00027\ }
+\DoxyCodeLine{00028\ }
+\DoxyCodeLine{00029\ \textcolor{preprocessor}{\#define\ SYS\_LOG\_EVT\_VALDIATION\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ L"{}Validation"{}}}
+\DoxyCodeLine{00030\ \textcolor{preprocessor}{\#define\ SYS\_LOG\_EVT\_DETECTION\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ L"{}Detection"{}}}
+\DoxyCodeLine{00031\ \textcolor{preprocessor}{\#define\ SYS\_LOG\_HOST\_BOOT\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ L"{}AT\_BOOT"{}}}
+\DoxyCodeLine{00032\ \textcolor{preprocessor}{\#define\ SYS\_LOG\_APP\_NAME\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ L"{}SSBL"{}}}
+\DoxyCodeLine{00033\ \textcolor{preprocessor}{\#define\ SYS\_LOG\_CSC\_NAME\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ L"{}SAT"{}}}
+\DoxyCodeLine{00034\ }
+\DoxyCodeLine{00060\ \textcolor{keyword}{typedef}\ \textcolor{keyword}{enum}\ \{}
+\DoxyCodeLine{00061\ \ \ \ \ SBS\_LOG\_CMN\_PRIO\_ALERT\ \ \ \ \ \ \ \ \ \ \ \ \ \ =\ 185,}
+\DoxyCodeLine{00062\ \ \ \ \ SBC\_LOG\_CMN\_PRIO\_CRIT,\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ }
+\DoxyCodeLine{00063\ \ \ \ \ SBC\_LOG\_CMN\_PRIO\_ERR,}
+\DoxyCodeLine{00064\ \ \ \ \ SBC\_LOG\_CMN\_PRIO\_WRN,\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ }
+\DoxyCodeLine{00065\ \ \ \ \ SBC\_LOG\_CMN\_PRIO\_NOTICE,}
+\DoxyCodeLine{00066\ \ \ \ \ SBC\_LOG\_CMN\_PRIO\_INFO,}
+\DoxyCodeLine{00067\ \ \ \ \ SBC\_LOG\_CMN\_PRIO\_DBG}
+\DoxyCodeLine{00068\ \}t\_sbc\_syslog\_prio;}
+\DoxyCodeLine{00069\ }
+\DoxyCodeLine{00070\ \textcolor{preprocessor}{\#define\ SBC\_LOG\_FSBL\_APPNAME\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ L"{}FSBL"{}}}
+\DoxyCodeLine{00071\ \textcolor{preprocessor}{\#define\ SBC\_LOG\_SSBL\_APPNAME\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ SYS\_LOG\_APP\_NAME}}
+\DoxyCodeLine{00072\ }
+\DoxyCodeLine{00073\ \textcolor{preprocessor}{\#define\ SBC\_LOG\_HOSTNAME\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ L"{}N/A"{}}}
+\DoxyCodeLine{00074\ }
+\DoxyCodeLine{00075\ \textcolor{comment}{//\#define\ LINE\_LEN\ 16}}
+\DoxyCodeLine{00076\ }
+\DoxyCodeLine{00081\ \textcolor{keywordtype}{void}\ SBC\_mem\_print\_bin(}
+\DoxyCodeLine{00082\ \ \ \ \ CHAR8\ *title,\ \ \ }
+\DoxyCodeLine{00083\ \ \ \ \ UINT8\ *buffer,\ \ }
+\DoxyCodeLine{00084\ \ \ \ \ UINT32\ length\ \ \ }
+\DoxyCodeLine{00085\ );}
+\DoxyCodeLine{00086\ }
+\DoxyCodeLine{00092\ \textcolor{keywordtype}{void}\ SBC\_external\_mem\_print\_bin(}
+\DoxyCodeLine{00093\ \ \ \ \ \ \ \ \ CHAR8\ *title\ ,}
+\DoxyCodeLine{00094\ \ \ \ \ \ \ \ \ UINT8*\ buffer\ ,}
+\DoxyCodeLine{00095\ \ \ \ \ \ \ \ \ UINT32\ length\ }
+\DoxyCodeLine{00096\ \ \ \ \ \ \ \ \ );}
+\DoxyCodeLine{00097\ }
+\DoxyCodeLine{00098\ VOID\ SBC\_LogBoolean(BOOLEAN\ expression,\ CONST\ CHAR8\ *funcname,\ UINTN\ linenumber,\ }
+\DoxyCodeLine{00099\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ CONST\ CHAR8\ *filename,\ CONST\ CHAR8\ *description);}
+\DoxyCodeLine{00100\ }
+\DoxyCodeLine{00101\ }
+\DoxyCodeLine{00102\ VOID\ SBC\_LogMsg(CHAR8*\ logmsg,\ CONST\ CHAR8\ *funcname,\ UINTN\ linenumber,\ }
+\DoxyCodeLine{00103\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ CONST\ CHAR8\ *filename);}
+\DoxyCodeLine{00104\ }
+\DoxyCodeLine{00105\ \textcolor{preprocessor}{\#ifdef\ \_DEBUG\_PRINT\_ON\_}}
+\DoxyCodeLine{00106\ \textcolor{preprocessor}{\#define\ SBCLOGBOOLEAN(expression)\ \ \ \ \(\backslash\)}}
+\DoxyCodeLine{00107\ \textcolor{preprocessor}{\ \ SBC\_LogBoolean((expression),\ \_\_func\_\_,\ \_\_LINE\_\_\ ,\ \_\_FILE\_\_,\ \#expression)}}
+\DoxyCodeLine{00108\ }
+\DoxyCodeLine{00109\ \textcolor{preprocessor}{\#define\ SBCLOGMSG(logmsg)\ \(\backslash\)}}
+\DoxyCodeLine{00110\ \textcolor{preprocessor}{\ \ SBC\_LogMsg(\#logmsg,\ \_\_func\_\_,\ \_\_LINE\_\_\ ,\ \_\_FILE\_\_)}}
+\DoxyCodeLine{00111\ }
+\DoxyCodeLine{00112\ \textcolor{preprocessor}{\#define\ dprint(fmt,...)\ \(\backslash\)}}
+\DoxyCodeLine{00113\ \textcolor{preprocessor}{\ \ \ \ DEBUG((DEBUG\_INFO,\ "{}(\%a:\%d)\ :\ "{}fmt"{}\(\backslash\)n"{},\_\_FUNCTION\_\_,\ \_\_LINE\_\_,\#\#\_\_VA\_ARGS\_\_))}}
+\DoxyCodeLine{00114\ }
+\DoxyCodeLine{00115\ \textcolor{preprocessor}{\#define\ eprint(fmt,...)\ \(\backslash\)}}
+\DoxyCodeLine{00116\ \textcolor{preprocessor}{\ \ \ \ DEBUG((DEBUG\_ERROR,\ "{}(ERROR\ \%a:\%a:\%d)\ :\ "{}fmt"{}\(\backslash\)n"{},\_\_FILE\_\_,\_\_FUNCTION\_\_,\ \_\_LINE\_\_,\#\#\_\_VA\_ARGS\_\_))}}
+\DoxyCodeLine{00117\ }
+\DoxyCodeLine{00118\ }
+\DoxyCodeLine{00119\ \textcolor{preprocessor}{\#define\ intgreen\_dprint(fmt,...)\ \(\backslash\)}}
+\DoxyCodeLine{00120\ \textcolor{preprocessor}{\ \ \ \ Print(ANSI\_COLOR\_GREEN\ L"{}(\%a:\%d)\ :\ "{}fmt"{}\ \(\backslash\)n"{}ANSI\_COLOR\_RESET,\_\_FUNCTION\_\_,\ \_\_LINE\_\_,\#\#\_\_VA\_ARGS\_\_)}}
+\DoxyCodeLine{00121\ }
+\DoxyCodeLine{00122\ \textcolor{preprocessor}{\#define\ int\_dprint(fmt,...)\ \(\backslash\)}}
+\DoxyCodeLine{00123\ \textcolor{preprocessor}{\ \ \ \ Print(L"{}(\%a:\%d)\ :\ "{}fmt"{}\ \%a\(\backslash\)n"{},\ \_\_FUNCTION\_\_,\ \_\_LINE\_\_,\#\#\_\_VA\_ARGS\_\_)}}
+\DoxyCodeLine{00124\ }
+\DoxyCodeLine{00125\ \textcolor{preprocessor}{\#define\ int\_eprint(fmt,...)\ \(\backslash\)}}
+\DoxyCodeLine{00126\ \textcolor{preprocessor}{\ \ \ \ Print(ANSI\_COLOR\_RED\_BOLD\ L"{}(\%a:\%d)\ :\ "{}fmt"{}\ \(\backslash\)n"{}\ ANSI\_COLOR\_RESET,\ \_\_FUNCTION\_\_,\ \_\_LINE\_\_,\#\#\_\_VA\_ARGS\_\_)}}
+\DoxyCodeLine{00127\ \textcolor{preprocessor}{\#else}}
+\DoxyCodeLine{00128\ \textcolor{comment}{//\#error\ "{}Use\ Case\ test"{}}}
+\DoxyCodeLine{00129\ \textcolor{preprocessor}{\#define\ SBCLOGBOOLEAN(expression)\ \ \ \ }}
+\DoxyCodeLine{00130\ }
+\DoxyCodeLine{00131\ \textcolor{preprocessor}{\#define\ SBCLOGMSG(logmsg)\ }}
+\DoxyCodeLine{00132\ }
+\DoxyCodeLine{00133\ \textcolor{preprocessor}{\#define\ dprint(fmt,...)\ }}
+\DoxyCodeLine{00134\ }
+\DoxyCodeLine{00135\ \textcolor{preprocessor}{\#define\ eprint(fmt,...)\ }}
+\DoxyCodeLine{00136\ }
+\DoxyCodeLine{00137\ \textcolor{preprocessor}{\#define\ intgreen\_dprint(fmt,...)\ }}
+\DoxyCodeLine{00138\ }
+\DoxyCodeLine{00139\ \textcolor{preprocessor}{\#define\ int\_dprint(fmt,...)\ }}
+\DoxyCodeLine{00140\ }
+\DoxyCodeLine{00141\ \textcolor{preprocessor}{\#define\ int\_eprint(fmt,...)\ }}
+\DoxyCodeLine{00142\ \textcolor{preprocessor}{\#endif}}
+\DoxyCodeLine{00143\ }
+\DoxyCodeLine{00144\ \textcolor{preprocessor}{\#ifdef\ \_USECASE\_TEST\_}}
+\DoxyCodeLine{00145\ \textcolor{preprocessor}{\#define\ \_ucprint(fmt,...)\ \(\backslash\)}}
+\DoxyCodeLine{00146\ \textcolor{preprocessor}{\ \ \ \ DEBUG((DEBUG\_INFO,\ "{}(\%a:\%d)\ :\ "{}fmt"{}\(\backslash\)n"{},\_\_FUNCTION\_\_,\ \_\_LINE\_\_,\#\#\_\_VA\_ARGS\_\_))}}
+\DoxyCodeLine{00147\ }
+\DoxyCodeLine{00148\ \textcolor{keywordtype}{void}\ \_uc\_mem\_print\_bin(}
+\DoxyCodeLine{00149\ \ \ \ \ \ \ \ \ CHAR8\ *title\ ,}
+\DoxyCodeLine{00150\ \ \ \ \ \ \ \ \ UINT8*\ buffer\ ,}
+\DoxyCodeLine{00151\ \ \ \ \ \ \ \ \ UINT32\ length\ }
+\DoxyCodeLine{00152\ \ \ \ \ \ \ \ \ );}
+\DoxyCodeLine{00153\ \textcolor{preprocessor}{\#else}}
+\DoxyCodeLine{00154\ \textcolor{preprocessor}{\#define\ \_ucprint(fmt,...)\ }}
+\DoxyCodeLine{00155\ \textcolor{preprocessor}{\#endif}}
+\DoxyCodeLine{00156\ \textcolor{comment}{/*}}
+\DoxyCodeLine{00157\ \textcolor{comment}{extern\ VOID\ \ SBC\_LogWrite(UINT32\ prio,\ CHAR16\ *ver,\ CHAR16\ *host,\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ }}
+\DoxyCodeLine{00158\ \textcolor{comment}{\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ CHAR16\ *appname,\ CHAR16\ *csc,\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ }}
+\DoxyCodeLine{00159\ \textcolor{comment}{\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ UINT32\ sfrid,\ CHAR16\ *evtype,\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ }}
+\DoxyCodeLine{00160\ \textcolor{comment}{\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ CONST\ CHAR16\ *format,\ ...);\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ }}
+\DoxyCodeLine{00161\ \textcolor{comment}{\#define\ sbc\_err\_syslog(prio,\ ver,\ host,\ appname,\ csc,\ sfrid,\ evtype,\ fmt,\ ...)\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \(\backslash\)}}
+\DoxyCodeLine{00162\ \textcolor{comment}{\ \ \ \ SBC\_LogWrite(prio,\ ver,\ host,\ appnmae,\ csc,\ sfrid,\ evtype,\ fmt,\ \#\#\_\_VA\_ARGS\_\_)\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ }}
+\DoxyCodeLine{00163\ \textcolor{comment}{*/}}
+\DoxyCodeLine{00164\ }
+\DoxyCodeLine{00165\ UINTN}
+\DoxyCodeLine{00166\ AsciiPrintToBuffer\ (}
+\DoxyCodeLine{00167\ \ \ IN\ \ CONST\ CHAR8\ *Format,}
+\DoxyCodeLine{00168\ \ \ ...}
+\DoxyCodeLine{00169\ \ \ );}
+\DoxyCodeLine{00170\ }
+\DoxyCodeLine{00171\ UINTN\ SBC\_LogFmtOut(OUT\ CHAR16\ *outbuf,\ IN\ CONST\ CHAR16\ *fmt,\ ...);}
+\DoxyCodeLine{00172\ UINTN\ SBC\_LogFmtOutNoraml(IN\ CONST\ CHAR16\ *fmt,\ ...);}
+\DoxyCodeLine{00173\ EFI\_STATUS\ SBC\_CustomPrint\ (}
+\DoxyCodeLine{00174\ \ \ IN\ CONST\ CHAR16\ *Format,}
+\DoxyCodeLine{00175\ \ \ ...}
+\DoxyCodeLine{00176\ \ \ );}
+\DoxyCodeLine{00177\ }
+\DoxyCodeLine{00178\ }
+\DoxyCodeLine{00179\ EFI\_STATUS}
+\DoxyCodeLine{00180\ EFIAPI}
+\DoxyCodeLine{00181\ \mbox{\hyperlink{FSBL_8c_a401c46fee055ed7105ab8be52b809167}{SBC\_LogCustomPrint}}\ (}
+\DoxyCodeLine{00182\ \ \ OUT\ CHAR16\ *OutFormat,}
+\DoxyCodeLine{00183\ \ \ IN\ CONST\ CHAR16\ *Format,}
+\DoxyCodeLine{00184\ \ \ ...}
+\DoxyCodeLine{00185\ \ \ );}
+\DoxyCodeLine{00186\ }
+\DoxyCodeLine{00187\ \textcolor{keyword}{extern}\ CHAR16\ mrgmsg[8192];\ }
+\DoxyCodeLine{00188\ }
+\DoxyCodeLine{00189\ \textcolor{comment}{//CHAR16\ *SBC\_LogMrg(CONST\ CHAR16\ *fmt,\ ...);}}
+\DoxyCodeLine{00190\ }
+\DoxyCodeLine{00220\ VOID\ SBC\_LogPrint(}
+\DoxyCodeLine{00221\ \ \ \ \ CONST\ CHAR16\ *func,\ \ \ }
+\DoxyCodeLine{00222\ \ \ \ \ UINT32\ funcline,\ \ \ \ \ \ }
+\DoxyCodeLine{00223\ \ \ \ \ UINT32\ prio,\ \ \ \ \ \ \ \ \ \ }
+\DoxyCodeLine{00224\ \ \ \ \ UINT32\ ver,\ \ \ \ \ \ \ \ \ \ \ }
+\DoxyCodeLine{00225\ \ \ \ \ CHAR16\ *host,\ \ \ \ \ \ \ \ \ }
+\DoxyCodeLine{00226\ \ \ \ \ CHAR16\ *appname,\ \ \ \ \ \ }
+\DoxyCodeLine{00227\ \ \ \ \ CHAR16\ *csc,\ \ \ \ \ \ \ \ \ \ }
+\DoxyCodeLine{00228\ \ \ \ \ UINT32\ sfrid,\ \ \ \ \ \ \ \ \ }
+\DoxyCodeLine{00229\ \ \ \ \ CHAR16\ *evtype,\ \ \ \ \ \ \ }
+\DoxyCodeLine{00230\ \ \ \ \ CHAR16\ *format,\ \ \ \ \ \ \ }
+\DoxyCodeLine{00231\ \ \ \ \ ...}
+\DoxyCodeLine{00232\ );}
+\DoxyCodeLine{00233\ }
+\DoxyCodeLine{00234\ }
+\DoxyCodeLine{00268\ EFI\_STATUS\ SBC\_BuildHexFormattedMessage(}
+\DoxyCodeLine{00269\ \ \ \ \ IN\ \ CONST\ VOID\ \ *PubKey,}
+\DoxyCodeLine{00270\ \ \ \ \ IN\ \ UINTN\ \ \ \ \ \ \ \ PubKeySize,}
+\DoxyCodeLine{00271\ \ \ \ \ IN\ \ CONST\ CHAR16\ *FormatString,}
+\DoxyCodeLine{00272\ \ \ \ \ OUT\ CHAR16\ \ \ \ \ \ *OutMsg,}
+\DoxyCodeLine{00273\ \ \ \ \ IN\ \ UINTN\ \ \ \ \ \ \ \ OutMsgBytes}
+\DoxyCodeLine{00274\ );}
+\DoxyCodeLine{00275\ }
+\DoxyCodeLine{00276\ }
+\DoxyCodeLine{00277\ }
+\DoxyCodeLine{00292\ UINTN\ SBC\_LogHexToStrChar8(\ UINT8\ *data,\ UINTN\ len,\ CHAR8\ *out,\ UINTN\ out\_cap,\ BOOLEAN\ loweracse,\ CHAR8\ sep);}
+\DoxyCodeLine{00293\ }
+\DoxyCodeLine{00308\ UINTN\ SBC\_LogHexToStrChar16(\ UINT8\ *data,\ UINTN\ len,\ CHAR16\ *out,\ UINTN\ out\_cap,\ BOOLEAN\ loweracse,\ CHAR16\ sep);}
+\DoxyCodeLine{00309\ }
+\DoxyCodeLine{00310\ VOID\ SBC\_LogHexKeyConvToChar16(VOID\ *out,\ VOID\ *msgbuf,\ VOID\ *keymsg);}
+\DoxyCodeLine{00311\ }
+\DoxyCodeLine{00312\ \textcolor{preprocessor}{\#define\ sbc\_err\_sysprn(prio,\ ver,\ host,\ appname,\ csc,\ sfrid,\ evtype,\ fmt,...)\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \(\backslash\)}}
+\DoxyCodeLine{00313\ \textcolor{preprocessor}{\ \ \ \ SBC\_LogPrint((CONST\ CHAR16\ *)\_\_FUNCTION\_\_,\ (UINT32)\_\_LINE\_\_,\ prio,\ ver,\ host,\ appname,\ csc,\ sfrid,\ evtype,\ fmt,\ \#\#\_\_VA\_ARGS\_\_)}}
+\DoxyCodeLine{00314\ }
+\DoxyCodeLine{00315\ \textcolor{keyword}{typedef}\ \textcolor{keyword}{enum}\ \{}
+\DoxyCodeLine{00316\ \ \ \ \ LOG\_LEVEL\_DEBUG,\ \ \ \ \textcolor{comment}{//\ 디버그\ 정보\ (가장\ 상세)}}
+\DoxyCodeLine{00317\ \ \ \ \ LOG\_LEVEL\_INFO,\ \ \ \ \ \textcolor{comment}{//\ 일반\ 정보}}
+\DoxyCodeLine{00318\ \ \ \ \ LOG\_LEVEL\_NOTICE,\ \ \ \textcolor{comment}{//\ 일반적이지만\ 중요한\ 조건}}
+\DoxyCodeLine{00319\ \ \ \ \ LOG\_LEVEL\_WARNING,\ \ \textcolor{comment}{//\ 경고\ 조건}}
+\DoxyCodeLine{00320\ \ \ \ \ LOG\_LEVEL\_ERROR,\ \ \ \ \textcolor{comment}{//\ 에러\ 조건}}
+\DoxyCodeLine{00321\ \ \ \ \ LOG\_LEVEL\_CRITICAL,\ \textcolor{comment}{//\ 치명적인\ 에러\ (시스템\ 중단\ 가능성)}}
+\DoxyCodeLine{00322\ \ \ \ \ LOG\_LEVEL\_ALERT,\ \ \ \ \textcolor{comment}{//\ 즉시\ 조치가\ 필요한\ 조건}}
+\DoxyCodeLine{00323\ \ \ \ \ LOG\_LEVEL\_EMERGENCY\ \textcolor{comment}{//\ 시스템\ 사용\ 불가\ (가장\ 심각)}}
+\DoxyCodeLine{00324\ \}\ LOG\_LEVEL;}
+\DoxyCodeLine{00325\ }
+\DoxyCodeLine{00326\ \textcolor{comment}{//}}
+\DoxyCodeLine{00327\ \textcolor{comment}{//\ 이벤트/카테고리\ 정의}}
+\DoxyCodeLine{00328\ \textcolor{comment}{//\ 로그\ 메시지가\ 어떤\ 종류의\ 이벤트에\ 속하는지\ 나타냅니다.}}
+\DoxyCodeLine{00329\ \textcolor{comment}{//}}
+\DoxyCodeLine{00330\ \textcolor{keyword}{typedef}\ \textcolor{keyword}{enum}\ \{}
+\DoxyCodeLine{00331\ \ \ \ \ LOG\_EVENT\_GENERIC,\ \ \ \ \ \ \textcolor{comment}{//\ 일반\ 이벤트}}
+\DoxyCodeLine{00332\ \ \ \ \ LOG\_EVENT\_BOOT\_INIT,\ \ \ \ \textcolor{comment}{//\ 부팅\ 초기화}}
+\DoxyCodeLine{00333\ \ \ \ \ LOG\_EVENT\_DRIVER\_LOAD,\ \ \textcolor{comment}{//\ 드라이버\ 로드}}
+\DoxyCodeLine{00334\ \ \ \ \ LOG\_EVENT\_FS\_OPERATION,\ \textcolor{comment}{//\ 파일\ 시스템\ 작업}}
+\DoxyCodeLine{00335\ \ \ \ \ LOG\_EVENT\_NETWORK,\ \ \ \ \ \ \textcolor{comment}{//\ 네트워크\ 관련}}
+\DoxyCodeLine{00336\ \ \ \ \ LOG\_EVENT\_SECURITY,\ \ \ \ \ \textcolor{comment}{//\ 보안\ 관련}}
+\DoxyCodeLine{00337\ \ \ \ \ LOG\_EVENT\_CONFIG,\ \ \ \ \ \ \ \textcolor{comment}{//\ 설정\ 관련}}
+\DoxyCodeLine{00338\ \ \ \ \ LOG\_EVENT\_NVRAM,\ \ \ \ \ \ \ \ \textcolor{comment}{//\ NVRAM\ 관련}}
+\DoxyCodeLine{00339\ \ \ \ \ LOG\_EVENT\_REBOOT,\ \ \ \ \ \ \ \textcolor{comment}{//\ 재부팅\ 관련}}
+\DoxyCodeLine{00340\ \ \ \ \ \textcolor{comment}{//\ ...\ 필요한\ 이벤트\ 추가}}
+\DoxyCodeLine{00341\ \}\ LOG\_EVENT;}
+\DoxyCodeLine{00342\ }
+\DoxyCodeLine{00343\ VOID\ UefiLog(LOG\_LEVEL\ Level,\ LOG\_EVENT\ Event,\ CONST\ CHAR16\ *Format,\ ...);}
+\DoxyCodeLine{00344\ }
+\DoxyCodeLine{00352\ VOID\ SBC\_LogElapsedTime(\textcolor{keyword}{const}\ CHAR16\ *Tag,\ UINTN\ Ns);}
+\DoxyCodeLine{00353\ \textcolor{preprocessor}{\#endif}}
+\DoxyCodeLine{00354\ }
+
+\end{DoxyCode}

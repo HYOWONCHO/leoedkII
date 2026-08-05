@@ -1,0 +1,31 @@
+\doxysection{SBC\+\_\+\+System\+Control.\+h}
+\hypertarget{SBC__SystemControl_8h_source}{}\label{SBC__SystemControl_8h_source}
+\begin{DoxyCode}{0}
+\DoxyCodeLine{00001\ }
+\DoxyCodeLine{00010\ \textcolor{preprocessor}{\#ifndef\ \_\_SYSTEM\_CONTROL\_H}}
+\DoxyCodeLine{00011\ \textcolor{preprocessor}{\#define\ \_\_SYSTEM\_CONTROL\_H}}
+\DoxyCodeLine{00012\ \textcolor{preprocessor}{\#include\ "{}SBC\_ErrorType.h"{}}}
+\DoxyCodeLine{00013\ }
+\DoxyCodeLine{00014\ }
+\DoxyCodeLine{00015\ \textcolor{preprocessor}{\#pragma\ pack(push,\ 1)}}
+\DoxyCodeLine{00054\ \textcolor{keyword}{typedef}\ \textcolor{keyword}{struct\ }\mbox{\hyperlink{struct__sb__rcv__proc__t}{\_sb\_rcv\_proc\_t}}\ \{}
+\DoxyCodeLine{00055\ \ \ \ \ VOID\ *\mbox{\hyperlink{struct__sb__rcv__proc__t_a78929480e09260b8d9a3f32a7a7eb9a6}{migkey}};\ \ \ \ }
+\DoxyCodeLine{00056\ \ \ \ \ VOID\ *\mbox{\hyperlink{struct__sb__rcv__proc__t_a7c79123fad69673ed1217bcd555d7aa1}{osid}};\ \ \ \ \ \ }
+\DoxyCodeLine{00057\ \ \ \ \ VOID\ *\mbox{\hyperlink{struct__sb__rcv__proc__t_ad412673864625684967be9e696f424d3}{baseans}};\ \ \ }
+\DoxyCodeLine{00058\ \ \ \ \ VOID\ *\mbox{\hyperlink{struct__sb__rcv__proc__t_a725a0a75ad493b8175f122f71505d6cf}{handle}};\ \ \ \ }
+\DoxyCodeLine{00059\ \ \ \ \ VOID\ *\mbox{\hyperlink{struct__sb__rcv__proc__t_a6003634df4e3a51f4e9a1220927760d6}{whitels}};\ \ \ }
+\DoxyCodeLine{00060\ \}\ \mbox{\hyperlink{structsb__rcv__proc__t}{sb\_rcv\_proc\_t}};}
+\DoxyCodeLine{00061\ }
+\DoxyCodeLine{00062\ \textcolor{preprocessor}{\#pragma\ pack(pop)}}
+\DoxyCodeLine{00063\ }
+\DoxyCodeLine{00064\ }
+\DoxyCodeLine{00071\ VOID\ \mbox{\hyperlink{SBC__SystemControl_8c_a8379a88c70f2dbbb34bc12655938b3f1}{SBC\_ShutdownSystem}}(VOID);}
+\DoxyCodeLine{00072\ }
+\DoxyCodeLine{00079\ VOID\ \mbox{\hyperlink{SBC__SystemControl_8c_a6a25f1faabba6a7b00d215d971016253}{SBC\_RebootSystem}}(VOID);}
+\DoxyCodeLine{00080\ }
+\DoxyCodeLine{00081\ }
+\DoxyCodeLine{00097\ SBCStatus\ \mbox{\hyperlink{SBC__SystemControl_8c_a7fb21fbb14d2c0fd55b69537f919b9e6}{SBC\_SecureBootCheck}}(VOID\ *priv);}
+\DoxyCodeLine{00098\ }
+\DoxyCodeLine{00099\ \textcolor{preprocessor}{\#endif}}
+
+\end{DoxyCode}

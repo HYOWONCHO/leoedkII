@@ -1,0 +1,1021 @@
+\doxysection{cmocka.\+h}
+\hypertarget{cmocka_8h_source}{}\label{cmocka_8h_source}
+\begin{DoxyCode}{0}
+\DoxyCodeLine{00001\ \textcolor{comment}{/*}}
+\DoxyCodeLine{00002\ \textcolor{comment}{\ *\ Copyright\ 2008\ Google\ Inc.}}
+\DoxyCodeLine{00003\ \textcolor{comment}{\ *\ Copyright\ 2014-\/2018\ Andreas\ Schneider\ <asn@cryptomilk.org>}}
+\DoxyCodeLine{00004\ \textcolor{comment}{\ *}}
+\DoxyCodeLine{00005\ \textcolor{comment}{\ *\ Licensed\ under\ the\ Apache\ License,\ Version\ 2.0\ (the\ "{}License"{});}}
+\DoxyCodeLine{00006\ \textcolor{comment}{\ *\ you\ may\ not\ use\ this\ file\ except\ in\ compliance\ with\ the\ License.}}
+\DoxyCodeLine{00007\ \textcolor{comment}{\ *\ You\ may\ obtain\ a\ copy\ of\ the\ License\ at}}
+\DoxyCodeLine{00008\ \textcolor{comment}{\ *}}
+\DoxyCodeLine{00009\ \textcolor{comment}{\ *\ http://www.apache.org/licenses/LICENSE-\/2.0}}
+\DoxyCodeLine{00010\ \textcolor{comment}{\ *}}
+\DoxyCodeLine{00011\ \textcolor{comment}{\ *\ Unless\ required\ by\ applicable\ law\ or\ agreed\ to\ in\ writing,\ software}}
+\DoxyCodeLine{00012\ \textcolor{comment}{\ *\ distributed\ under\ the\ License\ is\ distributed\ on\ an\ "{}AS\ IS"{}\ BASIS,}}
+\DoxyCodeLine{00013\ \textcolor{comment}{\ *\ WITHOUT\ WARRANTIES\ OR\ CONDITIONS\ OF\ ANY\ KIND,\ either\ express\ or\ implied.}}
+\DoxyCodeLine{00014\ \textcolor{comment}{\ *\ See\ the\ License\ for\ the\ specific\ language\ governing\ permissions\ and}}
+\DoxyCodeLine{00015\ \textcolor{comment}{\ *\ limitations\ under\ the\ License.}}
+\DoxyCodeLine{00016\ \textcolor{comment}{\ */}}
+\DoxyCodeLine{00017\ \textcolor{preprocessor}{\#ifndef\ CMOCKA\_H\_}}
+\DoxyCodeLine{00018\ \textcolor{preprocessor}{\#define\ CMOCKA\_H\_}}
+\DoxyCodeLine{00019\ }
+\DoxyCodeLine{00020\ \textcolor{preprocessor}{\#ifdef\ \_WIN32}}
+\DoxyCodeLine{00021\ \textcolor{preprocessor}{\#\ ifdef\ \_MSC\_VER}}
+\DoxyCodeLine{00022\ }
+\DoxyCodeLine{00023\ \textcolor{preprocessor}{\#define\ \_\_func\_\_\ \_\_FUNCTION\_\_}}
+\DoxyCodeLine{00024\ }
+\DoxyCodeLine{00025\ \textcolor{preprocessor}{\#\ ifndef\ inline}}
+\DoxyCodeLine{00026\ \textcolor{preprocessor}{\#define\ inline\ \_\_inline}}
+\DoxyCodeLine{00027\ \textcolor{preprocessor}{\#\ endif\ }\textcolor{comment}{/*\ inline\ */}\textcolor{preprocessor}{}}
+\DoxyCodeLine{00028\ }
+\DoxyCodeLine{00029\ \textcolor{preprocessor}{\#\ \ if\ \_MSC\_VER\ <\ 1500}}
+\DoxyCodeLine{00030\ \textcolor{preprocessor}{\#\ \ \ ifdef\ \_\_cplusplus}}
+\DoxyCodeLine{00031\ \textcolor{keyword}{extern}\ \textcolor{stringliteral}{"{}C"{}}\ \{}
+\DoxyCodeLine{00032\ \textcolor{preprocessor}{\#\ \ \ endif\ \ \ }\textcolor{comment}{/*\ \_\_cplusplus\ */}\textcolor{preprocessor}{}}
+\DoxyCodeLine{00033\ \textcolor{keywordtype}{int}\ \_\_stdcall\ IsDebuggerPresent();}
+\DoxyCodeLine{00034\ \textcolor{preprocessor}{\#\ \ \ ifdef\ \_\_cplusplus}}
+\DoxyCodeLine{00035\ \}\ \textcolor{comment}{/*\ extern\ "{}C"{}\ */}}
+\DoxyCodeLine{00036\ \textcolor{preprocessor}{\#\ \ \ endif\ \ \ }\textcolor{comment}{/*\ \_\_cplusplus\ */}\textcolor{preprocessor}{}}
+\DoxyCodeLine{00037\ \textcolor{preprocessor}{\#\ \ endif\ \ }\textcolor{comment}{/*\ \_MSC\_VER\ <\ 1500\ */}\textcolor{preprocessor}{}}
+\DoxyCodeLine{00038\ \textcolor{preprocessor}{\#\ endif\ }\textcolor{comment}{/*\ \_MSC\_VER\ */}\textcolor{preprocessor}{}}
+\DoxyCodeLine{00039\ \textcolor{preprocessor}{\#endif\ \ }\textcolor{comment}{/*\ \_WIN32\ */}\textcolor{preprocessor}{}}
+\DoxyCodeLine{00040\ }
+\DoxyCodeLine{00059\ \textcolor{comment}{/*\ If\ \_\_WORDSIZE\ is\ not\ set,\ try\ to\ figure\ it\ out\ and\ default\ to\ 32\ bit.\ */}}
+\DoxyCodeLine{00060\ \textcolor{preprocessor}{\#ifndef\ \_\_WORDSIZE}}
+\DoxyCodeLine{00061\ \textcolor{preprocessor}{\#\ if\ (defined(\_\_x86\_64\_\_)\ \&\&\ !defined(\_\_ILP32\_\_))\ ||\ defined(\_\_sparc\_v9\_\_)\ ||\ defined(\_\_sparcv9)}}
+\DoxyCodeLine{00062\ \textcolor{preprocessor}{\#\ \ define\ \_\_WORDSIZE\ 64}}
+\DoxyCodeLine{00063\ \textcolor{preprocessor}{\#\ else}}
+\DoxyCodeLine{00064\ \textcolor{preprocessor}{\#\ \ define\ \_\_WORDSIZE\ 32}}
+\DoxyCodeLine{00065\ \textcolor{preprocessor}{\#\ endif}}
+\DoxyCodeLine{00066\ \textcolor{preprocessor}{\#endif}}
+\DoxyCodeLine{00067\ }
+\DoxyCodeLine{00068\ \textcolor{preprocessor}{\#ifdef\ DOXYGEN}}
+\DoxyCodeLine{00073\ \textcolor{keyword}{typedef}\ uintmax\_t\ LargestIntegralType;}
+\DoxyCodeLine{00074\ \textcolor{preprocessor}{\#else\ }\textcolor{comment}{/*\ DOXGEN\ */}\textcolor{preprocessor}{}}
+\DoxyCodeLine{00075\ \textcolor{preprocessor}{\#ifndef\ LargestIntegralType}}
+\DoxyCodeLine{00076\ \textcolor{preprocessor}{\#\ if\ \_\_WORDSIZE\ ==\ 64\ \&\&\ !defined(\_WIN64)}}
+\DoxyCodeLine{00077\ \textcolor{preprocessor}{\#\ \ define\ LargestIntegralType\ unsigned\ long\ int}}
+\DoxyCodeLine{00078\ \textcolor{preprocessor}{\#\ else}}
+\DoxyCodeLine{00079\ \textcolor{preprocessor}{\#\ \ define\ LargestIntegralType\ unsigned\ long\ long\ int}}
+\DoxyCodeLine{00080\ \textcolor{preprocessor}{\#\ endif}}
+\DoxyCodeLine{00081\ \textcolor{preprocessor}{\#endif\ }\textcolor{comment}{/*\ LargestIntegralType\ */}\textcolor{preprocessor}{}}
+\DoxyCodeLine{00082\ \textcolor{preprocessor}{\#endif\ }\textcolor{comment}{/*\ DOXYGEN\ */}\textcolor{preprocessor}{}}
+\DoxyCodeLine{00083\ }
+\DoxyCodeLine{00084\ \textcolor{comment}{/*\ Printf\ format\ used\ to\ display\ LargestIntegralType\ as\ a\ hexidecimal.\ */}}
+\DoxyCodeLine{00085\ \textcolor{preprocessor}{\#ifndef\ LargestIntegralTypePrintfFormat}}
+\DoxyCodeLine{00086\ \textcolor{preprocessor}{\#\ ifdef\ \_WIN32}}
+\DoxyCodeLine{00087\ \textcolor{preprocessor}{\#\ \ define\ LargestIntegralTypePrintfFormat\ "{}0x\%I64x"{}}}
+\DoxyCodeLine{00088\ \textcolor{preprocessor}{\#\ else}}
+\DoxyCodeLine{00089\ \textcolor{preprocessor}{\#\ \ if\ \_\_WORDSIZE\ ==\ 64}}
+\DoxyCodeLine{00090\ \textcolor{preprocessor}{\#\ \ \ define\ LargestIntegralTypePrintfFormat\ "{}\%\#lx"{}}}
+\DoxyCodeLine{00091\ \textcolor{preprocessor}{\#\ \ else}}
+\DoxyCodeLine{00092\ \textcolor{preprocessor}{\#\ \ \ define\ LargestIntegralTypePrintfFormat\ "{}\%\#llx"{}}}
+\DoxyCodeLine{00093\ \textcolor{preprocessor}{\#\ \ endif}}
+\DoxyCodeLine{00094\ \textcolor{preprocessor}{\#\ endif\ }\textcolor{comment}{/*\ \_WIN32\ */}\textcolor{preprocessor}{}}
+\DoxyCodeLine{00095\ \textcolor{preprocessor}{\#endif\ }\textcolor{comment}{/*\ LargestIntegralTypePrintfFormat\ */}\textcolor{preprocessor}{}}
+\DoxyCodeLine{00096\ }
+\DoxyCodeLine{00097\ \textcolor{comment}{/*\ Printf\ format\ used\ to\ display\ LargestIntegralType\ as\ a\ decimal.\ */}}
+\DoxyCodeLine{00098\ \textcolor{preprocessor}{\#ifndef\ LargestIntegralTypePrintfFormatDecimal}}
+\DoxyCodeLine{00099\ \textcolor{preprocessor}{\#\ ifdef\ \_WIN32}}
+\DoxyCodeLine{00100\ \textcolor{preprocessor}{\#\ \ define\ LargestIntegralTypePrintfFormatDecimal\ "{}\%I64u"{}}}
+\DoxyCodeLine{00101\ \textcolor{preprocessor}{\#\ else}}
+\DoxyCodeLine{00102\ \textcolor{preprocessor}{\#\ \ if\ \_\_WORDSIZE\ ==\ 64}}
+\DoxyCodeLine{00103\ \textcolor{preprocessor}{\#\ \ \ define\ LargestIntegralTypePrintfFormatDecimal\ "{}\%lu"{}}}
+\DoxyCodeLine{00104\ \textcolor{preprocessor}{\#\ \ else}}
+\DoxyCodeLine{00105\ \textcolor{preprocessor}{\#\ \ \ define\ LargestIntegralTypePrintfFormatDecimal\ "{}\%llu"{}}}
+\DoxyCodeLine{00106\ \textcolor{preprocessor}{\#\ \ endif}}
+\DoxyCodeLine{00107\ \textcolor{preprocessor}{\#\ endif\ }\textcolor{comment}{/*\ \_WIN32\ */}\textcolor{preprocessor}{}}
+\DoxyCodeLine{00108\ \textcolor{preprocessor}{\#endif\ }\textcolor{comment}{/*\ LargestIntegralTypePrintfFormat\ */}\textcolor{preprocessor}{}}
+\DoxyCodeLine{00109\ }
+\DoxyCodeLine{00110\ \textcolor{preprocessor}{\#ifndef\ FloatPrintfFormat}}
+\DoxyCodeLine{00111\ \textcolor{preprocessor}{\#\ define\ FloatPrintfFormat\ "{}\%f"{}}}
+\DoxyCodeLine{00112\ \textcolor{preprocessor}{\#endif\ }\textcolor{comment}{/*\ FloatPrintfFormat\ */}\textcolor{preprocessor}{}}
+\DoxyCodeLine{00113\ }
+\DoxyCodeLine{00114\ \textcolor{preprocessor}{\#ifndef\ DoublePrintfFormat}}
+\DoxyCodeLine{00115\ \textcolor{preprocessor}{\#\ define\ DoublePrintfFormat\ "{}\%f"{}}}
+\DoxyCodeLine{00116\ \textcolor{preprocessor}{\#endif\ }\textcolor{comment}{/*\ DoublePrintfFormat\ */}\textcolor{preprocessor}{}}
+\DoxyCodeLine{00117\ }
+\DoxyCodeLine{00118\ \textcolor{comment}{/*\ Perform\ an\ unsigned\ cast\ to\ LargestIntegralType.\ */}}
+\DoxyCodeLine{00119\ \textcolor{preprocessor}{\#define\ cast\_to\_largest\_integral\_type(value)\ \(\backslash\)}}
+\DoxyCodeLine{00120\ \textcolor{preprocessor}{\ \ \ \ ((LargestIntegralType)(value))}}
+\DoxyCodeLine{00121\ }
+\DoxyCodeLine{00122\ \textcolor{comment}{/*\ Smallest\ integral\ type\ capable\ of\ holding\ a\ pointer.\ */}}
+\DoxyCodeLine{00123\ \textcolor{preprocessor}{\#if\ !defined(\_UINTPTR\_T)\ \&\&\ !defined(\_UINTPTR\_T\_DEFINED)\ \&\&\ !defined(HAVE\_UINTPTR\_T)}}
+\DoxyCodeLine{00124\ \textcolor{preprocessor}{\#\ if\ defined(\_WIN32)}}
+\DoxyCodeLine{00125\ \ \ \ \ \textcolor{comment}{/*\ WIN32\ is\ an\ ILP32\ platform\ */}}
+\DoxyCodeLine{00126\ \ \ \ \ \textcolor{keyword}{typedef}\ \textcolor{keywordtype}{unsigned}\ \textcolor{keywordtype}{int}\ uintptr\_t;}
+\DoxyCodeLine{00127\ \textcolor{preprocessor}{\#\ elif\ defined(\_WIN64)}}
+\DoxyCodeLine{00128\ \ \ \ \ \textcolor{keyword}{typedef}\ \textcolor{keywordtype}{unsigned}\ \textcolor{keywordtype}{long}\ \textcolor{keywordtype}{int}\ uintptr\_t;}
+\DoxyCodeLine{00129\ \textcolor{preprocessor}{\#\ else\ }\textcolor{comment}{/*\ \_WIN32\ */}\textcolor{preprocessor}{}}
+\DoxyCodeLine{00130\ }
+\DoxyCodeLine{00131\ \textcolor{comment}{/*\ ILP32\ and\ LP64\ platforms\ */}}
+\DoxyCodeLine{00132\ \textcolor{preprocessor}{\#\ \ ifdef\ \_\_WORDSIZE\ }\textcolor{comment}{/*\ glibc\ */}\textcolor{preprocessor}{}}
+\DoxyCodeLine{00133\ \textcolor{preprocessor}{\#\ \ \ if\ \_\_WORDSIZE\ ==\ 64}}
+\DoxyCodeLine{00134\ \ \ \ \ \ \ \textcolor{keyword}{typedef}\ \textcolor{keywordtype}{unsigned}\ \textcolor{keywordtype}{long}\ \textcolor{keywordtype}{int}\ uintptr\_t;}
+\DoxyCodeLine{00135\ \textcolor{preprocessor}{\#\ \ \ else}}
+\DoxyCodeLine{00136\ \ \ \ \ \ \ \textcolor{keyword}{typedef}\ \textcolor{keywordtype}{unsigned}\ \textcolor{keywordtype}{int}\ uintptr\_t;}
+\DoxyCodeLine{00137\ \textcolor{preprocessor}{\#\ \ \ endif\ }\textcolor{comment}{/*\ \_\_WORDSIZE\ ==\ 64\ */}\textcolor{preprocessor}{}}
+\DoxyCodeLine{00138\ \textcolor{preprocessor}{\#\ \ else\ }\textcolor{comment}{/*\ \_\_WORDSIZE\ */}\textcolor{preprocessor}{}}
+\DoxyCodeLine{00139\ \textcolor{preprocessor}{\#\ \ \ if\ defined(\_LP64)\ ||\ defined(\_I32LPx)}}
+\DoxyCodeLine{00140\ \ \ \ \ \ \ \textcolor{keyword}{typedef}\ \textcolor{keywordtype}{unsigned}\ \textcolor{keywordtype}{long}\ \textcolor{keywordtype}{int}\ uintptr\_t;}
+\DoxyCodeLine{00141\ \textcolor{preprocessor}{\#\ \ \ else}}
+\DoxyCodeLine{00142\ \ \ \ \ \ \ \textcolor{keyword}{typedef}\ \textcolor{keywordtype}{unsigned}\ \textcolor{keywordtype}{int}\ uintptr\_t;}
+\DoxyCodeLine{00143\ \textcolor{preprocessor}{\#\ \ \ endif}}
+\DoxyCodeLine{00144\ \textcolor{preprocessor}{\#\ \ endif\ }\textcolor{comment}{/*\ \_\_WORDSIZE\ */}\textcolor{preprocessor}{}}
+\DoxyCodeLine{00145\ \textcolor{preprocessor}{\#\ endif\ }\textcolor{comment}{/*\ \_WIN32\ */}\textcolor{preprocessor}{}}
+\DoxyCodeLine{00146\ }
+\DoxyCodeLine{00147\ \textcolor{preprocessor}{\#\ define\ \_UINTPTR\_T}}
+\DoxyCodeLine{00148\ \textcolor{preprocessor}{\#\ define\ \_UINTPTR\_T\_DEFINED}}
+\DoxyCodeLine{00149\ \textcolor{preprocessor}{\#endif\ }\textcolor{comment}{/*\ !defined(\_UINTPTR\_T)\ ||\ !defined(\_UINTPTR\_T\_DEFINED)\ */}\textcolor{preprocessor}{}}
+\DoxyCodeLine{00150\ }
+\DoxyCodeLine{00151\ \textcolor{comment}{/*\ Perform\ an\ unsigned\ cast\ to\ uintptr\_t.\ */}}
+\DoxyCodeLine{00152\ \textcolor{preprocessor}{\#define\ cast\_to\_pointer\_integral\_type(value)\ \(\backslash\)}}
+\DoxyCodeLine{00153\ \textcolor{preprocessor}{\ \ \ \ ((uintptr\_t)((size\_t)(value)))}}
+\DoxyCodeLine{00154\ }
+\DoxyCodeLine{00155\ \textcolor{comment}{/*\ Perform\ a\ cast\ of\ a\ pointer\ to\ LargestIntegralType\ */}}
+\DoxyCodeLine{00156\ \textcolor{preprocessor}{\#define\ cast\_ptr\_to\_largest\_integral\_type(value)\ \(\backslash\)}}
+\DoxyCodeLine{00157\ \textcolor{preprocessor}{cast\_to\_largest\_integral\_type(cast\_to\_pointer\_integral\_type(value))}}
+\DoxyCodeLine{00158\ }
+\DoxyCodeLine{00159\ \textcolor{comment}{/*\ GCC\ have\ printf\ type\ attribute\ check.\ \ */}}
+\DoxyCodeLine{00160\ \textcolor{preprocessor}{\#ifdef\ \_\_GNUC\_\_}}
+\DoxyCodeLine{00161\ \textcolor{preprocessor}{\#define\ CMOCKA\_PRINTF\_ATTRIBUTE(a,b)\ \(\backslash\)}}
+\DoxyCodeLine{00162\ \textcolor{preprocessor}{\ \ \ \ \_\_attribute\_\_\ ((\_\_format\_\_\ (\_\_printf\_\_,\ a,\ b)))}}
+\DoxyCodeLine{00163\ \textcolor{preprocessor}{\#else}}
+\DoxyCodeLine{00164\ \textcolor{preprocessor}{\#define\ CMOCKA\_PRINTF\_ATTRIBUTE(a,b)}}
+\DoxyCodeLine{00165\ \textcolor{preprocessor}{\#endif\ }\textcolor{comment}{/*\ \_\_GNUC\_\_\ */}\textcolor{preprocessor}{}}
+\DoxyCodeLine{00166\ }
+\DoxyCodeLine{00167\ \textcolor{preprocessor}{\#if\ defined(\_\_GNUC\_\_)}}
+\DoxyCodeLine{00168\ \textcolor{preprocessor}{\#define\ CMOCKA\_DEPRECATED\ \_\_attribute\_\_\ ((deprecated))}}
+\DoxyCodeLine{00169\ \textcolor{preprocessor}{\#elif\ defined(\_MSC\_VER)}}
+\DoxyCodeLine{00170\ \textcolor{preprocessor}{\#define\ CMOCKA\_DEPRECATED\ \_\_declspec(deprecated)}}
+\DoxyCodeLine{00171\ \textcolor{preprocessor}{\#else}}
+\DoxyCodeLine{00172\ \textcolor{preprocessor}{\#define\ CMOCKA\_DEPRECATED}}
+\DoxyCodeLine{00173\ \textcolor{preprocessor}{\#endif}}
+\DoxyCodeLine{00174\ }
+\DoxyCodeLine{00175\ \textcolor{preprocessor}{\#define\ WILL\_RETURN\_ALWAYS\ -\/1}}
+\DoxyCodeLine{00176\ \textcolor{preprocessor}{\#define\ WILL\_RETURN\_ONCE\ -\/2}}
+\DoxyCodeLine{00177\ }
+\DoxyCodeLine{00226\ \textcolor{preprocessor}{\#ifdef\ DOXYGEN}}
+\DoxyCodeLine{00234\ LargestIntegralType\ mock(\textcolor{keywordtype}{void});}
+\DoxyCodeLine{00235\ \textcolor{preprocessor}{\#else}}
+\DoxyCodeLine{00236\ \textcolor{preprocessor}{\#define\ mock()\ \_mock(\_\_func\_\_,\ \_\_FILE\_\_,\ \_\_LINE\_\_)}}
+\DoxyCodeLine{00237\ \textcolor{preprocessor}{\#endif}}
+\DoxyCodeLine{00238\ }
+\DoxyCodeLine{00239\ \textcolor{preprocessor}{\#ifdef\ DOXYGEN}}
+\DoxyCodeLine{00260\ \textcolor{preprocessor}{\#type\ mock\_type(\#type);}}
+\DoxyCodeLine{00261\ \textcolor{preprocessor}{\#else}}
+\DoxyCodeLine{00262\ \textcolor{preprocessor}{\#define\ mock\_type(type)\ ((type)\ mock())}}
+\DoxyCodeLine{00263\ \textcolor{preprocessor}{\#endif}}
+\DoxyCodeLine{00264\ }
+\DoxyCodeLine{00265\ \textcolor{preprocessor}{\#ifdef\ DOXYGEN}}
+\DoxyCodeLine{00287\ type\ mock\_ptr\_type(\#type);}
+\DoxyCodeLine{00288\ \textcolor{preprocessor}{\#else}}
+\DoxyCodeLine{00289\ \textcolor{preprocessor}{\#define\ mock\_ptr\_type(type)\ ((type)\ (uintptr\_t)\ mock())}}
+\DoxyCodeLine{00290\ \textcolor{preprocessor}{\#endif}}
+\DoxyCodeLine{00291\ }
+\DoxyCodeLine{00292\ }
+\DoxyCodeLine{00293\ \textcolor{preprocessor}{\#ifdef\ DOXYGEN}}
+\DoxyCodeLine{00318\ \textcolor{keywordtype}{void}\ will\_return(\#function,\ LargestIntegralType\ value);}
+\DoxyCodeLine{00319\ \textcolor{preprocessor}{\#else}}
+\DoxyCodeLine{00320\ \textcolor{preprocessor}{\#define\ will\_return(function,\ value)\ \(\backslash\)}}
+\DoxyCodeLine{00321\ \textcolor{preprocessor}{\ \ \ \ \_will\_return(\#function,\ \_\_FILE\_\_,\ \_\_LINE\_\_,\ \(\backslash\)}}
+\DoxyCodeLine{00322\ \textcolor{preprocessor}{\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ cast\_to\_largest\_integral\_type(value),\ 1)}}
+\DoxyCodeLine{00323\ \textcolor{preprocessor}{\#endif}}
+\DoxyCodeLine{00324\ }
+\DoxyCodeLine{00325\ \textcolor{preprocessor}{\#ifdef\ DOXYGEN}}
+\DoxyCodeLine{00341\ \textcolor{keywordtype}{void}\ will\_return\_count(\#function,\ LargestIntegralType\ value,\ \textcolor{keywordtype}{int}\ count);}
+\DoxyCodeLine{00342\ \textcolor{preprocessor}{\#else}}
+\DoxyCodeLine{00343\ \textcolor{preprocessor}{\#define\ will\_return\_count(function,\ value,\ count)\ \(\backslash\)}}
+\DoxyCodeLine{00344\ \textcolor{preprocessor}{\ \ \ \ \_will\_return(\#function,\ \_\_FILE\_\_,\ \_\_LINE\_\_,\ \(\backslash\)}}
+\DoxyCodeLine{00345\ \textcolor{preprocessor}{\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ cast\_to\_largest\_integral\_type(value),\ count)}}
+\DoxyCodeLine{00346\ \textcolor{preprocessor}{\#endif}}
+\DoxyCodeLine{00347\ }
+\DoxyCodeLine{00348\ \textcolor{preprocessor}{\#ifdef\ DOXYGEN}}
+\DoxyCodeLine{00364\ \textcolor{keywordtype}{void}\ will\_return\_always(\#function,\ LargestIntegralType\ value);}
+\DoxyCodeLine{00365\ \textcolor{preprocessor}{\#else}}
+\DoxyCodeLine{00366\ \textcolor{preprocessor}{\#define\ will\_return\_always(function,\ value)\ \(\backslash\)}}
+\DoxyCodeLine{00367\ \textcolor{preprocessor}{\ \ \ \ will\_return\_count(function,\ (value),\ WILL\_RETURN\_ALWAYS)}}
+\DoxyCodeLine{00368\ \textcolor{preprocessor}{\#endif}}
+\DoxyCodeLine{00369\ }
+\DoxyCodeLine{00370\ \textcolor{preprocessor}{\#ifdef\ DOXYGEN}}
+\DoxyCodeLine{00392\ \textcolor{keywordtype}{void}\ will\_return\_maybe(\#function,\ LargestIntegralType\ value);}
+\DoxyCodeLine{00393\ \textcolor{preprocessor}{\#else}}
+\DoxyCodeLine{00394\ \textcolor{preprocessor}{\#define\ will\_return\_maybe(function,\ value)\ \(\backslash\)}}
+\DoxyCodeLine{00395\ \textcolor{preprocessor}{\ \ \ \ will\_return\_count(function,\ (value),\ WILL\_RETURN\_ONCE)}}
+\DoxyCodeLine{00396\ \textcolor{preprocessor}{\#endif}}
+\DoxyCodeLine{00443\ \textcolor{comment}{/*}}
+\DoxyCodeLine{00444\ \textcolor{comment}{\ *\ Add\ a\ custom\ parameter\ checking\ function.\ \ If\ the\ event\ parameter\ is\ NULL}}
+\DoxyCodeLine{00445\ \textcolor{comment}{\ *\ the\ event\ structure\ is\ allocated\ internally\ by\ this\ function.\ \ If\ event}}
+\DoxyCodeLine{00446\ \textcolor{comment}{\ *\ parameter\ is\ provided\ it\ must\ be\ allocated\ on\ the\ heap\ and\ doesn't\ need\ to}}
+\DoxyCodeLine{00447\ \textcolor{comment}{\ *\ be\ deallocated\ by\ the\ caller.}}
+\DoxyCodeLine{00448\ \textcolor{comment}{\ */}}
+\DoxyCodeLine{00449\ \textcolor{preprocessor}{\#ifdef\ DOXYGEN}}
+\DoxyCodeLine{00466\ \textcolor{keywordtype}{void}\ expect\_check(\#function,\ \#parameter,\ \#check\_function,\ \textcolor{keyword}{const}\ \textcolor{keywordtype}{void}\ *check\_data);}
+\DoxyCodeLine{00467\ \textcolor{preprocessor}{\#else}}
+\DoxyCodeLine{00468\ \textcolor{preprocessor}{\#define\ expect\_check(function,\ parameter,\ check\_function,\ check\_data)\ \(\backslash\)}}
+\DoxyCodeLine{00469\ \textcolor{preprocessor}{\ \ \ \ \_expect\_check(\#function,\ \#parameter,\ \_\_FILE\_\_,\ \_\_LINE\_\_,\ check\_function,\ \(\backslash\)}}
+\DoxyCodeLine{00470\ \textcolor{preprocessor}{\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ cast\_to\_largest\_integral\_type(check\_data),\ NULL,\ 1)}}
+\DoxyCodeLine{00471\ \textcolor{preprocessor}{\#endif}}
+\DoxyCodeLine{00472\ }
+\DoxyCodeLine{00473\ \textcolor{preprocessor}{\#ifdef\ DOXYGEN}}
+\DoxyCodeLine{00488\ \textcolor{keywordtype}{void}\ expect\_in\_set(\#function,\ \#parameter,\ LargestIntegralType\ value\_array[]);}
+\DoxyCodeLine{00489\ \textcolor{preprocessor}{\#else}}
+\DoxyCodeLine{00490\ \textcolor{preprocessor}{\#define\ expect\_in\_set(function,\ parameter,\ value\_array)\ \(\backslash\)}}
+\DoxyCodeLine{00491\ \textcolor{preprocessor}{\ \ \ \ expect\_in\_set\_count(function,\ parameter,\ value\_array,\ 1)}}
+\DoxyCodeLine{00492\ \textcolor{preprocessor}{\#endif}}
+\DoxyCodeLine{00493\ }
+\DoxyCodeLine{00494\ \textcolor{preprocessor}{\#ifdef\ DOXYGEN}}
+\DoxyCodeLine{00513\ \textcolor{keywordtype}{void}\ expect\_in\_set\_count(\#function,\ \#parameter,\ LargestIntegralType\ value\_array[],\ \textcolor{keywordtype}{size\_t}\ count);}
+\DoxyCodeLine{00514\ \textcolor{preprocessor}{\#else}}
+\DoxyCodeLine{00515\ \textcolor{preprocessor}{\#define\ expect\_in\_set\_count(function,\ parameter,\ value\_array,\ count)\ \(\backslash\)}}
+\DoxyCodeLine{00516\ \textcolor{preprocessor}{\ \ \ \ \_expect\_in\_set(\#function,\ \#parameter,\ \_\_FILE\_\_,\ \_\_LINE\_\_,\ value\_array,\ \(\backslash\)}}
+\DoxyCodeLine{00517\ \textcolor{preprocessor}{\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ sizeof(value\_array)\ /\ sizeof((value\_array)[0]),\ count)}}
+\DoxyCodeLine{00518\ \textcolor{preprocessor}{\#endif}}
+\DoxyCodeLine{00519\ }
+\DoxyCodeLine{00520\ \textcolor{preprocessor}{\#ifdef\ DOXYGEN}}
+\DoxyCodeLine{00535\ \textcolor{keywordtype}{void}\ expect\_not\_in\_set(\#function,\ \#parameter,\ LargestIntegralType\ value\_array[]);}
+\DoxyCodeLine{00536\ \textcolor{preprocessor}{\#else}}
+\DoxyCodeLine{00537\ \textcolor{preprocessor}{\#define\ expect\_not\_in\_set(function,\ parameter,\ value\_array)\ \(\backslash\)}}
+\DoxyCodeLine{00538\ \textcolor{preprocessor}{\ \ \ \ expect\_not\_in\_set\_count(function,\ parameter,\ value\_array,\ 1)}}
+\DoxyCodeLine{00539\ \textcolor{preprocessor}{\#endif}}
+\DoxyCodeLine{00540\ }
+\DoxyCodeLine{00541\ \textcolor{preprocessor}{\#ifdef\ DOXYGEN}}
+\DoxyCodeLine{00560\ \textcolor{keywordtype}{void}\ expect\_not\_in\_set\_count(\#function,\ \#parameter,\ LargestIntegralType\ value\_array[],\ \textcolor{keywordtype}{size\_t}\ count);}
+\DoxyCodeLine{00561\ \textcolor{preprocessor}{\#else}}
+\DoxyCodeLine{00562\ \textcolor{preprocessor}{\#define\ expect\_not\_in\_set\_count(function,\ parameter,\ value\_array,\ count)\ \(\backslash\)}}
+\DoxyCodeLine{00563\ \textcolor{preprocessor}{\ \ \ \ \_expect\_not\_in\_set(\ \(\backslash\)}}
+\DoxyCodeLine{00564\ \textcolor{preprocessor}{\ \ \ \ \ \ \ \ \#function,\ \#parameter,\ \_\_FILE\_\_,\ \_\_LINE\_\_,\ value\_array,\ \(\backslash\)}}
+\DoxyCodeLine{00565\ \textcolor{preprocessor}{\ \ \ \ \ \ \ \ sizeof(value\_array)\ /\ sizeof((value\_array)[0]),\ count)}}
+\DoxyCodeLine{00566\ \textcolor{preprocessor}{\#endif}}
+\DoxyCodeLine{00567\ }
+\DoxyCodeLine{00568\ }
+\DoxyCodeLine{00569\ \textcolor{preprocessor}{\#ifdef\ DOXYGEN}}
+\DoxyCodeLine{00586\ \textcolor{keywordtype}{void}\ expect\_in\_range(\#function,\ \#parameter,\ LargestIntegralType\ minimum,\ LargestIntegralType\ maximum);}
+\DoxyCodeLine{00587\ \textcolor{preprocessor}{\#else}}
+\DoxyCodeLine{00588\ \textcolor{preprocessor}{\#define\ expect\_in\_range(function,\ parameter,\ minimum,\ maximum)\ \(\backslash\)}}
+\DoxyCodeLine{00589\ \textcolor{preprocessor}{\ \ \ \ expect\_in\_range\_count(function,\ parameter,\ minimum,\ maximum,\ 1)}}
+\DoxyCodeLine{00590\ \textcolor{preprocessor}{\#endif}}
+\DoxyCodeLine{00591\ }
+\DoxyCodeLine{00592\ \textcolor{preprocessor}{\#ifdef\ DOXYGEN}}
+\DoxyCodeLine{00613\ \textcolor{keywordtype}{void}\ expect\_in\_range\_count(\#function,\ \#parameter,\ LargestIntegralType\ minimum,\ LargestIntegralType\ maximum,\ \textcolor{keywordtype}{size\_t}\ count);}
+\DoxyCodeLine{00614\ \textcolor{preprocessor}{\#else}}
+\DoxyCodeLine{00615\ \textcolor{preprocessor}{\#define\ expect\_in\_range\_count(function,\ parameter,\ minimum,\ maximum,\ count)\ \(\backslash\)}}
+\DoxyCodeLine{00616\ \textcolor{preprocessor}{\ \ \ \ \_expect\_in\_range(\#function,\ \#parameter,\ \_\_FILE\_\_,\ \_\_LINE\_\_,\ minimum,\ \(\backslash\)}}
+\DoxyCodeLine{00617\ \textcolor{preprocessor}{\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ maximum,\ count)}}
+\DoxyCodeLine{00618\ \textcolor{preprocessor}{\#endif}}
+\DoxyCodeLine{00619\ }
+\DoxyCodeLine{00620\ \textcolor{preprocessor}{\#ifdef\ DOXYGEN}}
+\DoxyCodeLine{00637\ \textcolor{keywordtype}{void}\ expect\_not\_in\_range(\#function,\ \#parameter,\ LargestIntegralType\ minimum,\ LargestIntegralType\ maximum);}
+\DoxyCodeLine{00638\ \textcolor{preprocessor}{\#else}}
+\DoxyCodeLine{00639\ \textcolor{preprocessor}{\#define\ expect\_not\_in\_range(function,\ parameter,\ minimum,\ maximum)\ \(\backslash\)}}
+\DoxyCodeLine{00640\ \textcolor{preprocessor}{\ \ \ \ expect\_not\_in\_range\_count(function,\ parameter,\ minimum,\ maximum,\ 1)}}
+\DoxyCodeLine{00641\ \textcolor{preprocessor}{\#endif}}
+\DoxyCodeLine{00642\ }
+\DoxyCodeLine{00643\ \textcolor{preprocessor}{\#ifdef\ DOXYGEN}}
+\DoxyCodeLine{00664\ \textcolor{keywordtype}{void}\ expect\_not\_in\_range\_count(\#function,\ \#parameter,\ LargestIntegralType\ minimum,\ LargestIntegralType\ maximum,\ \textcolor{keywordtype}{size\_t}\ count);}
+\DoxyCodeLine{00665\ \textcolor{preprocessor}{\#else}}
+\DoxyCodeLine{00666\ \textcolor{preprocessor}{\#define\ expect\_not\_in\_range\_count(function,\ parameter,\ minimum,\ maximum,\ \(\backslash\)}}
+\DoxyCodeLine{00667\ \textcolor{preprocessor}{\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ count)\ \(\backslash\)}}
+\DoxyCodeLine{00668\ \textcolor{preprocessor}{\ \ \ \ \_expect\_not\_in\_range(\#function,\ \#parameter,\ \_\_FILE\_\_,\ \_\_LINE\_\_,\ \(\backslash\)}}
+\DoxyCodeLine{00669\ \textcolor{preprocessor}{\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ minimum,\ maximum,\ count)}}
+\DoxyCodeLine{00670\ \textcolor{preprocessor}{\#endif}}
+\DoxyCodeLine{00671\ }
+\DoxyCodeLine{00672\ \textcolor{preprocessor}{\#ifdef\ DOXYGEN}}
+\DoxyCodeLine{00686\ \textcolor{keywordtype}{void}\ expect\_value(\#function,\ \#parameter,\ LargestIntegralType\ value);}
+\DoxyCodeLine{00687\ \textcolor{preprocessor}{\#else}}
+\DoxyCodeLine{00688\ \textcolor{preprocessor}{\#define\ expect\_value(function,\ parameter,\ value)\ \(\backslash\)}}
+\DoxyCodeLine{00689\ \textcolor{preprocessor}{\ \ \ \ expect\_value\_count(function,\ parameter,\ value,\ 1)}}
+\DoxyCodeLine{00690\ \textcolor{preprocessor}{\#endif}}
+\DoxyCodeLine{00691\ }
+\DoxyCodeLine{00692\ \textcolor{preprocessor}{\#ifdef\ DOXYGEN}}
+\DoxyCodeLine{00710\ \textcolor{keywordtype}{void}\ expect\_value\_count(\#function,\ \#parameter,\ LargestIntegralType\ value,\ \textcolor{keywordtype}{size\_t}\ count);}
+\DoxyCodeLine{00711\ \textcolor{preprocessor}{\#else}}
+\DoxyCodeLine{00712\ \textcolor{preprocessor}{\#define\ expect\_value\_count(function,\ parameter,\ value,\ count)\ \(\backslash\)}}
+\DoxyCodeLine{00713\ \textcolor{preprocessor}{\ \ \ \ \_expect\_value(\#function,\ \#parameter,\ \_\_FILE\_\_,\ \_\_LINE\_\_,\ \(\backslash\)}}
+\DoxyCodeLine{00714\ \textcolor{preprocessor}{\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ cast\_to\_largest\_integral\_type(value),\ count)}}
+\DoxyCodeLine{00715\ \textcolor{preprocessor}{\#endif}}
+\DoxyCodeLine{00716\ }
+\DoxyCodeLine{00717\ \textcolor{preprocessor}{\#ifdef\ DOXYGEN}}
+\DoxyCodeLine{00731\ \textcolor{keywordtype}{void}\ expect\_not\_value(\#function,\ \#parameter,\ LargestIntegralType\ value);}
+\DoxyCodeLine{00732\ \textcolor{preprocessor}{\#else}}
+\DoxyCodeLine{00733\ \textcolor{preprocessor}{\#define\ expect\_not\_value(function,\ parameter,\ value)\ \(\backslash\)}}
+\DoxyCodeLine{00734\ \textcolor{preprocessor}{\ \ \ \ expect\_not\_value\_count(function,\ parameter,\ value,\ 1)}}
+\DoxyCodeLine{00735\ \textcolor{preprocessor}{\#endif}}
+\DoxyCodeLine{00736\ }
+\DoxyCodeLine{00737\ \textcolor{preprocessor}{\#ifdef\ DOXYGEN}}
+\DoxyCodeLine{00755\ \textcolor{keywordtype}{void}\ expect\_not\_value\_count(\#function,\ \#parameter,\ LargestIntegralType\ value,\ \textcolor{keywordtype}{size\_t}\ count);}
+\DoxyCodeLine{00756\ \textcolor{preprocessor}{\#else}}
+\DoxyCodeLine{00757\ \textcolor{preprocessor}{\#define\ expect\_not\_value\_count(function,\ parameter,\ value,\ count)\ \(\backslash\)}}
+\DoxyCodeLine{00758\ \textcolor{preprocessor}{\ \ \ \ \_expect\_not\_value(\#function,\ \#parameter,\ \_\_FILE\_\_,\ \_\_LINE\_\_,\ \(\backslash\)}}
+\DoxyCodeLine{00759\ \textcolor{preprocessor}{\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ cast\_to\_largest\_integral\_type(value),\ count)}}
+\DoxyCodeLine{00760\ \textcolor{preprocessor}{\#endif}}
+\DoxyCodeLine{00761\ }
+\DoxyCodeLine{00762\ \textcolor{preprocessor}{\#ifdef\ DOXYGEN}}
+\DoxyCodeLine{00777\ \textcolor{keywordtype}{void}\ expect\_string(\#function,\ \#parameter,\ \textcolor{keyword}{const}\ \textcolor{keywordtype}{char}\ *\textcolor{keywordtype}{string});}
+\DoxyCodeLine{00778\ \textcolor{preprocessor}{\#else}}
+\DoxyCodeLine{00779\ \textcolor{preprocessor}{\#define\ expect\_string(function,\ parameter,\ string)\ \(\backslash\)}}
+\DoxyCodeLine{00780\ \textcolor{preprocessor}{\ \ \ \ expect\_string\_count(function,\ parameter,\ string,\ 1)}}
+\DoxyCodeLine{00781\ \textcolor{preprocessor}{\#endif}}
+\DoxyCodeLine{00782\ }
+\DoxyCodeLine{00783\ \textcolor{preprocessor}{\#ifdef\ DOXYGEN}}
+\DoxyCodeLine{00802\ \textcolor{keywordtype}{void}\ expect\_string\_count(\#function,\ \#parameter,\ \textcolor{keyword}{const}\ \textcolor{keywordtype}{char}\ *\textcolor{keywordtype}{string},\ \textcolor{keywordtype}{size\_t}\ count);}
+\DoxyCodeLine{00803\ \textcolor{preprocessor}{\#else}}
+\DoxyCodeLine{00804\ \textcolor{preprocessor}{\#define\ expect\_string\_count(function,\ parameter,\ string,\ count)\ \(\backslash\)}}
+\DoxyCodeLine{00805\ \textcolor{preprocessor}{\ \ \ \ \_expect\_string(\#function,\ \#parameter,\ \_\_FILE\_\_,\ \_\_LINE\_\_,\ \(\backslash\)}}
+\DoxyCodeLine{00806\ \textcolor{preprocessor}{\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ (const\ char*)(string),\ count)}}
+\DoxyCodeLine{00807\ \textcolor{preprocessor}{\#endif}}
+\DoxyCodeLine{00808\ }
+\DoxyCodeLine{00809\ \textcolor{preprocessor}{\#ifdef\ DOXYGEN}}
+\DoxyCodeLine{00824\ \textcolor{keywordtype}{void}\ expect\_not\_string(\#function,\ \#parameter,\ \textcolor{keyword}{const}\ \textcolor{keywordtype}{char}\ *\textcolor{keywordtype}{string});}
+\DoxyCodeLine{00825\ \textcolor{preprocessor}{\#else}}
+\DoxyCodeLine{00826\ \textcolor{preprocessor}{\#define\ expect\_not\_string(function,\ parameter,\ string)\ \(\backslash\)}}
+\DoxyCodeLine{00827\ \textcolor{preprocessor}{\ \ \ \ expect\_not\_string\_count(function,\ parameter,\ string,\ 1)}}
+\DoxyCodeLine{00828\ \textcolor{preprocessor}{\#endif}}
+\DoxyCodeLine{00829\ }
+\DoxyCodeLine{00830\ \textcolor{preprocessor}{\#ifdef\ DOXYGEN}}
+\DoxyCodeLine{00849\ \textcolor{keywordtype}{void}\ expect\_not\_string\_count(\#function,\ \#parameter,\ \textcolor{keyword}{const}\ \textcolor{keywordtype}{char}\ *\textcolor{keywordtype}{string},\ \textcolor{keywordtype}{size\_t}\ count);}
+\DoxyCodeLine{00850\ \textcolor{preprocessor}{\#else}}
+\DoxyCodeLine{00851\ \textcolor{preprocessor}{\#define\ expect\_not\_string\_count(function,\ parameter,\ string,\ count)\ \(\backslash\)}}
+\DoxyCodeLine{00852\ \textcolor{preprocessor}{\ \ \ \ \_expect\_not\_string(\#function,\ \#parameter,\ \_\_FILE\_\_,\ \_\_LINE\_\_,\ \(\backslash\)}}
+\DoxyCodeLine{00853\ \textcolor{preprocessor}{\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ (const\ char*)(string),\ count)}}
+\DoxyCodeLine{00854\ \textcolor{preprocessor}{\#endif}}
+\DoxyCodeLine{00855\ }
+\DoxyCodeLine{00856\ \textcolor{preprocessor}{\#ifdef\ DOXYGEN}}
+\DoxyCodeLine{00872\ \textcolor{keywordtype}{void}\ expect\_memory(\#function,\ \#parameter,\ \textcolor{keywordtype}{void}\ *memory,\ \textcolor{keywordtype}{size\_t}\ size);}
+\DoxyCodeLine{00873\ \textcolor{preprocessor}{\#else}}
+\DoxyCodeLine{00874\ \textcolor{preprocessor}{\#define\ expect\_memory(function,\ parameter,\ memory,\ size)\ \(\backslash\)}}
+\DoxyCodeLine{00875\ \textcolor{preprocessor}{\ \ \ \ expect\_memory\_count(function,\ parameter,\ memory,\ size,\ 1)}}
+\DoxyCodeLine{00876\ \textcolor{preprocessor}{\#endif}}
+\DoxyCodeLine{00877\ }
+\DoxyCodeLine{00878\ \textcolor{preprocessor}{\#ifdef\ DOXYGEN}}
+\DoxyCodeLine{00899\ \textcolor{keywordtype}{void}\ expect\_memory\_count(\#function,\ \#parameter,\ \textcolor{keywordtype}{void}\ *memory,\ \textcolor{keywordtype}{size\_t}\ size,\ \textcolor{keywordtype}{size\_t}\ count);}
+\DoxyCodeLine{00900\ \textcolor{preprocessor}{\#else}}
+\DoxyCodeLine{00901\ \textcolor{preprocessor}{\#define\ expect\_memory\_count(function,\ parameter,\ memory,\ size,\ count)\ \(\backslash\)}}
+\DoxyCodeLine{00902\ \textcolor{preprocessor}{\ \ \ \ \_expect\_memory(\#function,\ \#parameter,\ \_\_FILE\_\_,\ \_\_LINE\_\_,\ \(\backslash\)}}
+\DoxyCodeLine{00903\ \textcolor{preprocessor}{\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ (const\ void*)(memory),\ size,\ count)}}
+\DoxyCodeLine{00904\ \textcolor{preprocessor}{\#endif}}
+\DoxyCodeLine{00905\ }
+\DoxyCodeLine{00906\ \textcolor{preprocessor}{\#ifdef\ DOXYGEN}}
+\DoxyCodeLine{00923\ \textcolor{keywordtype}{void}\ expect\_not\_memory(\#function,\ \#parameter,\ \textcolor{keywordtype}{void}\ *memory,\ \textcolor{keywordtype}{size\_t}\ size);}
+\DoxyCodeLine{00924\ \textcolor{preprocessor}{\#else}}
+\DoxyCodeLine{00925\ \textcolor{preprocessor}{\#define\ expect\_not\_memory(function,\ parameter,\ memory,\ size)\ \(\backslash\)}}
+\DoxyCodeLine{00926\ \textcolor{preprocessor}{\ \ \ \ expect\_not\_memory\_count(function,\ parameter,\ memory,\ size,\ 1)}}
+\DoxyCodeLine{00927\ \textcolor{preprocessor}{\#endif}}
+\DoxyCodeLine{00928\ }
+\DoxyCodeLine{00929\ \textcolor{preprocessor}{\#ifdef\ DOXYGEN}}
+\DoxyCodeLine{00950\ \textcolor{keywordtype}{void}\ expect\_not\_memory\_count(\#function,\ \#parameter,\ \textcolor{keywordtype}{void}\ *memory,\ \textcolor{keywordtype}{size\_t}\ size,\ \textcolor{keywordtype}{size\_t}\ count);}
+\DoxyCodeLine{00951\ \textcolor{preprocessor}{\#else}}
+\DoxyCodeLine{00952\ \textcolor{preprocessor}{\#define\ expect\_not\_memory\_count(function,\ parameter,\ memory,\ size,\ count)\ \(\backslash\)}}
+\DoxyCodeLine{00953\ \textcolor{preprocessor}{\ \ \ \ \_expect\_not\_memory(\#function,\ \#parameter,\ \_\_FILE\_\_,\ \_\_LINE\_\_,\ \(\backslash\)}}
+\DoxyCodeLine{00954\ \textcolor{preprocessor}{\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ (const\ void*)(memory),\ size,\ count)}}
+\DoxyCodeLine{00955\ \textcolor{preprocessor}{\#endif}}
+\DoxyCodeLine{00956\ }
+\DoxyCodeLine{00957\ }
+\DoxyCodeLine{00958\ \textcolor{preprocessor}{\#ifdef\ DOXYGEN}}
+\DoxyCodeLine{00970\ \textcolor{keywordtype}{void}\ expect\_any(\#function,\ \#parameter);}
+\DoxyCodeLine{00971\ \textcolor{preprocessor}{\#else}}
+\DoxyCodeLine{00972\ \textcolor{preprocessor}{\#define\ expect\_any(function,\ parameter)\ \(\backslash\)}}
+\DoxyCodeLine{00973\ \textcolor{preprocessor}{\ \ \ \ expect\_any\_count(function,\ parameter,\ 1)}}
+\DoxyCodeLine{00974\ \textcolor{preprocessor}{\#endif}}
+\DoxyCodeLine{00975\ }
+\DoxyCodeLine{00976\ \textcolor{preprocessor}{\#ifdef\ DOXYGEN}}
+\DoxyCodeLine{00988\ \textcolor{keywordtype}{void}\ expect\_any\_always(\#function,\ \#parameter);}
+\DoxyCodeLine{00989\ \textcolor{preprocessor}{\#else}}
+\DoxyCodeLine{00990\ \textcolor{preprocessor}{\#define\ expect\_any\_always(function,\ parameter)\ \(\backslash\)}}
+\DoxyCodeLine{00991\ \textcolor{preprocessor}{\ \ \ \ \ \ \ \ expect\_any\_count(function,\ parameter,\ WILL\_RETURN\_ALWAYS)}}
+\DoxyCodeLine{00992\ \textcolor{preprocessor}{\#endif}}
+\DoxyCodeLine{00993\ }
+\DoxyCodeLine{00994\ \textcolor{preprocessor}{\#ifdef\ DOXYGEN}}
+\DoxyCodeLine{01011\ \textcolor{keywordtype}{void}\ expect\_any\_count(\#function,\ \#parameter,\ \textcolor{keywordtype}{size\_t}\ count);}
+\DoxyCodeLine{01012\ \textcolor{preprocessor}{\#else}}
+\DoxyCodeLine{01013\ \textcolor{preprocessor}{\#define\ expect\_any\_count(function,\ parameter,\ count)\ \(\backslash\)}}
+\DoxyCodeLine{01014\ \textcolor{preprocessor}{\ \ \ \ \_expect\_any(\#function,\ \#parameter,\ \_\_FILE\_\_,\ \_\_LINE\_\_,\ count)}}
+\DoxyCodeLine{01015\ \textcolor{preprocessor}{\#endif}}
+\DoxyCodeLine{01016\ }
+\DoxyCodeLine{01017\ \textcolor{preprocessor}{\#ifdef\ DOXYGEN}}
+\DoxyCodeLine{01028\ \textcolor{keywordtype}{void}\ check\_expected(\#parameter);}
+\DoxyCodeLine{01029\ \textcolor{preprocessor}{\#else}}
+\DoxyCodeLine{01030\ \textcolor{preprocessor}{\#define\ check\_expected(parameter)\ \(\backslash\)}}
+\DoxyCodeLine{01031\ \textcolor{preprocessor}{\ \ \ \ \_check\_expected(\_\_func\_\_,\ \#parameter,\ \_\_FILE\_\_,\ \_\_LINE\_\_,\ \(\backslash\)}}
+\DoxyCodeLine{01032\ \textcolor{preprocessor}{\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ cast\_to\_largest\_integral\_type(parameter))}}
+\DoxyCodeLine{01033\ \textcolor{preprocessor}{\#endif}}
+\DoxyCodeLine{01034\ }
+\DoxyCodeLine{01035\ \textcolor{preprocessor}{\#ifdef\ DOXYGEN}}
+\DoxyCodeLine{01046\ \textcolor{keywordtype}{void}\ check\_expected\_ptr(\#parameter);}
+\DoxyCodeLine{01047\ \textcolor{preprocessor}{\#else}}
+\DoxyCodeLine{01048\ \textcolor{preprocessor}{\#define\ check\_expected\_ptr(parameter)\ \(\backslash\)}}
+\DoxyCodeLine{01049\ \textcolor{preprocessor}{\ \ \ \ \_check\_expected(\_\_func\_\_,\ \#parameter,\ \_\_FILE\_\_,\ \_\_LINE\_\_,\ \(\backslash\)}}
+\DoxyCodeLine{01050\ \textcolor{preprocessor}{\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ cast\_ptr\_to\_largest\_integral\_type(parameter))}}
+\DoxyCodeLine{01051\ \textcolor{preprocessor}{\#endif}}
+\DoxyCodeLine{01052\ }
+\DoxyCodeLine{01074\ \textcolor{preprocessor}{\#ifdef\ DOXYGEN}}
+\DoxyCodeLine{01087\ \textcolor{keywordtype}{void}\ assert\_true(scalar\ expression);}
+\DoxyCodeLine{01088\ \textcolor{preprocessor}{\#else}}
+\DoxyCodeLine{01089\ \textcolor{preprocessor}{\#define\ assert\_true(c)\ \_assert\_true(cast\_to\_largest\_integral\_type(c),\ \#c,\ \(\backslash\)}}
+\DoxyCodeLine{01090\ \textcolor{preprocessor}{\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \_\_FILE\_\_,\ \_\_LINE\_\_)}}
+\DoxyCodeLine{01091\ \textcolor{preprocessor}{\#endif}}
+\DoxyCodeLine{01092\ }
+\DoxyCodeLine{01093\ \textcolor{preprocessor}{\#ifdef\ DOXYGEN}}
+\DoxyCodeLine{01105\ \textcolor{keywordtype}{void}\ assert\_false(scalar\ expression);}
+\DoxyCodeLine{01106\ \textcolor{preprocessor}{\#else}}
+\DoxyCodeLine{01107\ \textcolor{preprocessor}{\#define\ assert\_false(c)\ \_assert\_true(!(cast\_to\_largest\_integral\_type(c)),\ \#c,\ \(\backslash\)}}
+\DoxyCodeLine{01108\ \textcolor{preprocessor}{\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \_\_FILE\_\_,\ \_\_LINE\_\_)}}
+\DoxyCodeLine{01109\ \textcolor{preprocessor}{\#endif}}
+\DoxyCodeLine{01110\ }
+\DoxyCodeLine{01111\ \textcolor{preprocessor}{\#ifdef\ DOXYGEN}}
+\DoxyCodeLine{01124\ \textcolor{keywordtype}{void}\ assert\_return\_code(\textcolor{keywordtype}{int}\ rc,\ \textcolor{keywordtype}{int}\ error);}
+\DoxyCodeLine{01125\ \textcolor{preprocessor}{\#else}}
+\DoxyCodeLine{01126\ \textcolor{preprocessor}{\#define\ assert\_return\_code(rc,\ error)\ \(\backslash\)}}
+\DoxyCodeLine{01127\ \textcolor{preprocessor}{\ \ \ \ \_assert\_return\_code(cast\_to\_largest\_integral\_type(rc),\ \(\backslash\)}}
+\DoxyCodeLine{01128\ \textcolor{preprocessor}{\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ sizeof(rc),\ \(\backslash\)}}
+\DoxyCodeLine{01129\ \textcolor{preprocessor}{\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ cast\_to\_largest\_integral\_type(error),\ \(\backslash\)}}
+\DoxyCodeLine{01130\ \textcolor{preprocessor}{\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \#rc,\ \_\_FILE\_\_,\ \_\_LINE\_\_)}}
+\DoxyCodeLine{01131\ \textcolor{preprocessor}{\#endif}}
+\DoxyCodeLine{01132\ }
+\DoxyCodeLine{01133\ \textcolor{preprocessor}{\#ifdef\ DOXYGEN}}
+\DoxyCodeLine{01144\ \textcolor{keywordtype}{void}\ assert\_non\_null(\textcolor{keywordtype}{void}\ *pointer);}
+\DoxyCodeLine{01145\ \textcolor{preprocessor}{\#else}}
+\DoxyCodeLine{01146\ \textcolor{preprocessor}{\#define\ assert\_non\_null(c)\ \_assert\_true(cast\_ptr\_to\_largest\_integral\_type(c),\ \#c,\ \(\backslash\)}}
+\DoxyCodeLine{01147\ \textcolor{preprocessor}{\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \_\_FILE\_\_,\ \_\_LINE\_\_)}}
+\DoxyCodeLine{01148\ \textcolor{preprocessor}{\#endif}}
+\DoxyCodeLine{01149\ }
+\DoxyCodeLine{01150\ \textcolor{preprocessor}{\#ifdef\ DOXYGEN}}
+\DoxyCodeLine{01161\ \textcolor{keywordtype}{void}\ assert\_null(\textcolor{keywordtype}{void}\ *pointer);}
+\DoxyCodeLine{01162\ \textcolor{preprocessor}{\#else}}
+\DoxyCodeLine{01163\ \textcolor{preprocessor}{\#define\ assert\_null(c)\ \_assert\_true(!(cast\_ptr\_to\_largest\_integral\_type(c)),\ \#c,\ \(\backslash\)}}
+\DoxyCodeLine{01164\ \textcolor{preprocessor}{\_\_FILE\_\_,\ \_\_LINE\_\_)}}
+\DoxyCodeLine{01165\ \textcolor{preprocessor}{\#endif}}
+\DoxyCodeLine{01166\ }
+\DoxyCodeLine{01167\ \textcolor{preprocessor}{\#ifdef\ DOXYGEN}}
+\DoxyCodeLine{01178\ \textcolor{keywordtype}{void}\ assert\_ptr\_equal(\textcolor{keywordtype}{void}\ *a,\ \textcolor{keywordtype}{void}\ *b);}
+\DoxyCodeLine{01179\ \textcolor{preprocessor}{\#else}}
+\DoxyCodeLine{01180\ \textcolor{preprocessor}{\#define\ assert\_ptr\_equal(a,\ b)\ \(\backslash\)}}
+\DoxyCodeLine{01181\ \textcolor{preprocessor}{\ \ \ \ \_assert\_int\_equal(cast\_ptr\_to\_largest\_integral\_type(a),\ \(\backslash\)}}
+\DoxyCodeLine{01182\ \textcolor{preprocessor}{\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ cast\_ptr\_to\_largest\_integral\_type(b),\ \(\backslash\)}}
+\DoxyCodeLine{01183\ \textcolor{preprocessor}{\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \_\_FILE\_\_,\ \_\_LINE\_\_)}}
+\DoxyCodeLine{01184\ \textcolor{preprocessor}{\#endif}}
+\DoxyCodeLine{01185\ }
+\DoxyCodeLine{01186\ \textcolor{preprocessor}{\#ifdef\ DOXYGEN}}
+\DoxyCodeLine{01197\ \textcolor{keywordtype}{void}\ assert\_ptr\_not\_equal(\textcolor{keywordtype}{void}\ *a,\ \textcolor{keywordtype}{void}\ *b);}
+\DoxyCodeLine{01198\ \textcolor{preprocessor}{\#else}}
+\DoxyCodeLine{01199\ \textcolor{preprocessor}{\#define\ assert\_ptr\_not\_equal(a,\ b)\ \(\backslash\)}}
+\DoxyCodeLine{01200\ \textcolor{preprocessor}{\ \ \ \ \_assert\_int\_not\_equal(cast\_ptr\_to\_largest\_integral\_type(a),\ \(\backslash\)}}
+\DoxyCodeLine{01201\ \textcolor{preprocessor}{\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ cast\_ptr\_to\_largest\_integral\_type(b),\ \(\backslash\)}}
+\DoxyCodeLine{01202\ \textcolor{preprocessor}{\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \_\_FILE\_\_,\ \_\_LINE\_\_)}}
+\DoxyCodeLine{01203\ \textcolor{preprocessor}{\#endif}}
+\DoxyCodeLine{01204\ }
+\DoxyCodeLine{01205\ \textcolor{preprocessor}{\#ifdef\ DOXYGEN}}
+\DoxyCodeLine{01216\ \textcolor{keywordtype}{void}\ assert\_int\_equal(\textcolor{keywordtype}{int}\ a,\ \textcolor{keywordtype}{int}\ b);}
+\DoxyCodeLine{01217\ \textcolor{preprocessor}{\#else}}
+\DoxyCodeLine{01218\ \textcolor{preprocessor}{\#define\ assert\_int\_equal(a,\ b)\ \(\backslash\)}}
+\DoxyCodeLine{01219\ \textcolor{preprocessor}{\ \ \ \ \_assert\_int\_equal(cast\_to\_largest\_integral\_type(a),\ \(\backslash\)}}
+\DoxyCodeLine{01220\ \textcolor{preprocessor}{\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ cast\_to\_largest\_integral\_type(b),\ \(\backslash\)}}
+\DoxyCodeLine{01221\ \textcolor{preprocessor}{\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \_\_FILE\_\_,\ \_\_LINE\_\_)}}
+\DoxyCodeLine{01222\ \textcolor{preprocessor}{\#endif}}
+\DoxyCodeLine{01223\ }
+\DoxyCodeLine{01224\ \textcolor{preprocessor}{\#ifdef\ DOXYGEN}}
+\DoxyCodeLine{01237\ \textcolor{keywordtype}{void}\ assert\_int\_not\_equal(\textcolor{keywordtype}{int}\ a,\ \textcolor{keywordtype}{int}\ b);}
+\DoxyCodeLine{01238\ \textcolor{preprocessor}{\#else}}
+\DoxyCodeLine{01239\ \textcolor{preprocessor}{\#define\ assert\_int\_not\_equal(a,\ b)\ \(\backslash\)}}
+\DoxyCodeLine{01240\ \textcolor{preprocessor}{\ \ \ \ \_assert\_int\_not\_equal(cast\_to\_largest\_integral\_type(a),\ \(\backslash\)}}
+\DoxyCodeLine{01241\ \textcolor{preprocessor}{\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ cast\_to\_largest\_integral\_type(b),\ \(\backslash\)}}
+\DoxyCodeLine{01242\ \textcolor{preprocessor}{\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \_\_FILE\_\_,\ \_\_LINE\_\_)}}
+\DoxyCodeLine{01243\ \textcolor{preprocessor}{\#endif}}
+\DoxyCodeLine{01244\ }
+\DoxyCodeLine{01245\ \textcolor{preprocessor}{\#ifdef\ DOXYGEN}}
+\DoxyCodeLine{01258\ \textcolor{keywordtype}{void}\ assert\_float\_equal(\textcolor{keywordtype}{float}\ a,\ \textcolor{keywordtype}{float}\ b,\ \textcolor{keywordtype}{float}\ epsilon);}
+\DoxyCodeLine{01259\ \textcolor{preprocessor}{\#else}}
+\DoxyCodeLine{01260\ \textcolor{preprocessor}{\#define\ assert\_float\_equal(a,\ b,\ epsilon)\ \(\backslash\)}}
+\DoxyCodeLine{01261\ \textcolor{preprocessor}{\ \ \ \ \_assert\_float\_equal((float)a,\ \(\backslash\)}}
+\DoxyCodeLine{01262\ \textcolor{preprocessor}{\ \ \ \ \ \ \ \ \ \ \ \ (float)b,\ \(\backslash\)}}
+\DoxyCodeLine{01263\ \textcolor{preprocessor}{\ \ \ \ \ \ \ \ \ \ \ \ (float)epsilon,\ \(\backslash\)}}
+\DoxyCodeLine{01264\ \textcolor{preprocessor}{\ \ \ \ \ \ \ \ \ \ \ \ \_\_FILE\_\_,\ \_\_LINE\_\_)}}
+\DoxyCodeLine{01265\ \textcolor{preprocessor}{\#endif}}
+\DoxyCodeLine{01266\ }
+\DoxyCodeLine{01267\ \textcolor{preprocessor}{\#ifdef\ DOXYGEN}}
+\DoxyCodeLine{01280\ \textcolor{keywordtype}{void}\ assert\_float\_not\_equal(\textcolor{keywordtype}{float}\ a,\ \textcolor{keywordtype}{float}\ b,\ \textcolor{keywordtype}{float}\ epsilon);}
+\DoxyCodeLine{01281\ \textcolor{preprocessor}{\#else}}
+\DoxyCodeLine{01282\ \textcolor{preprocessor}{\#define\ assert\_float\_not\_equal(a,\ b,\ epsilon)\ \(\backslash\)}}
+\DoxyCodeLine{01283\ \textcolor{preprocessor}{\ \ \ \ \_assert\_float\_not\_equal((float)a,\ \(\backslash\)}}
+\DoxyCodeLine{01284\ \textcolor{preprocessor}{\ \ \ \ \ \ \ \ \ \ \ \ (float)b,\ \(\backslash\)}}
+\DoxyCodeLine{01285\ \textcolor{preprocessor}{\ \ \ \ \ \ \ \ \ \ \ \ (float)epsilon,\ \(\backslash\)}}
+\DoxyCodeLine{01286\ \textcolor{preprocessor}{\ \ \ \ \ \ \ \ \ \ \ \ \_\_FILE\_\_,\ \_\_LINE\_\_)}}
+\DoxyCodeLine{01287\ \textcolor{preprocessor}{\#endif}}
+\DoxyCodeLine{01288\ }
+\DoxyCodeLine{01289\ \textcolor{preprocessor}{\#ifdef\ DOXYGEN}}
+\DoxyCodeLine{01302\ \textcolor{keywordtype}{void}\ assert\_double\_equal(\textcolor{keywordtype}{double}\ a,\ \textcolor{keywordtype}{double}\ b,\ \textcolor{keywordtype}{double}\ epsilon);}
+\DoxyCodeLine{01303\ \textcolor{preprocessor}{\#else}}
+\DoxyCodeLine{01304\ \textcolor{preprocessor}{\#define\ assert\_double\_equal(a,\ b,\ epsilon)\ \(\backslash\)}}
+\DoxyCodeLine{01305\ \textcolor{preprocessor}{\ \ \ \ \_assert\_double\_equal((double)a,\ \(\backslash\)}}
+\DoxyCodeLine{01306\ \textcolor{preprocessor}{\ \ \ \ \ \ \ \ \ \ \ \ (double)b,\ \(\backslash\)}}
+\DoxyCodeLine{01307\ \textcolor{preprocessor}{\ \ \ \ \ \ \ \ \ \ \ \ (double)epsilon,\ \(\backslash\)}}
+\DoxyCodeLine{01308\ \textcolor{preprocessor}{\ \ \ \ \ \ \ \ \ \ \ \ \_\_FILE\_\_,\ \_\_LINE\_\_)}}
+\DoxyCodeLine{01309\ \textcolor{preprocessor}{\#endif}}
+\DoxyCodeLine{01310\ }
+\DoxyCodeLine{01311\ \textcolor{preprocessor}{\#ifdef\ DOXYGEN}}
+\DoxyCodeLine{01324\ \textcolor{keywordtype}{void}\ assert\_double\_not\_equal(\textcolor{keywordtype}{double}\ a,\ \textcolor{keywordtype}{double}\ b,\ \textcolor{keywordtype}{double}\ epsilon);}
+\DoxyCodeLine{01325\ \textcolor{preprocessor}{\#else}}
+\DoxyCodeLine{01326\ \textcolor{preprocessor}{\#define\ assert\_double\_not\_equal(a,\ b,\ epsilon)\ \(\backslash\)}}
+\DoxyCodeLine{01327\ \textcolor{preprocessor}{\ \ \ \ \_assert\_double\_not\_equal((float)a,\ \(\backslash\)}}
+\DoxyCodeLine{01328\ \textcolor{preprocessor}{\ \ \ \ \ \ \ \ \ \ \ \ (double)b,\ \(\backslash\)}}
+\DoxyCodeLine{01329\ \textcolor{preprocessor}{\ \ \ \ \ \ \ \ \ \ \ \ (double)epsilon,\ \(\backslash\)}}
+\DoxyCodeLine{01330\ \textcolor{preprocessor}{\ \ \ \ \ \ \ \ \ \ \ \ \_\_FILE\_\_,\ \_\_LINE\_\_)}}
+\DoxyCodeLine{01331\ \textcolor{preprocessor}{\#endif}}
+\DoxyCodeLine{01332\ }
+\DoxyCodeLine{01333\ }
+\DoxyCodeLine{01334\ \textcolor{preprocessor}{\#ifdef\ DOXYGEN}}
+\DoxyCodeLine{01345\ \textcolor{keywordtype}{void}\ assert\_string\_equal(\textcolor{keyword}{const}\ \textcolor{keywordtype}{char}\ *a,\ \textcolor{keyword}{const}\ \textcolor{keywordtype}{char}\ *b);}
+\DoxyCodeLine{01346\ \textcolor{preprocessor}{\#else}}
+\DoxyCodeLine{01347\ \textcolor{preprocessor}{\#define\ assert\_string\_equal(a,\ b)\ \(\backslash\)}}
+\DoxyCodeLine{01348\ \textcolor{preprocessor}{\ \ \ \ \_assert\_string\_equal((const\ char*)(a),\ (const\ char*)(b),\ \_\_FILE\_\_,\ \(\backslash\)}}
+\DoxyCodeLine{01349\ \textcolor{preprocessor}{\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \_\_LINE\_\_)}}
+\DoxyCodeLine{01350\ \textcolor{preprocessor}{\#endif}}
+\DoxyCodeLine{01351\ }
+\DoxyCodeLine{01352\ \textcolor{preprocessor}{\#ifdef\ DOXYGEN}}
+\DoxyCodeLine{01363\ \textcolor{keywordtype}{void}\ assert\_string\_not\_equal(\textcolor{keyword}{const}\ \textcolor{keywordtype}{char}\ *a,\ \textcolor{keyword}{const}\ \textcolor{keywordtype}{char}\ *b);}
+\DoxyCodeLine{01364\ \textcolor{preprocessor}{\#else}}
+\DoxyCodeLine{01365\ \textcolor{preprocessor}{\#define\ assert\_string\_not\_equal(a,\ b)\ \(\backslash\)}}
+\DoxyCodeLine{01366\ \textcolor{preprocessor}{\ \ \ \ \_assert\_string\_not\_equal((const\ char*)(a),\ (const\ char*)(b),\ \_\_FILE\_\_,\ \(\backslash\)}}
+\DoxyCodeLine{01367\ \textcolor{preprocessor}{\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \_\_LINE\_\_)}}
+\DoxyCodeLine{01368\ \textcolor{preprocessor}{\#endif}}
+\DoxyCodeLine{01369\ }
+\DoxyCodeLine{01370\ \textcolor{preprocessor}{\#ifdef\ DOXYGEN}}
+\DoxyCodeLine{01385\ \textcolor{keywordtype}{void}\ assert\_memory\_equal(\textcolor{keyword}{const}\ \textcolor{keywordtype}{void}\ *a,\ \textcolor{keyword}{const}\ \textcolor{keywordtype}{void}\ *b,\ \textcolor{keywordtype}{size\_t}\ size);}
+\DoxyCodeLine{01386\ \textcolor{preprocessor}{\#else}}
+\DoxyCodeLine{01387\ \textcolor{preprocessor}{\#define\ assert\_memory\_equal(a,\ b,\ size)\ \(\backslash\)}}
+\DoxyCodeLine{01388\ \textcolor{preprocessor}{\ \ \ \ \_assert\_memory\_equal((const\ void*)(a),\ (const\ void*)(b),\ size,\ \_\_FILE\_\_,\ \(\backslash\)}}
+\DoxyCodeLine{01389\ \textcolor{preprocessor}{\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \_\_LINE\_\_)}}
+\DoxyCodeLine{01390\ \textcolor{preprocessor}{\#endif}}
+\DoxyCodeLine{01391\ }
+\DoxyCodeLine{01392\ \textcolor{preprocessor}{\#ifdef\ DOXYGEN}}
+\DoxyCodeLine{01407\ \textcolor{keywordtype}{void}\ assert\_memory\_not\_equal(\textcolor{keyword}{const}\ \textcolor{keywordtype}{void}\ *a,\ \textcolor{keyword}{const}\ \textcolor{keywordtype}{void}\ *b,\ \textcolor{keywordtype}{size\_t}\ size);}
+\DoxyCodeLine{01408\ \textcolor{preprocessor}{\#else}}
+\DoxyCodeLine{01409\ \textcolor{preprocessor}{\#define\ assert\_memory\_not\_equal(a,\ b,\ size)\ \(\backslash\)}}
+\DoxyCodeLine{01410\ \textcolor{preprocessor}{\ \ \ \ \_assert\_memory\_not\_equal((const\ void*)(a),\ (const\ void*)(b),\ size,\ \(\backslash\)}}
+\DoxyCodeLine{01411\ \textcolor{preprocessor}{\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \_\_FILE\_\_,\ \_\_LINE\_\_)}}
+\DoxyCodeLine{01412\ \textcolor{preprocessor}{\#endif}}
+\DoxyCodeLine{01413\ }
+\DoxyCodeLine{01414\ \textcolor{preprocessor}{\#ifdef\ DOXYGEN}}
+\DoxyCodeLine{01428\ \textcolor{keywordtype}{void}\ assert\_in\_range(LargestIntegralType\ value,\ LargestIntegralType\ minimum,\ LargestIntegralType\ maximum);}
+\DoxyCodeLine{01429\ \textcolor{preprocessor}{\#else}}
+\DoxyCodeLine{01430\ \textcolor{preprocessor}{\#define\ assert\_in\_range(value,\ minimum,\ maximum)\ \(\backslash\)}}
+\DoxyCodeLine{01431\ \textcolor{preprocessor}{\ \ \ \ \_assert\_in\_range(\ \(\backslash\)}}
+\DoxyCodeLine{01432\ \textcolor{preprocessor}{\ \ \ \ \ \ \ \ cast\_to\_largest\_integral\_type(value),\ \(\backslash\)}}
+\DoxyCodeLine{01433\ \textcolor{preprocessor}{\ \ \ \ \ \ \ \ cast\_to\_largest\_integral\_type(minimum),\ \(\backslash\)}}
+\DoxyCodeLine{01434\ \textcolor{preprocessor}{\ \ \ \ \ \ \ \ cast\_to\_largest\_integral\_type(maximum),\ \_\_FILE\_\_,\ \_\_LINE\_\_)}}
+\DoxyCodeLine{01435\ \textcolor{preprocessor}{\#endif}}
+\DoxyCodeLine{01436\ }
+\DoxyCodeLine{01437\ \textcolor{preprocessor}{\#ifdef\ DOXYGEN}}
+\DoxyCodeLine{01451\ \textcolor{keywordtype}{void}\ assert\_not\_in\_range(LargestIntegralType\ value,\ LargestIntegralType\ minimum,\ LargestIntegralType\ maximum);}
+\DoxyCodeLine{01452\ \textcolor{preprocessor}{\#else}}
+\DoxyCodeLine{01453\ \textcolor{preprocessor}{\#define\ assert\_not\_in\_range(value,\ minimum,\ maximum)\ \(\backslash\)}}
+\DoxyCodeLine{01454\ \textcolor{preprocessor}{\ \ \ \ \_assert\_not\_in\_range(\ \(\backslash\)}}
+\DoxyCodeLine{01455\ \textcolor{preprocessor}{\ \ \ \ \ \ \ \ cast\_to\_largest\_integral\_type(value),\ \(\backslash\)}}
+\DoxyCodeLine{01456\ \textcolor{preprocessor}{\ \ \ \ \ \ \ \ cast\_to\_largest\_integral\_type(minimum),\ \(\backslash\)}}
+\DoxyCodeLine{01457\ \textcolor{preprocessor}{\ \ \ \ \ \ \ \ cast\_to\_largest\_integral\_type(maximum),\ \_\_FILE\_\_,\ \_\_LINE\_\_)}}
+\DoxyCodeLine{01458\ \textcolor{preprocessor}{\#endif}}
+\DoxyCodeLine{01459\ }
+\DoxyCodeLine{01460\ \textcolor{preprocessor}{\#ifdef\ DOXYGEN}}
+\DoxyCodeLine{01473\ \textcolor{keywordtype}{void}\ assert\_in\_set(LargestIntegralType\ value,\ LargestIntegralType\ values[],\ \textcolor{keywordtype}{size\_t}\ count);}
+\DoxyCodeLine{01474\ \textcolor{preprocessor}{\#else}}
+\DoxyCodeLine{01475\ \textcolor{preprocessor}{\#define\ assert\_in\_set(value,\ values,\ number\_of\_values)\ \(\backslash\)}}
+\DoxyCodeLine{01476\ \textcolor{preprocessor}{\ \ \ \ \_assert\_in\_set(value,\ values,\ number\_of\_values,\ \_\_FILE\_\_,\ \_\_LINE\_\_)}}
+\DoxyCodeLine{01477\ \textcolor{preprocessor}{\#endif}}
+\DoxyCodeLine{01478\ }
+\DoxyCodeLine{01479\ \textcolor{preprocessor}{\#ifdef\ DOXYGEN}}
+\DoxyCodeLine{01492\ \textcolor{keywordtype}{void}\ assert\_not\_in\_set(LargestIntegralType\ value,\ LargestIntegralType\ values[],\ \textcolor{keywordtype}{size\_t}\ count);}
+\DoxyCodeLine{01493\ \textcolor{preprocessor}{\#else}}
+\DoxyCodeLine{01494\ \textcolor{preprocessor}{\#define\ assert\_not\_in\_set(value,\ values,\ number\_of\_values)\ \(\backslash\)}}
+\DoxyCodeLine{01495\ \textcolor{preprocessor}{\ \ \ \ \_assert\_not\_in\_set(value,\ values,\ number\_of\_values,\ \_\_FILE\_\_,\ \_\_LINE\_\_)}}
+\DoxyCodeLine{01496\ \textcolor{preprocessor}{\#endif}}
+\DoxyCodeLine{01497\ }
+\DoxyCodeLine{01558\ \textcolor{preprocessor}{\#ifdef\ DOXYGEN}}
+\DoxyCodeLine{01565\ \textcolor{keywordtype}{void}\ function\_called(\textcolor{keywordtype}{void});}
+\DoxyCodeLine{01566\ \textcolor{preprocessor}{\#else}}
+\DoxyCodeLine{01567\ \textcolor{preprocessor}{\#define\ function\_called()\ \_function\_called(\_\_func\_\_,\ \_\_FILE\_\_,\ \_\_LINE\_\_)}}
+\DoxyCodeLine{01568\ \textcolor{preprocessor}{\#endif}}
+\DoxyCodeLine{01569\ }
+\DoxyCodeLine{01570\ \textcolor{preprocessor}{\#ifdef\ DOXYGEN}}
+\DoxyCodeLine{01581\ \textcolor{keywordtype}{void}\ expect\_function\_calls(\#function,\ \textcolor{keyword}{const}\ \textcolor{keywordtype}{int}\ times);}
+\DoxyCodeLine{01582\ \textcolor{preprocessor}{\#else}}
+\DoxyCodeLine{01583\ \textcolor{preprocessor}{\#define\ expect\_function\_calls(function,\ times)\ \(\backslash\)}}
+\DoxyCodeLine{01584\ \textcolor{preprocessor}{\ \ \ \ \_expect\_function\_call(\#function,\ \_\_FILE\_\_,\ \_\_LINE\_\_,\ times)}}
+\DoxyCodeLine{01585\ \textcolor{preprocessor}{\#endif}}
+\DoxyCodeLine{01586\ }
+\DoxyCodeLine{01587\ \textcolor{preprocessor}{\#ifdef\ DOXYGEN}}
+\DoxyCodeLine{01596\ \textcolor{keywordtype}{void}\ expect\_function\_call(\#function);}
+\DoxyCodeLine{01597\ \textcolor{preprocessor}{\#else}}
+\DoxyCodeLine{01598\ \textcolor{preprocessor}{\#define\ expect\_function\_call(function)\ \(\backslash\)}}
+\DoxyCodeLine{01599\ \textcolor{preprocessor}{\ \ \ \ \_expect\_function\_call(\#function,\ \_\_FILE\_\_,\ \_\_LINE\_\_,\ 1)}}
+\DoxyCodeLine{01600\ \textcolor{preprocessor}{\#endif}}
+\DoxyCodeLine{01601\ }
+\DoxyCodeLine{01602\ \textcolor{preprocessor}{\#ifdef\ DOXYGEN}}
+\DoxyCodeLine{01610\ \textcolor{keywordtype}{void}\ expect\_function\_call\_any(\#function);}
+\DoxyCodeLine{01611\ \textcolor{preprocessor}{\#else}}
+\DoxyCodeLine{01612\ \textcolor{preprocessor}{\#define\ expect\_function\_call\_any(function)\ \(\backslash\)}}
+\DoxyCodeLine{01613\ \textcolor{preprocessor}{\ \ \ \ \_expect\_function\_call(\#function,\ \_\_FILE\_\_,\ \_\_LINE\_\_,\ -\/1)}}
+\DoxyCodeLine{01614\ \textcolor{preprocessor}{\#endif}}
+\DoxyCodeLine{01615\ }
+\DoxyCodeLine{01616\ \textcolor{preprocessor}{\#ifdef\ DOXYGEN}}
+\DoxyCodeLine{01624\ \textcolor{keywordtype}{void}\ ignore\_function\_calls(\#function);}
+\DoxyCodeLine{01625\ \textcolor{preprocessor}{\#else}}
+\DoxyCodeLine{01626\ \textcolor{preprocessor}{\#define\ ignore\_function\_calls(function)\ \(\backslash\)}}
+\DoxyCodeLine{01627\ \textcolor{preprocessor}{\ \ \ \ \_expect\_function\_call(\#function,\ \_\_FILE\_\_,\ \_\_LINE\_\_,\ -\/2)}}
+\DoxyCodeLine{01628\ \textcolor{preprocessor}{\#endif}}
+\DoxyCodeLine{01629\ }
+\DoxyCodeLine{01658\ \textcolor{preprocessor}{\#ifdef\ DOXYGEN}}
+\DoxyCodeLine{01662\ \textcolor{keywordtype}{void}\ fail(\textcolor{keywordtype}{void});}
+\DoxyCodeLine{01663\ \textcolor{preprocessor}{\#else}}
+\DoxyCodeLine{01664\ \textcolor{preprocessor}{\#define\ fail()\ \_fail(\_\_FILE\_\_,\ \_\_LINE\_\_)}}
+\DoxyCodeLine{01665\ \textcolor{preprocessor}{\#endif}}
+\DoxyCodeLine{01666\ }
+\DoxyCodeLine{01667\ \textcolor{preprocessor}{\#ifdef\ DOXYGEN}}
+\DoxyCodeLine{01671\ \textcolor{keywordtype}{void}\ skip(\textcolor{keywordtype}{void});}
+\DoxyCodeLine{01672\ \textcolor{preprocessor}{\#else}}
+\DoxyCodeLine{01673\ \textcolor{preprocessor}{\#define\ skip()\ \_skip(\_\_FILE\_\_,\ \_\_LINE\_\_)}}
+\DoxyCodeLine{01674\ \textcolor{preprocessor}{\#endif}}
+\DoxyCodeLine{01675\ }
+\DoxyCodeLine{01676\ \textcolor{preprocessor}{\#ifdef\ DOXYGEN}}
+\DoxyCodeLine{01691\ \textcolor{keywordtype}{void}\ fail\_msg(\textcolor{keyword}{const}\ \textcolor{keywordtype}{char}\ *msg,\ ...);}
+\DoxyCodeLine{01692\ \textcolor{preprocessor}{\#else}}
+\DoxyCodeLine{01693\ \textcolor{preprocessor}{\#define\ fail\_msg(msg,\ ...)\ do\ \{\ \(\backslash\)}}
+\DoxyCodeLine{01694\ \textcolor{preprocessor}{\ \ \ \ print\_error("{}ERROR:\ "{}\ msg\ "{}\(\backslash\)n"{},\ \#\#\_\_VA\_ARGS\_\_);\ \(\backslash\)}}
+\DoxyCodeLine{01695\ \textcolor{preprocessor}{\ \ \ \ fail();\ \(\backslash\)}}
+\DoxyCodeLine{01696\ \textcolor{preprocessor}{\}\ while\ (0)}}
+\DoxyCodeLine{01697\ \textcolor{preprocessor}{\#endif}}
+\DoxyCodeLine{01698\ }
+\DoxyCodeLine{01699\ \textcolor{preprocessor}{\#ifdef\ DOXYGEN}}
+\DoxyCodeLine{01719\ \textcolor{keywordtype}{int}\ run\_test(\#function);}
+\DoxyCodeLine{01720\ \textcolor{preprocessor}{\#else}}
+\DoxyCodeLine{01721\ \textcolor{preprocessor}{\#define\ run\_test(f)\ \_run\_test(\#f,\ f,\ NULL,\ UNIT\_TEST\_FUNCTION\_TYPE\_TEST,\ NULL)}}
+\DoxyCodeLine{01722\ \textcolor{preprocessor}{\#endif}}
+\DoxyCodeLine{01723\ }
+\DoxyCodeLine{01724\ \textcolor{keyword}{static}\ \textcolor{keyword}{inline}\ \textcolor{keywordtype}{void}\ \_unit\_test\_dummy(\textcolor{keywordtype}{void}\ **state)\ \{}
+\DoxyCodeLine{01725\ \ \ \ \ (void)state;}
+\DoxyCodeLine{01726\ \}}
+\DoxyCodeLine{01727\ }
+\DoxyCodeLine{01732\ \textcolor{preprocessor}{\#define\ unit\_test(f)\ \{\ \#f,\ f,\ UNIT\_TEST\_FUNCTION\_TYPE\_TEST\ \}}}
+\DoxyCodeLine{01733\ }
+\DoxyCodeLine{01734\ \textcolor{preprocessor}{\#define\ \_unit\_test\_setup(test,\ setup)\ \(\backslash\)}}
+\DoxyCodeLine{01735\ \textcolor{preprocessor}{\ \ \ \ \{\ \#test\ "{}\_"{}\ \#setup,\ setup,\ UNIT\_TEST\_FUNCTION\_TYPE\_SETUP\ \}}}
+\DoxyCodeLine{01736\ }
+\DoxyCodeLine{01741\ \textcolor{preprocessor}{\#define\ unit\_test\_setup(test,\ setup)\ \(\backslash\)}}
+\DoxyCodeLine{01742\ \textcolor{preprocessor}{\ \ \ \ \_unit\_test\_setup(test,\ setup),\ \(\backslash\)}}
+\DoxyCodeLine{01743\ \textcolor{preprocessor}{\ \ \ \ unit\_test(test),\ \(\backslash\)}}
+\DoxyCodeLine{01744\ \textcolor{preprocessor}{\ \ \ \ \_unit\_test\_teardown(test,\ \_unit\_test\_dummy)}}
+\DoxyCodeLine{01745\ }
+\DoxyCodeLine{01746\ \textcolor{preprocessor}{\#define\ \_unit\_test\_teardown(test,\ teardown)\ \(\backslash\)}}
+\DoxyCodeLine{01747\ \textcolor{preprocessor}{\ \ \ \ \{\ \#test\ "{}\_"{}\ \#teardown,\ teardown,\ UNIT\_TEST\_FUNCTION\_TYPE\_TEARDOWN\ \}}}
+\DoxyCodeLine{01748\ }
+\DoxyCodeLine{01753\ \textcolor{preprocessor}{\#define\ unit\_test\_teardown(test,\ teardown)\ \(\backslash\)}}
+\DoxyCodeLine{01754\ \textcolor{preprocessor}{\ \ \ \ \_unit\_test\_setup(test,\ \_unit\_test\_dummy),\ \(\backslash\)}}
+\DoxyCodeLine{01755\ \textcolor{preprocessor}{\ \ \ \ unit\_test(test),\ \(\backslash\)}}
+\DoxyCodeLine{01756\ \textcolor{preprocessor}{\ \ \ \ \_unit\_test\_teardown(test,\ teardown)}}
+\DoxyCodeLine{01757\ }
+\DoxyCodeLine{01762\ \textcolor{preprocessor}{\#define\ group\_test\_setup(setup)\ \(\backslash\)}}
+\DoxyCodeLine{01763\ \textcolor{preprocessor}{\ \ \ \ \{\ "{}group\_"{}\ \#setup,\ setup,\ UNIT\_TEST\_FUNCTION\_TYPE\_GROUP\_SETUP\ \}}}
+\DoxyCodeLine{01764\ }
+\DoxyCodeLine{01769\ \textcolor{preprocessor}{\#define\ group\_test\_teardown(teardown)\ \(\backslash\)}}
+\DoxyCodeLine{01770\ \textcolor{preprocessor}{\ \ \ \ \{\ "{}group\_"{}\ \#teardown,\ teardown,\ UNIT\_TEST\_FUNCTION\_TYPE\_GROUP\_TEARDOWN\ \}}}
+\DoxyCodeLine{01771\ }
+\DoxyCodeLine{01779\ \textcolor{preprocessor}{\#define\ unit\_test\_setup\_teardown(test,\ setup,\ teardown)\ \(\backslash\)}}
+\DoxyCodeLine{01780\ \textcolor{preprocessor}{\ \ \ \ \_unit\_test\_setup(test,\ setup),\ \(\backslash\)}}
+\DoxyCodeLine{01781\ \textcolor{preprocessor}{\ \ \ \ unit\_test(test),\ \(\backslash\)}}
+\DoxyCodeLine{01782\ \textcolor{preprocessor}{\ \ \ \ \_unit\_test\_teardown(test,\ teardown)}}
+\DoxyCodeLine{01783\ }
+\DoxyCodeLine{01784\ }
+\DoxyCodeLine{01786\ \textcolor{preprocessor}{\#define\ cmocka\_unit\_test(f)\ \{\ \#f,\ f,\ NULL,\ NULL,\ NULL\ \}}}
+\DoxyCodeLine{01787\ }
+\DoxyCodeLine{01789\ \textcolor{preprocessor}{\#define\ cmocka\_unit\_test\_setup(f,\ setup)\ \{\ \#f,\ f,\ setup,\ NULL,\ NULL\ \}}}
+\DoxyCodeLine{01790\ }
+\DoxyCodeLine{01792\ \textcolor{preprocessor}{\#define\ cmocka\_unit\_test\_teardown(f,\ teardown)\ \{\ \#f,\ f,\ NULL,\ teardown,\ NULL\ \}}}
+\DoxyCodeLine{01793\ }
+\DoxyCodeLine{01798\ \textcolor{preprocessor}{\#define\ cmocka\_unit\_test\_setup\_teardown(f,\ setup,\ teardown)\ \{\ \#f,\ f,\ setup,\ teardown,\ NULL\ \}}}
+\DoxyCodeLine{01799\ }
+\DoxyCodeLine{01807\ \textcolor{preprocessor}{\#define\ cmocka\_unit\_test\_prestate(f,\ state)\ \{\ \#f,\ f,\ NULL,\ NULL,\ state\ \}}}
+\DoxyCodeLine{01808\ }
+\DoxyCodeLine{01816\ \textcolor{preprocessor}{\#define\ cmocka\_unit\_test\_prestate\_setup\_teardown(f,\ setup,\ teardown,\ state)\ \{\ \#f,\ f,\ setup,\ teardown,\ state\ \}}}
+\DoxyCodeLine{01817\ }
+\DoxyCodeLine{01818\ \textcolor{preprocessor}{\#define\ run\_tests(tests)\ \_run\_tests(tests,\ sizeof(tests)\ /\ sizeof((tests)[0]))}}
+\DoxyCodeLine{01819\ \textcolor{preprocessor}{\#define\ run\_group\_tests(tests)\ \_run\_group\_tests(tests,\ sizeof(tests)\ /\ sizeof((tests)[0]))}}
+\DoxyCodeLine{01820\ }
+\DoxyCodeLine{01821\ \textcolor{preprocessor}{\#ifdef\ DOXYGEN}}
+\DoxyCodeLine{01878\ \textcolor{keywordtype}{int}\ cmocka\_run\_group\_tests(\textcolor{keyword}{const}\ \textcolor{keyword}{struct}\ \mbox{\hyperlink{structCMUnitTest}{CMUnitTest}}\ group\_tests[],}
+\DoxyCodeLine{01879\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ CMFixtureFunction\ group\_setup,}
+\DoxyCodeLine{01880\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ CMFixtureFunction\ group\_teardown);}
+\DoxyCodeLine{01881\ \textcolor{preprocessor}{\#else}}
+\DoxyCodeLine{01882\ \textcolor{preprocessor}{\#\ define\ cmocka\_run\_group\_tests(group\_tests,\ group\_setup,\ group\_teardown)\ \(\backslash\)}}
+\DoxyCodeLine{01883\ \textcolor{preprocessor}{\ \ \ \ \ \ \ \ \_cmocka\_run\_group\_tests(\#group\_tests,\ group\_tests,\ sizeof(group\_tests)\ /\ sizeof((group\_tests)[0]),\ group\_setup,\ group\_teardown)}}
+\DoxyCodeLine{01884\ \textcolor{preprocessor}{\#endif}}
+\DoxyCodeLine{01885\ }
+\DoxyCodeLine{01886\ \textcolor{preprocessor}{\#ifdef\ DOXYGEN}}
+\DoxyCodeLine{01946\ \textcolor{keywordtype}{int}\ cmocka\_run\_group\_tests\_name(\textcolor{keyword}{const}\ \textcolor{keywordtype}{char}\ *group\_name,}
+\DoxyCodeLine{01947\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ \textcolor{keyword}{struct}\ \mbox{\hyperlink{structCMUnitTest}{CMUnitTest}}\ group\_tests[],}
+\DoxyCodeLine{01948\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ CMFixtureFunction\ group\_setup,}
+\DoxyCodeLine{01949\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ CMFixtureFunction\ group\_teardown);}
+\DoxyCodeLine{01950\ \textcolor{preprocessor}{\#else}}
+\DoxyCodeLine{01951\ \textcolor{preprocessor}{\#\ define\ cmocka\_run\_group\_tests\_name(group\_name,\ group\_tests,\ group\_setup,\ group\_teardown)\ \(\backslash\)}}
+\DoxyCodeLine{01952\ \textcolor{preprocessor}{\ \ \ \ \ \ \ \ \_cmocka\_run\_group\_tests(group\_name,\ group\_tests,\ sizeof(group\_tests)\ /\ sizeof((group\_tests)[0]),\ group\_setup,\ group\_teardown)}}
+\DoxyCodeLine{01953\ \textcolor{preprocessor}{\#endif}}
+\DoxyCodeLine{01954\ }
+\DoxyCodeLine{01980\ \textcolor{preprocessor}{\#ifdef\ DOXYGEN}}
+\DoxyCodeLine{02003\ \textcolor{keywordtype}{void}\ *test\_malloc(\textcolor{keywordtype}{size\_t}\ size);}
+\DoxyCodeLine{02004\ \textcolor{preprocessor}{\#else}}
+\DoxyCodeLine{02005\ \textcolor{preprocessor}{\#define\ test\_malloc(size)\ \_test\_malloc(size,\ \_\_FILE\_\_,\ \_\_LINE\_\_)}}
+\DoxyCodeLine{02006\ \textcolor{preprocessor}{\#endif}}
+\DoxyCodeLine{02007\ }
+\DoxyCodeLine{02008\ \textcolor{preprocessor}{\#ifdef\ DOXYGEN}}
+\DoxyCodeLine{02022\ \textcolor{keywordtype}{void}\ *test\_calloc(\textcolor{keywordtype}{size\_t}\ nmemb,\ \textcolor{keywordtype}{size\_t}\ size);}
+\DoxyCodeLine{02023\ \textcolor{preprocessor}{\#else}}
+\DoxyCodeLine{02024\ \textcolor{preprocessor}{\#define\ test\_calloc(num,\ size)\ \_test\_calloc(num,\ size,\ \_\_FILE\_\_,\ \_\_LINE\_\_)}}
+\DoxyCodeLine{02025\ \textcolor{preprocessor}{\#endif}}
+\DoxyCodeLine{02026\ }
+\DoxyCodeLine{02027\ \textcolor{preprocessor}{\#ifdef\ DOXYGEN}}
+\DoxyCodeLine{02038\ \textcolor{keywordtype}{void}\ *test\_realloc(\textcolor{keywordtype}{void}\ *ptr,\ \textcolor{keywordtype}{size\_t}\ size);}
+\DoxyCodeLine{02039\ \textcolor{preprocessor}{\#else}}
+\DoxyCodeLine{02040\ \textcolor{preprocessor}{\#define\ test\_realloc(ptr,\ size)\ \_test\_realloc(ptr,\ size,\ \_\_FILE\_\_,\ \_\_LINE\_\_)}}
+\DoxyCodeLine{02041\ \textcolor{preprocessor}{\#endif}}
+\DoxyCodeLine{02042\ }
+\DoxyCodeLine{02043\ \textcolor{preprocessor}{\#ifdef\ DOXYGEN}}
+\DoxyCodeLine{02051\ \textcolor{keywordtype}{void}\ test\_free(\textcolor{keywordtype}{void}\ *ptr);}
+\DoxyCodeLine{02052\ \textcolor{preprocessor}{\#else}}
+\DoxyCodeLine{02053\ \textcolor{preprocessor}{\#define\ test\_free(ptr)\ \_test\_free(ptr,\ \_\_FILE\_\_,\ \_\_LINE\_\_)}}
+\DoxyCodeLine{02054\ \textcolor{preprocessor}{\#endif}}
+\DoxyCodeLine{02055\ }
+\DoxyCodeLine{02056\ \textcolor{comment}{/*\ Redirect\ malloc,\ calloc\ and\ free\ to\ the\ unit\ test\ allocators.\ */}}
+\DoxyCodeLine{02057\ \textcolor{preprocessor}{\#ifdef\ UNIT\_TESTING}}
+\DoxyCodeLine{02058\ \textcolor{preprocessor}{\#define\ malloc\ test\_malloc}}
+\DoxyCodeLine{02059\ \textcolor{preprocessor}{\#define\ realloc\ test\_realloc}}
+\DoxyCodeLine{02060\ \textcolor{preprocessor}{\#define\ calloc\ test\_calloc}}
+\DoxyCodeLine{02061\ \textcolor{preprocessor}{\#define\ free\ test\_free}}
+\DoxyCodeLine{02062\ \textcolor{preprocessor}{\#endif\ }\textcolor{comment}{/*\ UNIT\_TESTING\ */}\textcolor{preprocessor}{}}
+\DoxyCodeLine{02063\ }
+\DoxyCodeLine{02117\ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{group__cmocka__mock__assert_ga7f1663184edbd6120732191c4bffada2}{mock\_assert}}(\textcolor{keyword}{const}\ \textcolor{keywordtype}{int}\ result,\ \textcolor{keyword}{const}\ \textcolor{keywordtype}{char}*\ \textcolor{keyword}{const}\ expression,}
+\DoxyCodeLine{02118\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ \textcolor{keywordtype}{char}\ *\ \textcolor{keyword}{const}\ file,\ \textcolor{keyword}{const}\ \textcolor{keywordtype}{int}\ line);}
+\DoxyCodeLine{02119\ }
+\DoxyCodeLine{02120\ \textcolor{preprocessor}{\#ifdef\ DOXYGEN}}
+\DoxyCodeLine{02143\ \textcolor{keywordtype}{void}\ expect\_assert\_failure(function\ fn\_call);}
+\DoxyCodeLine{02144\ \textcolor{preprocessor}{\#else}}
+\DoxyCodeLine{02145\ \textcolor{preprocessor}{\#define\ expect\_assert\_failure(function\_call)\ \(\backslash\)}}
+\DoxyCodeLine{02146\ \textcolor{preprocessor}{\ \ \{\ \(\backslash\)}}
+\DoxyCodeLine{02147\ \textcolor{preprocessor}{\ \ \ \ const\ int\ result\ =\ setjmp(global\_expect\_assert\_env);\ \(\backslash\)}}
+\DoxyCodeLine{02148\ \textcolor{preprocessor}{\ \ \ \ global\_expecting\_assert\ =\ 1;\ \(\backslash\)}}
+\DoxyCodeLine{02149\ \textcolor{preprocessor}{\ \ \ \ if\ (result)\ \{\ \(\backslash\)}}
+\DoxyCodeLine{02150\ \textcolor{preprocessor}{\ \ \ \ \ \ print\_message("{}Expected\ assertion\ \%s\ occurred\(\backslash\)n"{},\ \(\backslash\)}}
+\DoxyCodeLine{02151\ \textcolor{preprocessor}{\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ global\_last\_failed\_assert);\ \(\backslash\)}}
+\DoxyCodeLine{02152\ \textcolor{preprocessor}{\ \ \ \ \ \ global\_expecting\_assert\ =\ 0;\ \(\backslash\)}}
+\DoxyCodeLine{02153\ \textcolor{preprocessor}{\ \ \ \ \}\ else\ \{\ \(\backslash\)}}
+\DoxyCodeLine{02154\ \textcolor{preprocessor}{\ \ \ \ \ \ function\_call\ ;\ \(\backslash\)}}
+\DoxyCodeLine{02155\ \textcolor{preprocessor}{\ \ \ \ \ \ global\_expecting\_assert\ =\ 0;\ \(\backslash\)}}
+\DoxyCodeLine{02156\ \textcolor{preprocessor}{\ \ \ \ \ \ print\_error("{}Expected\ assert\ in\ \%s\(\backslash\)n"{},\ \#function\_call);\ \(\backslash\)}}
+\DoxyCodeLine{02157\ \textcolor{preprocessor}{\ \ \ \ \ \ \_fail(\_\_FILE\_\_,\ \_\_LINE\_\_);\ \(\backslash\)}}
+\DoxyCodeLine{02158\ \textcolor{preprocessor}{\ \ \ \ \}\ \(\backslash\)}}
+\DoxyCodeLine{02159\ \textcolor{preprocessor}{\ \ \}}}
+\DoxyCodeLine{02160\ \textcolor{preprocessor}{\#endif}}
+\DoxyCodeLine{02161\ }
+\DoxyCodeLine{02164\ \textcolor{comment}{/*\ Function\ prototype\ for\ setup,\ test\ and\ teardown\ functions.\ */}}
+\DoxyCodeLine{02165\ \textcolor{keyword}{typedef}\ void\ (*UnitTestFunction)(\textcolor{keywordtype}{void}\ **state);}
+\DoxyCodeLine{02166\ }
+\DoxyCodeLine{02167\ \textcolor{comment}{/*\ Function\ that\ determines\ whether\ a\ function\ parameter\ value\ is\ correct.\ */}}
+\DoxyCodeLine{02168\ \textcolor{keyword}{typedef}\ int\ (*CheckParameterValue)(\textcolor{keyword}{const}\ LargestIntegralType\ value,}
+\DoxyCodeLine{02169\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ LargestIntegralType\ check\_value\_data);}
+\DoxyCodeLine{02170\ }
+\DoxyCodeLine{02171\ \textcolor{comment}{/*\ Type\ of\ the\ unit\ test\ function.\ */}}
+\DoxyCodeLine{02172\ \textcolor{keyword}{typedef}\ \textcolor{keyword}{enum}\ UnitTestFunctionType\ \{}
+\DoxyCodeLine{02173\ \ \ \ \ UNIT\_TEST\_FUNCTION\_TYPE\_TEST\ =\ 0,}
+\DoxyCodeLine{02174\ \ \ \ \ UNIT\_TEST\_FUNCTION\_TYPE\_SETUP,}
+\DoxyCodeLine{02175\ \ \ \ \ UNIT\_TEST\_FUNCTION\_TYPE\_TEARDOWN,}
+\DoxyCodeLine{02176\ \ \ \ \ UNIT\_TEST\_FUNCTION\_TYPE\_GROUP\_SETUP,}
+\DoxyCodeLine{02177\ \ \ \ \ UNIT\_TEST\_FUNCTION\_TYPE\_GROUP\_TEARDOWN,}
+\DoxyCodeLine{02178\ \}\ UnitTestFunctionType;}
+\DoxyCodeLine{02179\ }
+\DoxyCodeLine{02180\ \textcolor{comment}{/*}}
+\DoxyCodeLine{02181\ \textcolor{comment}{\ *\ Stores\ a\ unit\ test\ function\ with\ its\ name\ and\ type.}}
+\DoxyCodeLine{02182\ \textcolor{comment}{\ *\ NOTE:\ Every\ setup\ function\ must\ be\ paired\ with\ a\ teardown\ function.\ \ It's}}
+\DoxyCodeLine{02183\ \textcolor{comment}{\ *\ possible\ to\ specify\ NULL\ function\ pointers.}}
+\DoxyCodeLine{02184\ \textcolor{comment}{\ */}}
+\DoxyCodeLine{02185\ \textcolor{keyword}{typedef}\ \textcolor{keyword}{struct\ }\mbox{\hyperlink{structUnitTest}{UnitTest}}\ \{}
+\DoxyCodeLine{02186\ \ \ \ \ \textcolor{keyword}{const}\ \textcolor{keywordtype}{char}*\ name;}
+\DoxyCodeLine{02187\ \ \ \ \ UnitTestFunction\ function;}
+\DoxyCodeLine{02188\ \ \ \ \ UnitTestFunctionType\ function\_type;}
+\DoxyCodeLine{02189\ \}\ \mbox{\hyperlink{structUnitTest}{UnitTest}};}
+\DoxyCodeLine{02190\ }
+\DoxyCodeLine{02191\ \textcolor{keyword}{typedef}\ \textcolor{keyword}{struct\ }\mbox{\hyperlink{structGroupTest}{GroupTest}}\ \{}
+\DoxyCodeLine{02192\ \ \ \ \ UnitTestFunction\ setup;}
+\DoxyCodeLine{02193\ \ \ \ \ UnitTestFunction\ teardown;}
+\DoxyCodeLine{02194\ \ \ \ \ \textcolor{keyword}{const}\ \mbox{\hyperlink{structUnitTest}{UnitTest}}\ *tests;}
+\DoxyCodeLine{02195\ \ \ \ \ \textcolor{keyword}{const}\ \textcolor{keywordtype}{size\_t}\ number\_of\_tests;}
+\DoxyCodeLine{02196\ \}\ \mbox{\hyperlink{structGroupTest}{GroupTest}};}
+\DoxyCodeLine{02197\ }
+\DoxyCodeLine{02198\ \textcolor{comment}{/*\ Function\ prototype\ for\ test\ functions.\ */}}
+\DoxyCodeLine{02199\ \textcolor{keyword}{typedef}\ void\ (*CMUnitTestFunction)(\textcolor{keywordtype}{void}\ **state);}
+\DoxyCodeLine{02200\ }
+\DoxyCodeLine{02201\ \textcolor{comment}{/*\ Function\ prototype\ for\ setup\ and\ teardown\ functions.\ */}}
+\DoxyCodeLine{02202\ \textcolor{keyword}{typedef}\ int\ (*CMFixtureFunction)(\textcolor{keywordtype}{void}\ **state);}
+\DoxyCodeLine{02203\ }
+\DoxyCodeLine{02204\ \textcolor{keyword}{struct\ }\mbox{\hyperlink{structCMUnitTest}{CMUnitTest}}\ \{}
+\DoxyCodeLine{02205\ \ \ \ \ \textcolor{keyword}{const}\ \textcolor{keywordtype}{char}\ *name;}
+\DoxyCodeLine{02206\ \ \ \ \ CMUnitTestFunction\ test\_func;}
+\DoxyCodeLine{02207\ \ \ \ \ CMFixtureFunction\ setup\_func;}
+\DoxyCodeLine{02208\ \ \ \ \ CMFixtureFunction\ teardown\_func;}
+\DoxyCodeLine{02209\ \ \ \ \ \textcolor{keywordtype}{void}\ *initial\_state;}
+\DoxyCodeLine{02210\ \};}
+\DoxyCodeLine{02211\ }
+\DoxyCodeLine{02212\ \textcolor{comment}{/*\ Location\ within\ some\ source\ code.\ */}}
+\DoxyCodeLine{02213\ \textcolor{keyword}{typedef}\ \textcolor{keyword}{struct\ }\mbox{\hyperlink{structSourceLocation}{SourceLocation}}\ \{}
+\DoxyCodeLine{02214\ \ \ \ \ \textcolor{keyword}{const}\ \textcolor{keywordtype}{char}*\ file;}
+\DoxyCodeLine{02215\ \ \ \ \ \textcolor{keywordtype}{int}\ line;}
+\DoxyCodeLine{02216\ \}\ \mbox{\hyperlink{structSourceLocation}{SourceLocation}};}
+\DoxyCodeLine{02217\ }
+\DoxyCodeLine{02218\ \textcolor{comment}{/*\ Event\ that's\ called\ to\ check\ a\ parameter\ value.\ */}}
+\DoxyCodeLine{02219\ \textcolor{keyword}{typedef}\ \textcolor{keyword}{struct\ }\mbox{\hyperlink{structCheckParameterEvent}{CheckParameterEvent}}\ \{}
+\DoxyCodeLine{02220\ \ \ \ \ \mbox{\hyperlink{structSourceLocation}{SourceLocation}}\ location;}
+\DoxyCodeLine{02221\ \ \ \ \ \textcolor{keyword}{const}\ \textcolor{keywordtype}{char}\ *parameter\_name;}
+\DoxyCodeLine{02222\ \ \ \ \ CheckParameterValue\ check\_value;}
+\DoxyCodeLine{02223\ \ \ \ \ LargestIntegralType\ check\_value\_data;}
+\DoxyCodeLine{02224\ \}\ \mbox{\hyperlink{structCheckParameterEvent}{CheckParameterEvent}};}
+\DoxyCodeLine{02225\ }
+\DoxyCodeLine{02226\ \textcolor{comment}{/*\ Used\ by\ expect\_assert\_failure()\ and\ mock\_assert().\ */}}
+\DoxyCodeLine{02227\ \textcolor{keyword}{extern}\ \textcolor{keywordtype}{int}\ global\_expecting\_assert;}
+\DoxyCodeLine{02228\ \textcolor{keyword}{extern}\ jmp\_buf\ global\_expect\_assert\_env;}
+\DoxyCodeLine{02229\ \textcolor{keyword}{extern}\ \textcolor{keyword}{const}\ \textcolor{keywordtype}{char}\ *\ global\_last\_failed\_assert;}
+\DoxyCodeLine{02230\ }
+\DoxyCodeLine{02231\ \textcolor{comment}{/*\ Retrieves\ a\ value\ for\ the\ given\ function,\ as\ set\ by\ "{}will\_return"{}.\ */}}
+\DoxyCodeLine{02232\ LargestIntegralType\ \_mock(\textcolor{keyword}{const}\ \textcolor{keywordtype}{char}\ *\ \textcolor{keyword}{const}\ function,\ \textcolor{keyword}{const}\ \textcolor{keywordtype}{char}*\ \textcolor{keyword}{const}\ file,}
+\DoxyCodeLine{02233\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ \textcolor{keywordtype}{int}\ line);}
+\DoxyCodeLine{02234\ }
+\DoxyCodeLine{02235\ \textcolor{keywordtype}{void}\ \_expect\_function\_call(}
+\DoxyCodeLine{02236\ \ \ \ \ \textcolor{keyword}{const}\ \textcolor{keywordtype}{char}\ *\ \textcolor{keyword}{const}\ function\_name,}
+\DoxyCodeLine{02237\ \ \ \ \ \textcolor{keyword}{const}\ \textcolor{keywordtype}{char}\ *\ \textcolor{keyword}{const}\ file,}
+\DoxyCodeLine{02238\ \ \ \ \ \textcolor{keyword}{const}\ \textcolor{keywordtype}{int}\ line,}
+\DoxyCodeLine{02239\ \ \ \ \ \textcolor{keyword}{const}\ \textcolor{keywordtype}{int}\ count);}
+\DoxyCodeLine{02240\ }
+\DoxyCodeLine{02241\ \textcolor{keywordtype}{void}\ \_function\_called(\textcolor{keyword}{const}\ \textcolor{keywordtype}{char}\ *\ \textcolor{keyword}{const}\ function,\ \textcolor{keyword}{const}\ \textcolor{keywordtype}{char}*\ \textcolor{keyword}{const}\ file,}
+\DoxyCodeLine{02242\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ \textcolor{keywordtype}{int}\ line);}
+\DoxyCodeLine{02243\ }
+\DoxyCodeLine{02244\ \textcolor{keywordtype}{void}\ \_expect\_check(}
+\DoxyCodeLine{02245\ \ \ \ \ \textcolor{keyword}{const}\ \textcolor{keywordtype}{char}*\ \textcolor{keyword}{const}\ function,\ \textcolor{keyword}{const}\ \textcolor{keywordtype}{char}*\ \textcolor{keyword}{const}\ parameter,}
+\DoxyCodeLine{02246\ \ \ \ \ \textcolor{keyword}{const}\ \textcolor{keywordtype}{char}*\ \textcolor{keyword}{const}\ file,\ \textcolor{keyword}{const}\ \textcolor{keywordtype}{int}\ line,}
+\DoxyCodeLine{02247\ \ \ \ \ \textcolor{keyword}{const}\ CheckParameterValue\ check\_function,}
+\DoxyCodeLine{02248\ \ \ \ \ \textcolor{keyword}{const}\ LargestIntegralType\ check\_data,\ \mbox{\hyperlink{structCheckParameterEvent}{CheckParameterEvent}}\ *\ \textcolor{keyword}{const}\ event,}
+\DoxyCodeLine{02249\ \ \ \ \ \textcolor{keyword}{const}\ \textcolor{keywordtype}{int}\ count);}
+\DoxyCodeLine{02250\ }
+\DoxyCodeLine{02251\ \textcolor{keywordtype}{void}\ \_expect\_in\_set(}
+\DoxyCodeLine{02252\ \ \ \ \ \textcolor{keyword}{const}\ \textcolor{keywordtype}{char}*\ \textcolor{keyword}{const}\ function,\ \textcolor{keyword}{const}\ \textcolor{keywordtype}{char}*\ \textcolor{keyword}{const}\ parameter,}
+\DoxyCodeLine{02253\ \ \ \ \ \textcolor{keyword}{const}\ \textcolor{keywordtype}{char}*\ \textcolor{keyword}{const}\ file,\ \textcolor{keyword}{const}\ \textcolor{keywordtype}{int}\ line,\ \textcolor{keyword}{const}\ LargestIntegralType\ values[],}
+\DoxyCodeLine{02254\ \ \ \ \ \textcolor{keyword}{const}\ \textcolor{keywordtype}{size\_t}\ number\_of\_values,\ \textcolor{keyword}{const}\ \textcolor{keywordtype}{int}\ count);}
+\DoxyCodeLine{02255\ \textcolor{keywordtype}{void}\ \_expect\_not\_in\_set(}
+\DoxyCodeLine{02256\ \ \ \ \ \textcolor{keyword}{const}\ \textcolor{keywordtype}{char}*\ \textcolor{keyword}{const}\ function,\ \textcolor{keyword}{const}\ \textcolor{keywordtype}{char}*\ \textcolor{keyword}{const}\ parameter,}
+\DoxyCodeLine{02257\ \ \ \ \ \textcolor{keyword}{const}\ \textcolor{keywordtype}{char}*\ \textcolor{keyword}{const}\ file,\ \textcolor{keyword}{const}\ \textcolor{keywordtype}{int}\ line,\ \textcolor{keyword}{const}\ LargestIntegralType\ values[],}
+\DoxyCodeLine{02258\ \ \ \ \ \textcolor{keyword}{const}\ \textcolor{keywordtype}{size\_t}\ number\_of\_values,\ \textcolor{keyword}{const}\ \textcolor{keywordtype}{int}\ count);}
+\DoxyCodeLine{02259\ }
+\DoxyCodeLine{02260\ \textcolor{keywordtype}{void}\ \_expect\_in\_range(}
+\DoxyCodeLine{02261\ \ \ \ \ \textcolor{keyword}{const}\ \textcolor{keywordtype}{char}*\ \textcolor{keyword}{const}\ function,\ \textcolor{keyword}{const}\ \textcolor{keywordtype}{char}*\ \textcolor{keyword}{const}\ parameter,}
+\DoxyCodeLine{02262\ \ \ \ \ \textcolor{keyword}{const}\ \textcolor{keywordtype}{char}*\ \textcolor{keyword}{const}\ file,\ \textcolor{keyword}{const}\ \textcolor{keywordtype}{int}\ line,}
+\DoxyCodeLine{02263\ \ \ \ \ \textcolor{keyword}{const}\ LargestIntegralType\ minimum,}
+\DoxyCodeLine{02264\ \ \ \ \ \textcolor{keyword}{const}\ LargestIntegralType\ maximum,\ \textcolor{keyword}{const}\ \textcolor{keywordtype}{int}\ count);}
+\DoxyCodeLine{02265\ \textcolor{keywordtype}{void}\ \_expect\_not\_in\_range(}
+\DoxyCodeLine{02266\ \ \ \ \ \textcolor{keyword}{const}\ \textcolor{keywordtype}{char}*\ \textcolor{keyword}{const}\ function,\ \textcolor{keyword}{const}\ \textcolor{keywordtype}{char}*\ \textcolor{keyword}{const}\ parameter,}
+\DoxyCodeLine{02267\ \ \ \ \ \textcolor{keyword}{const}\ \textcolor{keywordtype}{char}*\ \textcolor{keyword}{const}\ file,\ \textcolor{keyword}{const}\ \textcolor{keywordtype}{int}\ line,}
+\DoxyCodeLine{02268\ \ \ \ \ \textcolor{keyword}{const}\ LargestIntegralType\ minimum,}
+\DoxyCodeLine{02269\ \ \ \ \ \textcolor{keyword}{const}\ LargestIntegralType\ maximum,\ \textcolor{keyword}{const}\ \textcolor{keywordtype}{int}\ count);}
+\DoxyCodeLine{02270\ }
+\DoxyCodeLine{02271\ \textcolor{keywordtype}{void}\ \_expect\_value(}
+\DoxyCodeLine{02272\ \ \ \ \ \textcolor{keyword}{const}\ \textcolor{keywordtype}{char}*\ \textcolor{keyword}{const}\ function,\ \textcolor{keyword}{const}\ \textcolor{keywordtype}{char}*\ \textcolor{keyword}{const}\ parameter,}
+\DoxyCodeLine{02273\ \ \ \ \ \textcolor{keyword}{const}\ \textcolor{keywordtype}{char}*\ \textcolor{keyword}{const}\ file,\ \textcolor{keyword}{const}\ \textcolor{keywordtype}{int}\ line,\ \textcolor{keyword}{const}\ LargestIntegralType\ value,}
+\DoxyCodeLine{02274\ \ \ \ \ \textcolor{keyword}{const}\ \textcolor{keywordtype}{int}\ count);}
+\DoxyCodeLine{02275\ \textcolor{keywordtype}{void}\ \_expect\_not\_value(}
+\DoxyCodeLine{02276\ \ \ \ \ \textcolor{keyword}{const}\ \textcolor{keywordtype}{char}*\ \textcolor{keyword}{const}\ function,\ \textcolor{keyword}{const}\ \textcolor{keywordtype}{char}*\ \textcolor{keyword}{const}\ parameter,}
+\DoxyCodeLine{02277\ \ \ \ \ \textcolor{keyword}{const}\ \textcolor{keywordtype}{char}*\ \textcolor{keyword}{const}\ file,\ \textcolor{keyword}{const}\ \textcolor{keywordtype}{int}\ line,\ \textcolor{keyword}{const}\ LargestIntegralType\ value,}
+\DoxyCodeLine{02278\ \ \ \ \ \textcolor{keyword}{const}\ \textcolor{keywordtype}{int}\ count);}
+\DoxyCodeLine{02279\ }
+\DoxyCodeLine{02280\ \textcolor{keywordtype}{void}\ \_expect\_string(}
+\DoxyCodeLine{02281\ \ \ \ \ \textcolor{keyword}{const}\ \textcolor{keywordtype}{char}*\ \textcolor{keyword}{const}\ function,\ \textcolor{keyword}{const}\ \textcolor{keywordtype}{char}*\ \textcolor{keyword}{const}\ parameter,}
+\DoxyCodeLine{02282\ \ \ \ \ \textcolor{keyword}{const}\ \textcolor{keywordtype}{char}*\ \textcolor{keyword}{const}\ file,\ \textcolor{keyword}{const}\ \textcolor{keywordtype}{int}\ line,\ \textcolor{keyword}{const}\ \textcolor{keywordtype}{char}*\ \textcolor{keywordtype}{string},}
+\DoxyCodeLine{02283\ \ \ \ \ \textcolor{keyword}{const}\ \textcolor{keywordtype}{int}\ count);}
+\DoxyCodeLine{02284\ \textcolor{keywordtype}{void}\ \_expect\_not\_string(}
+\DoxyCodeLine{02285\ \ \ \ \ \textcolor{keyword}{const}\ \textcolor{keywordtype}{char}*\ \textcolor{keyword}{const}\ function,\ \textcolor{keyword}{const}\ \textcolor{keywordtype}{char}*\ \textcolor{keyword}{const}\ parameter,}
+\DoxyCodeLine{02286\ \ \ \ \ \textcolor{keyword}{const}\ \textcolor{keywordtype}{char}*\ \textcolor{keyword}{const}\ file,\ \textcolor{keyword}{const}\ \textcolor{keywordtype}{int}\ line,\ \textcolor{keyword}{const}\ \textcolor{keywordtype}{char}*\ \textcolor{keywordtype}{string},}
+\DoxyCodeLine{02287\ \ \ \ \ \textcolor{keyword}{const}\ \textcolor{keywordtype}{int}\ count);}
+\DoxyCodeLine{02288\ }
+\DoxyCodeLine{02289\ \textcolor{keywordtype}{void}\ \_expect\_memory(}
+\DoxyCodeLine{02290\ \ \ \ \ \textcolor{keyword}{const}\ \textcolor{keywordtype}{char}*\ \textcolor{keyword}{const}\ function,\ \textcolor{keyword}{const}\ \textcolor{keywordtype}{char}*\ \textcolor{keyword}{const}\ parameter,}
+\DoxyCodeLine{02291\ \ \ \ \ \textcolor{keyword}{const}\ \textcolor{keywordtype}{char}*\ \textcolor{keyword}{const}\ file,\ \textcolor{keyword}{const}\ \textcolor{keywordtype}{int}\ line,\ \textcolor{keyword}{const}\ \textcolor{keywordtype}{void}*\ \textcolor{keyword}{const}\ memory,}
+\DoxyCodeLine{02292\ \ \ \ \ \textcolor{keyword}{const}\ \textcolor{keywordtype}{size\_t}\ size,\ \textcolor{keyword}{const}\ \textcolor{keywordtype}{int}\ count);}
+\DoxyCodeLine{02293\ \textcolor{keywordtype}{void}\ \_expect\_not\_memory(}
+\DoxyCodeLine{02294\ \ \ \ \ \textcolor{keyword}{const}\ \textcolor{keywordtype}{char}*\ \textcolor{keyword}{const}\ function,\ \textcolor{keyword}{const}\ \textcolor{keywordtype}{char}*\ \textcolor{keyword}{const}\ parameter,}
+\DoxyCodeLine{02295\ \ \ \ \ \textcolor{keyword}{const}\ \textcolor{keywordtype}{char}*\ \textcolor{keyword}{const}\ file,\ \textcolor{keyword}{const}\ \textcolor{keywordtype}{int}\ line,\ \textcolor{keyword}{const}\ \textcolor{keywordtype}{void}*\ \textcolor{keyword}{const}\ memory,}
+\DoxyCodeLine{02296\ \ \ \ \ \textcolor{keyword}{const}\ \textcolor{keywordtype}{size\_t}\ size,\ \textcolor{keyword}{const}\ \textcolor{keywordtype}{int}\ count);}
+\DoxyCodeLine{02297\ }
+\DoxyCodeLine{02298\ \textcolor{keywordtype}{void}\ \_expect\_any(}
+\DoxyCodeLine{02299\ \ \ \ \ \textcolor{keyword}{const}\ \textcolor{keywordtype}{char}*\ \textcolor{keyword}{const}\ function,\ \textcolor{keyword}{const}\ \textcolor{keywordtype}{char}*\ \textcolor{keyword}{const}\ parameter,}
+\DoxyCodeLine{02300\ \ \ \ \ \textcolor{keyword}{const}\ \textcolor{keywordtype}{char}*\ \textcolor{keyword}{const}\ file,\ \textcolor{keyword}{const}\ \textcolor{keywordtype}{int}\ line,\ \textcolor{keyword}{const}\ \textcolor{keywordtype}{int}\ count);}
+\DoxyCodeLine{02301\ }
+\DoxyCodeLine{02302\ \textcolor{keywordtype}{void}\ \_check\_expected(}
+\DoxyCodeLine{02303\ \ \ \ \ \textcolor{keyword}{const}\ \textcolor{keywordtype}{char}\ *\ \textcolor{keyword}{const}\ function\_name,\ \textcolor{keyword}{const}\ \textcolor{keywordtype}{char}\ *\ \textcolor{keyword}{const}\ parameter\_name,}
+\DoxyCodeLine{02304\ \ \ \ \ \textcolor{keyword}{const}\ \textcolor{keywordtype}{char}*\ file,\ \textcolor{keyword}{const}\ \textcolor{keywordtype}{int}\ line,\ \textcolor{keyword}{const}\ LargestIntegralType\ value);}
+\DoxyCodeLine{02305\ }
+\DoxyCodeLine{02306\ \textcolor{keywordtype}{void}\ \_will\_return(\textcolor{keyword}{const}\ \textcolor{keywordtype}{char}\ *\ \textcolor{keyword}{const}\ function\_name,\ \textcolor{keyword}{const}\ \textcolor{keywordtype}{char}\ *\ \textcolor{keyword}{const}\ file,}
+\DoxyCodeLine{02307\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ \textcolor{keywordtype}{int}\ line,\ \textcolor{keyword}{const}\ LargestIntegralType\ value,}
+\DoxyCodeLine{02308\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ \textcolor{keywordtype}{int}\ count);}
+\DoxyCodeLine{02309\ \textcolor{keywordtype}{void}\ \_assert\_true(\textcolor{keyword}{const}\ LargestIntegralType\ result,}
+\DoxyCodeLine{02310\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ \textcolor{keywordtype}{char}*\ \textcolor{keyword}{const}\ expression,}
+\DoxyCodeLine{02311\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ \textcolor{keywordtype}{char}\ *\ \textcolor{keyword}{const}\ file,\ \textcolor{keyword}{const}\ \textcolor{keywordtype}{int}\ line);}
+\DoxyCodeLine{02312\ \textcolor{keywordtype}{void}\ \_assert\_return\_code(\textcolor{keyword}{const}\ LargestIntegralType\ result,}
+\DoxyCodeLine{02313\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{size\_t}\ rlen,}
+\DoxyCodeLine{02314\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ LargestIntegralType\ error,}
+\DoxyCodeLine{02315\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ \textcolor{keywordtype}{char}\ *\ \textcolor{keyword}{const}\ expression,}
+\DoxyCodeLine{02316\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ \textcolor{keywordtype}{char}\ *\ \textcolor{keyword}{const}\ file,}
+\DoxyCodeLine{02317\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ \textcolor{keywordtype}{int}\ line);}
+\DoxyCodeLine{02318\ \textcolor{keywordtype}{void}\ \_assert\_float\_equal(\textcolor{keyword}{const}\ \textcolor{keywordtype}{float}\ a,\ \textcolor{keyword}{const}\ \textcolor{keywordtype}{float}\ n,}
+\DoxyCodeLine{02319\ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ \textcolor{keywordtype}{float}\ epsilon,\ \textcolor{keyword}{const}\ \textcolor{keywordtype}{char}*\ \textcolor{keyword}{const}\ file,}
+\DoxyCodeLine{02320\ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ \textcolor{keywordtype}{int}\ line);}
+\DoxyCodeLine{02321\ \textcolor{keywordtype}{void}\ \_assert\_float\_not\_equal(\textcolor{keyword}{const}\ \textcolor{keywordtype}{float}\ a,\ \textcolor{keyword}{const}\ \textcolor{keywordtype}{float}\ n,}
+\DoxyCodeLine{02322\ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ \textcolor{keywordtype}{float}\ epsilon,\ \textcolor{keyword}{const}\ \textcolor{keywordtype}{char}*\ \textcolor{keyword}{const}\ file,}
+\DoxyCodeLine{02323\ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ \textcolor{keywordtype}{int}\ line);}
+\DoxyCodeLine{02324\ \textcolor{keywordtype}{void}\ \_assert\_double\_equal(\textcolor{keyword}{const}\ \textcolor{keywordtype}{double}\ a,\ \textcolor{keyword}{const}\ \textcolor{keywordtype}{double}\ n,}
+\DoxyCodeLine{02325\ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ \textcolor{keywordtype}{double}\ epsilon,\ \textcolor{keyword}{const}\ \textcolor{keywordtype}{char}*\ \textcolor{keyword}{const}\ file,}
+\DoxyCodeLine{02326\ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ \textcolor{keywordtype}{int}\ line);}
+\DoxyCodeLine{02327\ \textcolor{keywordtype}{void}\ \_assert\_double\_not\_equal(\textcolor{keyword}{const}\ \textcolor{keywordtype}{double}\ a,\ \textcolor{keyword}{const}\ \textcolor{keywordtype}{double}\ n,}
+\DoxyCodeLine{02328\ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ \textcolor{keywordtype}{double}\ epsilon,\ \textcolor{keyword}{const}\ \textcolor{keywordtype}{char}*\ \textcolor{keyword}{const}\ file,}
+\DoxyCodeLine{02329\ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ \textcolor{keywordtype}{int}\ line);}
+\DoxyCodeLine{02330\ \textcolor{keywordtype}{void}\ \_assert\_int\_equal(}
+\DoxyCodeLine{02331\ \ \ \ \ \textcolor{keyword}{const}\ LargestIntegralType\ a,\ \textcolor{keyword}{const}\ LargestIntegralType\ b,}
+\DoxyCodeLine{02332\ \ \ \ \ \textcolor{keyword}{const}\ \textcolor{keywordtype}{char}\ *\ \textcolor{keyword}{const}\ file,\ \textcolor{keyword}{const}\ \textcolor{keywordtype}{int}\ line);}
+\DoxyCodeLine{02333\ \textcolor{keywordtype}{void}\ \_assert\_int\_not\_equal(}
+\DoxyCodeLine{02334\ \ \ \ \ \textcolor{keyword}{const}\ LargestIntegralType\ a,\ \textcolor{keyword}{const}\ LargestIntegralType\ b,}
+\DoxyCodeLine{02335\ \ \ \ \ \textcolor{keyword}{const}\ \textcolor{keywordtype}{char}\ *\ \textcolor{keyword}{const}\ file,\ \textcolor{keyword}{const}\ \textcolor{keywordtype}{int}\ line);}
+\DoxyCodeLine{02336\ \textcolor{keywordtype}{void}\ \_assert\_string\_equal(\textcolor{keyword}{const}\ \textcolor{keywordtype}{char}\ *\ \textcolor{keyword}{const}\ a,\ \textcolor{keyword}{const}\ \textcolor{keywordtype}{char}\ *\ \textcolor{keyword}{const}\ b,}
+\DoxyCodeLine{02337\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ \textcolor{keywordtype}{char}\ *\ \textcolor{keyword}{const}\ file,\ \textcolor{keyword}{const}\ \textcolor{keywordtype}{int}\ line);}
+\DoxyCodeLine{02338\ \textcolor{keywordtype}{void}\ \_assert\_string\_not\_equal(\textcolor{keyword}{const}\ \textcolor{keywordtype}{char}\ *\ \textcolor{keyword}{const}\ a,\ \textcolor{keyword}{const}\ \textcolor{keywordtype}{char}\ *\ \textcolor{keyword}{const}\ b,}
+\DoxyCodeLine{02339\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ \textcolor{keywordtype}{char}\ *file,\ \textcolor{keyword}{const}\ \textcolor{keywordtype}{int}\ line);}
+\DoxyCodeLine{02340\ \textcolor{keywordtype}{void}\ \_assert\_memory\_equal(\textcolor{keyword}{const}\ \textcolor{keywordtype}{void}\ *\ \textcolor{keyword}{const}\ a,\ \textcolor{keyword}{const}\ \textcolor{keywordtype}{void}\ *\ \textcolor{keyword}{const}\ b,}
+\DoxyCodeLine{02341\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ \textcolor{keywordtype}{size\_t}\ size,\ \textcolor{keyword}{const}\ \textcolor{keywordtype}{char}*\ \textcolor{keyword}{const}\ file,}
+\DoxyCodeLine{02342\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ \textcolor{keywordtype}{int}\ line);}
+\DoxyCodeLine{02343\ \textcolor{keywordtype}{void}\ \_assert\_memory\_not\_equal(\textcolor{keyword}{const}\ \textcolor{keywordtype}{void}\ *\ \textcolor{keyword}{const}\ a,\ \textcolor{keyword}{const}\ \textcolor{keywordtype}{void}\ *\ \textcolor{keyword}{const}\ b,}
+\DoxyCodeLine{02344\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ \textcolor{keywordtype}{size\_t}\ size,\ \textcolor{keyword}{const}\ \textcolor{keywordtype}{char}*\ \textcolor{keyword}{const}\ file,}
+\DoxyCodeLine{02345\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ \textcolor{keywordtype}{int}\ line);}
+\DoxyCodeLine{02346\ \textcolor{keywordtype}{void}\ \_assert\_in\_range(}
+\DoxyCodeLine{02347\ \ \ \ \ \textcolor{keyword}{const}\ LargestIntegralType\ value,\ \textcolor{keyword}{const}\ LargestIntegralType\ minimum,}
+\DoxyCodeLine{02348\ \ \ \ \ \textcolor{keyword}{const}\ LargestIntegralType\ maximum,\ \textcolor{keyword}{const}\ \textcolor{keywordtype}{char}*\ \textcolor{keyword}{const}\ file,\ \textcolor{keyword}{const}\ \textcolor{keywordtype}{int}\ line);}
+\DoxyCodeLine{02349\ \textcolor{keywordtype}{void}\ \_assert\_not\_in\_range(}
+\DoxyCodeLine{02350\ \ \ \ \ \textcolor{keyword}{const}\ LargestIntegralType\ value,\ \textcolor{keyword}{const}\ LargestIntegralType\ minimum,}
+\DoxyCodeLine{02351\ \ \ \ \ \textcolor{keyword}{const}\ LargestIntegralType\ maximum,\ \textcolor{keyword}{const}\ \textcolor{keywordtype}{char}*\ \textcolor{keyword}{const}\ file,\ \textcolor{keyword}{const}\ \textcolor{keywordtype}{int}\ line);}
+\DoxyCodeLine{02352\ \textcolor{keywordtype}{void}\ \_assert\_in\_set(}
+\DoxyCodeLine{02353\ \ \ \ \ \textcolor{keyword}{const}\ LargestIntegralType\ value,\ \textcolor{keyword}{const}\ LargestIntegralType\ values[],}
+\DoxyCodeLine{02354\ \ \ \ \ \textcolor{keyword}{const}\ \textcolor{keywordtype}{size\_t}\ number\_of\_values,\ \textcolor{keyword}{const}\ \textcolor{keywordtype}{char}*\ \textcolor{keyword}{const}\ file,\ \textcolor{keyword}{const}\ \textcolor{keywordtype}{int}\ line);}
+\DoxyCodeLine{02355\ \textcolor{keywordtype}{void}\ \_assert\_not\_in\_set(}
+\DoxyCodeLine{02356\ \ \ \ \ \textcolor{keyword}{const}\ LargestIntegralType\ value,\ \textcolor{keyword}{const}\ LargestIntegralType\ values[],}
+\DoxyCodeLine{02357\ \ \ \ \ \textcolor{keyword}{const}\ \textcolor{keywordtype}{size\_t}\ number\_of\_values,\ \textcolor{keyword}{const}\ \textcolor{keywordtype}{char}*\ \textcolor{keyword}{const}\ file,\ \textcolor{keyword}{const}\ \textcolor{keywordtype}{int}\ line);}
+\DoxyCodeLine{02358\ }
+\DoxyCodeLine{02359\ \textcolor{keywordtype}{void}*\ \_test\_malloc(\textcolor{keyword}{const}\ \textcolor{keywordtype}{size\_t}\ size,\ \textcolor{keyword}{const}\ \textcolor{keywordtype}{char}*\ file,\ \textcolor{keyword}{const}\ \textcolor{keywordtype}{int}\ line);}
+\DoxyCodeLine{02360\ \textcolor{keywordtype}{void}*\ \_test\_realloc(\textcolor{keywordtype}{void}\ *ptr,\ \textcolor{keyword}{const}\ \textcolor{keywordtype}{size\_t}\ size,\ \textcolor{keyword}{const}\ \textcolor{keywordtype}{char}*\ file,\ \textcolor{keyword}{const}\ \textcolor{keywordtype}{int}\ line);}
+\DoxyCodeLine{02361\ \textcolor{keywordtype}{void}*\ \_test\_calloc(\textcolor{keyword}{const}\ \textcolor{keywordtype}{size\_t}\ number\_of\_elements,\ \textcolor{keyword}{const}\ \textcolor{keywordtype}{size\_t}\ size,}
+\DoxyCodeLine{02362\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ \textcolor{keywordtype}{char}*\ file,\ \textcolor{keyword}{const}\ \textcolor{keywordtype}{int}\ line);}
+\DoxyCodeLine{02363\ \textcolor{keywordtype}{void}\ \_test\_free(\textcolor{keywordtype}{void}*\ \textcolor{keyword}{const}\ ptr,\ \textcolor{keyword}{const}\ \textcolor{keywordtype}{char}*\ file,\ \textcolor{keyword}{const}\ \textcolor{keywordtype}{int}\ line);}
+\DoxyCodeLine{02364\ }
+\DoxyCodeLine{02365\ \textcolor{keywordtype}{void}\ \_fail(\textcolor{keyword}{const}\ \textcolor{keywordtype}{char}\ *\ \textcolor{keyword}{const}\ file,\ \textcolor{keyword}{const}\ \textcolor{keywordtype}{int}\ line);}
+\DoxyCodeLine{02366\ }
+\DoxyCodeLine{02367\ \textcolor{keywordtype}{void}\ \_skip(\textcolor{keyword}{const}\ \textcolor{keywordtype}{char}\ *\ \textcolor{keyword}{const}\ file,\ \textcolor{keyword}{const}\ \textcolor{keywordtype}{int}\ line);}
+\DoxyCodeLine{02368\ }
+\DoxyCodeLine{02369\ \textcolor{keywordtype}{int}\ \mbox{\hyperlink{group__cmocka_ga20702ca5c3414c1c2bf98c3b73f90a21}{\_run\_test}}(}
+\DoxyCodeLine{02370\ \ \ \ \ \textcolor{keyword}{const}\ \textcolor{keywordtype}{char}\ *\ \textcolor{keyword}{const}\ function\_name,\ \textcolor{keyword}{const}\ UnitTestFunction\ Function,}
+\DoxyCodeLine{02371\ \ \ \ \ \textcolor{keywordtype}{void}\ **\ \textcolor{keyword}{const}\ \textcolor{keyword}{volatile}\ state,\ \textcolor{keyword}{const}\ UnitTestFunctionType\ function\_type,}
+\DoxyCodeLine{02372\ \ \ \ \ \textcolor{keyword}{const}\ \textcolor{keywordtype}{void}*\ \textcolor{keyword}{const}\ heap\_check\_point);}
+\DoxyCodeLine{02373\ CMOCKA\_DEPRECATED\ \textcolor{keywordtype}{int}\ \_run\_tests(\textcolor{keyword}{const}\ \mbox{\hyperlink{structUnitTest}{UnitTest}}\ *\ \textcolor{keyword}{const}\ tests,}
+\DoxyCodeLine{02374\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ \textcolor{keywordtype}{size\_t}\ number\_of\_tests);}
+\DoxyCodeLine{02375\ CMOCKA\_DEPRECATED\ \textcolor{keywordtype}{int}\ \_run\_group\_tests(\textcolor{keyword}{const}\ \mbox{\hyperlink{structUnitTest}{UnitTest}}\ *\ \textcolor{keyword}{const}\ tests,}
+\DoxyCodeLine{02376\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ \textcolor{keywordtype}{size\_t}\ number\_of\_tests);}
+\DoxyCodeLine{02377\ }
+\DoxyCodeLine{02378\ \textcolor{comment}{/*\ Test\ runner\ */}}
+\DoxyCodeLine{02379\ \textcolor{keywordtype}{int}\ \_cmocka\_run\_group\_tests(\textcolor{keyword}{const}\ \textcolor{keywordtype}{char}\ *group\_name,}
+\DoxyCodeLine{02380\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ \textcolor{keyword}{struct}\ \mbox{\hyperlink{structCMUnitTest}{CMUnitTest}}\ *\ \textcolor{keyword}{const}\ tests,}
+\DoxyCodeLine{02381\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ \textcolor{keywordtype}{size\_t}\ num\_tests,}
+\DoxyCodeLine{02382\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ CMFixtureFunction\ group\_setup,}
+\DoxyCodeLine{02383\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ CMFixtureFunction\ group\_teardown);}
+\DoxyCodeLine{02384\ }
+\DoxyCodeLine{02385\ \textcolor{comment}{/*\ Standard\ output\ and\ error\ print\ methods.\ */}}
+\DoxyCodeLine{02386\ \textcolor{keywordtype}{void}\ print\_message(\textcolor{keyword}{const}\ \textcolor{keywordtype}{char}*\ \textcolor{keyword}{const}\ format,\ ...)\ CMOCKA\_PRINTF\_ATTRIBUTE(1,\ 2);}
+\DoxyCodeLine{02387\ \textcolor{keywordtype}{void}\ print\_error(const\ \textcolor{keywordtype}{char}*\ const\ format,\ ...)\ CMOCKA\_PRINTF\_ATTRIBUTE(1,\ 2);}
+\DoxyCodeLine{02388\ \textcolor{keywordtype}{void}\ vprint\_message(const\ \textcolor{keywordtype}{char}*\ const\ format,\ va\_list\ args)\ CMOCKA\_PRINTF\_ATTRIBUTE(1,\ 0);}
+\DoxyCodeLine{02389\ \textcolor{keywordtype}{void}\ vprint\_error(const\ \textcolor{keywordtype}{char}*\ const\ format,\ va\_list\ args)\ CMOCKA\_PRINTF\_ATTRIBUTE(1,\ 0);}
+\DoxyCodeLine{02390\ }
+\DoxyCodeLine{02391\ enum\ cm\_message\_output\ \{}
+\DoxyCodeLine{02392\ \ \ \ \ CM\_OUTPUT\_STDOUT,}
+\DoxyCodeLine{02393\ \ \ \ \ CM\_OUTPUT\_SUBUNIT,}
+\DoxyCodeLine{02394\ \ \ \ \ CM\_OUTPUT\_TAP,}
+\DoxyCodeLine{02395\ \ \ \ \ CM\_OUTPUT\_XML,}
+\DoxyCodeLine{02396\ \};}
+\DoxyCodeLine{02397\ }
+\DoxyCodeLine{02409\ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{group__cmocka_gae3764f4f38d067fe9c5faf034c07debd}{cmocka\_set\_message\_output}}(\textcolor{keyword}{enum}\ cm\_message\_output\ output);}
+\DoxyCodeLine{02410\ }
+\DoxyCodeLine{02411\ }
+\DoxyCodeLine{02422\ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{group__cmocka_gad5006b3adbbe8962a57579f1d182a3b8}{cmocka\_set\_test\_filter}}(\textcolor{keyword}{const}\ \textcolor{keywordtype}{char}\ *pattern);}
+\DoxyCodeLine{02423\ }
+\DoxyCodeLine{02434\ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{group__cmocka_gac3994cdf617401dee7b0923503621072}{cmocka\_set\_skip\_filter}}(\textcolor{keyword}{const}\ \textcolor{keywordtype}{char}\ *pattern);}
+\DoxyCodeLine{02435\ }
+\DoxyCodeLine{02438\ \textcolor{preprocessor}{\#endif\ }\textcolor{comment}{/*\ CMOCKA\_H\_\ */}\textcolor{preprocessor}{}}
+\DoxyCodeLine{02439\ }
+
+\end{DoxyCode}

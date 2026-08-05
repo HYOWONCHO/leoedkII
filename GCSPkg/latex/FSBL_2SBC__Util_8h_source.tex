@@ -1,0 +1,99 @@
+\doxysection{SBC\+\_\+\+Util.\+h}
+\hypertarget{FSBL_2SBC__Util_8h_source}{}\label{FSBL_2SBC__Util_8h_source}\index{Application/FSBL/SBC\_Util.h@{Application/FSBL/SBC\_Util.h}}
+
+\begin{DoxyCode}{0}
+\DoxyCodeLine{00001\ \textcolor{preprocessor}{\#ifndef\ \_SBC\_UTIL\_}}
+\DoxyCodeLine{00002\ \textcolor{preprocessor}{\#define\ \_SBC\_UTIL\_}}
+\DoxyCodeLine{00003\ \textcolor{preprocessor}{\#include\ <string.h>}}
+\DoxyCodeLine{00004\ \textcolor{preprocessor}{\#include\ "{}SBC\_Log.h"{}}}
+\DoxyCodeLine{00005\ }
+\DoxyCodeLine{00006\ \textcolor{preprocessor}{\#define\ SBC\_SAFE\_FREE(x)\ \ \(\backslash\)}}
+\DoxyCodeLine{00007\ \textcolor{preprocessor}{\ \ do\ \{\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \(\backslash\)}}
+\DoxyCodeLine{00008\ \textcolor{preprocessor}{\ \ \ \ if\ ((x)\ !=\ NULL)\ \{\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \(\backslash\)}}
+\DoxyCodeLine{00009\ \textcolor{preprocessor}{\ \ \ \ \ \ FreePool((x));\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \(\backslash\)}}
+\DoxyCodeLine{00010\ \textcolor{preprocessor}{\ \ \ \ \ \ (x)\ =\ NULL;\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \(\backslash\)}}
+\DoxyCodeLine{00011\ \textcolor{preprocessor}{\ \ \ \ \}\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \(\backslash\)}}
+\DoxyCodeLine{00012\ \textcolor{preprocessor}{\ \ \}\ while(0)}}
+\DoxyCodeLine{00013\ }
+\DoxyCodeLine{00014\ }
+\DoxyCodeLine{00015\ \textcolor{preprocessor}{\#define\ SBC\_SWAP\_ENDIAN\_16(val)\ \(\backslash\)}}
+\DoxyCodeLine{00016\ \textcolor{preprocessor}{\ \ \ \ (((UINT16)(val)\ \&\ 0xFF00)\ >>\ 8)\ |\ \(\backslash\)}}
+\DoxyCodeLine{00017\ \textcolor{preprocessor}{\ \ \ \ (((UINT16)(val)\ \&\ 0x00FF)\ <<\ 8)}}
+\DoxyCodeLine{00018\ }
+\DoxyCodeLine{00019\ }
+\DoxyCodeLine{00020\ \textcolor{preprocessor}{\#define\ SBC\_SWAP\_ENDIAN\_32(val)\ \(\backslash\)}}
+\DoxyCodeLine{00021\ \textcolor{preprocessor}{\ \ \ \ (((UINT32)(val)\ \&\ 0xFF000000UL)\ >>\ 24)\ |\ \(\backslash\)}}
+\DoxyCodeLine{00022\ \textcolor{preprocessor}{\ \ \ \ (((UINT32)(val)\ \&\ 0x00FF0000UL)\ >>\ 8)\ \ |\ \(\backslash\)}}
+\DoxyCodeLine{00023\ \textcolor{preprocessor}{\ \ \ \ (((UINT32)(val)\ \&\ 0x0000FF00UL)\ <<\ 8)\ \ |\ \(\backslash\)}}
+\DoxyCodeLine{00024\ \textcolor{preprocessor}{\ \ \ \ (((UINT32)(val)\ \&\ 0x000000FFUL)\ <<\ 24)}}
+\DoxyCodeLine{00025\ }
+\DoxyCodeLine{00026\ }
+\DoxyCodeLine{00027\ \textcolor{preprocessor}{\#define\ SBC\_SWAP\_ENDIAN\_64(val)\ \(\backslash\)}}
+\DoxyCodeLine{00028\ \textcolor{preprocessor}{\ \ \ \ (((UINTN)(val)\ \&\ 0xFF00000000000000ULL)\ >>\ 56)\ |\ \(\backslash\)}}
+\DoxyCodeLine{00029\ \textcolor{preprocessor}{\ \ \ \ (((UINTN)(val)\ \&\ 0x00FF000000000000ULL)\ >>\ 40)\ |\ \(\backslash\)}}
+\DoxyCodeLine{00030\ \textcolor{preprocessor}{\ \ \ \ (((UINTN)(val)\ \&\ 0x0000FF0000000000ULL)\ >>\ 24)\ |\ \(\backslash\)}}
+\DoxyCodeLine{00031\ \textcolor{preprocessor}{\ \ \ \ (((UINTN)(val)\ \&\ 0x000000FF00000000ULL)\ >>\ 8)\ \ |\ \(\backslash\)}}
+\DoxyCodeLine{00032\ \textcolor{preprocessor}{\ \ \ \ (((UINTN)(val)\ \&\ 0x00000000FF000000ULL)\ <<\ 8)\ \ |\ \(\backslash\)}}
+\DoxyCodeLine{00033\ \textcolor{preprocessor}{\ \ \ \ (((UINTN)(val)\ \&\ 0x0000000000FF0000ULL)\ <<\ 24)\ |\ \(\backslash\)}}
+\DoxyCodeLine{00034\ \textcolor{preprocessor}{\ \ \ \ (((UINTN)(val)\ \&\ 0x000000000000FF00ULL)\ <<\ 40)\ |\ \(\backslash\)}}
+\DoxyCodeLine{00035\ \textcolor{preprocessor}{\ \ \ \ (((UINTN)(val)\ \&\ 0x00000000000000FFULL)\ <<\ 56)}}
+\DoxyCodeLine{00036\ }
+\DoxyCodeLine{00037\ }
+\DoxyCodeLine{00038\ }
+\DoxyCodeLine{00048\ STATIC\ \textcolor{keyword}{inline}\ UINT32\ \_calculate\_hex\_posval(UINT8\ val)}
+\DoxyCodeLine{00049\ \{}
+\DoxyCodeLine{00050\ \ \ UINT32\ ret\ =\ 0;}
+\DoxyCodeLine{00051\ \ \ \textcolor{keywordflow}{switch}(val)\ \{}
+\DoxyCodeLine{00052\ \ \ \textcolor{keywordflow}{case}\ \textcolor{charliteral}{'0'}\ ...\ \textcolor{charliteral}{'9'}:}
+\DoxyCodeLine{00053\ \ \ \ \ ret\ =\ val\ -\/\ 48;}
+\DoxyCodeLine{00054\ \ \ \ \ \textcolor{keywordflow}{break};}
+\DoxyCodeLine{00055\ \ \ \textcolor{keywordflow}{case}\ \textcolor{charliteral}{'a'}\ ...\ \textcolor{charliteral}{'f'}:}
+\DoxyCodeLine{00056\ \ \ \ \ ret\ =\ val\ -\/\ 87;}
+\DoxyCodeLine{00057\ \ \ \ \ \textcolor{keywordflow}{break};}
+\DoxyCodeLine{00058\ \ \ \textcolor{keywordflow}{case}\ \textcolor{charliteral}{'A'}\ ...\ \textcolor{charliteral}{'F'}:}
+\DoxyCodeLine{00059\ \ \ \ \ ret\ =\ val\ -\/\ 55;}
+\DoxyCodeLine{00060\ \ \ \ \ \textcolor{keywordflow}{break};}
+\DoxyCodeLine{00061\ \ \ \textcolor{keywordflow}{default}:}
+\DoxyCodeLine{00062\ \ \ \ \ dprint(\textcolor{stringliteral}{"{}Unknown\ Hex\ character\ (\%x)"{}},\ val);}
+\DoxyCodeLine{00063\ \ \ \ \ ret\ =\ 0;}
+\DoxyCodeLine{00064\ \ \ \ \ \textcolor{keywordflow}{break};}
+\DoxyCodeLine{00065\ \ \ \}}
+\DoxyCodeLine{00066\ }
+\DoxyCodeLine{00067\ \ \ \textcolor{keywordflow}{return}\ ret;}
+\DoxyCodeLine{00068\ }
+\DoxyCodeLine{00069\ \}}
+\DoxyCodeLine{00070\ }
+\DoxyCodeLine{00084\ STATIC\ \textcolor{keyword}{inline}\ UINT32\ \_convert\_str\_to\_hex(UINT8\ *src,\ UINT8\ *dest)}
+\DoxyCodeLine{00085\ \{}
+\DoxyCodeLine{00086\ }
+\DoxyCodeLine{00087\ \ \ UINTN\ complen\ =\ 0;}
+\DoxyCodeLine{00088\ \ \ UINT32\ cnt\ =\ 0;}
+\DoxyCodeLine{00089\ \ \ UINT32\ temp;}
+\DoxyCodeLine{00090\ }
+\DoxyCodeLine{00091\ \ \ complen\ =\ strlen((CONST\ CHAR8*\ )src);}
+\DoxyCodeLine{00092\ }
+\DoxyCodeLine{00093\ \ \ \textcolor{keywordflow}{for}(\textcolor{keywordtype}{int}\ x\ =\ 1;\ x\ <\ complen\ +\ 1;\ x++)\ \{}
+\DoxyCodeLine{00094\ \ \ \ \ temp\ =\ \_calculate\_hex\_posval(src[x-\/1]);}
+\DoxyCodeLine{00095\ \ \ \ \ \textcolor{keywordflow}{if}(x\%2\ ==\ 0)\ \{}
+\DoxyCodeLine{00096\ \ \ \ \ \ \ dest[cnt]\ |=\ temp\ \&\ 0xF;\ }
+\DoxyCodeLine{00097\ \ \ \ \ \ \ cnt++;}
+\DoxyCodeLine{00098\ \ \ \ \ \ \ \textcolor{keywordflow}{continue};}
+\DoxyCodeLine{00099\ \ \ \ \ \}}
+\DoxyCodeLine{00100\ }
+\DoxyCodeLine{00101\ \ \ \ \ dest[cnt]\ =\ (temp\ <<\ 4)\&\ 0xF0;}
+\DoxyCodeLine{00102\ \ \ \}}
+\DoxyCodeLine{00103\ }
+\DoxyCodeLine{00104\ \ \ \textcolor{keywordflow}{if}(complen\ \%\ 2\ !=\ 0)\ \{}
+\DoxyCodeLine{00105\ \ \ \ \ cnt\ +=\ complen\ \%\ 2;}
+\DoxyCodeLine{00106\ \ \ \}}
+\DoxyCodeLine{00107\ }
+\DoxyCodeLine{00108\ \ \ \textcolor{keywordflow}{return}\ cnt;}
+\DoxyCodeLine{00109\ }
+\DoxyCodeLine{00110\ \}}
+\DoxyCodeLine{00111\ }
+\DoxyCodeLine{00112\ }
+\DoxyCodeLine{00113\ }
+\DoxyCodeLine{00114\ }
+\DoxyCodeLine{00115\ \textcolor{preprocessor}{\#endif}}
+
+\end{DoxyCode}

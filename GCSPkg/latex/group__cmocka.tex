@@ -1,0 +1,485 @@
+\doxysection{The CMocka API}
+\hypertarget{group__cmocka}{}\label{group__cmocka}\index{The CMocka API@{The CMocka API}}
+Collaboration diagram for The CMocka API\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=350pt]{group__cmocka}
+\end{center}
+\end{figure}
+\doxysubsubsection*{Modules}
+\begin{DoxyCompactItemize}
+\item 
+\mbox{\hyperlink{group__cmocka__mock}{Mock Objects}}
+\item 
+\mbox{\hyperlink{group__cmocka__param}{Checking Parameters}}
+\item 
+\mbox{\hyperlink{group__cmocka__asserts}{Assert Macros}}
+\item 
+\mbox{\hyperlink{group__cmocka__call__order}{Call Ordering}}
+\item 
+\mbox{\hyperlink{group__cmocka__exec}{Running Tests}}
+\item 
+\mbox{\hyperlink{group__cmocka__alloc}{Dynamic Memory Allocation}}
+\item 
+\mbox{\hyperlink{group__cmocka__mock__assert}{Standard Assertions}}
+\end{DoxyCompactItemize}
+\doxysubsubsection*{Data Structures}
+\begin{DoxyCompactItemize}
+\item 
+struct \mbox{\hyperlink{structCheckParameterEvent}{Check\+Parameter\+Event}}
+\item 
+struct \mbox{\hyperlink{structCMUnitTest}{CMUnit\+Test}}
+\item 
+struct \mbox{\hyperlink{structGroupTest}{Group\+Test}}
+\item 
+struct \mbox{\hyperlink{structSourceLocation}{Source\+Location}}
+\item 
+struct \mbox{\hyperlink{structUnitTest}{Unit\+Test}}
+\end{DoxyCompactItemize}
+\doxysubsubsection*{Macros}
+\begin{DoxyCompactItemize}
+\item 
+\Hypertarget{group__cmocka_gaeea7ec6e47ecea02cc6812b268034b28}\label{group__cmocka_gaeea7ec6e47ecea02cc6812b268034b28} 
+\#define {\bfseries \+\_\+\+\_\+\+WORDSIZE}~32
+\item 
+\Hypertarget{group__cmocka_gaeea7ec6e47ecea02cc6812b268034b28}\label{group__cmocka_gaeea7ec6e47ecea02cc6812b268034b28} 
+\#define {\bfseries \+\_\+\+\_\+\+WORDSIZE}~32
+\item 
+\Hypertarget{group__cmocka_ga86a77080f650963d177e7a97748488a5}\label{group__cmocka_ga86a77080f650963d177e7a97748488a5} 
+\#define {\bfseries \+\_\+\+UINTPTR\+\_\+T}
+\item 
+\Hypertarget{group__cmocka_ga86a77080f650963d177e7a97748488a5}\label{group__cmocka_ga86a77080f650963d177e7a97748488a5} 
+\#define {\bfseries \+\_\+\+UINTPTR\+\_\+T}
+\item 
+\Hypertarget{group__cmocka_ga106239fcf6108905a1beb6837f7343c8}\label{group__cmocka_ga106239fcf6108905a1beb6837f7343c8} 
+\#define {\bfseries \+\_\+\+UINTPTR\+\_\+\+T\+\_\+\+DEFINED}
+\item 
+\Hypertarget{group__cmocka_ga106239fcf6108905a1beb6837f7343c8}\label{group__cmocka_ga106239fcf6108905a1beb6837f7343c8} 
+\#define {\bfseries \+\_\+\+UINTPTR\+\_\+\+T\+\_\+\+DEFINED}
+\item 
+\Hypertarget{group__cmocka_ga55238650c10063aca9388b4e598c813d}\label{group__cmocka_ga55238650c10063aca9388b4e598c813d} 
+\#define {\bfseries cast\+\_\+ptr\+\_\+to\+\_\+largest\+\_\+integral\+\_\+type}(value)~cast\+\_\+to\+\_\+largest\+\_\+integral\+\_\+type(cast\+\_\+to\+\_\+pointer\+\_\+integral\+\_\+type(value))
+\item 
+\Hypertarget{group__cmocka_ga55238650c10063aca9388b4e598c813d}\label{group__cmocka_ga55238650c10063aca9388b4e598c813d} 
+\#define {\bfseries cast\+\_\+ptr\+\_\+to\+\_\+largest\+\_\+integral\+\_\+type}(value)~cast\+\_\+to\+\_\+largest\+\_\+integral\+\_\+type(cast\+\_\+to\+\_\+pointer\+\_\+integral\+\_\+type(value))
+\item 
+\Hypertarget{group__cmocka_ga655cae71cb84ae751b9b400434aba9bc}\label{group__cmocka_ga655cae71cb84ae751b9b400434aba9bc} 
+\#define {\bfseries cast\+\_\+to\+\_\+largest\+\_\+integral\+\_\+type}(value)~    ((Largest\+Integral\+Type)(value))
+\item 
+\Hypertarget{group__cmocka_ga655cae71cb84ae751b9b400434aba9bc}\label{group__cmocka_ga655cae71cb84ae751b9b400434aba9bc} 
+\#define {\bfseries cast\+\_\+to\+\_\+largest\+\_\+integral\+\_\+type}(value)~    ((Largest\+Integral\+Type)(value))
+\item 
+\Hypertarget{group__cmocka_ga312645abd72ec83b9afed487642d0a18}\label{group__cmocka_ga312645abd72ec83b9afed487642d0a18} 
+\#define {\bfseries cast\+\_\+to\+\_\+pointer\+\_\+integral\+\_\+type}(value)~    ((uintptr\+\_\+t)((size\+\_\+t)(value)))
+\item 
+\Hypertarget{group__cmocka_ga312645abd72ec83b9afed487642d0a18}\label{group__cmocka_ga312645abd72ec83b9afed487642d0a18} 
+\#define {\bfseries cast\+\_\+to\+\_\+pointer\+\_\+integral\+\_\+type}(value)~    ((uintptr\+\_\+t)((size\+\_\+t)(value)))
+\item 
+\Hypertarget{group__cmocka_ga1c95ef085a988473b2b286a97d81467c}\label{group__cmocka_ga1c95ef085a988473b2b286a97d81467c} 
+\#define {\bfseries CMOCKA\+\_\+\+DEPRECATED}
+\item 
+\Hypertarget{group__cmocka_ga1c95ef085a988473b2b286a97d81467c}\label{group__cmocka_ga1c95ef085a988473b2b286a97d81467c} 
+\#define {\bfseries CMOCKA\+\_\+\+DEPRECATED}
+\item 
+\Hypertarget{group__cmocka_gaa54cefac703e23a5cac73943f92f51b0}\label{group__cmocka_gaa54cefac703e23a5cac73943f92f51b0} 
+\#define {\bfseries CMOCKA\+\_\+\+PRINTF\+\_\+\+ATTRIBUTE}(a,  b)
+\item 
+\Hypertarget{group__cmocka_gaa54cefac703e23a5cac73943f92f51b0}\label{group__cmocka_gaa54cefac703e23a5cac73943f92f51b0} 
+\#define {\bfseries CMOCKA\+\_\+\+PRINTF\+\_\+\+ATTRIBUTE}(a,  b)
+\item 
+\Hypertarget{group__cmocka_ga77401385567f3887628ca3bc49577613}\label{group__cmocka_ga77401385567f3887628ca3bc49577613} 
+\#define {\bfseries Double\+Printf\+Format}~"{}\%f"{}
+\item 
+\Hypertarget{group__cmocka_ga77401385567f3887628ca3bc49577613}\label{group__cmocka_ga77401385567f3887628ca3bc49577613} 
+\#define {\bfseries Double\+Printf\+Format}~"{}\%f"{}
+\item 
+\Hypertarget{group__cmocka_ga372e4d7da4b82e59bf9959cf2b88eae1}\label{group__cmocka_ga372e4d7da4b82e59bf9959cf2b88eae1} 
+\#define {\bfseries Float\+Printf\+Format}~"{}\%f"{}
+\item 
+\Hypertarget{group__cmocka_ga372e4d7da4b82e59bf9959cf2b88eae1}\label{group__cmocka_ga372e4d7da4b82e59bf9959cf2b88eae1} 
+\#define {\bfseries Float\+Printf\+Format}~"{}\%f"{}
+\item 
+\Hypertarget{group__cmocka_ga7abc548f6daf5f7ed7f471b1b9905f82}\label{group__cmocka_ga7abc548f6daf5f7ed7f471b1b9905f82} 
+\#define {\bfseries Largest\+Integral\+Type}~unsigned long long int
+\item 
+\Hypertarget{group__cmocka_ga7abc548f6daf5f7ed7f471b1b9905f82}\label{group__cmocka_ga7abc548f6daf5f7ed7f471b1b9905f82} 
+\#define {\bfseries Largest\+Integral\+Type}~unsigned long long int
+\item 
+\Hypertarget{group__cmocka_ga3721808ed217a3abf4035bbef52621d9}\label{group__cmocka_ga3721808ed217a3abf4035bbef52621d9} 
+\#define {\bfseries Largest\+Integral\+Type\+Printf\+Format}~"{}\%\#llx"{}
+\item 
+\Hypertarget{group__cmocka_ga3721808ed217a3abf4035bbef52621d9}\label{group__cmocka_ga3721808ed217a3abf4035bbef52621d9} 
+\#define {\bfseries Largest\+Integral\+Type\+Printf\+Format}~"{}\%\#llx"{}
+\item 
+\Hypertarget{group__cmocka_gab98f806581b76bbb0d3ebad2b0d87686}\label{group__cmocka_gab98f806581b76bbb0d3ebad2b0d87686} 
+\#define {\bfseries Largest\+Integral\+Type\+Printf\+Format\+Decimal}~"{}\%llu"{}
+\item 
+\Hypertarget{group__cmocka_gab98f806581b76bbb0d3ebad2b0d87686}\label{group__cmocka_gab98f806581b76bbb0d3ebad2b0d87686} 
+\#define {\bfseries Largest\+Integral\+Type\+Printf\+Format\+Decimal}~"{}\%llu"{}
+\item 
+\Hypertarget{group__cmocka_ga63eb6efce067a7113363d869708b8360}\label{group__cmocka_ga63eb6efce067a7113363d869708b8360} 
+\#define {\bfseries WILL\+\_\+\+RETURN\+\_\+\+ALWAYS}~-\/1
+\item 
+\Hypertarget{group__cmocka_ga63eb6efce067a7113363d869708b8360}\label{group__cmocka_ga63eb6efce067a7113363d869708b8360} 
+\#define {\bfseries WILL\+\_\+\+RETURN\+\_\+\+ALWAYS}~-\/1
+\item 
+\Hypertarget{group__cmocka_gacc7620d82df0268eb9d2ccaeb90f02a3}\label{group__cmocka_gacc7620d82df0268eb9d2ccaeb90f02a3} 
+\#define {\bfseries WILL\+\_\+\+RETURN\+\_\+\+ONCE}~-\/2
+\item 
+\Hypertarget{group__cmocka_gacc7620d82df0268eb9d2ccaeb90f02a3}\label{group__cmocka_gacc7620d82df0268eb9d2ccaeb90f02a3} 
+\#define {\bfseries WILL\+\_\+\+RETURN\+\_\+\+ONCE}~-\/2
+\end{DoxyCompactItemize}
+\doxysubsubsection*{Typedefs}
+\begin{DoxyCompactItemize}
+\item 
+\Hypertarget{group__cmocka_ga86484031696fb3117b0fb313c3f2f481}\label{group__cmocka_ga86484031696fb3117b0fb313c3f2f481} 
+typedef struct \mbox{\hyperlink{structCheckParameterEvent}{Check\+Parameter\+Event}} {\bfseries Check\+Parameter\+Event}
+\item 
+\Hypertarget{group__cmocka_ga86484031696fb3117b0fb313c3f2f481}\label{group__cmocka_ga86484031696fb3117b0fb313c3f2f481} 
+typedef struct \mbox{\hyperlink{structCheckParameterEvent}{Check\+Parameter\+Event}} {\bfseries Check\+Parameter\+Event}
+\item 
+\Hypertarget{group__cmocka_gaf96b76c9c5d7f305013296d406e7fc38}\label{group__cmocka_gaf96b76c9c5d7f305013296d406e7fc38} 
+typedef int(\texorpdfstring{$\ast$}{*} {\bfseries Check\+Parameter\+Value}) (const Largest\+Integral\+Type value, const Largest\+Integral\+Type check\+\_\+value\+\_\+data)
+\item 
+\Hypertarget{group__cmocka_gaf96b76c9c5d7f305013296d406e7fc38}\label{group__cmocka_gaf96b76c9c5d7f305013296d406e7fc38} 
+typedef int(\texorpdfstring{$\ast$}{*} {\bfseries Check\+Parameter\+Value}) (const Largest\+Integral\+Type value, const Largest\+Integral\+Type check\+\_\+value\+\_\+data)
+\item 
+\Hypertarget{group__cmocka_ga6d6219d951a8dd87760353943f045a25}\label{group__cmocka_ga6d6219d951a8dd87760353943f045a25} 
+typedef int(\texorpdfstring{$\ast$}{*} {\bfseries CMFixture\+Function}) (void \texorpdfstring{$\ast$}{*}\texorpdfstring{$\ast$}{*}state)
+\item 
+\Hypertarget{group__cmocka_ga6d6219d951a8dd87760353943f045a25}\label{group__cmocka_ga6d6219d951a8dd87760353943f045a25} 
+typedef int(\texorpdfstring{$\ast$}{*} {\bfseries CMFixture\+Function}) (void \texorpdfstring{$\ast$}{*}\texorpdfstring{$\ast$}{*}state)
+\item 
+\Hypertarget{group__cmocka_gaf7ec001f0be4727694546526a804c18c}\label{group__cmocka_gaf7ec001f0be4727694546526a804c18c} 
+typedef void(\texorpdfstring{$\ast$}{*} {\bfseries CMUnit\+Test\+Function}) (void \texorpdfstring{$\ast$}{*}\texorpdfstring{$\ast$}{*}state)
+\item 
+\Hypertarget{group__cmocka_gaf7ec001f0be4727694546526a804c18c}\label{group__cmocka_gaf7ec001f0be4727694546526a804c18c} 
+typedef void(\texorpdfstring{$\ast$}{*} {\bfseries CMUnit\+Test\+Function}) (void \texorpdfstring{$\ast$}{*}\texorpdfstring{$\ast$}{*}state)
+\item 
+\Hypertarget{group__cmocka_ga4a6db7b9ea81708307a6e766cea89be8}\label{group__cmocka_ga4a6db7b9ea81708307a6e766cea89be8} 
+typedef struct \mbox{\hyperlink{structGroupTest}{Group\+Test}} {\bfseries Group\+Test}
+\item 
+\Hypertarget{group__cmocka_ga4a6db7b9ea81708307a6e766cea89be8}\label{group__cmocka_ga4a6db7b9ea81708307a6e766cea89be8} 
+typedef struct \mbox{\hyperlink{structGroupTest}{Group\+Test}} {\bfseries Group\+Test}
+\item 
+\Hypertarget{group__cmocka_gaf5aef513b50fe90c4b820504415804b8}\label{group__cmocka_gaf5aef513b50fe90c4b820504415804b8} 
+typedef struct \mbox{\hyperlink{structSourceLocation}{Source\+Location}} {\bfseries Source\+Location}
+\item 
+\Hypertarget{group__cmocka_gaf5aef513b50fe90c4b820504415804b8}\label{group__cmocka_gaf5aef513b50fe90c4b820504415804b8} 
+typedef struct \mbox{\hyperlink{structSourceLocation}{Source\+Location}} {\bfseries Source\+Location}
+\item 
+\Hypertarget{group__cmocka_ga728e973c799f206f0151c8a3bd1e5699}\label{group__cmocka_ga728e973c799f206f0151c8a3bd1e5699} 
+typedef unsigned int {\bfseries uintptr\+\_\+t}
+\item 
+\Hypertarget{group__cmocka_ga728e973c799f206f0151c8a3bd1e5699}\label{group__cmocka_ga728e973c799f206f0151c8a3bd1e5699} 
+typedef unsigned int {\bfseries uintptr\+\_\+t}
+\item 
+\Hypertarget{group__cmocka_ga5f6c83439dd39c6c9f7b9357e5881608}\label{group__cmocka_ga5f6c83439dd39c6c9f7b9357e5881608} 
+typedef struct \mbox{\hyperlink{structUnitTest}{Unit\+Test}} {\bfseries Unit\+Test}
+\item 
+\Hypertarget{group__cmocka_ga5f6c83439dd39c6c9f7b9357e5881608}\label{group__cmocka_ga5f6c83439dd39c6c9f7b9357e5881608} 
+typedef struct \mbox{\hyperlink{structUnitTest}{Unit\+Test}} {\bfseries Unit\+Test}
+\item 
+\Hypertarget{group__cmocka_ga44ac9dd4214cb04101b971f8ecd577c1}\label{group__cmocka_ga44ac9dd4214cb04101b971f8ecd577c1} 
+typedef void(\texorpdfstring{$\ast$}{*} {\bfseries Unit\+Test\+Function}) (void \texorpdfstring{$\ast$}{*}\texorpdfstring{$\ast$}{*}state)
+\item 
+\Hypertarget{group__cmocka_ga44ac9dd4214cb04101b971f8ecd577c1}\label{group__cmocka_ga44ac9dd4214cb04101b971f8ecd577c1} 
+typedef void(\texorpdfstring{$\ast$}{*} {\bfseries Unit\+Test\+Function}) (void \texorpdfstring{$\ast$}{*}\texorpdfstring{$\ast$}{*}state)
+\item 
+\Hypertarget{group__cmocka_ga96060c7d25f78317273e2d2bea02b84a}\label{group__cmocka_ga96060c7d25f78317273e2d2bea02b84a} 
+typedef enum Unit\+Test\+Function\+Type {\bfseries Unit\+Test\+Function\+Type}
+\item 
+\Hypertarget{group__cmocka_ga96060c7d25f78317273e2d2bea02b84a}\label{group__cmocka_ga96060c7d25f78317273e2d2bea02b84a} 
+typedef enum Unit\+Test\+Function\+Type {\bfseries Unit\+Test\+Function\+Type}
+\end{DoxyCompactItemize}
+\doxysubsubsection*{Enumerations}
+\begin{DoxyCompactItemize}
+\item 
+\Hypertarget{group__cmocka_gab0bc6b8252e7840ff5738477dc7a97ca}\label{group__cmocka_gab0bc6b8252e7840ff5738477dc7a97ca} 
+enum {\bfseries cm\+\_\+message\+\_\+output} \{ {\bfseries CM\+\_\+\+OUTPUT\+\_\+\+STDOUT}
+, {\bfseries CM\+\_\+\+OUTPUT\+\_\+\+SUBUNIT}
+, {\bfseries CM\+\_\+\+OUTPUT\+\_\+\+TAP}
+, {\bfseries CM\+\_\+\+OUTPUT\+\_\+\+XML}
+ \}
+\item 
+\Hypertarget{group__cmocka_gab0bc6b8252e7840ff5738477dc7a97ca}\label{group__cmocka_gab0bc6b8252e7840ff5738477dc7a97ca} 
+enum {\bfseries cm\+\_\+message\+\_\+output} \{ {\bfseries CM\+\_\+\+OUTPUT\+\_\+\+STDOUT}
+, {\bfseries CM\+\_\+\+OUTPUT\+\_\+\+SUBUNIT}
+, {\bfseries CM\+\_\+\+OUTPUT\+\_\+\+TAP}
+, {\bfseries CM\+\_\+\+OUTPUT\+\_\+\+XML}
+ \}
+\item 
+\Hypertarget{group__cmocka_gacc1f84b55e26f5e7f8c1ad2ade44920b}\label{group__cmocka_gacc1f84b55e26f5e7f8c1ad2ade44920b} 
+enum {\bfseries Unit\+Test\+Function\+Type} \{ \newline
+{\bfseries UNIT\+\_\+\+TEST\+\_\+\+FUNCTION\+\_\+\+TYPE\+\_\+\+TEST} = 0
+, {\bfseries UNIT\+\_\+\+TEST\+\_\+\+FUNCTION\+\_\+\+TYPE\+\_\+\+SETUP}
+, {\bfseries UNIT\+\_\+\+TEST\+\_\+\+FUNCTION\+\_\+\+TYPE\+\_\+\+TEARDOWN}
+, {\bfseries UNIT\+\_\+\+TEST\+\_\+\+FUNCTION\+\_\+\+TYPE\+\_\+\+GROUP\+\_\+\+SETUP}
+, \newline
+{\bfseries UNIT\+\_\+\+TEST\+\_\+\+FUNCTION\+\_\+\+TYPE\+\_\+\+GROUP\+\_\+\+TEARDOWN}
+ \}
+\item 
+\Hypertarget{group__cmocka_gacc1f84b55e26f5e7f8c1ad2ade44920b}\label{group__cmocka_gacc1f84b55e26f5e7f8c1ad2ade44920b} 
+enum {\bfseries Unit\+Test\+Function\+Type} \{ \newline
+{\bfseries UNIT\+\_\+\+TEST\+\_\+\+FUNCTION\+\_\+\+TYPE\+\_\+\+TEST} = 0
+, {\bfseries UNIT\+\_\+\+TEST\+\_\+\+FUNCTION\+\_\+\+TYPE\+\_\+\+SETUP}
+, {\bfseries UNIT\+\_\+\+TEST\+\_\+\+FUNCTION\+\_\+\+TYPE\+\_\+\+TEARDOWN}
+, {\bfseries UNIT\+\_\+\+TEST\+\_\+\+FUNCTION\+\_\+\+TYPE\+\_\+\+GROUP\+\_\+\+SETUP}
+, \newline
+{\bfseries UNIT\+\_\+\+TEST\+\_\+\+FUNCTION\+\_\+\+TYPE\+\_\+\+GROUP\+\_\+\+TEARDOWN}
+ \}
+\end{DoxyCompactItemize}
+\doxysubsubsection*{Functions}
+\begin{DoxyCompactItemize}
+\item 
+\Hypertarget{group__cmocka_gae2cda8560f380a9a28ec21477f37c037}\label{group__cmocka_gae2cda8560f380a9a28ec21477f37c037} 
+void {\bfseries \+\_\+assert\+\_\+double\+\_\+equal} (const double a, const double n, const double epsilon, const char \texorpdfstring{$\ast$}{*}const file, const int line)
+\item 
+\Hypertarget{group__cmocka_ga216916562f0b1af643063ab615f54c78}\label{group__cmocka_ga216916562f0b1af643063ab615f54c78} 
+void {\bfseries \+\_\+assert\+\_\+double\+\_\+not\+\_\+equal} (const double a, const double n, const double epsilon, const char \texorpdfstring{$\ast$}{*}const file, const int line)
+\item 
+\Hypertarget{group__cmocka_gafe52076ea68900e0db5c6fb7ffcbec34}\label{group__cmocka_gafe52076ea68900e0db5c6fb7ffcbec34} 
+void {\bfseries \+\_\+assert\+\_\+float\+\_\+equal} (const float a, const float n, const float epsilon, const char \texorpdfstring{$\ast$}{*}const file, const int line)
+\item 
+\Hypertarget{group__cmocka_ga09dcccd1bceaf6784a556327e2e6bb29}\label{group__cmocka_ga09dcccd1bceaf6784a556327e2e6bb29} 
+void {\bfseries \+\_\+assert\+\_\+float\+\_\+not\+\_\+equal} (const float a, const float n, const float epsilon, const char \texorpdfstring{$\ast$}{*}const file, const int line)
+\item 
+\Hypertarget{group__cmocka_ga64aa6be4f6af73d1867a0e2cc9f5ca70}\label{group__cmocka_ga64aa6be4f6af73d1867a0e2cc9f5ca70} 
+void {\bfseries \+\_\+assert\+\_\+in\+\_\+range} (const Largest\+Integral\+Type value, const Largest\+Integral\+Type minimum, const Largest\+Integral\+Type maximum, const char \texorpdfstring{$\ast$}{*}const file, const int line)
+\item 
+\Hypertarget{group__cmocka_gae0bff1d7cea4d0388a3b0010f0445ea8}\label{group__cmocka_gae0bff1d7cea4d0388a3b0010f0445ea8} 
+void {\bfseries \+\_\+assert\+\_\+in\+\_\+set} (const Largest\+Integral\+Type value, const Largest\+Integral\+Type values\mbox{[}$\,$\mbox{]}, const size\+\_\+t number\+\_\+of\+\_\+values, const char \texorpdfstring{$\ast$}{*}const file, const int line)
+\item 
+\Hypertarget{group__cmocka_gac659b23b307a250319b3c6b54864c6f2}\label{group__cmocka_gac659b23b307a250319b3c6b54864c6f2} 
+void {\bfseries \+\_\+assert\+\_\+int\+\_\+equal} (const Largest\+Integral\+Type a, const Largest\+Integral\+Type b, const char \texorpdfstring{$\ast$}{*}const file, const int line)
+\item 
+\Hypertarget{group__cmocka_ga5cc65e587a8a0b82dc0eea7906d4a047}\label{group__cmocka_ga5cc65e587a8a0b82dc0eea7906d4a047} 
+void {\bfseries \+\_\+assert\+\_\+int\+\_\+not\+\_\+equal} (const Largest\+Integral\+Type a, const Largest\+Integral\+Type b, const char \texorpdfstring{$\ast$}{*}const file, const int line)
+\item 
+\Hypertarget{group__cmocka_gada39ba99b07fe88bbf9d42456a365abc}\label{group__cmocka_gada39ba99b07fe88bbf9d42456a365abc} 
+void {\bfseries \+\_\+assert\+\_\+memory\+\_\+equal} (const void \texorpdfstring{$\ast$}{*}const a, const void \texorpdfstring{$\ast$}{*}const b, const size\+\_\+t size, const char \texorpdfstring{$\ast$}{*}const file, const int line)
+\item 
+\Hypertarget{group__cmocka_ga7b3c47423bceafaeb60e7248c4a1b807}\label{group__cmocka_ga7b3c47423bceafaeb60e7248c4a1b807} 
+void {\bfseries \+\_\+assert\+\_\+memory\+\_\+not\+\_\+equal} (const void \texorpdfstring{$\ast$}{*}const a, const void \texorpdfstring{$\ast$}{*}const b, const size\+\_\+t size, const char \texorpdfstring{$\ast$}{*}const file, const int line)
+\item 
+\Hypertarget{group__cmocka_ga40dab29ff851c60f184ec84e184eba3f}\label{group__cmocka_ga40dab29ff851c60f184ec84e184eba3f} 
+void {\bfseries \+\_\+assert\+\_\+not\+\_\+in\+\_\+range} (const Largest\+Integral\+Type value, const Largest\+Integral\+Type minimum, const Largest\+Integral\+Type maximum, const char \texorpdfstring{$\ast$}{*}const file, const int line)
+\item 
+\Hypertarget{group__cmocka_ga25a737a3b76860f67f89859e49fb56c8}\label{group__cmocka_ga25a737a3b76860f67f89859e49fb56c8} 
+void {\bfseries \+\_\+assert\+\_\+not\+\_\+in\+\_\+set} (const Largest\+Integral\+Type value, const Largest\+Integral\+Type values\mbox{[}$\,$\mbox{]}, const size\+\_\+t number\+\_\+of\+\_\+values, const char \texorpdfstring{$\ast$}{*}const file, const int line)
+\item 
+\Hypertarget{group__cmocka_gaab307d00e1d52cb56c02bb7bbe71eb50}\label{group__cmocka_gaab307d00e1d52cb56c02bb7bbe71eb50} 
+void {\bfseries \+\_\+assert\+\_\+return\+\_\+code} (const Largest\+Integral\+Type result, size\+\_\+t rlen, const Largest\+Integral\+Type error, const char \texorpdfstring{$\ast$}{*}const expression, const char \texorpdfstring{$\ast$}{*}const file, const int line)
+\item 
+\Hypertarget{group__cmocka_ga5e0c6c1751e286b09869c26369d1e39d}\label{group__cmocka_ga5e0c6c1751e286b09869c26369d1e39d} 
+void {\bfseries \+\_\+assert\+\_\+string\+\_\+equal} (const char \texorpdfstring{$\ast$}{*}const a, const char \texorpdfstring{$\ast$}{*}const b, const char \texorpdfstring{$\ast$}{*}const file, const int line)
+\item 
+\Hypertarget{group__cmocka_ga79c04cd7ebcd344e75a2a76a1a6a54d2}\label{group__cmocka_ga79c04cd7ebcd344e75a2a76a1a6a54d2} 
+void {\bfseries \+\_\+assert\+\_\+string\+\_\+not\+\_\+equal} (const char \texorpdfstring{$\ast$}{*}const a, const char \texorpdfstring{$\ast$}{*}const b, const char \texorpdfstring{$\ast$}{*}file, const int line)
+\item 
+\Hypertarget{group__cmocka_ga716f6148096fda384f02558c6891ca4e}\label{group__cmocka_ga716f6148096fda384f02558c6891ca4e} 
+void {\bfseries \+\_\+assert\+\_\+true} (const Largest\+Integral\+Type result, const char \texorpdfstring{$\ast$}{*}const expression, const char \texorpdfstring{$\ast$}{*}const file, const int line)
+\item 
+\Hypertarget{group__cmocka_ga82ebb718632fbdbc90bd270dd8d38d7f}\label{group__cmocka_ga82ebb718632fbdbc90bd270dd8d38d7f} 
+void {\bfseries \+\_\+check\+\_\+expected} (const char \texorpdfstring{$\ast$}{*}const function\+\_\+name, const char \texorpdfstring{$\ast$}{*}const parameter\+\_\+name, const char \texorpdfstring{$\ast$}{*}file, const int line, const Largest\+Integral\+Type value)
+\item 
+\Hypertarget{group__cmocka_gad1db968ac45af8c090da08ef9a12adc8}\label{group__cmocka_gad1db968ac45af8c090da08ef9a12adc8} 
+int {\bfseries \+\_\+cmocka\+\_\+run\+\_\+group\+\_\+tests} (const char \texorpdfstring{$\ast$}{*}group\+\_\+name, const struct \mbox{\hyperlink{structCMUnitTest}{CMUnit\+Test}} \texorpdfstring{$\ast$}{*}const tests, const size\+\_\+t num\+\_\+tests, CMFixture\+Function group\+\_\+setup, CMFixture\+Function group\+\_\+teardown)
+\item 
+\Hypertarget{group__cmocka_gab22982f6b3960f277aba494bb7dec081}\label{group__cmocka_gab22982f6b3960f277aba494bb7dec081} 
+void {\bfseries \+\_\+expect\+\_\+any} (const char \texorpdfstring{$\ast$}{*}const function, const char \texorpdfstring{$\ast$}{*}const parameter, const char \texorpdfstring{$\ast$}{*}const file, const int line, const int count)
+\item 
+\Hypertarget{group__cmocka_ga944fbabc74f26c6e147e32960282e955}\label{group__cmocka_ga944fbabc74f26c6e147e32960282e955} 
+void {\bfseries \+\_\+expect\+\_\+check} (const char \texorpdfstring{$\ast$}{*}const function, const char \texorpdfstring{$\ast$}{*}const parameter, const char \texorpdfstring{$\ast$}{*}const file, const int line, const Check\+Parameter\+Value check\+\_\+function, const Largest\+Integral\+Type check\+\_\+data, \mbox{\hyperlink{structCheckParameterEvent}{Check\+Parameter\+Event}} \texorpdfstring{$\ast$}{*}const event, const int count)
+\item 
+\Hypertarget{group__cmocka_gabc123855bc9bbe2cfe7deb455e36df94}\label{group__cmocka_gabc123855bc9bbe2cfe7deb455e36df94} 
+void {\bfseries \+\_\+expect\+\_\+function\+\_\+call} (const char \texorpdfstring{$\ast$}{*}const function\+\_\+name, const char \texorpdfstring{$\ast$}{*}const file, const int line, const int count)
+\item 
+\Hypertarget{group__cmocka_gaac8514020a74fb632c51c9a4cc82700c}\label{group__cmocka_gaac8514020a74fb632c51c9a4cc82700c} 
+void {\bfseries \+\_\+expect\+\_\+in\+\_\+range} (const char \texorpdfstring{$\ast$}{*}const function, const char \texorpdfstring{$\ast$}{*}const parameter, const char \texorpdfstring{$\ast$}{*}const file, const int line, const Largest\+Integral\+Type minimum, const Largest\+Integral\+Type maximum, const int count)
+\item 
+\Hypertarget{group__cmocka_gaa826b3a76def6713f42faf8997b05b49}\label{group__cmocka_gaa826b3a76def6713f42faf8997b05b49} 
+void {\bfseries \+\_\+expect\+\_\+in\+\_\+set} (const char \texorpdfstring{$\ast$}{*}const function, const char \texorpdfstring{$\ast$}{*}const parameter, const char \texorpdfstring{$\ast$}{*}const file, const int line, const Largest\+Integral\+Type values\mbox{[}$\,$\mbox{]}, const size\+\_\+t number\+\_\+of\+\_\+values, const int count)
+\item 
+\Hypertarget{group__cmocka_gae895cc4643158de732148ec4b9c93fd4}\label{group__cmocka_gae895cc4643158de732148ec4b9c93fd4} 
+void {\bfseries \+\_\+expect\+\_\+memory} (const char \texorpdfstring{$\ast$}{*}const function, const char \texorpdfstring{$\ast$}{*}const parameter, const char \texorpdfstring{$\ast$}{*}const file, const int line, const void \texorpdfstring{$\ast$}{*}const memory, const size\+\_\+t size, const int count)
+\item 
+\Hypertarget{group__cmocka_gaa00332d2b48be63b24553c80e0e2a5b4}\label{group__cmocka_gaa00332d2b48be63b24553c80e0e2a5b4} 
+void {\bfseries \+\_\+expect\+\_\+not\+\_\+in\+\_\+range} (const char \texorpdfstring{$\ast$}{*}const function, const char \texorpdfstring{$\ast$}{*}const parameter, const char \texorpdfstring{$\ast$}{*}const file, const int line, const Largest\+Integral\+Type minimum, const Largest\+Integral\+Type maximum, const int count)
+\item 
+\Hypertarget{group__cmocka_ga9436e4d6e9d74354df10238ec7c9e6bc}\label{group__cmocka_ga9436e4d6e9d74354df10238ec7c9e6bc} 
+void {\bfseries \+\_\+expect\+\_\+not\+\_\+in\+\_\+set} (const char \texorpdfstring{$\ast$}{*}const function, const char \texorpdfstring{$\ast$}{*}const parameter, const char \texorpdfstring{$\ast$}{*}const file, const int line, const Largest\+Integral\+Type values\mbox{[}$\,$\mbox{]}, const size\+\_\+t number\+\_\+of\+\_\+values, const int count)
+\item 
+\Hypertarget{group__cmocka_ga4d3dfed269e10dd263bf09862c53adc2}\label{group__cmocka_ga4d3dfed269e10dd263bf09862c53adc2} 
+void {\bfseries \+\_\+expect\+\_\+not\+\_\+memory} (const char \texorpdfstring{$\ast$}{*}const function, const char \texorpdfstring{$\ast$}{*}const parameter, const char \texorpdfstring{$\ast$}{*}const file, const int line, const void \texorpdfstring{$\ast$}{*}const memory, const size\+\_\+t size, const int count)
+\item 
+\Hypertarget{group__cmocka_gad11acecda2a0baeabe1ea8c6e117505b}\label{group__cmocka_gad11acecda2a0baeabe1ea8c6e117505b} 
+void {\bfseries \+\_\+expect\+\_\+not\+\_\+string} (const char \texorpdfstring{$\ast$}{*}const function, const char \texorpdfstring{$\ast$}{*}const parameter, const char \texorpdfstring{$\ast$}{*}const file, const int line, const char \texorpdfstring{$\ast$}{*}string, const int count)
+\item 
+\Hypertarget{group__cmocka_gadd19c9f0b79d48f60ceee4d2a74296d4}\label{group__cmocka_gadd19c9f0b79d48f60ceee4d2a74296d4} 
+void {\bfseries \+\_\+expect\+\_\+not\+\_\+value} (const char \texorpdfstring{$\ast$}{*}const function, const char \texorpdfstring{$\ast$}{*}const parameter, const char \texorpdfstring{$\ast$}{*}const file, const int line, const Largest\+Integral\+Type value, const int count)
+\item 
+\Hypertarget{group__cmocka_ga44532805b576ed147dab75c01536c4d2}\label{group__cmocka_ga44532805b576ed147dab75c01536c4d2} 
+void {\bfseries \+\_\+expect\+\_\+string} (const char \texorpdfstring{$\ast$}{*}const function, const char \texorpdfstring{$\ast$}{*}const parameter, const char \texorpdfstring{$\ast$}{*}const file, const int line, const char \texorpdfstring{$\ast$}{*}string, const int count)
+\item 
+\Hypertarget{group__cmocka_ga23916e6c254d6671d3b5626e677ed912}\label{group__cmocka_ga23916e6c254d6671d3b5626e677ed912} 
+void {\bfseries \+\_\+expect\+\_\+value} (const char \texorpdfstring{$\ast$}{*}const function, const char \texorpdfstring{$\ast$}{*}const parameter, const char \texorpdfstring{$\ast$}{*}const file, const int line, const Largest\+Integral\+Type value, const int count)
+\item 
+\Hypertarget{group__cmocka_ga200fb175325dc307bc094dcacd6291c1}\label{group__cmocka_ga200fb175325dc307bc094dcacd6291c1} 
+void {\bfseries \+\_\+fail} (const char \texorpdfstring{$\ast$}{*}const file, const int line)
+\item 
+\Hypertarget{group__cmocka_ga3ba466ca3d0c66116141f7d507f65bd4}\label{group__cmocka_ga3ba466ca3d0c66116141f7d507f65bd4} 
+void {\bfseries \+\_\+function\+\_\+called} (const char \texorpdfstring{$\ast$}{*}const function, const char \texorpdfstring{$\ast$}{*}const file, const int line)
+\item 
+\Hypertarget{group__cmocka_gaf9f3d93d14a8770ade71d10c1bdfea10}\label{group__cmocka_gaf9f3d93d14a8770ade71d10c1bdfea10} 
+Largest\+Integral\+Type {\bfseries \+\_\+mock} (const char \texorpdfstring{$\ast$}{*}const function, const char \texorpdfstring{$\ast$}{*}const file, const int line)
+\item 
+\Hypertarget{group__cmocka_ga2decf9da807b69417e5a97923f1fa6c7}\label{group__cmocka_ga2decf9da807b69417e5a97923f1fa6c7} 
+CMOCKA\+\_\+\+DEPRECATED int {\bfseries \+\_\+run\+\_\+group\+\_\+tests} (const \mbox{\hyperlink{structUnitTest}{Unit\+Test}} \texorpdfstring{$\ast$}{*}const tests, const size\+\_\+t number\+\_\+of\+\_\+tests)
+\item 
+int \mbox{\hyperlink{group__cmocka_ga20702ca5c3414c1c2bf98c3b73f90a21}{\+\_\+run\+\_\+test}} (const char \texorpdfstring{$\ast$}{*}const function\+\_\+name, const Unit\+Test\+Function Function, void \texorpdfstring{$\ast$}{*}\texorpdfstring{$\ast$}{*}const volatile state, const Unit\+Test\+Function\+Type function\+\_\+type, const void \texorpdfstring{$\ast$}{*}const heap\+\_\+check\+\_\+point)
+\item 
+\Hypertarget{group__cmocka_gae286739220ea21fd11a16f7ceda3abb0}\label{group__cmocka_gae286739220ea21fd11a16f7ceda3abb0} 
+CMOCKA\+\_\+\+DEPRECATED int {\bfseries \+\_\+run\+\_\+tests} (const \mbox{\hyperlink{structUnitTest}{Unit\+Test}} \texorpdfstring{$\ast$}{*}const tests, const size\+\_\+t number\+\_\+of\+\_\+tests)
+\item 
+\Hypertarget{group__cmocka_gab102a4c6a13c149968999815285300f3}\label{group__cmocka_gab102a4c6a13c149968999815285300f3} 
+void {\bfseries \+\_\+skip} (const char \texorpdfstring{$\ast$}{*}const file, const int line)
+\item 
+\Hypertarget{group__cmocka_ga5941ee6ac5ae33055139c769e25def2f}\label{group__cmocka_ga5941ee6ac5ae33055139c769e25def2f} 
+void \texorpdfstring{$\ast$}{*} {\bfseries \+\_\+test\+\_\+calloc} (const size\+\_\+t number\+\_\+of\+\_\+elements, const size\+\_\+t size, const char \texorpdfstring{$\ast$}{*}file, const int line)
+\item 
+\Hypertarget{group__cmocka_gaa638dca2eb88eb45ba9b3dc810701345}\label{group__cmocka_gaa638dca2eb88eb45ba9b3dc810701345} 
+void {\bfseries \+\_\+test\+\_\+free} (void \texorpdfstring{$\ast$}{*}const ptr, const char \texorpdfstring{$\ast$}{*}file, const int line)
+\item 
+\Hypertarget{group__cmocka_gae3577bea6df34f9513e2f61004bc7bda}\label{group__cmocka_gae3577bea6df34f9513e2f61004bc7bda} 
+void \texorpdfstring{$\ast$}{*} {\bfseries \+\_\+test\+\_\+malloc} (const size\+\_\+t size, const char \texorpdfstring{$\ast$}{*}file, const int line)
+\item 
+\Hypertarget{group__cmocka_gaa2ded7f3ac7628cd7662cb0d20c6b4d3}\label{group__cmocka_gaa2ded7f3ac7628cd7662cb0d20c6b4d3} 
+void \texorpdfstring{$\ast$}{*} {\bfseries \+\_\+test\+\_\+realloc} (void \texorpdfstring{$\ast$}{*}ptr, const size\+\_\+t size, const char \texorpdfstring{$\ast$}{*}file, const int line)
+\item 
+\Hypertarget{group__cmocka_ga59c004f9cee48a5706fb3392bf947f41}\label{group__cmocka_ga59c004f9cee48a5706fb3392bf947f41} 
+void {\bfseries \+\_\+will\+\_\+return} (const char \texorpdfstring{$\ast$}{*}const function\+\_\+name, const char \texorpdfstring{$\ast$}{*}const file, const int line, const Largest\+Integral\+Type value, const int count)
+\item 
+void \mbox{\hyperlink{group__cmocka_gae3764f4f38d067fe9c5faf034c07debd}{cmocka\+\_\+set\+\_\+message\+\_\+output}} (enum cm\+\_\+message\+\_\+output output)
+\begin{DoxyCompactList}\small\item\em Function to set the output format for a test. \end{DoxyCompactList}\item 
+void \mbox{\hyperlink{group__cmocka_gac3994cdf617401dee7b0923503621072}{cmocka\+\_\+set\+\_\+skip\+\_\+filter}} (const char \texorpdfstring{$\ast$}{*}pattern)
+\begin{DoxyCompactList}\small\item\em Set a pattern to skip tests matching the pattern. \end{DoxyCompactList}\item 
+void \mbox{\hyperlink{group__cmocka_gad5006b3adbbe8962a57579f1d182a3b8}{cmocka\+\_\+set\+\_\+test\+\_\+filter}} (const char \texorpdfstring{$\ast$}{*}pattern)
+\begin{DoxyCompactList}\small\item\em Set a pattern to only run the test matching the pattern. \end{DoxyCompactList}\item 
+\Hypertarget{group__cmocka_gaf145ce5a7da02f89bf7148577aeb66dc}\label{group__cmocka_gaf145ce5a7da02f89bf7148577aeb66dc} 
+void void {\bfseries print\+\_\+error} (const char \texorpdfstring{$\ast$}{*}const format,...) CMOCKA\+\_\+\+PRINTF\+\_\+\+ATTRIBUTE(1
+\item 
+\Hypertarget{group__cmocka_ga91d00d3858bbf48e8c36af63dafdbcdc}\label{group__cmocka_ga91d00d3858bbf48e8c36af63dafdbcdc} 
+void {\bfseries print\+\_\+message} (const char \texorpdfstring{$\ast$}{*}const format,...) CMOCKA\+\_\+\+PRINTF\+\_\+\+ATTRIBUTE(1
+\item 
+\Hypertarget{group__cmocka_gabb4100a574db894f6e4c45860d554517}\label{group__cmocka_gabb4100a574db894f6e4c45860d554517} 
+void void void void {\bfseries vprint\+\_\+error} (const char \texorpdfstring{$\ast$}{*}const format, va\+\_\+list args) CMOCKA\+\_\+\+PRINTF\+\_\+\+ATTRIBUTE(1
+\item 
+\Hypertarget{group__cmocka_ga8e7303f77c32fdd97920234746f02f4a}\label{group__cmocka_ga8e7303f77c32fdd97920234746f02f4a} 
+void void void {\bfseries vprint\+\_\+message} (const char \texorpdfstring{$\ast$}{*}const format, va\+\_\+list args) CMOCKA\+\_\+\+PRINTF\+\_\+\+ATTRIBUTE(1
+\end{DoxyCompactItemize}
+\doxysubsubsection*{Variables}
+\begin{DoxyCompactItemize}
+\item 
+\Hypertarget{group__cmocka_ga1a604d991b7917b5a8acf02ff051a22d}\label{group__cmocka_ga1a604d991b7917b5a8acf02ff051a22d} 
+jmp\+\_\+buf {\bfseries global\+\_\+expect\+\_\+assert\+\_\+env}
+\item 
+\Hypertarget{group__cmocka_ga1a604d991b7917b5a8acf02ff051a22d}\label{group__cmocka_ga1a604d991b7917b5a8acf02ff051a22d} 
+jmp\+\_\+buf {\bfseries global\+\_\+expect\+\_\+assert\+\_\+env}
+\item 
+\Hypertarget{group__cmocka_ga249870b7a077de2195651cdc25dd84da}\label{group__cmocka_ga249870b7a077de2195651cdc25dd84da} 
+int {\bfseries global\+\_\+expecting\+\_\+assert}
+\item 
+\Hypertarget{group__cmocka_ga249870b7a077de2195651cdc25dd84da}\label{group__cmocka_ga249870b7a077de2195651cdc25dd84da} 
+int {\bfseries global\+\_\+expecting\+\_\+assert}
+\item 
+\Hypertarget{group__cmocka_gaee41bffee72ebd70a0ec6a58985dce72}\label{group__cmocka_gaee41bffee72ebd70a0ec6a58985dce72} 
+const char \texorpdfstring{$\ast$}{*} {\bfseries global\+\_\+last\+\_\+failed\+\_\+assert}
+\item 
+\Hypertarget{group__cmocka_gaee41bffee72ebd70a0ec6a58985dce72}\label{group__cmocka_gaee41bffee72ebd70a0ec6a58985dce72} 
+const char \texorpdfstring{$\ast$}{*} {\bfseries global\+\_\+last\+\_\+failed\+\_\+assert}
+\end{DoxyCompactItemize}
+
+
+\doxysubsection{Detailed Description}
+These headers or their equivalents MUST be included prior to including this header file. 
+\begin{DoxyCode}{0}
+\DoxyCodeLine{\textcolor{preprocessor}{\#include\ <stdarg.h>}}
+\DoxyCodeLine{\textcolor{preprocessor}{\#include\ <stddef.h>}}
+\DoxyCodeLine{\textcolor{preprocessor}{\#include\ <setjmp.h>}}
+\DoxyCodeLine{\textcolor{preprocessor}{\#include\ <stdint.h>}}
+
+\end{DoxyCode}
+
+
+This allows test applications to use custom definitions of C standard library functions and types. 
+
+\doxysubsection{Function Documentation}
+\Hypertarget{group__cmocka_ga20702ca5c3414c1c2bf98c3b73f90a21}\label{group__cmocka_ga20702ca5c3414c1c2bf98c3b73f90a21} 
+\index{The CMocka API@{The CMocka API}!\_run\_test@{\_run\_test}}
+\index{\_run\_test@{\_run\_test}!The CMocka API@{The CMocka API}}
+\doxysubsubsection{\texorpdfstring{\_run\_test()}{\_run\_test()}}
+{\footnotesize\ttfamily int \+\_\+run\+\_\+test (\begin{DoxyParamCaption}\item[{const char \texorpdfstring{$\ast$}{*}const}]{function\+\_\+name,  }\item[{const Unit\+Test\+Function}]{Function,  }\item[{void \texorpdfstring{$\ast$}{*}\texorpdfstring{$\ast$}{*}const volatile}]{state,  }\item[{const Unit\+Test\+Function\+Type}]{function\+\_\+type,  }\item[{const void \texorpdfstring{$\ast$}{*}const}]{heap\+\_\+check\+\_\+point }\end{DoxyParamCaption})}
+
+DEPRECATED TEST RUNNER \Hypertarget{group__cmocka_gae3764f4f38d067fe9c5faf034c07debd}\label{group__cmocka_gae3764f4f38d067fe9c5faf034c07debd} 
+\index{The CMocka API@{The CMocka API}!cmocka\_set\_message\_output@{cmocka\_set\_message\_output}}
+\index{cmocka\_set\_message\_output@{cmocka\_set\_message\_output}!The CMocka API@{The CMocka API}}
+\doxysubsubsection{\texorpdfstring{cmocka\_set\_message\_output()}{cmocka\_set\_message\_output()}}
+{\footnotesize\ttfamily void cmocka\+\_\+set\+\_\+message\+\_\+output (\begin{DoxyParamCaption}\item[{enum cm\+\_\+message\+\_\+output}]{output }\end{DoxyParamCaption})}
+
+
+
+Function to set the output format for a test. 
+
+The ouput format for the test can either be set globally using this function or overriden with environment variable CMOCKA\+\_\+\+MESSAGE\+\_\+\+OUTPUT.
+
+The environment variable can be set to either STDOUT, SUBUNIT, TAP or XML.
+
+
+\begin{DoxyParams}[1]{Parameters}
+\mbox{\texttt{ in}}  & {\em output} & The output format to use for the test. \\
+\hline
+\end{DoxyParams}
+\Hypertarget{group__cmocka_gac3994cdf617401dee7b0923503621072}\label{group__cmocka_gac3994cdf617401dee7b0923503621072} 
+\index{The CMocka API@{The CMocka API}!cmocka\_set\_skip\_filter@{cmocka\_set\_skip\_filter}}
+\index{cmocka\_set\_skip\_filter@{cmocka\_set\_skip\_filter}!The CMocka API@{The CMocka API}}
+\doxysubsubsection{\texorpdfstring{cmocka\_set\_skip\_filter()}{cmocka\_set\_skip\_filter()}}
+{\footnotesize\ttfamily void cmocka\+\_\+set\+\_\+skip\+\_\+filter (\begin{DoxyParamCaption}\item[{const char \texorpdfstring{$\ast$}{*}}]{pattern }\end{DoxyParamCaption})}
+
+
+
+Set a pattern to skip tests matching the pattern. 
+
+This allows to filter tests and skip the ones matching the pattern. The pattern can include two wildards. The first is \textquotesingle{}\texorpdfstring{$\ast$}{*}\textquotesingle{}, a wildcard that matches zero or more characters, or ???? a wildcard that matches exactly one character.
+
+
+\begin{DoxyParams}[1]{Parameters}
+\mbox{\texttt{ in}}  & {\em pattern} & The pattern to match, e.\+g. "{}test\+\_\+wurst\texorpdfstring{$\ast$}{*}"{} \\
+\hline
+\end{DoxyParams}
+\Hypertarget{group__cmocka_gad5006b3adbbe8962a57579f1d182a3b8}\label{group__cmocka_gad5006b3adbbe8962a57579f1d182a3b8} 
+\index{The CMocka API@{The CMocka API}!cmocka\_set\_test\_filter@{cmocka\_set\_test\_filter}}
+\index{cmocka\_set\_test\_filter@{cmocka\_set\_test\_filter}!The CMocka API@{The CMocka API}}
+\doxysubsubsection{\texorpdfstring{cmocka\_set\_test\_filter()}{cmocka\_set\_test\_filter()}}
+{\footnotesize\ttfamily void cmocka\+\_\+set\+\_\+test\+\_\+filter (\begin{DoxyParamCaption}\item[{const char \texorpdfstring{$\ast$}{*}}]{pattern }\end{DoxyParamCaption})}
+
+
+
+Set a pattern to only run the test matching the pattern. 
+
+This allows to filter tests and only run the ones matching the pattern. The pattern can include two wildards. The first is \textquotesingle{}\texorpdfstring{$\ast$}{*}\textquotesingle{}, a wildcard that matches zero or more characters, or ???? a wildcard that matches exactly one character.
+
+
+\begin{DoxyParams}[1]{Parameters}
+\mbox{\texttt{ in}}  & {\em pattern} & The pattern to match, e.\+g. "{}test\+\_\+wurst\texorpdfstring{$\ast$}{*}"{} \\
+\hline
+\end{DoxyParams}
+\input{group__cmocka__mock}
+\input{group__cmocka__param}
+\input{group__cmocka__asserts}
+\input{group__cmocka__call__order}
+\input{group__cmocka__exec}
+\input{group__cmocka__alloc}
+\input{group__cmocka__mock__assert}

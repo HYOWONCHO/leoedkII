@@ -1,0 +1,9 @@
+<map id="SBC_ReadFile" name="SBC_ReadFile">
+<area shape="rect" id="Node000001" title="Read a file from a UEFI file system into a memory buffer." alt="" coords="465,31,580,56"/>
+<area shape="rect" id="Node000002" href="$group__BaseAnswer.html#gad993c7407ff302f90f0b4bbf4a618db2" title="Validate the device authentication answer using the provided key." alt="" coords="227,5,417,31"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="452,37,417,33,418,27,452,32"/>
+<area shape="rect" id="Node000004" href="$SBC__FileCtrl_8c.html#a628ab578804897888390b1e69b1f34ba" title="(Deprecated) Read system boot mode value." alt="" coords="245,55,399,80"/>
+<area shape="poly" id="edge3_Node000001_Node000004" title=" " alt="" coords="452,54,400,61,399,55,451,49"/>
+<area shape="rect" id="Node000003" href="$SBC__SystemControl_8c.html#a7fb21fbb14d2c0fd55b69537f919b9e6" title="Perform secure boot integrity and authenticity verification." alt="" coords="5,5,179,31"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="213,21,179,21,179,15,213,15"/>
+</map>

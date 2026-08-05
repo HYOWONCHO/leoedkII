@@ -1,0 +1,12 @@
+<map id="SBC_DeviceSecuirtyKeyCreate" name="SBC_DeviceSecuirtyKeyCreate">
+<area shape="rect" id="Node000001" title="Create a new device security key." alt="" coords="472,5,699,31"/>
+<area shape="rect" id="Node000002" href="$group__BaseAnswer.html#gadac983e333f364bf0976a9ceca1f9630" title="Verify certificate was issued by RootCA." alt="" coords="244,5,424,31"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="458,30,424,29,424,24,458,24"/>
+<area shape="poly" id="edge2_Node000001_Node000002" title=" " alt="" coords="458,12,424,12,424,7,458,6"/>
+<area shape="rect" id="Node000003" href="$group__BaseAnswer.html#ga6fc4f3638ff1e63bf4790c05ff6025ce" title=" " alt="" coords="255,55,413,80"/>
+<area shape="poly" id="edge3_Node000001_Node000003" title=" " alt="" coords="507,36,400,57,399,52,506,31"/>
+<area shape="rect" id="Node000004" href="$group__BaseAnswer.html#gad993c7407ff302f90f0b4bbf4a618db2" title="Validate the device authentication answer using the provided key." alt="" coords="5,29,196,55"/>
+<area shape="poly" id="edge4_Node000003_Node000004" title=" " alt="" coords="241,60,196,55,196,50,242,55"/>
+<area shape="rect" id="Node000005" href="$group__BaseAnswer.html#ga32539efbcb50a39a50a0272e65b29653" title="Verify the FSBL signature." alt="" coords="32,79,169,104"/>
+<area shape="poly" id="edge5_Node000003_Node000005" title=" " alt="" coords="242,79,170,87,169,82,241,74"/>
+</map>

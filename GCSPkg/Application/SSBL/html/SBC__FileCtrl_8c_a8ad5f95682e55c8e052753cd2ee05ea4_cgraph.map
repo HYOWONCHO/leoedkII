@@ -1,0 +1,5 @@
+<map id="SBC_ProtectedSWWrite" name="SBC_ProtectedSWWrite">
+<area shape="rect" id="Node000001" title="Protected SW blob write to Raw Partition." alt="" coords="5,5,184,31"/>
+<area shape="rect" id="Node000002" href="$SBC__FileCtrl_8c.html#a14e0c5b72f6cc01c3e358ef27b16f700" title="Write the data in Raw Partition block at the specified LBA." alt="" coords="232,5,408,31"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="184,15,218,15,218,21,184,21"/>
+</map>

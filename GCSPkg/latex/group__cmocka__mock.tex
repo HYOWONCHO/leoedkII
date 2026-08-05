@@ -1,0 +1,139 @@
+\doxysubsection{Mock Objects}
+\hypertarget{group__cmocka__mock}{}\label{group__cmocka__mock}\index{Mock Objects@{Mock Objects}}
+Collaboration diagram for Mock Objects\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=297pt]{group__cmocka__mock}
+\end{center}
+\end{figure}
+\doxysubsubsubsection*{Macros}
+\begin{DoxyCompactItemize}
+\item 
+\Hypertarget{group__cmocka__mock_gabfbc7d47a880b629f1f922c84bb0b298}\label{group__cmocka__mock_gabfbc7d47a880b629f1f922c84bb0b298} 
+\#define {\bfseries mock}()~\+\_\+mock(\+\_\+\+\_\+func\+\_\+\+\_\+, \+\_\+\+\_\+\+FILE\+\_\+\+\_\+, \+\_\+\+\_\+\+LINE\+\_\+\+\_\+)
+\item 
+\Hypertarget{group__cmocka__mock_gabfbc7d47a880b629f1f922c84bb0b298}\label{group__cmocka__mock_gabfbc7d47a880b629f1f922c84bb0b298} 
+\#define {\bfseries mock}()~\+\_\+mock(\+\_\+\+\_\+func\+\_\+\+\_\+, \+\_\+\+\_\+\+FILE\+\_\+\+\_\+, \+\_\+\+\_\+\+LINE\+\_\+\+\_\+)
+\item 
+\Hypertarget{group__cmocka__mock_gad5d3d911b6b35fd12197d0866b69680d}\label{group__cmocka__mock_gad5d3d911b6b35fd12197d0866b69680d} 
+\#define {\bfseries mock\+\_\+ptr\+\_\+type}(type)~((type) (uintptr\+\_\+t) mock())
+\item 
+\Hypertarget{group__cmocka__mock_gad5d3d911b6b35fd12197d0866b69680d}\label{group__cmocka__mock_gad5d3d911b6b35fd12197d0866b69680d} 
+\#define {\bfseries mock\+\_\+ptr\+\_\+type}(type)~((type) (uintptr\+\_\+t) mock())
+\item 
+\Hypertarget{group__cmocka__mock_ga9c5b6d6f0cb3f2020dfa9def4dbab594}\label{group__cmocka__mock_ga9c5b6d6f0cb3f2020dfa9def4dbab594} 
+\#define {\bfseries mock\+\_\+type}(type)~((type) mock())
+\item 
+\Hypertarget{group__cmocka__mock_ga9c5b6d6f0cb3f2020dfa9def4dbab594}\label{group__cmocka__mock_ga9c5b6d6f0cb3f2020dfa9def4dbab594} 
+\#define {\bfseries mock\+\_\+type}(type)~((type) mock())
+\item 
+\#define \mbox{\hyperlink{group__cmocka__mock_ga30c27007b639ae66ec3bb8598f9526b9}{will\+\_\+return}}(function,  value)
+\item 
+\#define \mbox{\hyperlink{group__cmocka__mock_ga30c27007b639ae66ec3bb8598f9526b9}{will\+\_\+return}}(function,  value)
+\item 
+\Hypertarget{group__cmocka__mock_gaa71fcfa99426230c1b17b135a2690630}\label{group__cmocka__mock_gaa71fcfa99426230c1b17b135a2690630} 
+\#define {\bfseries will\+\_\+return\+\_\+always}(function,  value)~    will\+\_\+return\+\_\+count(function, (value), WILL\+\_\+\+RETURN\+\_\+\+ALWAYS)
+\item 
+\Hypertarget{group__cmocka__mock_gaa71fcfa99426230c1b17b135a2690630}\label{group__cmocka__mock_gaa71fcfa99426230c1b17b135a2690630} 
+\#define {\bfseries will\+\_\+return\+\_\+always}(function,  value)~    will\+\_\+return\+\_\+count(function, (value), WILL\+\_\+\+RETURN\+\_\+\+ALWAYS)
+\item 
+\#define \mbox{\hyperlink{group__cmocka__mock_gaab1cabbc12a25d322f75b77aa67eaf2c}{will\+\_\+return\+\_\+count}}(function,  value,  count)
+\item 
+\#define \mbox{\hyperlink{group__cmocka__mock_gaab1cabbc12a25d322f75b77aa67eaf2c}{will\+\_\+return\+\_\+count}}(function,  value,  count)
+\item 
+\Hypertarget{group__cmocka__mock_ga26063fc50e2ece395c9b47ffdc2e1f35}\label{group__cmocka__mock_ga26063fc50e2ece395c9b47ffdc2e1f35} 
+\#define {\bfseries will\+\_\+return\+\_\+maybe}(function,  value)~    will\+\_\+return\+\_\+count(function, (value), WILL\+\_\+\+RETURN\+\_\+\+ONCE)
+\item 
+\Hypertarget{group__cmocka__mock_ga26063fc50e2ece395c9b47ffdc2e1f35}\label{group__cmocka__mock_ga26063fc50e2ece395c9b47ffdc2e1f35} 
+\#define {\bfseries will\+\_\+return\+\_\+maybe}(function,  value)~    will\+\_\+return\+\_\+count(function, (value), WILL\+\_\+\+RETURN\+\_\+\+ONCE)
+\end{DoxyCompactItemize}
+
+
+\doxysubsubsection{Detailed Description}
+Mock objects mock objects are simulated objects that mimic the behavior of real objects. Instead of calling the real objects, the tested object calls a mock object that merely asserts that the correct methods were called, with the expected parameters, in the correct order.
+
+
+\begin{DoxyItemize}
+\item {\bfseries{will\+\_\+return(function, value)}} -\/ The will\+\_\+return() macro pushes a value onto a stack of mock values. This macro is intended to be used by the unit test itself, while programming the behaviour of the mocked object.
+
+
+\item {\bfseries{mock()}} -\/ the mock macro pops a value from a stack of test values. The user of the mock() macro is the mocked object that uses it to learn how it should behave. 
+\end{DoxyItemize}
+
+Because the will\+\_\+return() and mock() are intended to be used in pairs, the cmocka library would fail the test if there are more values pushed onto the stack using will\+\_\+return() than consumed with mock() and vice-\/versa.
+
+The following unit test stub illustrates how would a unit test instruct the mock object to return a particular value\+:
+
+
+\begin{DoxyCode}{0}
+\DoxyCodeLine{will\_return(chef\_cook,\ \textcolor{stringliteral}{"{}hotdog"{}});}
+\DoxyCodeLine{will\_return(chef\_cook,\ 0);}
+
+\end{DoxyCode}
+
+
+Now the mock object can check if the parameter it received is the parameter which is expected by the test driver. This can be done the following way\+:
+
+
+\begin{DoxyCode}{0}
+\DoxyCodeLine{\textcolor{keywordtype}{int}\ chef\_cook(\textcolor{keyword}{const}\ \textcolor{keywordtype}{char}\ *order,\ \textcolor{keywordtype}{char}\ **dish\_out)}
+\DoxyCodeLine{\{}
+\DoxyCodeLine{\ \ \ \ check\_expected(order);}
+\DoxyCodeLine{\}}
+
+\end{DoxyCode}
+
+
+For a complete example please take a look \href{https://git.cryptomilk.org/projects/cmocka.git/tree/example/mock}{\texttt{ here}}. 
+
+\doxysubsubsection{Macro Definition Documentation}
+\Hypertarget{group__cmocka__mock_ga30c27007b639ae66ec3bb8598f9526b9}\label{group__cmocka__mock_ga30c27007b639ae66ec3bb8598f9526b9} 
+\index{Mock Objects@{Mock Objects}!will\_return@{will\_return}}
+\index{will\_return@{will\_return}!Mock Objects@{Mock Objects}}
+\doxysubsubsubsection{\texorpdfstring{will\_return}{will\_return}\hspace{0.1cm}{\footnotesize\ttfamily [1/2]}}
+{\footnotesize\ttfamily \#define will\+\_\+return(\begin{DoxyParamCaption}\item[{}]{function,  }\item[{}]{value }\end{DoxyParamCaption})}
+
+{\bfseries Value\+:}
+\begin{DoxyCode}{0}
+\DoxyCodeLine{\ \ \ \ \_will\_return(\#function,\ \_\_FILE\_\_,\ \_\_LINE\_\_,\ \(\backslash\)}
+\DoxyCodeLine{\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ cast\_to\_largest\_integral\_type(value),\ 1)}
+
+\end{DoxyCode}
+\Hypertarget{group__cmocka__mock_ga30c27007b639ae66ec3bb8598f9526b9}\label{group__cmocka__mock_ga30c27007b639ae66ec3bb8598f9526b9} 
+\index{Mock Objects@{Mock Objects}!will\_return@{will\_return}}
+\index{will\_return@{will\_return}!Mock Objects@{Mock Objects}}
+\doxysubsubsubsection{\texorpdfstring{will\_return}{will\_return}\hspace{0.1cm}{\footnotesize\ttfamily [2/2]}}
+{\footnotesize\ttfamily \#define will\+\_\+return(\begin{DoxyParamCaption}\item[{}]{function,  }\item[{}]{value }\end{DoxyParamCaption})}
+
+{\bfseries Value\+:}
+\begin{DoxyCode}{0}
+\DoxyCodeLine{\ \ \ \ \_will\_return(\#function,\ \_\_FILE\_\_,\ \_\_LINE\_\_,\ \(\backslash\)}
+\DoxyCodeLine{\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ cast\_to\_largest\_integral\_type(value),\ 1)}
+
+\end{DoxyCode}
+\Hypertarget{group__cmocka__mock_gaab1cabbc12a25d322f75b77aa67eaf2c}\label{group__cmocka__mock_gaab1cabbc12a25d322f75b77aa67eaf2c} 
+\index{Mock Objects@{Mock Objects}!will\_return\_count@{will\_return\_count}}
+\index{will\_return\_count@{will\_return\_count}!Mock Objects@{Mock Objects}}
+\doxysubsubsubsection{\texorpdfstring{will\_return\_count}{will\_return\_count}\hspace{0.1cm}{\footnotesize\ttfamily [1/2]}}
+{\footnotesize\ttfamily \#define will\+\_\+return\+\_\+count(\begin{DoxyParamCaption}\item[{}]{function,  }\item[{}]{value,  }\item[{}]{count }\end{DoxyParamCaption})}
+
+{\bfseries Value\+:}
+\begin{DoxyCode}{0}
+\DoxyCodeLine{\ \ \ \ \_will\_return(\#function,\ \_\_FILE\_\_,\ \_\_LINE\_\_,\ \(\backslash\)}
+\DoxyCodeLine{\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ cast\_to\_largest\_integral\_type(value),\ count)}
+
+\end{DoxyCode}
+\Hypertarget{group__cmocka__mock_gaab1cabbc12a25d322f75b77aa67eaf2c}\label{group__cmocka__mock_gaab1cabbc12a25d322f75b77aa67eaf2c} 
+\index{Mock Objects@{Mock Objects}!will\_return\_count@{will\_return\_count}}
+\index{will\_return\_count@{will\_return\_count}!Mock Objects@{Mock Objects}}
+\doxysubsubsubsection{\texorpdfstring{will\_return\_count}{will\_return\_count}\hspace{0.1cm}{\footnotesize\ttfamily [2/2]}}
+{\footnotesize\ttfamily \#define will\+\_\+return\+\_\+count(\begin{DoxyParamCaption}\item[{}]{function,  }\item[{}]{value,  }\item[{}]{count }\end{DoxyParamCaption})}
+
+{\bfseries Value\+:}
+\begin{DoxyCode}{0}
+\DoxyCodeLine{\ \ \ \ \_will\_return(\#function,\ \_\_FILE\_\_,\ \_\_LINE\_\_,\ \(\backslash\)}
+\DoxyCodeLine{\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ cast\_to\_largest\_integral\_type(value),\ count)}
+
+\end{DoxyCode}

@@ -1,0 +1,5 @@
+<map id="SBC_LoadSystemSetting" name="SBC_LoadSystemSetting">
+<area shape="rect" id="Node000001" title="Loads system configuration data from a block I/O device into a memory blob." alt="" coords="5,5,191,31"/>
+<area shape="rect" id="Node000002" href="$SBC__FileCtrl_8c.html#ab797adf8022e6bb64ba91bf55f9ae70b" title="Read a raw data block from a physical storage device (LBA&#45;based)." alt="" coords="239,5,412,31"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="191,15,225,15,225,21,191,21"/>
+</map>

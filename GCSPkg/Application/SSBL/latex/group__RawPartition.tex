@@ -1,0 +1,274 @@
+\doxysection{Raw Partition related data structure and defines}
+\hypertarget{group__RawPartition}{}\label{group__RawPartition}\index{Raw Partition related data structure and defines@{Raw Partition related data structure and defines}}
+\doxysubsubsection*{Data Structures}
+\begin{DoxyCompactItemize}
+\item 
+union \mbox{\hyperlink{union__boot__fw__inf__t}{\+\_\+boot\+\_\+fw\+\_\+inf\+\_\+t}}
+\item 
+union \mbox{\hyperlink{union__osid__key__t}{\+\_\+osid\+\_\+key\+\_\+t}}
+\item 
+struct \mbox{\hyperlink{struct__rawprt__hdr__t}{\+\_\+rawprt\+\_\+hdr\+\_\+t}}
+\item 
+union \mbox{\hyperlink{union__sys__pres__t}{\+\_\+sys\+\_\+pres\+\_\+t}}
+\item 
+union \mbox{\hyperlink{unionboot__fw__inf__t}{boot\+\_\+fw\+\_\+inf\+\_\+t}}
+\begin{DoxyCompactList}\small\item\em Boot Firmware storage information. \end{DoxyCompactList}\item 
+struct \mbox{\hyperlink{structrawprt__hdr__t}{rawprt\+\_\+hdr\+\_\+t}}
+\begin{DoxyCompactList}\small\item\em Raw Partition Header structure. \end{DoxyCompactList}\end{DoxyCompactItemize}
+\doxysubsubsection*{Macros}
+\begin{DoxyCompactItemize}
+\item 
+\Hypertarget{group__RawPartition_gaf1bbe7fecc31e9d85ea7663d11501cd9}\label{group__RawPartition_gaf1bbe7fecc31e9d85ea7663d11501cd9} 
+\#define {\bfseries BOOT\+\_\+\+BLKIO\+\_\+\+DFTSZ}~0x00000200
+\item 
+\Hypertarget{group__RawPartition_gaa38e60a34aedc922e30bd2c02f6388bc}\label{group__RawPartition_gaa38e60a34aedc922e30bd2c02f6388bc} 
+\#define {\bfseries BOOT\+\_\+\+FSBL\+\_\+\+IMGMAX}~(\mbox{\hyperlink{group__RawPartition_ga67401815b5dcc9aaf1e7dc5f36d666f7}{BOOT\+\_\+\+FSBL\+\_\+\+MAX}} -\/ BOOT\+\_\+\+IMG\+\_\+\+LENB)
+\item 
+\#define \mbox{\hyperlink{group__RawPartition_ga67401815b5dcc9aaf1e7dc5f36d666f7}{BOOT\+\_\+\+FSBL\+\_\+\+MAX}}~0x00400000
+\item 
+\#define \mbox{\hyperlink{group__RawPartition_ga6887ff05053954f6ef245236a92a05bf}{BOOT\+\_\+\+FSBL\+\_\+\+OFS}}~0x00000000
+\item 
+\Hypertarget{group__RawPartition_ga56afcbe9fc63263396ef3160c965658d}\label{group__RawPartition_ga56afcbe9fc63263396ef3160c965658d} 
+\#define {\bfseries BOOT\+\_\+\+FW\+\_\+\+IMG\+\_\+\+MB}~128
+\item 
+\Hypertarget{group__RawPartition_gad821118217f68354c702522c69bd975f}\label{group__RawPartition_gad821118217f68354c702522c69bd975f} 
+\#define {\bfseries BOOT\+\_\+\+FW\+\_\+\+IMGMAX}~(BOOT\+\_\+\+FW\+\_\+\+IMG\+\_\+\+MB $<$$<$ 20)
+\item 
+\Hypertarget{group__RawPartition_ga24adb4368262132c2ca8d7c9afaafda8}\label{group__RawPartition_ga24adb4368262132c2ca8d7c9afaafda8} 
+\#define {\bfseries BOOT\+\_\+\+FW\+\_\+\+LBA\+\_\+\+BLOCKS}~(BOOT\+\_\+\+FW\+\_\+\+IMGMAX / SBC\+\_\+\+RAWPRT\+\_\+\+DFLT\+\_\+\+BLK\+\_\+\+SZ)
+\item 
+\Hypertarget{group__RawPartition_gaf57368018921db3371c8b997191c56d9}\label{group__RawPartition_gaf57368018921db3371c8b997191c56d9} 
+\#define {\bfseries BOOT\+\_\+\+FW\+\_\+\+PROT\+\_\+\+SW\+\_\+\+POS}~(0x01\+C00000 \texorpdfstring{$\vert$}{|} BOOT\+\_\+\+FW\+\_\+\+SRTOFS)
+\begin{DoxyCompactList}\small\item\em Addresss of Protected Software ~\newline
+ \end{DoxyCompactList}\item 
+\Hypertarget{group__RawPartition_gaabb1bc837034d3921280349fad67b910}\label{group__RawPartition_gaabb1bc837034d3921280349fad67b910} 
+\#define {\bfseries BOOT\+\_\+\+FW\+\_\+\+SRTOFS}~0x00000200
+\item 
+\Hypertarget{group__RawPartition_ga23789f15488432d17456c6daef1f4982}\label{group__RawPartition_ga23789f15488432d17456c6daef1f4982} 
+\#define {\bfseries BOOT\+\_\+\+IMG\+\_\+\+LENB}~0x00000004
+\item 
+\Hypertarget{group__RawPartition_gaf2aeef0a33e802451f581e9d09d60b13}\label{group__RawPartition_gaf2aeef0a33e802451f581e9d09d60b13} 
+\#define {\bfseries BOOT\+\_\+\+OS\+\_\+\+IMG\+\_\+\+MB}~20
+\item 
+\Hypertarget{group__RawPartition_gad2d6b195b11c10b5d83cba385737d1e5}\label{group__RawPartition_gad2d6b195b11c10b5d83cba385737d1e5} 
+\#define {\bfseries BOOT\+\_\+\+OS\+\_\+\+IMGMAX}~(\mbox{\hyperlink{group__RawPartition_gaaebb644f5043773adcbfa28e5527278b}{BOOT\+\_\+\+OS\+\_\+\+MAX}} -\/ BOOT\+\_\+\+IMG\+\_\+\+LENB)
+\item 
+\#define \mbox{\hyperlink{group__RawPartition_gaaebb644f5043773adcbfa28e5527278b}{BOOT\+\_\+\+OS\+\_\+\+MAX}}~(BOOT\+\_\+\+OS\+\_\+\+IMG\+\_\+\+MB $<$$<$ 20)
+\item 
+\#define \mbox{\hyperlink{group__RawPartition_ga16c38cb6370eaf2614f0eb6442292783}{BOOT\+\_\+\+OS\+\_\+\+OFS}}~0x00800000
+\item 
+\Hypertarget{group__RawPartition_ga473c0168a12ee580d2f194f720bd66de}\label{group__RawPartition_ga473c0168a12ee580d2f194f720bd66de} 
+\#define {\bfseries BOOT\+\_\+\+SECTOR1\+\_\+\+OFS}~(0x00000000 \texorpdfstring{$\vert$}{|} BOOT\+\_\+\+FW\+\_\+\+SRTOFS)
+\item 
+\Hypertarget{group__RawPartition_ga5c926cfd5a7663750fd20cb7dee939ac}\label{group__RawPartition_ga5c926cfd5a7663750fd20cb7dee939ac} 
+\#define {\bfseries BOOT\+\_\+\+SECTOR2\+\_\+\+OFS}~(0x08000000 \texorpdfstring{$\vert$}{|} BOOT\+\_\+\+FW\+\_\+\+SRTOFS)
+\item 
+\Hypertarget{group__RawPartition_gac4599cea78e341624d2fea93620d13c1}\label{group__RawPartition_gac4599cea78e341624d2fea93620d13c1} 
+\#define {\bfseries BOOT\+\_\+\+SECTOR3\+\_\+\+OFS}~(0x10000000 \texorpdfstring{$\vert$}{|} BOOT\+\_\+\+FW\+\_\+\+SRTOFS)
+\item 
+\Hypertarget{group__RawPartition_ga9c3317dca2de56f4aa07e20660d4d949}\label{group__RawPartition_ga9c3317dca2de56f4aa07e20660d4d949} 
+\#define {\bfseries BOOT\+\_\+\+SSBL\+\_\+\+IMGMAX}~(\mbox{\hyperlink{group__RawPartition_ga1c5eab3dda98247435465d3e16841f4e}{BOOT\+\_\+\+SSBL\+\_\+\+MAX}} -\/ BOOT\+\_\+\+IMG\+\_\+\+LENB)
+\item 
+\#define \mbox{\hyperlink{group__RawPartition_ga1c5eab3dda98247435465d3e16841f4e}{BOOT\+\_\+\+SSBL\+\_\+\+MAX}}~0x00400000
+\item 
+\#define \mbox{\hyperlink{group__RawPartition_gac9f7a17742041f776260d54fc5b5916b}{BOOT\+\_\+\+SSBL\+\_\+\+OFS}}~0x00400000
+\item 
+\Hypertarget{group__RawPartition_ga15a4edb5f80c0975afd4b0d17dcb3b59}\label{group__RawPartition_ga15a4edb5f80c0975afd4b0d17dcb3b59} 
+\#define {\bfseries BOOT\+\_\+\+SW\+\_\+\+IMG\+\_\+\+MB}~100
+\item 
+\Hypertarget{group__RawPartition_ga864acc047ae0e4e626228011d9efc936}\label{group__RawPartition_ga864acc047ae0e4e626228011d9efc936} 
+\#define {\bfseries BOOT\+\_\+\+SW\+\_\+\+IMGMAX}~(\mbox{\hyperlink{group__RawPartition_gaf164bf777bbfef9394987c97bd06d9dc}{BOOT\+\_\+\+SW\+\_\+\+MAX}} -\/ BOOT\+\_\+\+IMG\+\_\+\+LENB)
+\item 
+\#define \mbox{\hyperlink{group__RawPartition_gaf164bf777bbfef9394987c97bd06d9dc}{BOOT\+\_\+\+SW\+\_\+\+MAX}}~(BOOT\+\_\+\+SW\+\_\+\+IMG\+\_\+\+MB $<$$<$ 20)
+\item 
+\#define \mbox{\hyperlink{group__RawPartition_ga429ff1c0747d02c422105a2da0556e3d}{BOOT\+\_\+\+SW\+\_\+\+OFS}}~0x01\+C00000
+\item 
+\Hypertarget{group__RawPartition_ga1406b403bddf42b421d0b5d01c57dd54}\label{group__RawPartition_ga1406b403bddf42b421d0b5d01c57dd54} 
+\#define {\bfseries LEN\+\_\+\+DFLT\+\_\+\+OFS}~0x04
+\item 
+\Hypertarget{group__RawPartition_ga6a96101d61d488dd9c778e3d4be73abf}\label{group__RawPartition_ga6a96101d61d488dd9c778e3d4be73abf} 
+\#define {\bfseries SBC\+\_\+\+BOOT\+\_\+\+MODE\+\_\+\+LEN}~2
+\begin{DoxyCompactList}\small\item\em Boot mode field length (in bytes). \end{DoxyCompactList}\item 
+\Hypertarget{group__RawPartition_ga3e3c53f9f060647ce6cac86b5eabfbb3}\label{group__RawPartition_ga3e3c53f9f060647ce6cac86b5eabfbb3} 
+\#define {\bfseries SBC\+\_\+\+BOOT\+\_\+\+PRES\+\_\+\+LEN}~4
+\begin{DoxyCompactList}\small\item\em Boot presence flag length (in bytes). \end{DoxyCompactList}\item 
+\Hypertarget{group__RawPartition_ga9ccbf63e449412eb70455c5e36b2a8aa}\label{group__RawPartition_ga9ccbf63e449412eb70455c5e36b2a8aa} 
+\#define {\bfseries SBC\+\_\+\+HDR\+\_\+\+SKIP\+\_\+\+LEN}~46
+\begin{DoxyCompactList}\small\item\em Number of bytes to skip before the partition header data begins. \end{DoxyCompactList}\item 
+\Hypertarget{group__RawPartition_ga07d71d9342ec3c467ac29a50d789311a}\label{group__RawPartition_ga07d71d9342ec3c467ac29a50d789311a} 
+\#define {\bfseries SBC\+\_\+\+KEY\+\_\+\+MODE\+\_\+\+LEN}~2
+\begin{DoxyCompactList}\small\item\em Key mode field length (in bytes). \end{DoxyCompactList}\item 
+\Hypertarget{group__RawPartition_gaabf790766c8ef5f0c18f38aef6508cc2}\label{group__RawPartition_gaabf790766c8ef5f0c18f38aef6508cc2} 
+\#define {\bfseries SBC\+\_\+\+PRTNIFO\+\_\+\+LEN}~64
+\begin{DoxyCompactList}\small\item\em Partition information length (in bytes). \end{DoxyCompactList}\item 
+\#define \mbox{\hyperlink{group__RawPartition_gaf0fdeaf6fde08e4612dbac3f4c29d959}{SBC\+\_\+\+RAW\+\_\+\+PRTHDR\+\_\+\+LBA}}~0
+\begin{DoxyCompactList}\small\item\em Logical Block Address (LBA) of the raw partition header. \end{DoxyCompactList}\item 
+\#define \mbox{\hyperlink{group__RawPartition_ga00fc7c4cd6cb6e5c4c1e9d7f3a57e359}{SBC\+\_\+\+RAWPRT\+\_\+\+MAGIC\+\_\+\+ID}}~0x\+AA55\+AA55
+\begin{DoxyCompactList}\small\item\em Magic identifier for the raw partition header. \end{DoxyCompactList}\item 
+\Hypertarget{group__RawPartition_gab9f9d94cd3331f17b2860f84fbe02346}\label{group__RawPartition_gab9f9d94cd3331f17b2860f84fbe02346} 
+\#define {\bfseries SBC\+\_\+\+RECOVERY\+\_\+\+LEN}~2
+\begin{DoxyCompactList}\small\item\em Recovery flag field length (in bytes). \end{DoxyCompactList}\item 
+\Hypertarget{group__RawPartition_ga5db488a7df64f171d477dca5bff3c89d}\label{group__RawPartition_ga5db488a7df64f171d477dca5bff3c89d} 
+\#define {\bfseries SYS\+\_\+\+CERT\+\_\+\+LEN}~(2$<$$<$10)
+\item 
+\Hypertarget{group__RawPartition_ga54f8c174470fca25cea574bd788ce6eb}\label{group__RawPartition_ga54f8c174470fca25cea574bd788ce6eb} 
+\#define {\bfseries SYS\+\_\+\+CONF\+\_\+\+DEVID\+\_\+\+CRT\+\_\+\+OFS}~0x00000880
+\item 
+\Hypertarget{group__RawPartition_gab4f218b201a93b1400d817b63042b12b}\label{group__RawPartition_gab4f218b201a93b1400d817b63042b12b} 
+\#define {\bfseries SYS\+\_\+\+CONF\+\_\+\+FWID\+\_\+\+CRT\+\_\+\+OFS}~0x00001080
+\item 
+\Hypertarget{group__RawPartition_ga84aa33e8e5b17d5b9830e3bab28c7daf}\label{group__RawPartition_ga84aa33e8e5b17d5b9830e3bab28c7daf} 
+\#define {\bfseries SYS\+\_\+\+CONF\+\_\+\+OSID\+\_\+\+CRT\+\_\+\+OFS}~0x00001880
+\item 
+\Hypertarget{group__RawPartition_gae83a7df891bf93ce766be4242cad33be}\label{group__RawPartition_gae83a7df891bf93ce766be4242cad33be} 
+\#define {\bfseries SYS\+\_\+\+CONF\+\_\+\+OSID\+\_\+\+OFS}~0x00000000
+\item 
+\#define \mbox{\hyperlink{group__RawPartition_gae3dd1ba24119ce2cd86c5157f003932f}{SYS\+\_\+\+CONF\+\_\+\+RES\+\_\+\+OFS}}~0x00000040
+\item 
+\Hypertarget{group__RawPartition_gaaa61e1d8a5d5653aae8adb6c3fb340b6}\label{group__RawPartition_gaaa61e1d8a5d5653aae8adb6c3fb340b6} 
+\#define {\bfseries SYS\+\_\+\+CONF\+\_\+\+ROOT\+\_\+\+CA\+\_\+\+OFS}~0x00000080
+\item 
+\Hypertarget{group__RawPartition_ga230e4f0bb79389768989105955cee47f}\label{group__RawPartition_ga230e4f0bb79389768989105955cee47f} 
+\#define {\bfseries SYS\+\_\+\+CONF\+\_\+\+START\+\_\+\+OFS}~(0x18000000 \texorpdfstring{$\vert$}{|} BOOT\+\_\+\+FW\+\_\+\+SRTOFS)
+\item 
+\Hypertarget{group__RawPartition_ga718f918eade75e131d31123ac7c59d32}\label{group__RawPartition_ga718f918eade75e131d31123ac7c59d32} 
+\#define {\bfseries SYS\+\_\+\+CONF\+\_\+\+SW\+\_\+\+LIST\+\_\+\+OFS}~0x00002080
+\item 
+\Hypertarget{group__RawPartition_ga82dd2488e5a34701674af6d7b0650f2f}\label{group__RawPartition_ga82dd2488e5a34701674af6d7b0650f2f} 
+\#define {\bfseries SYS\+\_\+\+OSID\+\_\+\+IV\+\_\+\+LEN}~12
+\item 
+\Hypertarget{group__RawPartition_gad538e384f577d41b1ee7476b8a02af65}\label{group__RawPartition_gad538e384f577d41b1ee7476b8a02af65} 
+\#define {\bfseries SYS\+\_\+\+OSID\+\_\+\+KEY\+\_\+\+LEN}~32
+\item 
+\Hypertarget{group__RawPartition_gaccf4cec84148666da1789804ab76072e}\label{group__RawPartition_gaccf4cec84148666da1789804ab76072e} 
+\#define {\bfseries SYS\+\_\+\+OSID\+\_\+\+LEN}~4
+\item 
+\Hypertarget{group__RawPartition_gac8702f5b0af1c4512036b803b12b9572}\label{group__RawPartition_gac8702f5b0af1c4512036b803b12b9572} 
+\#define {\bfseries SYS\+\_\+\+OSID\+\_\+\+MAX\+\_\+\+LEN}~64
+\item 
+\Hypertarget{group__RawPartition_gae0a3c56f62122715924369388614f38c}\label{group__RawPartition_gae0a3c56f62122715924369388614f38c} 
+\#define {\bfseries SYS\+\_\+\+OSID\+\_\+\+TAG\+\_\+\+LEN}~16
+\item 
+\Hypertarget{group__RawPartition_ga3c5446516bff51d2952114403c2d5013}\label{group__RawPartition_ga3c5446516bff51d2952114403c2d5013} 
+\#define {\bfseries SYS\+\_\+\+PRES\+\_\+\+INFO\+\_\+\+MAX}~(SYS\+\_\+\+PRES\+\_\+\+LEN + SYS\+\_\+\+PRES\+\_\+\+RES\+\_\+\+LEN + SYS\+\_\+\+PRES\+\_\+\+IV\+\_\+\+LEN + SYS\+\_\+\+PRES\+\_\+\+TAG\+\_\+\+LEN + SYS\+\_\+\+PRES\+\_\+\+RESERVED)
+\item 
+\Hypertarget{group__RawPartition_gadc660f667e76c51b07e2c0a4376e1254}\label{group__RawPartition_gadc660f667e76c51b07e2c0a4376e1254} 
+\#define {\bfseries SYS\+\_\+\+PRES\+\_\+\+IV\+\_\+\+LEN}~12
+\item 
+\Hypertarget{group__RawPartition_ga5abe554ca62f3723f7176972f7ee8d7b}\label{group__RawPartition_ga5abe554ca62f3723f7176972f7ee8d7b} 
+\#define {\bfseries SYS\+\_\+\+PRES\+\_\+\+LEN}~4
+\item 
+\Hypertarget{group__RawPartition_ga6ef3af1b3b8efe826c91622c4def2e07}\label{group__RawPartition_ga6ef3af1b3b8efe826c91622c4def2e07} 
+\#define {\bfseries SYS\+\_\+\+PRES\+\_\+\+MAX\+\_\+\+LEN}~64
+\item 
+\Hypertarget{group__RawPartition_gade4f38c2b9573107bb509425f646c871}\label{group__RawPartition_gade4f38c2b9573107bb509425f646c871} 
+\#define {\bfseries SYS\+\_\+\+PRES\+\_\+\+RES\+\_\+\+LEN}~16
+\item 
+\Hypertarget{group__RawPartition_gacc32836c06a7a42b8e41ea7134d18ace}\label{group__RawPartition_gacc32836c06a7a42b8e41ea7134d18ace} 
+\#define {\bfseries SYS\+\_\+\+PRES\+\_\+\+RESERVED}~16
+\item 
+\Hypertarget{group__RawPartition_gad382370f291ff55776de1a78bc495b8e}\label{group__RawPartition_gad382370f291ff55776de1a78bc495b8e} 
+\#define {\bfseries SYS\+\_\+\+PRES\+\_\+\+TAG\+\_\+\+LEN}~16
+\item 
+\Hypertarget{group__RawPartition_ga97a2eb150812e93d114b20308ffae153}\label{group__RawPartition_ga97a2eb150812e93d114b20308ffae153} 
+\#define {\bfseries SYS\+\_\+\+SETTING\+\_\+\+STORAGE\+\_\+\+LEN}~(SYS\+\_\+\+OSID\+\_\+\+MAX\+\_\+\+LEN + SYS\+\_\+\+PRES\+\_\+\+MAX\+\_\+\+LEN + SYS\+\_\+\+CERT\+\_\+\+LEN + SYS\+\_\+\+CERT\+\_\+\+LEN + SYS\+\_\+\+CERT\+\_\+\+LEN + SYS\+\_\+\+CERT\+\_\+\+LEN + SYS\+\_\+\+SWLIST\+\_\+\+OFS\+\_\+\+LEN)
+\item 
+\Hypertarget{group__RawPartition_ga70d362a04254bb1ad7e2d5119911a313}\label{group__RawPartition_ga70d362a04254bb1ad7e2d5119911a313} 
+\#define {\bfseries SYS\+\_\+\+SWLIST\+\_\+\+OFS\+\_\+\+LEN}~(8$<$$<$10)
+\end{DoxyCompactItemize}
+\doxysubsubsection*{Typedefs}
+\begin{DoxyCompactItemize}
+\item 
+\Hypertarget{group__RawPartition_ga41813950367f36242ca252d9c151a1f9}\label{group__RawPartition_ga41813950367f36242ca252d9c151a1f9} 
+typedef union \mbox{\hyperlink{union__boot__fw__inf__t}{\+\_\+boot\+\_\+fw\+\_\+inf\+\_\+t}} {\bfseries boot\+\_\+fw\+\_\+inf\+\_\+t}
+\item 
+\Hypertarget{group__RawPartition_ga684709cec27244808ec8b4d9f164d623}\label{group__RawPartition_ga684709cec27244808ec8b4d9f164d623} 
+typedef union \mbox{\hyperlink{union__osid__key__t}{\+\_\+osid\+\_\+key\+\_\+t}} {\bfseries osid\+\_\+key\+\_\+t}
+\item 
+\Hypertarget{group__RawPartition_gaec99e2b745705641612b4388e8721a68}\label{group__RawPartition_gaec99e2b745705641612b4388e8721a68} 
+typedef struct \mbox{\hyperlink{struct__rawprt__hdr__t}{\+\_\+rawprt\+\_\+hdr\+\_\+t}} {\bfseries rawprt\+\_\+hdr\+\_\+t}
+\item 
+\Hypertarget{group__RawPartition_ga7bb3c663ca4fec8ffc530be50c28d8f6}\label{group__RawPartition_ga7bb3c663ca4fec8ffc530be50c28d8f6} 
+typedef union \mbox{\hyperlink{union__sys__pres__t}{\+\_\+sys\+\_\+pres\+\_\+t}} {\bfseries sys\+\_\+pres\+\_\+t}
+\end{DoxyCompactItemize}
+
+
+\doxysubsection{Detailed Description}
+
+
+\doxysubsection{Macro Definition Documentation}
+\Hypertarget{group__RawPartition_ga67401815b5dcc9aaf1e7dc5f36d666f7}\label{group__RawPartition_ga67401815b5dcc9aaf1e7dc5f36d666f7} 
+\index{Raw Partition related data structure and defines@{Raw Partition related data structure and defines}!BOOT\_FSBL\_MAX@{BOOT\_FSBL\_MAX}}
+\index{BOOT\_FSBL\_MAX@{BOOT\_FSBL\_MAX}!Raw Partition related data structure and defines@{Raw Partition related data structure and defines}}
+\doxysubsubsection{\texorpdfstring{BOOT\_FSBL\_MAX}{BOOT\_FSBL\_MAX}}
+{\footnotesize\ttfamily \#define BOOT\+\_\+\+FSBL\+\_\+\+MAX~0x00400000}
+
+4M \Hypertarget{group__RawPartition_ga6887ff05053954f6ef245236a92a05bf}\label{group__RawPartition_ga6887ff05053954f6ef245236a92a05bf} 
+\index{Raw Partition related data structure and defines@{Raw Partition related data structure and defines}!BOOT\_FSBL\_OFS@{BOOT\_FSBL\_OFS}}
+\index{BOOT\_FSBL\_OFS@{BOOT\_FSBL\_OFS}!Raw Partition related data structure and defines@{Raw Partition related data structure and defines}}
+\doxysubsubsection{\texorpdfstring{BOOT\_FSBL\_OFS}{BOOT\_FSBL\_OFS}}
+{\footnotesize\ttfamily \#define BOOT\+\_\+\+FSBL\+\_\+\+OFS~0x00000000}
+
+FSBL Offset \Hypertarget{group__RawPartition_gaaebb644f5043773adcbfa28e5527278b}\label{group__RawPartition_gaaebb644f5043773adcbfa28e5527278b} 
+\index{Raw Partition related data structure and defines@{Raw Partition related data structure and defines}!BOOT\_OS\_MAX@{BOOT\_OS\_MAX}}
+\index{BOOT\_OS\_MAX@{BOOT\_OS\_MAX}!Raw Partition related data structure and defines@{Raw Partition related data structure and defines}}
+\doxysubsubsection{\texorpdfstring{BOOT\_OS\_MAX}{BOOT\_OS\_MAX}}
+{\footnotesize\ttfamily \#define BOOT\+\_\+\+OS\+\_\+\+MAX~(BOOT\+\_\+\+OS\+\_\+\+IMG\+\_\+\+MB $<$$<$ 20)}
+
+20 M \Hypertarget{group__RawPartition_ga16c38cb6370eaf2614f0eb6442292783}\label{group__RawPartition_ga16c38cb6370eaf2614f0eb6442292783} 
+\index{Raw Partition related data structure and defines@{Raw Partition related data structure and defines}!BOOT\_OS\_OFS@{BOOT\_OS\_OFS}}
+\index{BOOT\_OS\_OFS@{BOOT\_OS\_OFS}!Raw Partition related data structure and defines@{Raw Partition related data structure and defines}}
+\doxysubsubsection{\texorpdfstring{BOOT\_OS\_OFS}{BOOT\_OS\_OFS}}
+{\footnotesize\ttfamily \#define BOOT\+\_\+\+OS\+\_\+\+OFS~0x00800000}
+
+Operating System Offset \Hypertarget{group__RawPartition_ga1c5eab3dda98247435465d3e16841f4e}\label{group__RawPartition_ga1c5eab3dda98247435465d3e16841f4e} 
+\index{Raw Partition related data structure and defines@{Raw Partition related data structure and defines}!BOOT\_SSBL\_MAX@{BOOT\_SSBL\_MAX}}
+\index{BOOT\_SSBL\_MAX@{BOOT\_SSBL\_MAX}!Raw Partition related data structure and defines@{Raw Partition related data structure and defines}}
+\doxysubsubsection{\texorpdfstring{BOOT\_SSBL\_MAX}{BOOT\_SSBL\_MAX}}
+{\footnotesize\ttfamily \#define BOOT\+\_\+\+SSBL\+\_\+\+MAX~0x00400000}
+
+4M \Hypertarget{group__RawPartition_gac9f7a17742041f776260d54fc5b5916b}\label{group__RawPartition_gac9f7a17742041f776260d54fc5b5916b} 
+\index{Raw Partition related data structure and defines@{Raw Partition related data structure and defines}!BOOT\_SSBL\_OFS@{BOOT\_SSBL\_OFS}}
+\index{BOOT\_SSBL\_OFS@{BOOT\_SSBL\_OFS}!Raw Partition related data structure and defines@{Raw Partition related data structure and defines}}
+\doxysubsubsection{\texorpdfstring{BOOT\_SSBL\_OFS}{BOOT\_SSBL\_OFS}}
+{\footnotesize\ttfamily \#define BOOT\+\_\+\+SSBL\+\_\+\+OFS~0x00400000}
+
+SSB Offset \Hypertarget{group__RawPartition_gaf164bf777bbfef9394987c97bd06d9dc}\label{group__RawPartition_gaf164bf777bbfef9394987c97bd06d9dc} 
+\index{Raw Partition related data structure and defines@{Raw Partition related data structure and defines}!BOOT\_SW\_MAX@{BOOT\_SW\_MAX}}
+\index{BOOT\_SW\_MAX@{BOOT\_SW\_MAX}!Raw Partition related data structure and defines@{Raw Partition related data structure and defines}}
+\doxysubsubsection{\texorpdfstring{BOOT\_SW\_MAX}{BOOT\_SW\_MAX}}
+{\footnotesize\ttfamily \#define BOOT\+\_\+\+SW\+\_\+\+MAX~(BOOT\+\_\+\+SW\+\_\+\+IMG\+\_\+\+MB $<$$<$ 20)}
+
+100 M \Hypertarget{group__RawPartition_ga429ff1c0747d02c422105a2da0556e3d}\label{group__RawPartition_ga429ff1c0747d02c422105a2da0556e3d} 
+\index{Raw Partition related data structure and defines@{Raw Partition related data structure and defines}!BOOT\_SW\_OFS@{BOOT\_SW\_OFS}}
+\index{BOOT\_SW\_OFS@{BOOT\_SW\_OFS}!Raw Partition related data structure and defines@{Raw Partition related data structure and defines}}
+\doxysubsubsection{\texorpdfstring{BOOT\_SW\_OFS}{BOOT\_SW\_OFS}}
+{\footnotesize\ttfamily \#define BOOT\+\_\+\+SW\+\_\+\+OFS~0x01\+C00000}
+
+Boot Software offset \Hypertarget{group__RawPartition_gaf0fdeaf6fde08e4612dbac3f4c29d959}\label{group__RawPartition_gaf0fdeaf6fde08e4612dbac3f4c29d959} 
+\index{Raw Partition related data structure and defines@{Raw Partition related data structure and defines}!SBC\_RAW\_PRTHDR\_LBA@{SBC\_RAW\_PRTHDR\_LBA}}
+\index{SBC\_RAW\_PRTHDR\_LBA@{SBC\_RAW\_PRTHDR\_LBA}!Raw Partition related data structure and defines@{Raw Partition related data structure and defines}}
+\doxysubsubsection{\texorpdfstring{SBC\_RAW\_PRTHDR\_LBA}{SBC\_RAW\_PRTHDR\_LBA}}
+{\footnotesize\ttfamily \#define SBC\+\_\+\+RAW\+\_\+\+PRTHDR\+\_\+\+LBA~0}
+
+
+
+Logical Block Address (LBA) of the raw partition header. 
+
+Defines the starting LBA where the raw partition header is located. Typically, this is set to 0 to indicate the first logical block of the device. \Hypertarget{group__RawPartition_ga00fc7c4cd6cb6e5c4c1e9d7f3a57e359}\label{group__RawPartition_ga00fc7c4cd6cb6e5c4c1e9d7f3a57e359} 
+\index{Raw Partition related data structure and defines@{Raw Partition related data structure and defines}!SBC\_RAWPRT\_MAGIC\_ID@{SBC\_RAWPRT\_MAGIC\_ID}}
+\index{SBC\_RAWPRT\_MAGIC\_ID@{SBC\_RAWPRT\_MAGIC\_ID}!Raw Partition related data structure and defines@{Raw Partition related data structure and defines}}
+\doxysubsubsection{\texorpdfstring{SBC\_RAWPRT\_MAGIC\_ID}{SBC\_RAWPRT\_MAGIC\_ID}}
+{\footnotesize\ttfamily \#define SBC\+\_\+\+RAWPRT\+\_\+\+MAGIC\+\_\+\+ID~0x\+AA55\+AA55}
+
+
+
+Magic identifier for the raw partition header. 
+
+Defines a unique 32-\/bit magic value ({\ttfamily 0x\+AA55\+AA55}) used to validate the presence and integrity of a raw partition header. \Hypertarget{group__RawPartition_gae3dd1ba24119ce2cd86c5157f003932f}\label{group__RawPartition_gae3dd1ba24119ce2cd86c5157f003932f} 
+\index{Raw Partition related data structure and defines@{Raw Partition related data structure and defines}!SYS\_CONF\_RES\_OFS@{SYS\_CONF\_RES\_OFS}}
+\index{SYS\_CONF\_RES\_OFS@{SYS\_CONF\_RES\_OFS}!Raw Partition related data structure and defines@{Raw Partition related data structure and defines}}
+\doxysubsubsection{\texorpdfstring{SYS\_CONF\_RES\_OFS}{SYS\_CONF\_RES\_OFS}}
+{\footnotesize\ttfamily \#define SYS\+\_\+\+CONF\+\_\+\+RES\+\_\+\+OFS~0x00000040}
+
+Reference offset 

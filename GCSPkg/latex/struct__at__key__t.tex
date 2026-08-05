@@ -1,0 +1,98 @@
+\doxysection{\+\_\+at\+\_\+key\+\_\+t Struct Reference}
+\hypertarget{struct__at__key__t}{}\label{struct__at__key__t}\index{\_at\_key\_t@{\_at\_key\_t}}
+
+
+Anti-\/tampering key structure.  
+
+
+
+
+{\ttfamily \#include $<$SBC\+\_\+\+Ecc\+Sign\+Verify.\+h$>$}
+
+\doxysubsubsection*{Data Fields}
+\begin{DoxyCompactItemize}
+\item 
+\mbox{\hyperlink{struct__at__key__t_a7f8da6cb7a8faf1687e37ec8872c553d}{UINT8}} \mbox{\hyperlink{struct__at__key__t_ad7833d10359b0c76723045ea122b70b3}{d}} \mbox{[}32\mbox{]}
+\item 
+\mbox{\hyperlink{struct__at__key__t_a7f8da6cb7a8faf1687e37ec8872c553d}{UINTN}} \mbox{\hyperlink{struct__at__key__t_afae78ea0427d2413015f2fa9667df621}{dl}}
+\item 
+\Hypertarget{struct__at__key__t_a7abd70419ee4c18aadaa61f2bdbb6184}\label{struct__at__key__t_a7abd70419ee4c18aadaa61f2bdbb6184} 
+\begin{tabbing}
+xx\=xx\=xx\=xx\=xx\=xx\=xx\=xx\=xx\=\kill
+union \{\\
+\>struct \{\\
+\>\>UINT8 {\bfseries qx} \mbox{[}32\mbox{]}\\
+\>\>UINT8 {\bfseries qy} \mbox{[}32\mbox{]}\\
+\>\} {\bfseries qxy}\\
+\>UINT8 {\bfseries value} \mbox{[}64\mbox{]}\\
+\} {\bfseries q}\\
+
+\end{tabbing}\item 
+\Hypertarget{struct__at__key__t_a5ffae4ac8d7c4b335b7a4915af726275}\label{struct__at__key__t_a5ffae4ac8d7c4b335b7a4915af726275} 
+\begin{tabbing}
+xx\=xx\=xx\=xx\=xx\=xx\=xx\=xx\=xx\=\kill
+union \{\\
+\>struct \{\\
+\>\>UINT8 \mbox{\hyperlink{struct__at__key__t_a998467d939c3c26c6a3c4cc0991f1ce4}{qx}} \mbox{[}32\mbox{]}\\
+\>\>UINT8 \mbox{\hyperlink{struct__at__key__t_a4bac7a15bc9f8ee2ac4a3a2c48686286}{qy}} \mbox{[}32\mbox{]}\\
+\>\} {\bfseries qxy}\\
+\>UINT8 \mbox{\hyperlink{struct__at__key__t_a7f8da6cb7a8faf1687e37ec8872c553d}{value}} \mbox{[}64\mbox{]}\\
+\} {\bfseries q}\\
+
+\end{tabbing}\item 
+\mbox{\hyperlink{struct__at__key__t_a7f8da6cb7a8faf1687e37ec8872c553d}{UINTN}} \mbox{\hyperlink{struct__at__key__t_ae8b206276045d8f24c181b61d6529ea6}{ql}}
+\end{DoxyCompactItemize}
+
+
+\doxysubsection{Detailed Description}
+Anti-\/tampering key structure. 
+
+\doxysubsection{Field Documentation}
+\Hypertarget{struct__at__key__t_ad7833d10359b0c76723045ea122b70b3}\label{struct__at__key__t_ad7833d10359b0c76723045ea122b70b3} 
+\index{\_at\_key\_t@{\_at\_key\_t}!d@{d}}
+\index{d@{d}!\_at\_key\_t@{\_at\_key\_t}}
+\doxysubsubsection{\texorpdfstring{d}{d}}
+{\footnotesize\ttfamily \mbox{\hyperlink{struct__at__key__t_a7f8da6cb7a8faf1687e37ec8872c553d}{UINT8}} \+\_\+at\+\_\+key\+\_\+t\+::d}
+
+private key
+
+Private key (32 bytes for ECC-\/256). \Hypertarget{struct__at__key__t_afae78ea0427d2413015f2fa9667df621}\label{struct__at__key__t_afae78ea0427d2413015f2fa9667df621} 
+\index{\_at\_key\_t@{\_at\_key\_t}!dl@{dl}}
+\index{dl@{dl}!\_at\_key\_t@{\_at\_key\_t}}
+\doxysubsubsection{\texorpdfstring{dl}{dl}}
+{\footnotesize\ttfamily \mbox{\hyperlink{struct__at__key__t_a7f8da6cb7a8faf1687e37ec8872c553d}{UINTN}} \+\_\+at\+\_\+key\+\_\+t\+::dl}
+
+private key size
+
+Length of private key in bytes. \Hypertarget{struct__at__key__t_ae8b206276045d8f24c181b61d6529ea6}\label{struct__at__key__t_ae8b206276045d8f24c181b61d6529ea6} 
+\index{\_at\_key\_t@{\_at\_key\_t}!ql@{ql}}
+\index{ql@{ql}!\_at\_key\_t@{\_at\_key\_t}}
+\doxysubsubsection{\texorpdfstring{ql}{ql}}
+{\footnotesize\ttfamily \mbox{\hyperlink{struct__at__key__t_a7f8da6cb7a8faf1687e37ec8872c553d}{UINTN}} \+\_\+at\+\_\+key\+\_\+t\+::ql}
+
+public key size
+
+Length of public key in bytes. \Hypertarget{struct__at__key__t_a998467d939c3c26c6a3c4cc0991f1ce4}\label{struct__at__key__t_a998467d939c3c26c6a3c4cc0991f1ce4} 
+\index{\_at\_key\_t@{\_at\_key\_t}!qx@{qx}}
+\index{qx@{qx}!\_at\_key\_t@{\_at\_key\_t}}
+\doxysubsubsection{\texorpdfstring{qx}{qx}}
+{\footnotesize\ttfamily \mbox{\hyperlink{struct__at__key__t_a7f8da6cb7a8faf1687e37ec8872c553d}{UINT8}} \+\_\+at\+\_\+key\+\_\+t\+::qx\mbox{[}32\mbox{]}}
+
+Public key X coordinate (32 bytes). \Hypertarget{struct__at__key__t_a4bac7a15bc9f8ee2ac4a3a2c48686286}\label{struct__at__key__t_a4bac7a15bc9f8ee2ac4a3a2c48686286} 
+\index{\_at\_key\_t@{\_at\_key\_t}!qy@{qy}}
+\index{qy@{qy}!\_at\_key\_t@{\_at\_key\_t}}
+\doxysubsubsection{\texorpdfstring{qy}{qy}}
+{\footnotesize\ttfamily \mbox{\hyperlink{struct__at__key__t_a7f8da6cb7a8faf1687e37ec8872c553d}{UINT8}} \+\_\+at\+\_\+key\+\_\+t\+::qy\mbox{[}32\mbox{]}}
+
+Public key Y coordinate (32 bytes). \Hypertarget{struct__at__key__t_a7f8da6cb7a8faf1687e37ec8872c553d}\label{struct__at__key__t_a7f8da6cb7a8faf1687e37ec8872c553d} 
+\index{\_at\_key\_t@{\_at\_key\_t}!value@{value}}
+\index{value@{value}!\_at\_key\_t@{\_at\_key\_t}}
+\doxysubsubsection{\texorpdfstring{value}{value}}
+{\footnotesize\ttfamily UINT8 \+\_\+at\+\_\+key\+\_\+t\+::value\mbox{[}64\mbox{]}}
+
+Combined public key (qx \texorpdfstring{$\vert$}{|}\texorpdfstring{$\vert$}{|} qy). 
+
+The documentation for this struct was generated from the following files\+:\begin{DoxyCompactItemize}
+\item 
+Application/\+FSBL/SBC\+\_\+\+Ecc\+Sign\+Verify.\+h\item 
+Application/\+SSBL/SBC\+\_\+\+Ecc\+Sign\+Verify.\+h\end{DoxyCompactItemize}

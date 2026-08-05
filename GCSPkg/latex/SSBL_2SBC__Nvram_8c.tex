@@ -1,0 +1,86 @@
+\doxysection{Application/\+SSBL/\+SBC\+\_\+\+Nvram.c File Reference}
+\hypertarget{SSBL_2SBC__Nvram_8c}{}\label{SSBL_2SBC__Nvram_8c}\index{Application/SSBL/SBC\_Nvram.c@{Application/SSBL/SBC\_Nvram.c}}
+
+
+NVRAM access and management utilities for SBC firmware modules.  
+
+
+{\ttfamily \#include $<$Uefi.\+h$>$}\newline
+{\ttfamily \#include $<$Library/\+Uefi\+Lib.\+h$>$}\newline
+{\ttfamily \#include $<$Library/\+Uefi\+Boot\+Services\+Table\+Lib.\+h$>$}\newline
+{\ttfamily \#include $<$Library/\+Uefi\+Runtime\+Services\+Table\+Lib.\+h$>$}\newline
+{\ttfamily \#include $<$Library/\+Memory\+Allocation\+Lib.\+h$>$}\newline
+{\ttfamily \#include $<$Library/\+Base\+Memory\+Lib.\+h$>$}\newline
+{\ttfamily \#include $<$Guid/\+Global\+Variable.\+h$>$}\newline
+Include dependency graph for SBC\+\_\+\+Nvram.\+c\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=350pt]{SSBL_2SBC__Nvram_8c__incl}
+\end{center}
+\end{figure}
+\doxysubsubsection*{Functions}
+\begin{DoxyCompactItemize}
+\item 
+\Hypertarget{SSBL_2SBC__Nvram_8c_add8b7f4804fd5a4ab8b01edcc4d65398}\label{SSBL_2SBC__Nvram_8c_add8b7f4804fd5a4ab8b01edcc4d65398} 
+EFI\+\_\+\+STATUS {\bfseries SBC\+\_\+\+Bios\+Read\+Boot\+Order} (VOID)
+\item 
+\Hypertarget{SSBL_2SBC__Nvram_8c_aac9f931614336dbcd958681bcacf013d}\label{SSBL_2SBC__Nvram_8c_aac9f931614336dbcd958681bcacf013d} 
+VOID {\bfseries SBC\+\_\+\+Nvram\+De\+Init} (VOID \texorpdfstring{$\ast$}{*}priv)
+\item 
+\Hypertarget{SSBL_2SBC__Nvram_8c_ad45ce060fe2288bcdfc4f9b7bf14e679}\label{SSBL_2SBC__Nvram_8c_ad45ce060fe2288bcdfc4f9b7bf14e679} 
+EFI\+\_\+\+STATUS {\bfseries SBC\+\_\+\+Nvram\+Get\+Var} (VOID \texorpdfstring{$\ast$}{*}varname, VOID \texorpdfstring{$\ast$}{*}payload, VOID \texorpdfstring{$\ast$}{*}sz\+\_\+pl)
+\item 
+\Hypertarget{SSBL_2SBC__Nvram_8c_ad6854fb4df8ad6f13e25b5120411f0b0}\label{SSBL_2SBC__Nvram_8c_ad6854fb4df8ad6f13e25b5120411f0b0} 
+VOID {\bfseries SBC\+\_\+\+Nvram\+Init} (VOID \texorpdfstring{$\ast$}{*}priv)
+\item 
+\Hypertarget{SSBL_2SBC__Nvram_8c_a1dc53b090e924b2f2fe9883625c64ea6}\label{SSBL_2SBC__Nvram_8c_a1dc53b090e924b2f2fe9883625c64ea6} 
+EFI\+\_\+\+STATUS {\bfseries SBC\+\_\+\+Nvram\+List\+All\+Variables} (VOID)
+\item 
+\Hypertarget{SSBL_2SBC__Nvram_8c_a51c5f90b905dac1f9b75c29c5681624b}\label{SSBL_2SBC__Nvram_8c_a51c5f90b905dac1f9b75c29c5681624b} 
+EFI\+\_\+\+STATUS {\bfseries SBC\+\_\+\+Nvram\+Set\+Var} (VOID \texorpdfstring{$\ast$}{*}varname, VOID \texorpdfstring{$\ast$}{*}payload, VOID \texorpdfstring{$\ast$}{*}sz\+\_\+pl)
+\end{DoxyCompactItemize}
+\doxysubsubsection*{Variables}
+\begin{DoxyCompactItemize}
+\item 
+STATIC EFI\+\_\+\+GUID \mbox{\hyperlink{SSBL_2SBC__Nvram_8c_aaf8eeb72d0962c84eb66968b12e77eda}{g\+Sp\+Im\+Vendor\+Guid}}
+\end{DoxyCompactItemize}
+
+
+\doxysubsection{Detailed Description}
+NVRAM access and management utilities for SBC firmware modules. 
+
+Copyright (C) 2024 by Security Platform Inc. \texorpdfstring{$\ast$}{*} This file is part of the SBC Project. \texorpdfstring{$\ast$}{*}
+\begin{DoxyItemize}
+\item This software contains confidential and proprietary information of \texorpdfstring{$\ast$}{*} Security Platform Inc. Unauthorized reproduction, distribution, or \texorpdfstring{$\ast$}{*} disclosure of this software, in whole or in part, is strictly prohibited. \texorpdfstring{$\ast$}{*}
+\end{DoxyItemize}
+
+\begin{DoxyAuthor}{Author}
+LEON 
+\end{DoxyAuthor}
+\begin{DoxyVersion}{Version}
+1.\+0 
+\end{DoxyVersion}
+\begin{DoxyDate}{Date}
+2025-\/10-\/31
+\end{DoxyDate}
+\begin{DoxyCopyright}{Copyright}
+(c) 2025 Security Platform Inc. All rights reserved. 
+\end{DoxyCopyright}
+
+
+\doxysubsection{Variable Documentation}
+\Hypertarget{SSBL_2SBC__Nvram_8c_aaf8eeb72d0962c84eb66968b12e77eda}\label{SSBL_2SBC__Nvram_8c_aaf8eeb72d0962c84eb66968b12e77eda} 
+\index{SBC\_Nvram.c@{SBC\_Nvram.c}!gSpImVendorGuid@{gSpImVendorGuid}}
+\index{gSpImVendorGuid@{gSpImVendorGuid}!SBC\_Nvram.c@{SBC\_Nvram.c}}
+\doxysubsubsection{\texorpdfstring{gSpImVendorGuid}{gSpImVendorGuid}}
+{\footnotesize\ttfamily STATIC EFI\+\_\+\+GUID g\+Sp\+Im\+Vendor\+Guid}
+
+{\bfseries Initial value\+:}
+\begin{DoxyCode}{0}
+\DoxyCodeLine{=}
+\DoxyCodeLine{\ \ \ \ \ \ \{\ 0xd4fe1500,\ 0x6c3c,\ 0x4ad5,}
+\DoxyCodeLine{\ \ \ \ \ \ \{\ 0x9e,\ 0xa1,\ 0x22,\ 0xd2,\ 0x97,\ 0x6c,\ 0x56,\ 0xd9\ \}\ \}}
+
+\end{DoxyCode}

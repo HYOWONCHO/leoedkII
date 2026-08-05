@@ -1,0 +1,259 @@
+\doxysection{SBC\+\_\+\+File\+Ctrl.\+h}
+\hypertarget{FSBL_2SBC__FileCtrl_8h_source}{}\label{FSBL_2SBC__FileCtrl_8h_source}\index{Application/FSBL/SBC\_FileCtrl.h@{Application/FSBL/SBC\_FileCtrl.h}}
+
+\begin{DoxyCode}{0}
+\DoxyCodeLine{00001\ \textcolor{preprocessor}{\#ifndef\ SBC\_FILECTRL\_H}}
+\DoxyCodeLine{00002\ \textcolor{preprocessor}{\#define\ SBC\_FILECTRL\_H}}
+\DoxyCodeLine{00003\ }
+\DoxyCodeLine{00004\ \textcolor{preprocessor}{\#include\ "{}SBC\_ErrorType.h"{}}}
+\DoxyCodeLine{00005\ }
+\DoxyCodeLine{00006\ \textcolor{preprocessor}{\#define\ BOOT\_VENDOR\_BASEDIR\ \ \ \ \ L"{}\(\backslash\)\(\backslash\)EFI\(\backslash\)\(\backslash\)rocky"{}}}
+\DoxyCodeLine{00007\ }
+\DoxyCodeLine{00008\ \textcolor{preprocessor}{\#define\ BOOT\_MODE\_FNAME\ \ \ \ \ \ \ \ \ L"{}\(\backslash\)\(\backslash\)EFI\(\backslash\)\(\backslash\)BOOT\(\backslash\)\(\backslash\)bootmode"{}}}
+\DoxyCodeLine{00009\ \textcolor{preprocessor}{\#define\ BOOT\_MODE\_STRNRORMAL\ \ \ \ "{}normal"{}}}
+\DoxyCodeLine{00010\ \textcolor{preprocessor}{\#define\ BOOT\_MODE\_STRUPDATE\ \ \ \ \ "{}update"{}}}
+\DoxyCodeLine{00011\ \textcolor{preprocessor}{\#define\ BOOT\_MODE\_STRFACTORY\ \ \ \ "{}factory"{}}}
+\DoxyCodeLine{00012\ }
+\DoxyCodeLine{00013\ \textcolor{keyword}{typedef}\ \textcolor{keyword}{enum}\ \_t\_boot\_mode\ \{}
+\DoxyCodeLine{00014\ \ \ \ \ BOOT\_MODE\_NONE\ \ \ \ \ \ =\ 0,}
+\DoxyCodeLine{00015\ \ \ \ \ BOOT\_MODE\_NORMAL,\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ }
+\DoxyCodeLine{00016\ \ \ \ \ BOOT\_MODE\_UPDATE,\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ }
+\DoxyCodeLine{00017\ \ \ \ \ BOOT\_MODE\_RECOVERY,}
+\DoxyCodeLine{00018\ \ \ \ \ BOOT\_MODE\_FACTORY,\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ }
+\DoxyCodeLine{00019\ \ \ \ \ BOOT\_MODE\_UNKNOWN\ }
+\DoxyCodeLine{00020\ \}boot\_mode\_t;}
+\DoxyCodeLine{00021\ }
+\DoxyCodeLine{00022\ \textcolor{keyword}{typedef}\ \textcolor{keyword}{enum}\ \_t\_key\_mode\ \{}
+\DoxyCodeLine{00023\ \ \ \ \ KEY\_MODE\_NONE\ =\ 0,}
+\DoxyCodeLine{00024\ \ \ \ \ KEY\_MODE\_NORMAL,\ }
+\DoxyCodeLine{00025\ \ \ \ \ KEY\_MODE\_BOOT,}
+\DoxyCodeLine{00026\ \ \ \ \ KEY\_MODE\_UPDATE,}
+\DoxyCodeLine{00027\ \ \ \ \ KEY\_MODE\_UNKNOWN}
+\DoxyCodeLine{00028\ \}key\_mode\_t;}
+\DoxyCodeLine{00029\ }
+\DoxyCodeLine{00030\ \textcolor{keyword}{typedef}\ \textcolor{keyword}{struct\ }\mbox{\hyperlink{struct__t__bm__lookup__table}{\_t\_bm\_lookup\_table}}\ \{}
+\DoxyCodeLine{00031\ \ \ \ \ CHAR8\ *\mbox{\hyperlink{struct__t__bm__lookup__table_a03934d6aef0cc9caf34f9d1cca747f8c}{key}};}
+\DoxyCodeLine{00032\ \ \ \ \ UINT32\ \mbox{\hyperlink{struct__t__bm__lookup__table_afc6cdb2ca572b3efb27454ed3afd7811}{val}};}
+\DoxyCodeLine{00033\ \}\mbox{\hyperlink{structbm__lookup__table__t}{bm\_lookup\_table\_t}};}
+\DoxyCodeLine{00034\ }
+\DoxyCodeLine{00035\ }
+\DoxyCodeLine{00036\ }
+\DoxyCodeLine{00037\ \textcolor{preprocessor}{\#define\ SBC\_RAWPRT\_DFLT\_SHIFT\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ 0x9}}
+\DoxyCodeLine{00038\ \textcolor{preprocessor}{\#define\ SBC\_RAWPRT\_DFLT\_BLK\_SZ\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ (1\ <<\ SBC\_RAWPRT\_DFLT\_SHIFT)}}
+\DoxyCodeLine{00039\ }
+\DoxyCodeLine{00040\ \textcolor{preprocessor}{\#define\ SBC\_FILE\_RW\_BLK(len)\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \(\backslash\)}}
+\DoxyCodeLine{00041\ \textcolor{preprocessor}{\ \ \ \ (\{\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \(\backslash\)}}
+\DoxyCodeLine{00042\ \textcolor{preprocessor}{\ \ \ \ \ \ \ \ UINT32\ \_x\ =\ len;\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \(\backslash\)}}
+\DoxyCodeLine{00043\ \textcolor{preprocessor}{\ \ \ \ \ \ \ \ if(\_x\ <=\ SBC\_RAWPRT\_DFLT\_BLK\_SZ)\ \{\ \ \ \ \ \ \ \ \ \ \(\backslash\)}}
+\DoxyCodeLine{00044\ \textcolor{preprocessor}{\ \ \ \ \ \ \ \ \ \ \ \ \_x\ =\ 0;\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \(\backslash\)}}
+\DoxyCodeLine{00045\ \textcolor{preprocessor}{\ \ \ \ \ \ \ \ \}\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \(\backslash\)}}
+\DoxyCodeLine{00046\ \textcolor{preprocessor}{\ \ \ \ \ \ \ \ else\ \{\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \(\backslash\)}}
+\DoxyCodeLine{00047\ \textcolor{preprocessor}{\ \ \ \ \ \ \ \ \ \ \ \ \_x\ =\ len\ /\ SBC\_RAWPRT\_DFLT\_BLK\_SZ;\ \ \ \ \ \ \(\backslash\)}}
+\DoxyCodeLine{00048\ \textcolor{preprocessor}{\ \ \ \ \ \ \ \ \}\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \(\backslash\)}}
+\DoxyCodeLine{00049\ \textcolor{preprocessor}{\ \ \ \ \ \ \ \ \_x;\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \(\backslash\)}}
+\DoxyCodeLine{00050\ \textcolor{preprocessor}{\ \ \ \ \})\ \ \ \ \ }}
+\DoxyCodeLine{00058\ \textcolor{preprocessor}{\#define\ SBC\_RAW\_PRTHDR\_LBA\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ 0}}
+\DoxyCodeLine{00060\ \textcolor{preprocessor}{\#define\ SBC\_RAWPRT\_MAGIC\_ID\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ 0xAA55AA55\ }}
+\DoxyCodeLine{00061\ }
+\DoxyCodeLine{00063\ \textcolor{preprocessor}{\#define\ SBC\_PRTNIFO\_LEN\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ 64}}
+\DoxyCodeLine{00064\ }
+\DoxyCodeLine{00066\ \textcolor{preprocessor}{\#define\ SBC\_HDR\_SKIP\_LEN\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ 46}}
+\DoxyCodeLine{00067\ }
+\DoxyCodeLine{00069\ \textcolor{preprocessor}{\#define\ SBC\_BOOT\_PRES\_LEN\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ 8}}
+\DoxyCodeLine{00070\ }
+\DoxyCodeLine{00072\ \textcolor{preprocessor}{\#define\ SBC\_BOOT\_MODE\_LEN\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ 2}}
+\DoxyCodeLine{00073\ \textcolor{preprocessor}{\#define\ SBC\_KEY\_MODE\_LEN\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ 2}}
+\DoxyCodeLine{00074\ \textcolor{preprocessor}{\#define\ SBC\_RECOVERY\_LEN\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ 2}}
+\DoxyCodeLine{00075\ }
+\DoxyCodeLine{00076\ \textcolor{preprocessor}{\#pragma\ pack(1)}}
+\DoxyCodeLine{00080\ \textcolor{keyword}{typedef}\ \textcolor{keyword}{struct\ }\mbox{\hyperlink{struct__rawprt__hdr__t}{\_rawprt\_hdr\_t}}\ \{}
+\DoxyCodeLine{00081\ \ \ \ \ UINT32\ \ \ \ \ \ \mbox{\hyperlink{struct__rawprt__hdr__t_a53354678a852c81b2f599bd99383dd9d}{magicid}};\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ }
+\DoxyCodeLine{00082\ \ \ \ \ UINT8\ \ \ \ \ \ \ \mbox{\hyperlink{struct__rawprt__hdr__t_ad019c7c8361624939d3dd1d340e917d0}{prtinfo}}[\mbox{\hyperlink{group__RawPartition_gaabf790766c8ef5f0c18f38aef6508cc2}{SBC\_PRTNIFO\_LEN}}];\ \ \ \ \ \ \ }
+\DoxyCodeLine{00083\ \ \ \ \ UINT8\ \ \ \ \ \ \ reserv[\mbox{\hyperlink{group__RawPartition_ga9ccbf63e449412eb70455c5e36b2a8aa}{SBC\_HDR\_SKIP\_LEN}}];}
+\DoxyCodeLine{00084\ \ \ \ \ UINT16\ \ \ \ \ \ \mbox{\hyperlink{struct__rawprt__hdr__t_afcb9244b526fbbfea3f9804dfe39579c}{bootmode}};\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ }
+\DoxyCodeLine{00085\ \ \ \ \ UINT16\ \ \ \ \ \ keymode;\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ }
+\DoxyCodeLine{00086\ \ \ \ \ UINT16\ \ \ \ \ \ \mbox{\hyperlink{struct__rawprt__hdr__t_a91571f8daea1a6aac7bba18cc3eaef41}{rcvmode}};\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ }
+\DoxyCodeLine{00087\ \ \ \ \ UINT8\ \ \ \ \ \ \ \mbox{\hyperlink{struct__rawprt__hdr__t_a929c9d8c3595c93a384a8a788b3006da}{bootpres}}[\mbox{\hyperlink{group__RawPartition_ga3e3c53f9f060647ce6cac86b5eabfbb3}{SBC\_BOOT\_PRES\_LEN}}];\ \ \ \ }
+\DoxyCodeLine{00088\ \}\mbox{\hyperlink{group__RawPartition_gaec99e2b745705641612b4388e8721a68}{rawprt\_hdr\_t}};}
+\DoxyCodeLine{00089\ }
+\DoxyCodeLine{00090\ \textcolor{preprocessor}{\#pragma\ pack()}}
+\DoxyCodeLine{00091\ }
+\DoxyCodeLine{00092\ \textcolor{preprocessor}{\#define\ BOOT\_FW\_SRTOFS\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ 0x00000200}}
+\DoxyCodeLine{00093\ }
+\DoxyCodeLine{00094\ \textcolor{preprocessor}{\#define\ BOOT\_FSBL\_OFS\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ 0x00000000\ \ \ \ \ \ }}
+\DoxyCodeLine{00095\ \textcolor{preprocessor}{\#define\ BOOT\_SSBL\_OFS\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ 0x00400000\ \ \ \ \ \ }}
+\DoxyCodeLine{00096\ \textcolor{preprocessor}{\#define\ BOOT\_OS\_OFS\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ 0x00800000\ \ \ \ \ \ }}
+\DoxyCodeLine{00097\ \textcolor{preprocessor}{\#define\ BOOT\_SW\_OFS\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ 0x01C00000\ \ \ \ \ \ }}
+\DoxyCodeLine{00100\ \textcolor{preprocessor}{\#define\ BOOT\_SECTOR1\_OFS\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ (0x00000000\ |\ BOOT\_FW\_SRTOFS)}}
+\DoxyCodeLine{00101\ \textcolor{preprocessor}{\#define\ BOOT\_SECTOR2\_OFS\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ (0x08000000\ |\ BOOT\_FW\_SRTOFS)}}
+\DoxyCodeLine{00102\ \textcolor{preprocessor}{\#define\ BOOT\_SECTOR3\_OFS\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ (0x10000000\ |\ BOOT\_FW\_SRTOFS)}}
+\DoxyCodeLine{00103\ }
+\DoxyCodeLine{00104\ \textcolor{preprocessor}{\#define\ BOOT\_IMG\_LENB\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ 0x00000004}}
+\DoxyCodeLine{00105\ \textcolor{preprocessor}{\#define\ BOOT\_FSBL\_MAX\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ 0x00400000\ \ \ \ \ \ }}
+\DoxyCodeLine{00106\ \textcolor{preprocessor}{\#define\ BOOT\_FSBL\_IMGMAX\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ (BOOT\_FSBL\_MAX\ -\/\ BOOT\_IMG\_LENB)}}
+\DoxyCodeLine{00107\ }
+\DoxyCodeLine{00108\ }
+\DoxyCodeLine{00109\ \textcolor{preprocessor}{\#define\ BOOT\_SSBL\_MAX\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ 0x00400000\ \ \ \ \ \ }}
+\DoxyCodeLine{00110\ \textcolor{preprocessor}{\#define\ BOOT\_SSBL\_IMGMAX\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ (BOOT\_SSBL\_MAX\ -\/\ BOOT\_IMG\_LENB)}}
+\DoxyCodeLine{00111\ }
+\DoxyCodeLine{00112\ }
+\DoxyCodeLine{00113\ \textcolor{preprocessor}{\#define\ BOOT\_OS\_IMG\_MB\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ 20}}
+\DoxyCodeLine{00114\ \textcolor{preprocessor}{\#define\ BOOT\_OS\_MAX\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ (BOOT\_OS\_IMG\_MB\ <<\ 20)\ \ \ \ \ \ }}
+\DoxyCodeLine{00115\ \textcolor{preprocessor}{\#define\ BOOT\_OS\_IMGMAX\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ (BOOT\_OS\_MAX\ -\/\ BOOT\_IMG\_LENB)}}
+\DoxyCodeLine{00116\ }
+\DoxyCodeLine{00117\ \textcolor{preprocessor}{\#define\ BOOT\_SW\_IMG\_MB\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ 100}}
+\DoxyCodeLine{00118\ \textcolor{preprocessor}{\#define\ BOOT\_SW\_MAX\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ (BOOT\_SW\_IMG\_MB\ <<\ 20)\ \ \ \ \ \ }}
+\DoxyCodeLine{00119\ \textcolor{preprocessor}{\#define\ BOOT\_SW\_IMGMAX\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ (BOOT\_SW\_MAX\ -\/\ BOOT\_IMG\_LENB)}}
+\DoxyCodeLine{00120\ }
+\DoxyCodeLine{00121\ }
+\DoxyCodeLine{00122\ \textcolor{preprocessor}{\#define\ BOOT\_FW\_IMG\_MB\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ 128}}
+\DoxyCodeLine{00123\ \textcolor{preprocessor}{\#define\ BOOT\_FW\_IMGMAX\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ (BOOT\_FW\_IMG\_MB\ <<\ 20)}}
+\DoxyCodeLine{00124\ }
+\DoxyCodeLine{00125\ }
+\DoxyCodeLine{00126\ \textcolor{preprocessor}{\#define\ BOOT\_FW\_LBA\_BLOCKS\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ (BOOT\_FW\_IMGMAX\ /\ SBC\_RAWPRT\_BLK\_SZ)}}
+\DoxyCodeLine{00127\ }
+\DoxyCodeLine{00128\ }
+\DoxyCodeLine{00132\ \textcolor{preprocessor}{\#pragma\ pack(1)}}
+\DoxyCodeLine{00133\ \textcolor{keyword}{typedef}\ \textcolor{keyword}{union\ }\mbox{\hyperlink{union__boot__fw__inf__t}{\_boot\_fw\_inf\_t}}\ \{}
+\DoxyCodeLine{00134\ }
+\DoxyCodeLine{00135\ \ \ \ \ \textcolor{keyword}{struct\ }\{}
+\DoxyCodeLine{00136\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{union__boot__fw__inf__t_ad0501b6dd7ad072786aaf6d452a3dade}{UINT32}}\ \ \mbox{\hyperlink{union__boot__fw__inf__t_a0b27e61a4d5d50f2f3918f70b285fe0b}{fsbln}};}
+\DoxyCodeLine{00137\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{union__boot__fw__inf__t_ad0501b6dd7ad072786aaf6d452a3dade}{UINT8}}\ \ \ \mbox{\hyperlink{union__boot__fw__inf__t_a5393bd32a5bcfebd42ef837c3455ef36}{fsblimg}}[BOOT\_FSBL\_IMGMAX];}
+\DoxyCodeLine{00138\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{union__boot__fw__inf__t_ad0501b6dd7ad072786aaf6d452a3dade}{UINT32}}\ \ \mbox{\hyperlink{union__boot__fw__inf__t_acac32a6f9be2db2c8d8b3d50189120a2}{ssbln}};}
+\DoxyCodeLine{00139\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{union__boot__fw__inf__t_ad0501b6dd7ad072786aaf6d452a3dade}{UINT8}}\ \ \ \mbox{\hyperlink{union__boot__fw__inf__t_a1365d01bc730a78c575e5c26b564e45b}{ssblimg}}[BOOT\_SSBL\_IMGMAX];}
+\DoxyCodeLine{00140\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{union__boot__fw__inf__t_ad0501b6dd7ad072786aaf6d452a3dade}{UINT32}}\ \ \mbox{\hyperlink{union__boot__fw__inf__t_aa3530c553251e48f708a9d1fc2ab9f41}{osln}};}
+\DoxyCodeLine{00141\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{union__boot__fw__inf__t_ad0501b6dd7ad072786aaf6d452a3dade}{UINT8}}\ \ \ \mbox{\hyperlink{union__boot__fw__inf__t_aef4de81e056c0297efb23296c66f5397}{osimg}}[BOOT\_OS\_IMGMAX];}
+\DoxyCodeLine{00142\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{union__boot__fw__inf__t_ad0501b6dd7ad072786aaf6d452a3dade}{UINT32}}\ \ \mbox{\hyperlink{union__boot__fw__inf__t_ab6415014f5a25c3f2306acb3974c1244}{swn}};}
+\DoxyCodeLine{00143\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{union__boot__fw__inf__t_ad0501b6dd7ad072786aaf6d452a3dade}{UINT8}}\ \ \ \mbox{\hyperlink{union__boot__fw__inf__t_ab6b322bcb548c4c3ce8836ac71b96183}{swimg}}[BOOT\_SW\_IMGMAX];}
+\DoxyCodeLine{00144\ \ \ \ \ \}mbr;}
+\DoxyCodeLine{00145\ }
+\DoxyCodeLine{00146\ \ \ \ \ \mbox{\hyperlink{union__boot__fw__inf__t_ad0501b6dd7ad072786aaf6d452a3dade}{UINT8}}\ \mbox{\hyperlink{union__boot__fw__inf__t_ad0501b6dd7ad072786aaf6d452a3dade}{value}}[BOOT\_FW\_IMGMAX];}
+\DoxyCodeLine{00147\ }
+\DoxyCodeLine{00148\ \}\mbox{\hyperlink{group__RawPartition_ga41813950367f36242ca252d9c151a1f9}{boot\_fw\_inf\_t}};}
+\DoxyCodeLine{00149\ }
+\DoxyCodeLine{00150\ \textcolor{preprocessor}{\#pragma\ pack()}}
+\DoxyCodeLine{00151\ }
+\DoxyCodeLine{00152\ }
+\DoxyCodeLine{00153\ \textcolor{preprocessor}{\#define\ LEN\_DFLT\_OFS\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ 0x04}}
+\DoxyCodeLine{00154\ }
+\DoxyCodeLine{00155\ \textcolor{preprocessor}{\#define\ SYS\_CONF\_START\_OFS\ \ \ \ \ \ \ \ \ \ \ \ \ \ (0x18000000\ |\ BOOT\_FW\_SRTOFS)}}
+\DoxyCodeLine{00156\ \textcolor{preprocessor}{\#define\ SYS\_CONF\_OSID\_OFS\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ 0x00000000}}
+\DoxyCodeLine{00157\ \textcolor{preprocessor}{\#define\ SYS\_CONF\_RES\_OFS\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ 0x00000040\ \ \ \ \ \ \ \ \ \ }}
+\DoxyCodeLine{00158\ \textcolor{preprocessor}{\#define\ SYS\_CONF\_ROOT\_CA\_OFS\ \ \ \ \ \ \ \ \ \ \ \ 0x00000080}}
+\DoxyCodeLine{00159\ \textcolor{preprocessor}{\#define\ SYS\_CONF\_DEVID\_CRT\_OFS\ \ \ \ \ \ \ \ \ \ 0x00000880}}
+\DoxyCodeLine{00160\ \textcolor{preprocessor}{\#define\ SYS\_CONF\_FWID\_CRT\_OFS\ \ \ \ \ \ \ \ \ \ \ 0x00001080}}
+\DoxyCodeLine{00161\ \textcolor{preprocessor}{\#define\ SYS\_CONF\_OSID\_CRT\_OFS\ \ \ \ \ \ \ \ \ \ \ 0x00001880}}
+\DoxyCodeLine{00162\ \textcolor{preprocessor}{\#define\ SYS\_CONF\_SW\_LIST\_OFS\ \ \ \ \ \ \ \ \ \ \ \ 0x00002080}}
+\DoxyCodeLine{00163\ }
+\DoxyCodeLine{00164\ }
+\DoxyCodeLine{00165\ \textcolor{preprocessor}{\#define\ SYS\_OSID\_LEN\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ 4}}
+\DoxyCodeLine{00166\ \textcolor{preprocessor}{\#define\ SYS\_OSID\_KEY\_LEN\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ 32}}
+\DoxyCodeLine{00167\ \textcolor{preprocessor}{\#define\ SYS\_OSID\_IV\_LEN\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ 12}}
+\DoxyCodeLine{00168\ \textcolor{preprocessor}{\#define\ SYS\_OSID\_TAG\_LEN\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ 16}}
+\DoxyCodeLine{00169\ \textcolor{preprocessor}{\#define\ SYS\_OSID\_MAX\_LEN\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ 64}}
+\DoxyCodeLine{00170\ }
+\DoxyCodeLine{00171\ \textcolor{preprocessor}{\#define\ SYS\_PRES\_LEN\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ 4}}
+\DoxyCodeLine{00172\ \textcolor{preprocessor}{\#define\ SYS\_PRES\_RES\_LEN\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ 16}}
+\DoxyCodeLine{00173\ \textcolor{preprocessor}{\#define\ SYS\_PRES\_IV\_LEN\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ 12}}
+\DoxyCodeLine{00174\ \textcolor{preprocessor}{\#define\ SYS\_PRES\_TAG\_LEN\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ 16}}
+\DoxyCodeLine{00175\ \textcolor{preprocessor}{\#define\ SYS\_PRES\_RESERVED\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ 16}}
+\DoxyCodeLine{00176\ \textcolor{preprocessor}{\#define\ SYS\_PRES\_MAX\_LEN\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ 64}}
+\DoxyCodeLine{00177\ }
+\DoxyCodeLine{00178\ \textcolor{preprocessor}{\#define\ SYS\_PRES\_INFO\_MAX\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ (SYS\_PRES\_LEN\ +\ SYS\_PRES\_RES\_LEN\ +\ SYS\_PRES\_IV\_LEN\ +\ SYS\_PRES\_TAG\_LEN\ +\ SYS\_PRES\_RESERVED)}}
+\DoxyCodeLine{00179\ }
+\DoxyCodeLine{00180\ \textcolor{preprocessor}{\#define\ SYS\_CERT\_LEN\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ (2<<10)}}
+\DoxyCodeLine{00181\ \textcolor{preprocessor}{\#define\ SYS\_SWLIST\_OFS\_LEN\ \ \ \ \ \ \ \ \ \ \ \ \ \ (8<<10)}}
+\DoxyCodeLine{00182\ }
+\DoxyCodeLine{00183\ \textcolor{preprocessor}{\#define\ SYS\_SETTING\_STORAGE\_LEN\ \ \ \ \ \ \ \ \ (SYS\_OSID\_MAX\_LEN\ +\ SYS\_PRES\_MAX\_LEN\ +\ SYS\_CERT\_LEN\ +\ SYS\_CERT\_LEN\ +\ SYS\_CERT\_LEN\ +\ SYS\_CERT\_LEN\ +\ SYS\_SWLIST\_OFS\_LEN)}}
+\DoxyCodeLine{00184\ }
+\DoxyCodeLine{00185\ \textcolor{preprocessor}{\#pragma\ pack(1)}}
+\DoxyCodeLine{00186\ \textcolor{keyword}{typedef}\ \textcolor{keyword}{union\ }\mbox{\hyperlink{union__osid__key__t}{\_osid\_key\_t}}\ \{}
+\DoxyCodeLine{00187\ }
+\DoxyCodeLine{00188\ \ \ \ \ \textcolor{keyword}{struct\ }\{}
+\DoxyCodeLine{00189\ \ \ \ \ \ \ \ \ UINT32\ \ \ \ \ \ len;}
+\DoxyCodeLine{00190\ \ \ \ \ \ \ \ \ UINT8\ \ \ \ \ \ \ key[SYS\_OSID\_KEY\_LEN];}
+\DoxyCodeLine{00191\ \ \ \ \ \ \ \ \ UINT8\ \ \ \ \ \ \ iv[SYS\_OSID\_IV\_LEN];}
+\DoxyCodeLine{00192\ \ \ \ \ \ \ \ \ UINT8\ \ \ \ \ \ \ tag[SYS\_OSID\_TAG\_LEN];}
+\DoxyCodeLine{00193\ \ \ \ \ \}m;}
+\DoxyCodeLine{00194\ }
+\DoxyCodeLine{00195\ \ \ \ \ UINT8\ value[SYS\_OSID\_LEN\ +\ SYS\_OSID\_KEY\_LEN\ +\ SYS\_OSID\_IV\_LEN\ +\ SYS\_OSID\_TAG\_LEN];}
+\DoxyCodeLine{00196\ \}\mbox{\hyperlink{union__osid__key__t}{osid\_key\_t}};}
+\DoxyCodeLine{00197\ }
+\DoxyCodeLine{00198\ \textcolor{keyword}{typedef}\ \textcolor{keyword}{union\ }\mbox{\hyperlink{union__sys__pres__t}{\_sys\_pres\_t}}\ \ \{}
+\DoxyCodeLine{00199\ }
+\DoxyCodeLine{00200\ \ \ \ \ \textcolor{keyword}{struct\ }\{}
+\DoxyCodeLine{00201\ \ \ \ \ \ \ \ \ UINT32\ \ \ \ \ \ len;}
+\DoxyCodeLine{00202\ \ \ \ \ \ \ \ \ UINT8\ \ \ \ \ \ \ res[SYS\_PRES\_RES\_LEN];}
+\DoxyCodeLine{00203\ \ \ \ \ \ \ \ \ UINT8\ \ \ \ \ \ \ iv[SYS\_PRES\_IV\_LEN];}
+\DoxyCodeLine{00204\ \ \ \ \ \ \ \ \ UINT8\ \ \ \ \ \ \ tag[SYS\_PRES\_TAG\_LEN];}
+\DoxyCodeLine{00205\ \ \ \ \ \ \ \ \ UINT8\ \ \ \ \ \ \ reserved[SYS\_PRES\_RESERVED];}
+\DoxyCodeLine{00206\ \ \ \ \ \}m;}
+\DoxyCodeLine{00207\ }
+\DoxyCodeLine{00208\ }
+\DoxyCodeLine{00209\ \ \ \ \ UINT8\ value[SYS\_PRES\_INFO\_MAX];}
+\DoxyCodeLine{00210\ }
+\DoxyCodeLine{00211\ \}\mbox{\hyperlink{union__sys__pres__t}{sys\_pres\_t}};}
+\DoxyCodeLine{00212\ }
+\DoxyCodeLine{00213\ \textcolor{preprocessor}{\#pragma\ pack()}}
+\DoxyCodeLine{00214\ }
+\DoxyCodeLine{00215\ \ \ \ \ \ \ }
+\DoxyCodeLine{00218\ \textcolor{comment}{//SBCStatus\ SBC\_CreateFile(EFI\_HANDLE\ h,\ CHAR16\ *fname);\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ }}
+\DoxyCodeLine{00219\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ }
+\DoxyCodeLine{00224\ \textcolor{preprocessor}{\#define\ SBC\_RPTN\_FIRST\_SKIP\_BYTES\ \ \ \ \ \ \ \ \ \ \ 0x40\ }\textcolor{comment}{//\ 64\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ }}
+\DoxyCodeLine{00225\ \textcolor{preprocessor}{\#define\ SBC\_RPTN\_INFO\_LEN\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ 0x40\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ }}
+\DoxyCodeLine{00226\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ }
+\DoxyCodeLine{00227\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ }
+\DoxyCodeLine{00236\ \textcolor{keyword}{typedef}\ \textcolor{keyword}{union\ }\mbox{\hyperlink{union__sbc__rtpn__header__t}{\_sbc\_rtpn\_header\_t}}\ \{}
+\DoxyCodeLine{00237\ \ \ \ \ \textcolor{keyword}{struct\ }\{}
+\DoxyCodeLine{00238\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{union__sbc__rtpn__header__t_ae811bd84e9ae21139f11b0b26a8cd38b}{UINT8}}\ \mbox{\hyperlink{union__sbc__rtpn__header__t_a8c74cecdfdd032fe3723b5e6f4e88d80}{skip}}[SBC\_RPTN\_INFO\_LEN];\ }
+\DoxyCodeLine{00239\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{union__sbc__rtpn__header__t_ae811bd84e9ae21139f11b0b26a8cd38b}{UINT8}}\ \mbox{\hyperlink{union__sbc__rtpn__header__t_a1bf57b9b099c5ad25a7eb16373218849}{info}}[SBC\_RPTN\_INFO\_LEN];\ }
+\DoxyCodeLine{00240\ \ \ \ \ \}m;}
+\DoxyCodeLine{00241\ }
+\DoxyCodeLine{00242\ \ \ \ \ \mbox{\hyperlink{union__sbc__rtpn__header__t_ae811bd84e9ae21139f11b0b26a8cd38b}{UINT8}}\ \mbox{\hyperlink{union__sbc__rtpn__header__t_ae811bd84e9ae21139f11b0b26a8cd38b}{value}}[SBC\_RPTN\_INFO\_LEN\ <<\ 1];\ }
+\DoxyCodeLine{00244\ }
+\DoxyCodeLine{00245\ \}\mbox{\hyperlink{unionsbc__rptn__header__t}{sbc\_rptn\_header\_t}};}
+\DoxyCodeLine{00246\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ }
+\DoxyCodeLine{00247\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ }
+\DoxyCodeLine{00261\ EFI\_STATUS\ SBC\_ReadFile(EFI\_HANDLE\ ImageHandle,\ CHAR16\ *FileNames,\ \mbox{\hyperlink{struct__lv__t}{LV\_t}}\ *out);\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ }
+\DoxyCodeLine{00262\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ }
+\DoxyCodeLine{00263\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ }
+\DoxyCodeLine{00274\ SBCStatus\ \ SBC\_GetFileSize(CHAR16\ *FileName,\ UINTN\ \ *FileSize);\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ }
+\DoxyCodeLine{00275\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ }
+\DoxyCodeLine{00285\ UINTN\ \ SBC\_FileSysFindHndl(EFI\_HANDLE\ *handle);\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ }
+\DoxyCodeLine{00286\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ }
+\DoxyCodeLine{00299\ SBCStatus\ \ SBC\_CreateFile(EFI\_HANDLE\ h,\ CHAR16\ *fname);\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ }
+\DoxyCodeLine{00300\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ }
+\DoxyCodeLine{00313\ SBCStatus\ \ SBC\_CreateDirectory(EFI\_HANDLE\ h,\ CHAR16\ *fname);\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ }
+\DoxyCodeLine{00314\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ }
+\DoxyCodeLine{00329\ SBCStatus\ SBC\_ReadRawPrtHeaderInfo(VOID\ *blkhnd,\ VOID\ *rdbuf,\ \ UINT32\ *rdlen);}
+\DoxyCodeLine{00330\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ }
+\DoxyCodeLine{00331\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ }
+\DoxyCodeLine{00345\ SBCStatus\ SBC\_RawPrtReadBlock(VOID\ *blkhnd,\ VOID\ *rdbuf,\ \ UINT32\ *rdlen,\ UINTN\ rlba);\ \ \ \ \ }
+\DoxyCodeLine{00346\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ }
+\DoxyCodeLine{00358\ SBCStatus\ \ SBC\_FindBlkIoHandle(OUT\ VOID\ **hblk);\ \ }
+\DoxyCodeLine{00359\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ }
+\DoxyCodeLine{00374\ SBCStatus\ \ SBC\_RawPrtBlockWrite(VOID\ *blkio,\ UINT8\ *wrbuf,\ UINT32\ wrlen,\ UINT32\ wrlba);\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ }
+\DoxyCodeLine{00375\ }
+\DoxyCodeLine{00376\ }
+\DoxyCodeLine{00386\ UINT32\ \ SBC\_ReadBootMode(VOID);}
+\DoxyCodeLine{00387\ }
+\DoxyCodeLine{00388\ }
+\DoxyCodeLine{00410\ SBCStatus\ SBC\_RawAlignedReadBlockIO(VOID\ *blk,\ UINTN\ off,\ UINTN\ sz,\ VOID\ *buf);}
+\DoxyCodeLine{00411\ }
+\DoxyCodeLine{00412\ }
+\DoxyCodeLine{00434\ SBCStatus\ SBC\_RawAlignedWriteBlockIO(VOID\ *blk,\ UINTN\ off,\ UINTN\ sz,\ CONST\ VOID\ *buf);}
+\DoxyCodeLine{00435\ }
+\DoxyCodeLine{00436\ EFI\_STATUS\ SBC\_WriteFile(EFI\_HANDLE\ ImageHandle,\ CHAR16\ *FileNames,\ \mbox{\hyperlink{struct__lv__t}{LV\_t}}\ *out);}
+\DoxyCodeLine{00437\ }
+\DoxyCodeLine{00438\ UINTN\ SBC\_FindEfiFileSystemProtocol(EFI\_HANDLE\ **handle);}
+\DoxyCodeLine{00439\ }
+\DoxyCodeLine{00440\ EFI\_STATUS\ SBC\_IsFlieAccess(EFI\_HANDLE\ ImageHandle,\ CHAR16\ *FileNames);}
+\DoxyCodeLine{00441\ }
+\DoxyCodeLine{00442\ BOOLEAN\ SBC\_IsDirExist(EFI\_HANDLE\ ImageHandle,\ CHAR16\ *DirectoryName);}
+\DoxyCodeLine{00443\ }
+\DoxyCodeLine{00444\ SBCStatus\ \ SBC\_FindFileBufHndl(UINT16\ *f\_path,\ UINTN\ *hndlcnt,\ VOID\ **hndl);}
+\DoxyCodeLine{00445\ }
+\DoxyCodeLine{00446\ EFI\_STATUS\ SBC\_LogWriteFile(EFI\_HANDLE\ ImageHandle,\ CHAR16\ *FileNames,\ \mbox{\hyperlink{struct__lv__t}{LV\_t}}\ *out);}
+\DoxyCodeLine{00447\ \textcolor{preprocessor}{\#endif}}
+
+\end{DoxyCode}

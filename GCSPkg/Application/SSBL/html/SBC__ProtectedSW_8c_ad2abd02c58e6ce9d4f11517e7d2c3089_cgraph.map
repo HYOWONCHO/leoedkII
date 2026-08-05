@@ -1,0 +1,5 @@
+<map id="SBC_LoadSysFile" name="SBC_LoadSysFile">
+<area shape="rect" id="Node000001" title="Load and decrypt a protected system file from the secure partition." alt="" coords="5,5,141,31"/>
+<area shape="rect" id="Node000002" href="$SBC__FileCtrl_8c.html#a0bffd54719b02c63355534614cdb450b" title="Read arbitrary bytes to a Block I/O device." alt="" coords="189,5,408,31"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="141,15,175,15,175,21,141,21"/>
+</map>

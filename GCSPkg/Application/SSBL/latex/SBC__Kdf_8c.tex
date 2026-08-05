@@ -1,0 +1,220 @@
+\doxysection{SBC\+\_\+\+Kdf.\+c File Reference}
+\hypertarget{SBC__Kdf_8c}{}\label{SBC__Kdf_8c}\index{SBC\_Kdf.c@{SBC\_Kdf.c}}
+
+
+Key Derivation Function (KDF) and Random Number Generator implementation.  
+
+
+{\ttfamily \#include $<$Library/\+Base\+Crypt\+Lib.\+h$>$}\newline
+{\ttfamily \#include $<$Library/\+Base\+Memory\+Lib.\+h$>$}\newline
+{\ttfamily \#include $<$Library/\+Base\+Lib.\+h$>$}\newline
+{\ttfamily \#include $<$Library/\+Timer\+Lib.\+h$>$}\newline
+{\ttfamily \#include "{}SBC\+\_\+\+Error\+Type.\+h"{}}\newline
+{\ttfamily \#include "{}SBC\+\_\+\+Type\+Defs.\+h"{}}\newline
+Include dependency graph for SBC\+\_\+\+Kdf.\+c\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=350pt]{SBC__Kdf_8c__incl}
+\end{center}
+\end{figure}
+\doxysubsubsection*{Functions}
+\begin{DoxyCompactItemize}
+\item 
+UINTN \mbox{\hyperlink{SBC__Kdf_8c_a928e42caeefd1ebedbb0930486dcd8dc}{Get\+Cpu\+Seed}} (VOID)
+\begin{DoxyCompactList}\small\item\em Generate a random seed value using CPU or performance timer. \end{DoxyCompactList}\item 
+SBCStatus \mbox{\hyperlink{SBC__Kdf_8c_a1dd319250203a1f81d0da2dd880015e1}{SBC\+\_\+\+HKdf\+Sha256}} (\mbox{\hyperlink{structkdf__t}{kdf\+\_\+t}} \texorpdfstring{$\ast$}{*}k, \mbox{\hyperlink{struct__lv__t}{LV\+\_\+t}} \texorpdfstring{$\ast$}{*}out)
+\begin{DoxyCompactList}\small\item\em Derive a cryptographic key using HKDF with SHA-\/256. \end{DoxyCompactList}\item 
+SBCStatus \mbox{\hyperlink{SBC__Kdf_8c_aea2f9b2418a89ee2fcc06b09213c05be}{SBC\+\_\+\+Rng\+Generation}} (UINT8 \texorpdfstring{$\ast$}{*}seed, UINTN szseed, UINTN szrng, UINT8 \texorpdfstring{$\ast$}{*}rngdata)
+\begin{DoxyCompactList}\small\item\em Generate the RNG. \end{DoxyCompactList}\end{DoxyCompactItemize}
+\doxysubsubsection*{Variables}
+\begin{DoxyCompactItemize}
+\item 
+static UINT8 \mbox{\hyperlink{SBC__Kdf_8c_afb7b312a2e105b7555b3744ef174f473}{sha256info}} \mbox{[}10\mbox{]}
+\item 
+static UINT8 \mbox{\hyperlink{SBC__Kdf_8c_a598435adf41dd84927501ce8b2e8e17f}{sha256salt}} \mbox{[}13\mbox{]}
+\end{DoxyCompactItemize}
+
+
+\doxysubsection{Detailed Description}
+Key Derivation Function (KDF) and Random Number Generator implementation. 
+
+Copyright (C) 2024 by Security Platform Inc. \texorpdfstring{$\ast$}{*} This file is part of the SBC Project. \texorpdfstring{$\ast$}{*}
+\begin{DoxyItemize}
+\item This software contains confidential and proprietary information of \texorpdfstring{$\ast$}{*} Security Platform Inc. Unauthorized reproduction, distribution, or \texorpdfstring{$\ast$}{*} disclosure of this software, in whole or in part, is strictly prohibited. \texorpdfstring{$\ast$}{*}
+\end{DoxyItemize}
+
+\begin{DoxyAuthor}{Author}
+LEON 
+\end{DoxyAuthor}
+\begin{DoxyVersion}{Version}
+1.\+0 
+\end{DoxyVersion}
+\begin{DoxyDate}{Date}
+2025-\/10-\/31
+\end{DoxyDate}
+\begin{DoxyCopyright}{Copyright}
+(c) 2025 Security Platform Inc. All rights reserved. 
+\end{DoxyCopyright}
+
+
+\doxysubsection{Function Documentation}
+\Hypertarget{SBC__Kdf_8c_a928e42caeefd1ebedbb0930486dcd8dc}\label{SBC__Kdf_8c_a928e42caeefd1ebedbb0930486dcd8dc} 
+\index{SBC\_Kdf.c@{SBC\_Kdf.c}!GetCpuSeed@{GetCpuSeed}}
+\index{GetCpuSeed@{GetCpuSeed}!SBC\_Kdf.c@{SBC\_Kdf.c}}
+\doxysubsubsection{\texorpdfstring{GetCpuSeed()}{GetCpuSeed()}}
+{\footnotesize\ttfamily UINTN Get\+Cpu\+Seed (\begin{DoxyParamCaption}\item[{VOID}]{ }\end{DoxyParamCaption})}
+
+
+
+Generate a random seed value using CPU or performance timer. 
+
+Copyright (C) 2024 by Security Platform Inc. \texorpdfstring{$\ast$}{*} This file is part of the SBC Project. \texorpdfstring{$\ast$}{*}
+\begin{DoxyItemize}
+\item This software contains confidential and proprietary information of \texorpdfstring{$\ast$}{*} Security Platform Inc. Unauthorized reproduction, distribution, or \texorpdfstring{$\ast$}{*} disclosure of this software, in whole or in part, is strictly prohibited. \texorpdfstring{$\ast$}{*} 
+\end{DoxyItemize}
+
+\begin{DoxyReturn}{Returns}
+64-\/bit random seed value.
+\end{DoxyReturn}
+
+\begin{DoxyRetVals}{Return values}
+{\em UINT64} & Random seed value derived from hardware or timing entropy.\\
+\hline
+\end{DoxyRetVals}
+\begin{DoxySeeAlso}{See also}
+Asm\+Rd\+Rand64(), Asm\+Read\+Tsc(), Get\+Performance\+Counter() 
+\end{DoxySeeAlso}
+Here is the caller graph for this function\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=309pt]{SBC__Kdf_8c_a928e42caeefd1ebedbb0930486dcd8dc_icgraph}
+\end{center}
+\end{figure}
+\Hypertarget{SBC__Kdf_8c_a1dd319250203a1f81d0da2dd880015e1}\label{SBC__Kdf_8c_a1dd319250203a1f81d0da2dd880015e1} 
+\index{SBC\_Kdf.c@{SBC\_Kdf.c}!SBC\_HKdfSha256@{SBC\_HKdfSha256}}
+\index{SBC\_HKdfSha256@{SBC\_HKdfSha256}!SBC\_Kdf.c@{SBC\_Kdf.c}}
+\doxysubsubsection{\texorpdfstring{SBC\_HKdfSha256()}{SBC\_HKdfSha256()}}
+{\footnotesize\ttfamily SBCStatus SBC\+\_\+\+HKdf\+Sha256 (\begin{DoxyParamCaption}\item[{\mbox{\hyperlink{structkdf__t}{kdf\+\_\+t}} \texorpdfstring{$\ast$}{*}}]{k,  }\item[{\mbox{\hyperlink{struct__lv__t}{LV\+\_\+t}} \texorpdfstring{$\ast$}{*}}]{out }\end{DoxyParamCaption})}
+
+
+
+Derive a cryptographic key using HKDF with SHA-\/256. 
+
+
+\begin{DoxyParams}[1]{Parameters}
+\mbox{\texttt{ in}}  & {\em k} & Pointer to a \doxylink{structkdf__t}{kdf\+\_\+t} structure containing HKDF parameters\+:
+\begin{DoxyItemize}
+\item {\ttfamily salt} — Optional random salt value.
+\item {\ttfamily ikm} — Input Keying Material (base key input).
+\item {\ttfamily info} — Optional context/application-\/specific information.
+\item {\ttfamily len} — Desired length of the output key. 
+\end{DoxyItemize}\\
+\hline
+\mbox{\texttt{ out}}  & {\em out} & Pointer to an LV\+\_\+t structure that receives the derived key. The buffer must be allocated to accommodate the requested length.\\
+\hline
+\end{DoxyParams}
+
+\begin{DoxyRetVals}{Return values}
+{\em SBCOK} & Key derivation completed successfully. \\
+\hline
+{\em SBCFAIL} & HKDF computation failed (e.\+g., HMAC operation failure). \\
+\hline
+{\em SBCNULLP} & One or more input pointers are NULL. \\
+\hline
+{\em SBCINVPARAM} & Invalid HKDF parameters (e.\+g., zero-\/length key or salt). \\
+\hline
+{\em SBCCRYPTO} & SHA-\/256 or HMAC computation error occurred. \\
+\hline
+\end{DoxyRetVals}
+\Hypertarget{SBC__Kdf_8c_aea2f9b2418a89ee2fcc06b09213c05be}\label{SBC__Kdf_8c_aea2f9b2418a89ee2fcc06b09213c05be} 
+\index{SBC\_Kdf.c@{SBC\_Kdf.c}!SBC\_RngGeneration@{SBC\_RngGeneration}}
+\index{SBC\_RngGeneration@{SBC\_RngGeneration}!SBC\_Kdf.c@{SBC\_Kdf.c}}
+\doxysubsubsection{\texorpdfstring{SBC\_RngGeneration()}{SBC\_RngGeneration()}}
+{\footnotesize\ttfamily SBCStatus SBC\+\_\+\+Rng\+Generation (\begin{DoxyParamCaption}\item[{UINT8 \texorpdfstring{$\ast$}{*}}]{seed,  }\item[{UINTN}]{szseed,  }\item[{UINTN}]{szrng,  }\item[{UINT8 \texorpdfstring{$\ast$}{*}}]{rngdata }\end{DoxyParamCaption})}
+
+
+
+Generate the RNG. 
+
+Generate random data using hardware or software RNG.
+
+
+\begin{DoxyParams}[1]{Parameters}
+\mbox{\texttt{ in}}  & {\em seed} & Random seed buffer \\
+\hline
+\mbox{\texttt{ in}}  & {\em szseed} & Length of seed buffer \\
+\hline
+\mbox{\texttt{ in}}  & {\em szrng} & Number of Random size \\
+\hline
+\mbox{\texttt{ out}}  & {\em rngdata} & Random data\\
+\hline
+\end{DoxyParams}
+\begin{DoxyReturn}{Returns}
+On success, return the SBCOK, otherwise return approiate value
+\end{DoxyReturn}
+
+\begin{DoxyParams}[1]{Parameters}
+\mbox{\texttt{ in}}  & {\em seed} & Pointer to a buffer containing seed data (optional). If {\ttfamily NULL}, the function uses an internal entropy source. \\
+\hline
+\mbox{\texttt{ in}}  & {\em szseed} & Length of the seed buffer, in bytes. Can be 0 if {\ttfamily seed} is not provided. \\
+\hline
+\mbox{\texttt{ in}}  & {\em szrng} & Number of random bytes to generate. \\
+\hline
+\mbox{\texttt{ out}}  & {\em rngdata} & Pointer to a buffer that receives the generated random data. The buffer must be at least {\ttfamily szrng} bytes long.\\
+\hline
+\end{DoxyParams}
+
+\begin{DoxyRetVals}{Return values}
+{\em SBCOK} & Random data successfully generated. \\
+\hline
+{\em SBCFAIL} & Random generation failed due to entropy source error. \\
+\hline
+{\em SBCNULLP} & One or more input pointers are NULL. \\
+\hline
+{\em SBCINVPARAM} & Invalid size or parameter value. \\
+\hline
+{\em SBCCRYPTO} & Hardware RNG or entropy engine error. \\
+\hline
+\end{DoxyRetVals}
+Here is the call graph for this function\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=309pt]{SBC__Kdf_8c_aea2f9b2418a89ee2fcc06b09213c05be_cgraph}
+\end{center}
+\end{figure}
+
+
+\doxysubsection{Variable Documentation}
+\Hypertarget{SBC__Kdf_8c_afb7b312a2e105b7555b3744ef174f473}\label{SBC__Kdf_8c_afb7b312a2e105b7555b3744ef174f473} 
+\index{SBC\_Kdf.c@{SBC\_Kdf.c}!sha256info@{sha256info}}
+\index{sha256info@{sha256info}!SBC\_Kdf.c@{SBC\_Kdf.c}}
+\doxysubsubsection{\texorpdfstring{sha256info}{sha256info}}
+{\footnotesize\ttfamily UINT8 sha256info\mbox{[}10\mbox{]}\hspace{0.3cm}{\ttfamily [static]}}
+
+{\bfseries Initial value\+:}
+\begin{DoxyCode}{0}
+\DoxyCodeLine{=\ \{}
+\DoxyCodeLine{\ \ 0xf0,\ 0xf1,\ 0xf2,\ 0xf3,\ 0xf4,\ 0xf5,\ 0xf6,\ 0xf7,\ 0xf8,\ 0xf9,}
+\DoxyCodeLine{\}}
+
+\end{DoxyCode}
+\Hypertarget{SBC__Kdf_8c_a598435adf41dd84927501ce8b2e8e17f}\label{SBC__Kdf_8c_a598435adf41dd84927501ce8b2e8e17f} 
+\index{SBC\_Kdf.c@{SBC\_Kdf.c}!sha256salt@{sha256salt}}
+\index{sha256salt@{sha256salt}!SBC\_Kdf.c@{SBC\_Kdf.c}}
+\doxysubsubsection{\texorpdfstring{sha256salt}{sha256salt}}
+{\footnotesize\ttfamily UINT8 sha256salt\mbox{[}13\mbox{]}\hspace{0.3cm}{\ttfamily [static]}}
+
+{\bfseries Initial value\+:}
+\begin{DoxyCode}{0}
+\DoxyCodeLine{=\ \{}
+\DoxyCodeLine{\ \ 0x00,\ 0x01,\ 0x02,\ 0x03,\ 0x04,\ 0x05,\ 0x06,\ 0x07,\ 0x08,\ 0x09,}
+\DoxyCodeLine{\ \ 0x0a,\ 0x0b,\ 0x0c,}
+\DoxyCodeLine{\}}
+
+\end{DoxyCode}

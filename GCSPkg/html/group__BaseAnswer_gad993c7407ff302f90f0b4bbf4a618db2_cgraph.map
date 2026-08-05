@@ -1,0 +1,9 @@
+<map id="SBC_BaseAnswerValidate" name="SBC_BaseAnswerValidate">
+<area shape="rect" id="Node000001" title="Validate the device authentication answer using the provided key." alt="" coords="5,31,196,56"/>
+<area shape="rect" id="Node000002" href="$group__BaseAnswer.html#ga6fc4f3638ff1e63bf4790c05ff6025ce" title=" " alt="" coords="244,5,401,31"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="196,30,230,26,231,31,197,35"/>
+<area shape="rect" id="Node000004" href="$group__BaseAnswer.html#ga3ea832a71eedfaf6ac74391d417c26f7" title="Verify the SSBL signature." alt="" coords="253,55,392,80"/>
+<area shape="poly" id="edge3_Node000001_Node000004" title=" " alt="" coords="197,51,240,56,239,61,196,56"/>
+<area shape="rect" id="Node000003" href="$group__BaseAnswer.html#gabc62c881d2dc4feb5a902de829dd27b4" title="Create a new device security key." alt="" coords="449,5,676,31"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="402,15,435,15,435,21,402,21"/>
+</map>

@@ -1,0 +1,80 @@
+\doxysection{SBC\+\_\+\+Crypt\+AES.\+h}
+\hypertarget{SBC__CryptAES_8h_source}{}\label{SBC__CryptAES_8h_source}
+\begin{DoxyCode}{0}
+\DoxyCodeLine{00001\ }
+\DoxyCodeLine{00010\ \textcolor{preprocessor}{\#ifndef\ \_AES\_CRYPT\_}}
+\DoxyCodeLine{00011\ \textcolor{preprocessor}{\#define\ \_AES\_CRYPT\_}}
+\DoxyCodeLine{00012\ }
+\DoxyCodeLine{00013\ \textcolor{preprocessor}{\#include\ "{}SBC\_ErrorType.h"{}}}
+\DoxyCodeLine{00014\ }
+\DoxyCodeLine{00021\ \textcolor{keyword}{typedef}\ \textcolor{keyword}{enum}\ \{}
+\DoxyCodeLine{00022\ \ \ SBC\_CIPHER\_NONE\ \ \ \ \ \ \ =\ 0,\ \ }
+\DoxyCodeLine{00023\ \ \ SBC\_CIPHER\_AES\_ECB,\ \ \ \ \ \ \ \ \ }
+\DoxyCodeLine{00024\ \ \ SBC\_CIPHER\_AES\_CBC,\ \ \ \ \ \ \ \ \ }
+\DoxyCodeLine{00025\ \ \ SBC\_CIPHER\_AES\_CTR,\ \ \ \ \ \ \ \ \ }
+\DoxyCodeLine{00026\ \ \ SBC\_CIPHER\_AES\_GCM,\ \ \ \ \ \ \ \ \ }
+\DoxyCodeLine{00027\ \ \ SBC\_CIPHER\_UNKNOWN\ \ \ \ \ \ \ \ \ \ }
+\DoxyCodeLine{00028\ \}\ SBC\_CipherAlgoMode;}
+\DoxyCodeLine{00029\ }
+\DoxyCodeLine{00030\ }
+\DoxyCodeLine{00038\ \textcolor{keyword}{typedef}\ \textcolor{keyword}{struct\ }\{}
+\DoxyCodeLine{00039\ \ \ UINT16\ \ \ \ \mbox{\hyperlink{structSBC__CipherTLV_a41deccb86929d442aaa0fa400f76fd17}{tag}};\ \ \ \ \ }
+\DoxyCodeLine{00040\ \ \ UINTN\ \ \ \ \ \mbox{\hyperlink{structSBC__CipherTLV_a5e0945f7e8dc3cf069a7f90d30edafe1}{length}};\ \ }
+\DoxyCodeLine{00041\ \ \ UINT8\ \ \ \ \ *\mbox{\hyperlink{structSBC__CipherTLV_a98d73a423a540c14f987659241edf142}{value}};\ \ }
+\DoxyCodeLine{00042\ \}\ \mbox{\hyperlink{structSBC__CipherTLV}{SBC\_CipherTLV}};}
+\DoxyCodeLine{00043\ }
+\DoxyCodeLine{00051\ \textcolor{keyword}{typedef}\ \textcolor{keyword}{struct\ }\mbox{\hyperlink{struct__aes__cbc__context__t}{\_aes\_cbc\_context\_t}}\ \{}
+\DoxyCodeLine{00052\ \ \ VOID\ *\mbox{\hyperlink{struct__aes__cbc__context__t_aa2146bdacb42d80b5b5c44d80bc29b44}{handle}};\ \ \ \ \ \ \ \ \ \ \ \ \ }
+\DoxyCodeLine{00053\ \ \ \mbox{\hyperlink{structSBC__CipherTLV}{SBC\_CipherTLV}}\ \mbox{\hyperlink{struct__aes__cbc__context__t_a9233c0c7513eb00af6c6a25493311783}{keylv}};\ \ \ \ \ \ }
+\DoxyCodeLine{00054\ \ \ \mbox{\hyperlink{structSBC__CipherTLV}{SBC\_CipherTLV}}\ *\mbox{\hyperlink{struct__aes__cbc__context__t_ae7cef48945784944deb6ccd30371a25b}{inlv}};\ \ \ \ \ \ }
+\DoxyCodeLine{00055\ \ \ \mbox{\hyperlink{structSBC__CipherTLV}{SBC\_CipherTLV}}\ *\mbox{\hyperlink{struct__aes__cbc__context__t_a0ba9196101021d0a5720b871dd092b7e}{outlv}};\ \ \ \ \ }
+\DoxyCodeLine{00056\ \ \ UINT8\ *\mbox{\hyperlink{struct__aes__cbc__context__t_ab2a59f8dcbec4f4353844ad1beb2739e}{iv}};\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ }
+\DoxyCodeLine{00057\ \}\ \mbox{\hyperlink{structSBC__AESCBCCtx}{SBC\_AESCBCCtx}};}
+\DoxyCodeLine{00058\ }
+\DoxyCodeLine{00113\ \textcolor{keyword}{typedef}\ \textcolor{keyword}{struct\ }\mbox{\hyperlink{struct__aes__gcm__context__t}{\_aes\_gcm\_context\_t}}\ \{}
+\DoxyCodeLine{00114\ \ \ \ \ \mbox{\hyperlink{structSBC__CipherTLV}{SBC\_CipherTLV}}\ \mbox{\hyperlink{struct__aes__gcm__context__t_a153f98c3909717576069e0a6da801e78}{key}};\ \ \ }
+\DoxyCodeLine{00115\ \ \ \ \ \mbox{\hyperlink{structSBC__CipherTLV}{SBC\_CipherTLV}}\ \mbox{\hyperlink{struct__aes__gcm__context__t_ab8266f4536f831c317570db36bef669e}{iv}};\ \ \ \ }
+\DoxyCodeLine{00116\ \ \ \ \ \mbox{\hyperlink{structSBC__CipherTLV}{SBC\_CipherTLV}}\ \mbox{\hyperlink{struct__aes__gcm__context__t_a7f68d8633ebc9675a484db0f58e8c24b}{aad}};\ \ \ }
+\DoxyCodeLine{00117\ \ \ \ \ \mbox{\hyperlink{structSBC__CipherTLV}{SBC\_CipherTLV}}\ \mbox{\hyperlink{struct__aes__gcm__context__t_a599f602d8dfefebc3d99b7963f653791}{msg}};\ \ \ }
+\DoxyCodeLine{00118\ \ \ \ \ \mbox{\hyperlink{structSBC__CipherTLV}{SBC\_CipherTLV}}\ \mbox{\hyperlink{struct__aes__gcm__context__t_a7cb6c791e28a7a4c685ad5441a8f65f4}{tag}};\ \ \ }
+\DoxyCodeLine{00119\ \ \ \ \ \mbox{\hyperlink{structSBC__CipherTLV}{SBC\_CipherTLV}}\ \mbox{\hyperlink{struct__aes__gcm__context__t_af63fff026ab33b46ad5294780937ed58}{out}};\ \ \ }
+\DoxyCodeLine{00120\ \}\ \mbox{\hyperlink{structSBC__AESGcmCtx}{SBC\_AESGcmCtx}};}
+\DoxyCodeLine{00121\ }
+\DoxyCodeLine{00122\ }
+\DoxyCodeLine{00134\ \textcolor{keyword}{typedef}\ \textcolor{keyword}{struct\ }\mbox{\hyperlink{struct__aes__context__t}{\_aes\_context\_t}}\ \{}
+\DoxyCodeLine{00135\ \ \ VOID\ *\mbox{\hyperlink{struct__aes__context__t_aaa201de4d3c4300e94859f3da99623e9}{handle}};\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ }
+\DoxyCodeLine{00136\ \ \ UINT8\ *\mbox{\hyperlink{struct__aes__context__t_a40a420872f94c2b068d399d7eceaa248}{key}};\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ }
+\DoxyCodeLine{00137\ \ \ UINTN\ \mbox{\hyperlink{struct__aes__context__t_ad6df37f6448d898fb846183d9efdb720}{keylen}};\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ }
+\DoxyCodeLine{00138\ \ \ SBC\_CipherAlgoMode\ \mbox{\hyperlink{struct__aes__context__t_ad28135daf9058d589a27625a1ee9bd1f}{algoid}};\ \ \ \ }
+\DoxyCodeLine{00140\ \ \ \mbox{\hyperlink{structSBC__CipherTLV}{SBC\_CipherTLV}}\ *\mbox{\hyperlink{struct__aes__context__t_a12101c7f0d5b838610a9ceaf8d7bd226}{in}};\ \ \ \ \ \ \ \ \ \ \ \ }
+\DoxyCodeLine{00141\ \ \ \mbox{\hyperlink{structSBC__CipherTLV}{SBC\_CipherTLV}}\ *\mbox{\hyperlink{struct__aes__context__t_a543ed050e75a1da1ed0f86205a9a6068}{out}};\ \ \ \ \ \ \ \ \ \ \ }
+\DoxyCodeLine{00142\ \ \ UINT8\ *\mbox{\hyperlink{struct__aes__context__t_a2a5ff3e2a72ce7602d43b2219b7942e7}{iv}};\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ }
+\DoxyCodeLine{00144\ \ \ \mbox{\hyperlink{struct__aes__cbc__context__t}{SBC\_AESCBCCtx}}\ *\mbox{\hyperlink{struct__aes__context__t_a5e21b6c3b306b3a7e7ed514a0fecba60}{cbc}};\ \ \ \ \ \ \ \ \ \ \ }
+\DoxyCodeLine{00145\ \ \ \mbox{\hyperlink{struct__aes__gcm__context__t}{SBC\_AESGcmCtx}}\ *\mbox{\hyperlink{struct__aes__context__t_aea65c5b7363a37f06064ac9dd648e3ca}{gcm}};\ \ \ \ \ \ \ \ \ \ \ }
+\DoxyCodeLine{00146\ \}\ \mbox{\hyperlink{structSBC__AESContext}{SBC\_AESContext}};}
+\DoxyCodeLine{00147\ }
+\DoxyCodeLine{00152\ \textcolor{preprocessor}{\#define\ SBC\_AES\_KEY\_STRENGTH\ \ \ \ \ \ \ \ \ \ 32\ \ }}
+\DoxyCodeLine{00158\ \textcolor{preprocessor}{\#define\ SBC\_AES\_IV\_STRENGTH\ \ \ \ \ \ \ \ \ \ \ 12\ \ }}
+\DoxyCodeLine{00164\ \textcolor{preprocessor}{\#define\ SBC\_AES\_TAG\_STRENGTH\ \ \ \ \ \ \ \ \ \ 16\ \ }}
+\DoxyCodeLine{00170\ \textcolor{preprocessor}{\#define\ SBC\_KEY\_STRENGTH\_256\ \ \ \ \ \ \ \ \ \ 256\ \ }}
+\DoxyCodeLine{00176\ \textcolor{preprocessor}{\#define\ SBC\_KEY\_LEN\_256\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ (SBC\_KEY\_STRENGTH\_256\ >>\ 3)\ \ }}
+\DoxyCodeLine{00182\ \textcolor{preprocessor}{\#define\ SBC\_KEY\_STRENGTH\_128\ \ \ \ \ \ \ \ \ \ 128\ \ }}
+\DoxyCodeLine{00188\ \textcolor{preprocessor}{\#define\ SBC\_KEY\_LEN\_128\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ (SBC\_KEY\_STRENGTH\_128\ >>\ 3)\ \ }}
+\DoxyCodeLine{00203\ SBCStatus\ SBC\_AESInit(\mbox{\hyperlink{structSBC__AESContext}{SBC\_AESContext}}\ *ctx);}
+\DoxyCodeLine{00204\ }
+\DoxyCodeLine{00216\ VOID\ \mbox{\hyperlink{SBC__CryptAES_8c_a2132936a18724b0f6630167eeb571d4a}{SBC\_AESDeInit}}(\mbox{\hyperlink{structSBC__AESContext}{SBC\_AESContext}}\ *ctx);}
+\DoxyCodeLine{00217\ }
+\DoxyCodeLine{00232\ SBCStatus\ SBC\_AESEncrypt(\mbox{\hyperlink{structSBC__AESContext}{SBC\_AESContext}}\ *ctxp);}
+\DoxyCodeLine{00233\ }
+\DoxyCodeLine{00248\ SBCStatus\ SBC\_AESDecrypt(\mbox{\hyperlink{structSBC__AESContext}{SBC\_AESContext}}\ *ctx);}
+\DoxyCodeLine{00249\ }
+\DoxyCodeLine{00250\ }
+\DoxyCodeLine{00265\ SBCStatus\ SBC\_AESGcmDecrypt(\mbox{\hyperlink{structSBC__AESContext}{SBC\_AESContext}}\ *ctx);}
+\DoxyCodeLine{00266\ }
+\DoxyCodeLine{00267\ }
+\DoxyCodeLine{00282\ SBCStatus\ SBC\_AESGcmEncrypt(\mbox{\hyperlink{structSBC__AESContext}{SBC\_AESContext}}\ *ctx);}
+\DoxyCodeLine{00283\ }
+\DoxyCodeLine{00304\ \textcolor{keywordtype}{void}\ SBC\_AESGcmSetContext(VOID\ *ctx,\ VOID\ *key,\ VOID\ *iv,\ VOID\ *tag);}
+\DoxyCodeLine{00305\ \textcolor{preprocessor}{\#endif}}
+
+\end{DoxyCode}

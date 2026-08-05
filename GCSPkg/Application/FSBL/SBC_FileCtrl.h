@@ -1,0 +1,717 @@
+#ifndef SBC_FILECTRL_H
+#define SBC_FILECTRL_H
+
+#include "SBC_ErrorType.h"
+
+#define BOOT_VENDOR_BASEDIR     L"\\EFI\\rocky"
+
+#define BOOT_MODE_FNAME         L"\\EFI\\BOOT\\bootmode"
+#define BOOT_MODE_STRNRORMAL    "normal"
+#define BOOT_MODE_STRUPDATE     "update"
+#define BOOT_MODE_STRFACTORY    "factory"
+
+typedef enum _t_boot_mode {
+    BOOT_MODE_NONE      = 0,
+    BOOT_MODE_NORMAL,                     /// Normal Boot Mode
+    BOOT_MODE_UPDATE,                     /// Image update
+    BOOT_MODE_RECOVERY,
+    BOOT_MODE_FACTORY,                    /// Factory mode boot 
+    BOOT_MODE_UNKNOWN 
+}boot_mode_t;
+
+typedef enum _t_key_mode {
+    KEY_MODE_NONE = 0,
+    KEY_MODE_NORMAL, 
+    KEY_MODE_BOOT,
+    KEY_MODE_UPDATE,
+    KEY_MODE_UNKNOWN
+}key_mode_t;
+
+typedef struct _t_bm_lookup_table {
+    CHAR8 *key;
+    UINT32 val;
+}bm_lookup_table_t;
+
+
+
+#define SBC_RAWPRT_DFLT_SHIFT                       0x9
+#define SBC_RAWPRT_DFLT_BLK_SZ                      (1 << SBC_RAWPRT_DFLT_SHIFT)
+
+#define SBC_FILE_RW_BLK(len)                        \
+    ({                                              \
+        UINT32 _x = len;                            \
+        if(_x <= SBC_RAWPRT_DFLT_BLK_SZ) {          \
+            _x = 0;                                 \
+        }                                           \
+        else {                                      \
+            _x = len / SBC_RAWPRT_DFLT_BLK_SZ;      \
+        }                                           \
+        _x;                                         \
+    })     
+/*! 
+    \defgroup   RawPartition        Raw Partition related data structure and defines
+    \{
+*/
+
+
+
+#define SBC_RAW_PRTHDR_LBA                  0
+/*! Raw Partition Identifier */
+#define SBC_RAWPRT_MAGIC_ID                 0xAA55AA55 
+
+/*! Partition Information Length */
+#define SBC_PRTNIFO_LEN                     64
+
+/*! Raw Partition Header skip bytes*/
+#define SBC_HDR_SKIP_LEN                    44
+
+/*! Boot pres length */
+#define SBC_BOOT_PRES_LEN                   8
+
+/*! Boot Mode */
+#define SBC_BOOT_MODE_LEN                   2
+#define SBC_KEY_MODE_LEN                    2
+#define SBC_RECOVERY_LEN                    2
+
+#pragma pack(push, 1)
+/*!
+    \struct rawprt_hdr_t
+    \brief Raw Partition Header  structure
+*/
+typedef struct _rawprt_hdr_t {
+    UINT32      magicid;                                /**< Identifier for SBC Raw-Partition */
+    UINT8       prtinfo[SBC_PRTNIFO_LEN];               /**< Partition information */
+    UINT8       reserv[SBC_HDR_SKIP_LEN];
+    UINT16      prevmode;
+    UINT16      bootmode;                               /**< Boot Mode */   
+    UINT16      keymode;                                /*! Key Mode*/
+    UINT16      rcvmode;                                /*! Recover mode */     
+    UINT8       bootpres[SBC_BOOT_PRES_LEN];            /**< Boot pres */
+    UINT8       bootpres_reserv[SBC_BOOT_PRES_LEN];     /**< Boot pres */
+}rawprt_hdr_t;
+
+#pragma pack(pop)
+
+#define BOOT_FW_SRTOFS                      0x00000200U
+
+#define BOOT_FSBL_OFS                       0x00000000U      /**< FSBL Offset */
+#define BOOT_SSBL_OFS                       0x00400000U      /**< SSB Offset */
+#define BOOT_OS_OFS                         0x00800000U      /**< Operating System Offset */
+#define BOOT_SW_OFS                         0x01C00000U      /**< Boot Software offset */
+
+
+#define BOOT_SECTOR1_OFS                    (0x00000000U | BOOT_FW_SRTOFS)
+#define BOOT_SECTOR2_OFS                    (0x08000000U | BOOT_FW_SRTOFS)
+#define BOOT_SECTOR3_OFS                    (0x10000000U | BOOT_FW_SRTOFS)
+
+#define BOOT_IMG_LENB                       0x00000004U
+#define BOOT_FSBL_MAX                       0x00400000U      /**< 4M */
+#define BOOT_FSBL_IMGMAX                    (BOOT_FSBL_MAX - BOOT_IMG_LENB)
+
+
+#define BOOT_SSBL_MAX                       0x00400000U      /**< 4M */
+#define BOOT_SSBL_IMGMAX                    (BOOT_SSBL_MAX - BOOT_IMG_LENB)
+
+
+#define BOOT_OS_IMG_MB                      20U
+#define BOOT_OS_MAX                         (BOOT_OS_IMG_MB << 20)      /**< 20 M */
+#define BOOT_OS_IMGMAX                      (BOOT_OS_MAX - BOOT_IMG_LENB)
+
+#define BOOT_SW_IMG_MB                      100U
+#define BOOT_SW_MAX                         (BOOT_SW_IMG_MB << 20)      /**<  100 M */
+#define BOOT_SW_IMGMAX                      (BOOT_SW_MAX - BOOT_IMG_LENB)
+
+
+#define BOOT_FW_IMG_MB                      128U
+#define BOOT_FW_IMGMAX                      (BOOT_FW_IMG_MB << 20)
+
+
+#define BOOT_FW_LBA_BLOCKS                  (BOOT_FW_IMGMAX / SBC_RAWPRT_BLK_SZ)
+
+
+/**
+ * \brief Boot Firmware storage information 
+ */
+#pragma pack(1)
+typedef union _boot_fw_inf_t {
+
+    struct {
+        UINT32  fsbln;
+        UINT8   fsblimg[BOOT_FSBL_IMGMAX];
+        UINT32  ssbln;
+        UINT8   ssblimg[BOOT_SSBL_IMGMAX];
+        UINT32  osln;
+        UINT8   osimg[BOOT_OS_IMGMAX];
+        UINT32  swn;
+        UINT8   swimg[BOOT_SW_IMGMAX];
+    }mbr;
+
+    UINT8 value[BOOT_FW_IMGMAX];
+
+}boot_fw_inf_t;
+
+#pragma pack()
+
+
+#define LEN_DFLT_OFS                    0x04
+
+#define SYS_CONF_START_OFS              (0x18000000U | BOOT_FW_SRTOFS)
+#define SYS_CONF_OSID_OFS               0x00000000U
+#define SYS_CONF_RES_OFS                0x00000040U          /**< Reference offset */
+#define SYS_CONF_ROOT_CA_OFS            0x00000080U
+#define SYS_CONF_DEVID_CRT_OFS          0x00000880U
+#define SYS_CONF_FWID_CRT_OFS           0x00001080U
+#define SYS_CONF_OSID_CRT_OFS           0x00001880U
+#define SYS_CONF_SW_LIST_OFS            0x00002080U
+
+
+#define SYS_OSID_LEN                    4
+#define SYS_OSID_KEY_LEN                32
+#define SYS_OSID_IV_LEN                 12
+#define SYS_OSID_TAG_LEN                16
+#define SYS_OSID_MAX_LEN                64
+
+#define SYS_PRES_LEN                    4
+#define SYS_PRES_RES_LEN                16
+#define SYS_PRES_IV_LEN                 12
+#define SYS_PRES_TAG_LEN                16
+#define SYS_PRES_RESERVED               16
+#define SYS_PRES_MAX_LEN                64
+
+#define SYS_PRES_INFO_MAX               (SYS_PRES_LEN + SYS_PRES_RES_LEN + SYS_PRES_IV_LEN + SYS_PRES_TAG_LEN + SYS_PRES_RESERVED)
+
+#define SYS_CERT_LEN                    (2<<10)
+#define SYS_SWLIST_OFS_LEN              (8<<10)
+
+#define SYS_SETTING_STORAGE_LEN         (SYS_OSID_MAX_LEN + SYS_PRES_MAX_LEN + SYS_CERT_LEN + SYS_CERT_LEN + SYS_CERT_LEN + SYS_CERT_LEN + SYS_SWLIST_OFS_LEN)
+
+#pragma pack(1)
+typedef union _osid_key_t {
+
+    struct {
+        UINT32      len;
+        UINT8       key[SYS_OSID_KEY_LEN];
+        UINT8       iv[SYS_OSID_IV_LEN];
+        UINT8       tag[SYS_OSID_TAG_LEN];
+    }m;
+
+    UINT8 value[SYS_OSID_LEN + SYS_OSID_KEY_LEN + SYS_OSID_IV_LEN + SYS_OSID_TAG_LEN];
+}osid_key_t;
+
+typedef union _sys_pres_t  {
+
+    struct {
+        UINT32      len;
+        UINT8       res[SYS_PRES_RES_LEN];
+        UINT8       iv[SYS_PRES_IV_LEN];
+        UINT8       tag[SYS_PRES_TAG_LEN];
+        UINT8       reserved[SYS_PRES_RESERVED];
+    }m;
+
+
+    UINT8 value[SYS_PRES_INFO_MAX];
+
+}sys_pres_t;
+
+#pragma pack()
+
+      
+/*! \} */                                                                                                       
+                                                                                                                                                                               
+//SBCStatus SBC_CreateFile(EFI_HANDLE h, CHAR16 *fname);                                                     
+                                                                                                             
+/*!                                                                                                          
+    \brief Define the RAW Partition information                                                              
+*/                                                                                                           
+                                                                                                             
+#define SBC_RPTN_FIRST_SKIP_BYTES           0x40 // 64                                                       
+#define SBC_RPTN_INFO_LEN                   0x40                                                             
+                                                                                                             
+                                                                                                             
+/*!                                                                                                          
+ * SBC Raw Partition Header structure                                                                        
+ *                                                                                                           
+ * \var sbc_rptn_header_t::value - SBC Header information buffer                                             
+ * \var sbc_rptn_header_t::m - Buffer regard to "SKIP" and "INFO"                                            
+ *                                                                                                           
+ * \author leoc (6/4/25)                                                                                     
+ */                                                                                                          
+typedef union _sbc_rtpn_header_t {
+    struct {
+        UINT8 skip[SBC_RPTN_INFO_LEN]; /**< SKIP Buffer, but it has a Magic ID to find the device in UEFI*/
+        UINT8 info[SBC_RPTN_INFO_LEN]; /*!< partition information*/
+    }m;
+
+    UINT8 value[SBC_RPTN_INFO_LEN << 1]; //!< Header data buffer
+                                         ///< Header data buffer
+
+}sbc_rptn_header_t;
+                                                                                                             
+                                                                                                             
+/*!                                                                                                          
+ * Read the Data from specified file                                                                         
+ *                                                                                                           
+ * \author leoc (5/14/25)                                                                                    
+ *                                                                                                           
+ * \param[in] ImageHandle                                                                                    
+ * \param[in] FileNames                                                                                      
+ * \param[out] out                                                                                           
+ *                                                                                                           
+ * \return EFI_STATUS                                                                                        
+ * \note                                                                                                     
+ *  MUST call the SBC_FileSysFindHndl to obtain a FileProtocolHandle before using this function              
+ */                                                                                                          
+EFI_STATUS SBC_ReadFile(EFI_HANDLE ImageHandle, CHAR16 *FileNames, LV_t *out);                               
+                                                                                                             
+                                                                                                             
+/*!                                                                                                          
+ * Get the size of the file for specified file.                                                              
+ *                                                                                                           
+ * \author leoc (6/4/25)                                                                                     
+ *                                                                                                           
+ * \param[in] FileName      File Name buffer                                                                 
+ * \param[out] FileSize     Size of File for specified FileName                                              
+ *                                                                                                           
+ * \return On success, return the SBCOK, otherwise, return the approiate value.                              
+ */                                                                                                          
+SBCStatus  SBC_GetFileSize(CHAR16 *FileName, UINTN  *FileSize);                                              
+                                                                                                             
+/*!                                                                                                          
+ * Find the File related protocol handle                                                                     
+ *                                                                                                           
+ * \author leoc (6/4/25)                                                                                     
+ *                                                                                                           
+ * \param[OUT] handle File protocol handle buffer                                                            
+ *                                                                                                           
+ * \return On success, return the handle count, otherwise, return the zero                                   
+ */                                                                                                          
+UINTN  SBC_FileSysFindHndl(EFI_HANDLE *handle);                                                              
+                                                                                                             
+/*!                                                                                                          
+ * Create the File                                                                                           
+ *                                                                                                           
+ * \author leoc (5/21/25)                                                                                    
+ *                                                                                                           
+ * \param h                                                                                                  
+ * \param fname                                                                                              
+ *                                                                                                           
+ * \return SBCStatus                                                                                         
+ * \note                                                                                                     
+ *  MUST call the SBC_FileSysFindHndl to obtain a FileProtocolHandle before using this function              
+ */                                                                                                          
+SBCStatus  SBC_CreateFile(EFI_HANDLE h, CHAR16 *fname);                                                      
+                                                                                                             
+/*!                                                                                                          
+ * Create the directory                                                                                      
+ *                                                                                                           
+ * \author leoc (5/21/25)                                                                                    
+ *                                                                                                           
+ * \param h                                                                                                  
+ * \param fname                                                                                              
+ *                                                                                                           
+ * \return SBCStatus                                                                                         
+ * \note                                                                                                     
+ *  MUST call the SBC_FileSysFindHndl to obtain a FileProtocolHandle before using this function              
+ */                                                                                                          
+SBCStatus  SBC_CreateDirectory(EFI_HANDLE h, CHAR16 *fname);                                                 
+                                                                                                             
+/*!                                                                                                          
+ *                                                                                                           
+ * \fn SBCStatus SBC_ReadRawPrtHeaderInfo(IN VOID *blkhnd, OUT VOID *rdbuf, IN UINT32 *rdlen)                   
+ *                                                                                                           
+ * \brief Load the raw-partition header information                                                          
+ *                                                                                                           
+ * \author leoc (6/4/25)                                                                                     
+ *                                                                                                           
+ * \param[in] blkhnd        Handle pointer for the BlockIo device  operation                                 
+ * \param[out] rdbuf        Pointer to load the Header information                                           
+ * \param[in,out] rdlen     Length of read bytes                                                             
+ *                                                                                                           
+ * \return On success, return the SBCOK, otherwise, return the approiate value.                              
+ */                                                                                                          
+SBCStatus SBC_ReadRawPrtHeaderInfo(VOID *blkhnd, VOID *rdbuf,  UINT32 *rdlen);
+                           
+                           
+/*!
+ * \fn SBCStatus SBC_RawPrtReadBlock(VOID *blkhnd, VOID *rdbuf,  UINT32 *rdlen, UINTN rlba)
+ * 
+ * \author leoc (6/5/25)
+ * 
+ * \param blkhnd Context handle for Block IO
+ * \param rdbuf  Pointer to the destination buffer for the data
+ * \param rdlen  Size of rdbuf
+ * \param rlba   Starting Logical Block Address to read from
+ * 
+ * \retval  SBCOK   Data ws read correctly form the device
+ * \retval  Othrewise value is Error 
+ */
+SBCStatus SBC_RawPrtReadBlock(VOID *blkhnd, VOID *rdbuf,  UINT32 *rdlen, UINTN rlba);     
+                      
+/*!
+ * \fn SBCStatus  SBC_FindBlkIoHandle(OUT VOID **hblk)
+ * 
+ * Find the Block Protocol interface for SBC Raw Partition 
+ * 
+ * \author leoc (6/5/25)
+ * 
+ * \param hblk   
+ * 
+ * \return SBCStatus 
+ */
+SBCStatus  SBC_FindBlkIoHandle(OUT VOID **hblk);  
+                    
+/*!
+ * \fn SBCStatus  SBC_RawPrtBlockWrite(VOID *blkio, UINT8 *wrbuf, UINT32 wrlen, UINT32 wrlba)
+ * 
+ * Write the data in Raw Partition 
+ * 
+ * \author leoc (6/9/25)
+ * 
+ * \param blkio  
+ * \param wrbuf  
+ * \param wrlen  
+ * \param wrlba  
+ * 
+ * \return SBCStatus 
+ */
+SBCStatus  SBC_RawPrtBlockWrite(VOID *blkio, UINT8 *wrbuf, UINT32 wrlen, UINT32 wrlba);                    
+
+
+/*!
+ * \fn UINT32  SBC_ReadBootMode(VOID)
+ * 
+ * \author leoc (6/17/25)
+ * 
+ * \param void   
+ * 
+ * \return UINT32 
+ */
+UINT32  SBC_ReadBootMode(VOID);
+
+
+/*!
+ * \fn SBCStatus SBC_RawAlignedReadBlockIO(VOID *blk, UINTN off, UINTN sz, CONsST VOID *buf)
+ * 
+ * \brief Writes arbitrary-length data to an EFI Block I/O device
+ * 
+ * \author leoc (10/24/25)
+ * 
+ * \param[in] blk       Pointer to an EFI_BLOCK_IO_PROTOCOL instance
+ * \param[in] off       Byte offset from the beginning of the block device
+ * \param[in] sz        Number of bytes to read from output buffer
+ * \param[out] buf      Pointer to the data buffer to store the read data
+ * 
+ * \retval SBCOK            Complete successfully
+ * \retval SBCIO            Device I/O or media error occurred during read/write
+ * \retval SBCINVPARAM      Invalid offset ot size
+ * \retval SBCNULLP         Memory allocation failed
+ * 
+ * \see
+ *      EFI_BLOCK_IO_PROTOCOL, EFI_BLOCK_IO_MEDIA, AllocatePool(), FreePool()
+ *  
+ */
+SBCStatus SBC_RawAlignedReadBlockIO(VOID *blk, UINTN off, UINTN sz, VOID *buf);
+
+
+/*!
+ * \fn SBCStatus SBC_RawAlignedWriteBlockIO(VOID *blk, UINTN off, UINTN sz, CONST VOID *buf)
+ * 
+ * \brief Writes arbitrary-length data to an EFI Block I/O device
+ * 
+ * \author leoc (10/24/25)
+ * 
+ * \param[in] blk    Pointer to an EFI_BLOCK_IO_PROTOCOL instance
+ * \param[in] off    Byte offset from the beginning of the block device
+ * \param[in] sz     Number of bytes to write from input buffer
+ * \param[in] buf    Pointer to the data buffer to be written
+ * 
+ * \retval SBCOK            Complete successfully
+ * \retval SBCIO            Device I/O or media error occurred during read/write
+ * \retval SBCINVPARAM      Invalid offset ot size
+ * \retval SBCNULLP         Memory allocation failed
+ * 
+ * \see
+ *      EFI_BLOCK_IO_PROTOCOL, EFI_BLOCK_IO_MEDIA, AllocatePool(), FreePool()
+ *  
+ */
+SBCStatus SBC_RawAlignedWriteBlockIO(VOID *blk, UINTN off, UINTN sz, CONST VOID *buf);
+
+
+/**
+  Read a text file from any available filesystem and convert it to UTF-16.
+
+  @param[in]  FileName     Full UEFI file path (e.g., L"\\EFI\\BOOT\\config.txt")
+  @param[out] OutBuffer    Pointer to receive allocated UTF-16 buffer
+  @param[out] OutLength    Number of UTF-16 characters (excluding NULL)
+
+  @retval SBCOK   The file was successfully located and read
+  @retval SBCNOTFND  The file could not be found or read
+**/
+SBCStatus SBC_FileReadUnicodeSimple(
+    IN  CHAR16    *FileName,
+    OUT CHAR16  **OutBuffer,
+    OUT UINTN     *OutLength
+);
+
+EFI_STATUS SBC_CopyBlockDeviceToFile(
+    IN VOID   *_Blk,
+    IN UINT64  ByteOffset,
+    IN UINT64  DataBytes,
+    IN CHAR16 *DstPath,
+    OUT UINT64 *BytesRead OPTIONAL
+);
+
+SBCStatus SBC_DeleteFile (
+    IN CHAR16 *FilePath
+    );
+
+EFI_STATUS SBC_WriteFile(EFI_HANDLE ImageHandle, CHAR16 *FileNames, LV_t *out);
+
+UINTN SBC_FindEfiFileSystemProtocol(EFI_HANDLE **handle);
+
+EFI_STATUS SBC_IsFlieAccess(EFI_HANDLE ImageHandle, CHAR16 *FileNames);
+
+BOOLEAN SBC_IsDirExist(EFI_HANDLE ImageHandle, CHAR16 *DirectoryName);
+
+SBCStatus  SBC_FindFileBufHndl(UINT16 *f_path, UINTN *hndlcnt, VOID **hndl);
+
+EFI_STATUS SBC_LogWriteFile(EFI_HANDLE ImageHandle, CHAR16 *FileNames, LV_t *out);
+
+EFI_STATUS SBC_CopyFileToBlockDevice(IN CHAR16 *SrcPath,
+                      IN VOID *_Blk,
+                      IN UINT64 ByteOffset,
+                      OUT UINT64 *BytesWritten OPTIONAL);
+
+
+SBCStatus SBC_RawPrtHdrChange(
+    VOID *handle,
+    UINT32 cur, UINT32 prev, 
+    UINT32 prevmode, 
+    UINT32 bm, 
+    UINT32 km);
+
+
+/**
+  Locate all EFI Simple File System handles.
+
+  @param[out] OutHandles   Pointer to array of EFI_HANDLEs (caller must FreePool)
+  @param[out] OutCount     Number of handles returned
+
+  @retval SBCOK            Success
+  @retval SBCFAIL          Failed to locate file systems
+  @retval SBCNULLP         Invalid parameter
+**/
+SBCStatus
+SBC_FindEfiFileSystemProtocol_X(
+    OUT EFI_HANDLE **OutHandles,
+    OUT UINTN      *OutCount
+    );
+
+/**
+  Find which file system handle contains the specified file.
+
+  @param[in]  FilePath     Absolute file path (e.g. "\\EFI\\BOOT\\bootx64.efi")
+  @param[in]  Handles      Array of file system handles
+  @param[in]  HandleCount  Number of handles
+  @param[out] OutIndex     Index of the handle containing the file
+
+  @retval SBCOK            File found
+  @retval SBCNOTFND        File not found on any FS
+  @retval SBCFAIL          Internal error
+  @retval SBCNULLP         Invalid parameter
+**/
+SBCStatus
+SBC_FindFileBufHndl_X(
+    IN  CHAR16     *FilePath,
+    IN  EFI_HANDLE *Handles,
+    IN  UINTN       HandleCount,
+    OUT UINTN      *OutIndex
+    );
+
+//
+// -----------------------------------------------------------------------------
+// File Size / Read / Write / Delete (FS Handle based)
+// -----------------------------------------------------------------------------
+
+/**
+  Get file size using a specific file system handle.
+
+  IMPORTANT:
+  - This function MUST NOT use LocateProtocol().
+  - File size is retrieved only from the specified FS handle.
+
+  @param[in]  FsHandle     File system handle
+  @param[in]  FilePath    Absolute file path
+  @param[out] OutSize     File size in bytes
+
+  @retval SBCOK            Success
+  @retval SBCNOTFND        File not found
+  @retval SBCFAIL          Failed to get file size
+  @retval SBCNULLP         Invalid parameter
+**/
+SBCStatus
+SBC_GetFileSizeOnHandle(
+    IN  EFI_HANDLE FsHandle,
+    IN  CHAR16     *FilePath,
+    OUT UINTN      *OutSize
+    );
+
+/**
+  Read entire file into memory using a specific file system handle.
+
+  - Allocates buffer internally.
+  - Caller must FreePool(OutLv->value) on success.
+  - OutLv is cleared on failure.
+
+  @param[in]  FsHandle     File system handle
+  @param[in]  FilePath    Absolute file path
+  @param[out] OutLv       Output buffer and size
+
+  @retval SBCOK            Success
+  @retval SBCNOTFND        File not found
+  @retval SBCIO            Read error or short read
+  @retval SBCFAIL          Allocation or internal error
+  @retval SBCNULLP         Invalid parameter
+**/
+SBCStatus
+SBC_ReadFileOnHandle(
+    IN  EFI_HANDLE FsHandle,
+    IN  CHAR16     *FilePath,
+    OUT LV_t       *OutLv
+    );
+
+/**
+  Write data to a file using a specific file system handle.
+
+  - Can overwrite existing file or create a new one.
+  - Uses the same FS handle to avoid write-protected issues.
+
+  @param[in] FsHandle      File system handle
+  @param[in] FilePath     Absolute file path
+  @param[in] Data          Pointer to data buffer
+  @param[in] DataSize      Data size in bytes
+  @param[in] Overwrite     TRUE to delete/recreate existing file
+
+  @retval SBCOK            Success
+  @retval SBCIO            Write failure
+  @retval SBCFAIL          Internal error
+  @retval SBCNULLP         Invalid parameter
+**/
+SBCStatus
+SBC_WriteFileOnHandle(
+    IN EFI_HANDLE FsHandle,
+    IN CHAR16    *FilePath,
+    IN VOID      *Data,
+    IN UINTN      DataSize,
+    IN BOOLEAN    Overwrite
+    );
+
+/**
+  Delete a file using a specific file system handle.
+
+  NOTE:
+  - LocateProtocol() must NOT be used.
+  - Always delete using the same FS handle used for read/write.
+
+  @param[in] FsHandle      File system handle
+  @param[in] FilePath     Absolute file path
+
+  @retval SBCOK            Success
+  @retval SBCNOTFND        File not found
+  @retval SBCFAIL          Delete failed
+  @retval SBCNULLP         Invalid parameter
+**/
+SBCStatus
+SBC_DeleteFileOnHandle(
+    IN EFI_HANDLE FsHandle,
+    IN CHAR16    *FilePath
+    );
+
+
+/**
+ * @brief Load a file from any available EFI filesystem.
+ *
+ * This function automatically searches all handles that support
+ * EFI_SIMPLE_FILE_SYSTEM_PROTOCOL and attempts to open/read
+ * the specified file path.
+ *
+ * If the file is successfully found, the file contents are allocated
+ * into memory and returned through @p OutLv.
+ *
+ * The caller is responsible for freeing OutLv->value using FreePool().
+ *
+ * @param[in]  FilePath
+ *     Absolute EFI file path.
+ *
+ *     Example:
+ *     - L"\\EFI\\BOOT\\SSBL.efi"
+ *     - L"\\EFI\\BOOT\\grubx64.efi"
+ *
+ * @param[out] OutLv
+ *     Output buffer structure.
+ *
+ *     - value  : Allocated file buffer
+ *     - length : File size in bytes
+ *
+ * @retval SBCOK
+ *     File successfully loaded.
+ *
+ * @retval SBCNULLP
+ *     Invalid parameter.
+ *
+ * @retval SBCNOTFND
+ *     File not found on any filesystem.
+ *
+ * @retval SBCIO
+ *     File read error occurred.
+ *
+ * @retval SBCFAIL
+ *     General failure.
+ *
+ * @note
+ * The caller must release the allocated buffer:
+ *
+ * @code
+ * if (Lv.value != NULL) {
+ *     FreePool(Lv.value);
+ *     Lv.value = NULL;
+ *     Lv.length = 0;
+ * }
+ * @endcode
+ *
+ * @par Example
+ *
+ * @code
+ * LV_t Lv;
+ * SBCStatus Ret;
+ *
+ * Ret = SBC_LoadFile(
+ *           L"\\EFI\\BOOT\\SSBL.efi",
+ *           &Lv
+ *       );
+ *
+ * if (Ret != SBCOK) {
+ *     eprint("SBC_LoadFile failed");
+ *     return Ret;
+ * }
+ *
+ * dprint("File loaded successfully");
+ * dprint("File Size : %ld bytes", Lv.length);
+ *
+ * // Use Lv.value ...
+ *
+ * FreePool(Lv.value);
+ * Lv.value  = NULL;
+ * Lv.length = 0;
+ * @endcode
+ */
+SBCStatus
+SBC_LoadFile(
+    IN  CHAR16 *FilePath,
+    OUT LV_t   *OutLv
+);
+
+
+
+SBCStatus SBC_OSID_KeyStore(void *context);
+#endif

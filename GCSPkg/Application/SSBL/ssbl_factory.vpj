@@ -1,0 +1,187 @@
+<!DOCTYPE Project SYSTEM "http://www.slickedit.com/dtd/vse/10.0/vpj.dtd">
+<Project
+    Version="10.0"
+    VendorName="SlickEdit"
+    TemplateName="Other C/C++"
+    WorkingDir=".">
+    <Config
+        Name="Debug"
+        Type="cpp"
+        DebugCallbackName="gdb"
+        OutputFile="%bdssbl_factory"
+        CompilerConfigName="Latest Version">
+        <Menu>
+            <Target
+                Name="Compile"
+                MenuCaption="&amp;Compile"
+                CaptureOutputWith="ProcessBuffer"
+                OutputExts="*.o"
+                SaveOption="SaveCurrent"
+                RunFromDir="%rw">
+                <Exec CmdLine='cc -c -g %i %defd -o "%bd%n.o" "%f"'/>
+            </Target>
+            <Target
+                Name="Link"
+                MenuCaption="&amp;Link">
+                <Exec CmdLine='cc -g -o "%o" %f %libs'/>
+            </Target>
+            <Target
+                Name="Build"
+                MenuCaption="&amp;Build"
+                CaptureOutputWith="ProcessBuffer"
+                SaveOption="SaveWorkspaceFiles"
+                RunFromDir="%rw">
+                <Exec CmdLine='"%(VSLICKBIN1)vsbuild" build "%w" "%r"'/>
+            </Target>
+            <Target
+                Name="Rebuild"
+                MenuCaption="&amp;Rebuild"
+                CaptureOutputWith="ProcessBuffer"
+                SaveOption="SaveWorkspaceFiles"
+                RunFromDir="%rw">
+                <Exec CmdLine='"%(VSLICKBIN1)vsbuild" rebuild "%w" "%r"'/>
+            </Target>
+            <Target
+                Name="Debug"
+                MenuCaption="&amp;Debug"
+                SaveOption="SaveNone"
+                BuildFirst="1"
+                CaptureOutputWith="ProcessBuffer"
+                RunFromDir="%rw">
+                <Exec CmdLine='vsdebugio -prog "%o"'/>
+            </Target>
+            <Target
+                Name="Execute"
+                MenuCaption="E&amp;xecute"
+                SaveOption="SaveNone"
+                BuildFirst="1"
+                CaptureOutputWith="ProcessBuffer"
+                RunFromDir="%rw">
+                <Exec CmdLine='"%o"'/>
+            </Target>
+        </Menu>
+    </Config>
+    <Config
+        Name="Release"
+        Type="cpp"
+        DebugCallbackName="gdb"
+        OutputFile="%bdssbl_factory"
+        CompilerConfigName="Latest Version">
+        <Menu>
+            <Target
+                Name="Compile"
+                MenuCaption="&amp;Compile"
+                CaptureOutputWith="ProcessBuffer"
+                SaveOption="SaveCurrent"
+                OutputExts="*.o"
+                RunFromDir="%rw">
+                <Exec CmdLine='cc -c -O %i %defd -o "%bd%n.o" "%f"'/>
+            </Target>
+            <Target
+                Name="Link"
+                MenuCaption="&amp;Link">
+                <Exec CmdLine='cc -O -o "%o" %f %libs'/>
+            </Target>
+            <Target
+                Name="Build"
+                MenuCaption="&amp;Build"
+                CaptureOutputWith="ProcessBuffer"
+                SaveOption="SaveWorkspaceFiles"
+                RunFromDir="%rw">
+                <Exec CmdLine='"%(VSLICKBIN1)vsbuild" build "%w" "%r"'/>
+            </Target>
+            <Target
+                Name="Rebuild"
+                MenuCaption="&amp;Rebuild"
+                CaptureOutputWith="ProcessBuffer"
+                SaveOption="SaveWorkspaceFiles"
+                RunFromDir="%rw">
+                <Exec CmdLine='"%(VSLICKBIN1)vsbuild" rebuild "%w" "%r"'/>
+            </Target>
+            <Target
+                Name="Debug"
+                MenuCaption="&amp;Debug"
+                SaveOption="SaveNone"
+                BuildFirst="1"
+                CaptureOutputWith="ProcessBuffer"
+                RunFromDir="%rw">
+                <Exec CmdLine='vsdebugio -prog "%o"'/>
+            </Target>
+            <Target
+                Name="Execute"
+                MenuCaption="E&amp;xecute"
+                SaveOption="SaveNone"
+                BuildFirst="1"
+                CaptureOutputWith="ProcessBuffer"
+                RunFromDir="%rw">
+                <Exec CmdLine='"%o"'/>
+            </Target>
+        </Menu>
+    </Config>
+    <Rules Name="Compile">
+        <Rule
+            InputExts="*.s"
+            OutputExts="*.o"
+            LinkObject="1">
+            <Exec CmdLine='as -o "%bd%n.o" "%f"'/>
+        </Rule>
+    </Rules>
+    <CustomFolders>
+        <Folder
+            Name="Source Files"
+            Filters="*.c;*.C;*.cc;*.cpp;*.cp;*.cxx;*.c++;*.prg;*.pas;*.dpr;*.asm;*.s;*.bas;*.java;*.cs;*.sc;*.scala;*.e;*.cob;*.html;*.rc;*.tcl;*.py;*.pl;*.d;*.m;*.mm;*.go;*.groovy;*.gsh"
+            GUID="{4D78083A-77FC-4486-BF5C-BF0E4B53BDAB}"></Folder>
+        <Folder
+            Name="Header Files"
+            Filters="*.h;*.H;*.hh;*.hpp;*.hxx;*.h++;*.inc;*.sh;*.cpy;*.if"
+            GUID="{C6AF9B08-6FAE-4743-B5BF-59F2EF370B99}"></Folder>
+        <Folder
+            Name="Resource Files"
+            Filters="*.ico;*.cur;*.dlg"
+            GUID="{886D0EC4-D9A9-4EF3-809F-6F9126F55B8F}"/>
+        <Folder
+            Name="Bitmaps"
+            Filters="*.bmp"
+            GUID="{1680C0EC-9E01-4A29-ACEF-864E3D20B8C6}"/>
+        <Folder
+            Name="Other Files"
+            Filters=""
+            GUID="{9BD49117-6700-4AA9-9A95-557768062DD3}"></Folder>
+    </CustomFolders>
+    <List Name="RTE">
+    </List>
+    <Files AutoFolders="DirectoryView">
+        <F N="aes_vectortable.h"/>
+        <F N="cmocka.c"/>
+        <F N="cmocka.h"/>
+        <F N="ecc_vectortable.h"/>
+        <F N="leo_test.h"/>
+        <F N="SBC_AntiTampering.c"/>
+        <F N="SBC_AntiTampering.h"/>
+        <F N="SBC_Config.h"/>
+        <F N="SBC_CryptAES.c"/>
+        <F N="SBC_CryptAES.h"/>
+        <F N="SBC_EccSignVerify.h"/>
+        <F N="SBC_EccSignVeriify.c"/>
+        <F N="SBC_ErrorType.h"/>
+        <F N="SBC_FileCtrl.c"/>
+        <F N="SBC_FileCtrl.h"/>
+        <F N="SBC_HashAndMac.c"/>
+        <F N="SBC_Hashing.c"/>
+        <F N="SBC_Hashing.h"/>
+        <F N="SBC_HashTestVectorTable.h"/>
+        <F N="SBC_Kdf.c"/>
+        <F N="SBC_Kdf.h"/>
+        <F N="SBC_LoadKernelImage.c"/>
+        <F N="SBC_Log.c"/>
+        <F N="SBC_Log.h"/>
+        <F N="SBC_SystemControl.c"/>
+        <F N="SBC_SystemControl.h"/>
+        <F N="SBC_TypeDefs.h"/>
+        <F N="SBC_Util.h"/>
+        <F N="SBC_X509.c"/>
+        <F N="SBC_X509.h"/>
+        <F N="SSBLFactory.c"/>
+        <F N="SSBLFactory.inf"/>
+    </Files>
+</Project>

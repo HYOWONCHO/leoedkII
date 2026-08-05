@@ -1,0 +1,67 @@
+\doxysection{\+\_\+rawprt\+\_\+hdr\+\_\+t Struct Reference}
+\hypertarget{struct__rawprt__hdr__t}{}\label{struct__rawprt__hdr__t}\index{\_rawprt\_hdr\_t@{\_rawprt\_hdr\_t}}
+\doxysubsubsection*{Data Fields}
+\begin{DoxyCompactItemize}
+\item 
+UINT16 \mbox{\hyperlink{struct__rawprt__hdr__t_afcb9244b526fbbfea3f9804dfe39579c}{bootmode}}
+\item 
+UINT8 \mbox{\hyperlink{struct__rawprt__hdr__t_a4f1a0530cfd357b17dbf678cd2e932de}{bootpres}} \mbox{[}\mbox{\hyperlink{group__RawPartition_ga3e3c53f9f060647ce6cac86b5eabfbb3}{SBC\+\_\+\+BOOT\+\_\+\+PRES\+\_\+\+LEN}}\mbox{]}
+\item 
+UINT8 \mbox{\hyperlink{struct__rawprt__hdr__t_a008c8681a6429acb6f4d414478b33cee}{bootpres\+\_\+reserv}} \mbox{[}\mbox{\hyperlink{group__RawPartition_ga3e3c53f9f060647ce6cac86b5eabfbb3}{SBC\+\_\+\+BOOT\+\_\+\+PRES\+\_\+\+LEN}}\mbox{]}
+\item 
+\Hypertarget{struct__rawprt__hdr__t_a99a50c882147fed15f8170e92bc5766b}\label{struct__rawprt__hdr__t_a99a50c882147fed15f8170e92bc5766b} 
+UINT16 {\bfseries keymode}
+\item 
+UINT32 \mbox{\hyperlink{struct__rawprt__hdr__t_a53354678a852c81b2f599bd99383dd9d}{magicid}}
+\item 
+UINT8 \mbox{\hyperlink{struct__rawprt__hdr__t_a87d37126bdb0a44008e83650be024f3b}{prtinfo}} \mbox{[}\mbox{\hyperlink{group__RawPartition_gaabf790766c8ef5f0c18f38aef6508cc2}{SBC\+\_\+\+PRTNIFO\+\_\+\+LEN}}\mbox{]}
+\item 
+UINT16 \mbox{\hyperlink{struct__rawprt__hdr__t_a91571f8daea1a6aac7bba18cc3eaef41}{rcvmode}}
+\item 
+\Hypertarget{struct__rawprt__hdr__t_aa53682e6bc8c1f5b2a0bd20176d45aff}\label{struct__rawprt__hdr__t_aa53682e6bc8c1f5b2a0bd20176d45aff} 
+UINT8 {\bfseries reserv} \mbox{[}\mbox{\hyperlink{group__RawPartition_ga9ccbf63e449412eb70455c5e36b2a8aa}{SBC\+\_\+\+HDR\+\_\+\+SKIP\+\_\+\+LEN}}\mbox{]}
+\end{DoxyCompactItemize}
+
+
+\doxysubsection{Field Documentation}
+\Hypertarget{struct__rawprt__hdr__t_afcb9244b526fbbfea3f9804dfe39579c}\label{struct__rawprt__hdr__t_afcb9244b526fbbfea3f9804dfe39579c} 
+\index{\_rawprt\_hdr\_t@{\_rawprt\_hdr\_t}!bootmode@{bootmode}}
+\index{bootmode@{bootmode}!\_rawprt\_hdr\_t@{\_rawprt\_hdr\_t}}
+\doxysubsubsection{\texorpdfstring{bootmode}{bootmode}}
+{\footnotesize\ttfamily UINT16 \+\_\+rawprt\+\_\+hdr\+\_\+t\+::bootmode}
+
+Boot Mode \Hypertarget{struct__rawprt__hdr__t_a4f1a0530cfd357b17dbf678cd2e932de}\label{struct__rawprt__hdr__t_a4f1a0530cfd357b17dbf678cd2e932de} 
+\index{\_rawprt\_hdr\_t@{\_rawprt\_hdr\_t}!bootpres@{bootpres}}
+\index{bootpres@{bootpres}!\_rawprt\_hdr\_t@{\_rawprt\_hdr\_t}}
+\doxysubsubsection{\texorpdfstring{bootpres}{bootpres}}
+{\footnotesize\ttfamily UINT8 \+\_\+rawprt\+\_\+hdr\+\_\+t\+::bootpres\mbox{[}\mbox{\hyperlink{group__RawPartition_ga3e3c53f9f060647ce6cac86b5eabfbb3}{SBC\+\_\+\+BOOT\+\_\+\+PRES\+\_\+\+LEN}}\mbox{]}}
+
+Recover mode Boot pres \Hypertarget{struct__rawprt__hdr__t_a008c8681a6429acb6f4d414478b33cee}\label{struct__rawprt__hdr__t_a008c8681a6429acb6f4d414478b33cee} 
+\index{\_rawprt\_hdr\_t@{\_rawprt\_hdr\_t}!bootpres\_reserv@{bootpres\_reserv}}
+\index{bootpres\_reserv@{bootpres\_reserv}!\_rawprt\_hdr\_t@{\_rawprt\_hdr\_t}}
+\doxysubsubsection{\texorpdfstring{bootpres\_reserv}{bootpres\_reserv}}
+{\footnotesize\ttfamily UINT8 \+\_\+rawprt\+\_\+hdr\+\_\+t\+::bootpres\+\_\+reserv\mbox{[}\mbox{\hyperlink{group__RawPartition_ga3e3c53f9f060647ce6cac86b5eabfbb3}{SBC\+\_\+\+BOOT\+\_\+\+PRES\+\_\+\+LEN}}\mbox{]}}
+
+Boot pres \Hypertarget{struct__rawprt__hdr__t_a53354678a852c81b2f599bd99383dd9d}\label{struct__rawprt__hdr__t_a53354678a852c81b2f599bd99383dd9d} 
+\index{\_rawprt\_hdr\_t@{\_rawprt\_hdr\_t}!magicid@{magicid}}
+\index{magicid@{magicid}!\_rawprt\_hdr\_t@{\_rawprt\_hdr\_t}}
+\doxysubsubsection{\texorpdfstring{magicid}{magicid}}
+{\footnotesize\ttfamily UINT32 \+\_\+rawprt\+\_\+hdr\+\_\+t\+::magicid}
+
+Identifier for SBC Raw-\/\+Partition \Hypertarget{struct__rawprt__hdr__t_a87d37126bdb0a44008e83650be024f3b}\label{struct__rawprt__hdr__t_a87d37126bdb0a44008e83650be024f3b} 
+\index{\_rawprt\_hdr\_t@{\_rawprt\_hdr\_t}!prtinfo@{prtinfo}}
+\index{prtinfo@{prtinfo}!\_rawprt\_hdr\_t@{\_rawprt\_hdr\_t}}
+\doxysubsubsection{\texorpdfstring{prtinfo}{prtinfo}}
+{\footnotesize\ttfamily UINT8 \+\_\+rawprt\+\_\+hdr\+\_\+t\+::prtinfo\mbox{[}\mbox{\hyperlink{group__RawPartition_gaabf790766c8ef5f0c18f38aef6508cc2}{SBC\+\_\+\+PRTNIFO\+\_\+\+LEN}}\mbox{]}}
+
+Partition information \Hypertarget{struct__rawprt__hdr__t_a91571f8daea1a6aac7bba18cc3eaef41}\label{struct__rawprt__hdr__t_a91571f8daea1a6aac7bba18cc3eaef41} 
+\index{\_rawprt\_hdr\_t@{\_rawprt\_hdr\_t}!rcvmode@{rcvmode}}
+\index{rcvmode@{rcvmode}!\_rawprt\_hdr\_t@{\_rawprt\_hdr\_t}}
+\doxysubsubsection{\texorpdfstring{rcvmode}{rcvmode}}
+{\footnotesize\ttfamily UINT16 \+\_\+rawprt\+\_\+hdr\+\_\+t\+::rcvmode}
+
+Key Mode 
+
+The documentation for this struct was generated from the following file\+:\begin{DoxyCompactItemize}
+\item 
+SBC\+\_\+\+File\+Ctrl.\+h\end{DoxyCompactItemize}

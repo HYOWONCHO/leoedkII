@@ -1,0 +1,5 @@
+<map id="SBC_RecryptoProtectedSW" name="SBC_RecryptoProtectedSW">
+<area shape="rect" id="Node000001" title="Re&#45;encrypt (re&#45;crypto) a protected software image using a new key set." alt="" coords="212,5,413,31"/>
+<area shape="rect" id="Node000002" href="$SBC__ProtectedSW_8c.html#a6d40367e0a002e55377ab0859776f807" title=" " alt="" coords="5,5,164,31"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="198,21,164,21,164,15,198,15"/>
+</map>

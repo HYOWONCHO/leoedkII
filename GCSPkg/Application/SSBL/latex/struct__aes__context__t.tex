@@ -1,0 +1,95 @@
+\doxysection{\+\_\+aes\+\_\+context\+\_\+t Struct Reference}
+\hypertarget{struct__aes__context__t}{}\label{struct__aes__context__t}\index{\_aes\_context\_t@{\_aes\_context\_t}}
+
+
+Collaboration diagram for \+\_\+aes\+\_\+context\+\_\+t\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=350pt]{struct__aes__context__t__coll__graph}
+\end{center}
+\end{figure}
+\doxysubsubsection*{Data Fields}
+\begin{DoxyCompactItemize}
+\item 
+SBC\+\_\+\+Cipher\+Algo\+Mode \mbox{\hyperlink{struct__aes__context__t_ad28135daf9058d589a27625a1ee9bd1f}{algoid}}
+\item 
+\mbox{\hyperlink{struct__aes__cbc__context__t}{SBC\+\_\+\+AESCBCCtx}} \texorpdfstring{$\ast$}{*} \mbox{\hyperlink{struct__aes__context__t_a5e21b6c3b306b3a7e7ed514a0fecba60}{cbc}}
+\item 
+\mbox{\hyperlink{struct__aes__gcm__context__t}{SBC\+\_\+\+AESGcm\+Ctx}} \texorpdfstring{$\ast$}{*} \mbox{\hyperlink{struct__aes__context__t_aea65c5b7363a37f06064ac9dd648e3ca}{gcm}}
+\item 
+VOID \texorpdfstring{$\ast$}{*} \mbox{\hyperlink{struct__aes__context__t_aaa201de4d3c4300e94859f3da99623e9}{handle}}
+\item 
+\mbox{\hyperlink{structSBC__CipherTLV}{SBC\+\_\+\+Cipher\+TLV}} \texorpdfstring{$\ast$}{*} \mbox{\hyperlink{struct__aes__context__t_a12101c7f0d5b838610a9ceaf8d7bd226}{in}}
+\item 
+UINT8 \texorpdfstring{$\ast$}{*} \mbox{\hyperlink{struct__aes__context__t_a2a5ff3e2a72ce7602d43b2219b7942e7}{iv}}
+\item 
+UINT8 \texorpdfstring{$\ast$}{*} \mbox{\hyperlink{struct__aes__context__t_a40a420872f94c2b068d399d7eceaa248}{key}}
+\item 
+UINTN \mbox{\hyperlink{struct__aes__context__t_ad6df37f6448d898fb846183d9efdb720}{keylen}}
+\item 
+\mbox{\hyperlink{structSBC__CipherTLV}{SBC\+\_\+\+Cipher\+TLV}} \texorpdfstring{$\ast$}{*} \mbox{\hyperlink{struct__aes__context__t_a543ed050e75a1da1ed0f86205a9a6068}{out}}
+\end{DoxyCompactItemize}
+
+
+\doxysubsection{Field Documentation}
+\Hypertarget{struct__aes__context__t_ad28135daf9058d589a27625a1ee9bd1f}\label{struct__aes__context__t_ad28135daf9058d589a27625a1ee9bd1f} 
+\index{\_aes\_context\_t@{\_aes\_context\_t}!algoid@{algoid}}
+\index{algoid@{algoid}!\_aes\_context\_t@{\_aes\_context\_t}}
+\doxysubsubsection{\texorpdfstring{algoid}{algoid}}
+{\footnotesize\ttfamily SBC\+\_\+\+Cipher\+Algo\+Mode \+\_\+aes\+\_\+context\+\_\+t\+::algoid}
+
+Cipher algorithm mode (e.\+g., CBC, GCM). \Hypertarget{struct__aes__context__t_a5e21b6c3b306b3a7e7ed514a0fecba60}\label{struct__aes__context__t_a5e21b6c3b306b3a7e7ed514a0fecba60} 
+\index{\_aes\_context\_t@{\_aes\_context\_t}!cbc@{cbc}}
+\index{cbc@{cbc}!\_aes\_context\_t@{\_aes\_context\_t}}
+\doxysubsubsection{\texorpdfstring{cbc}{cbc}}
+{\footnotesize\ttfamily \mbox{\hyperlink{struct__aes__cbc__context__t}{SBC\+\_\+\+AESCBCCtx}}\texorpdfstring{$\ast$}{*} \+\_\+aes\+\_\+context\+\_\+t\+::cbc}
+
+AES-\/\+CBC mode context. Used when algoid is SBC\+\_\+\+CIPHER\+\_\+\+AES\+\_\+\+CBC. \Hypertarget{struct__aes__context__t_aea65c5b7363a37f06064ac9dd648e3ca}\label{struct__aes__context__t_aea65c5b7363a37f06064ac9dd648e3ca} 
+\index{\_aes\_context\_t@{\_aes\_context\_t}!gcm@{gcm}}
+\index{gcm@{gcm}!\_aes\_context\_t@{\_aes\_context\_t}}
+\doxysubsubsection{\texorpdfstring{gcm}{gcm}}
+{\footnotesize\ttfamily \mbox{\hyperlink{struct__aes__gcm__context__t}{SBC\+\_\+\+AESGcm\+Ctx}}\texorpdfstring{$\ast$}{*} \+\_\+aes\+\_\+context\+\_\+t\+::gcm}
+
+AES-\/\+GCM mode context. Used when algoid is SBC\+\_\+\+CIPHER\+\_\+\+AES\+\_\+\+GCM. \Hypertarget{struct__aes__context__t_aaa201de4d3c4300e94859f3da99623e9}\label{struct__aes__context__t_aaa201de4d3c4300e94859f3da99623e9} 
+\index{\_aes\_context\_t@{\_aes\_context\_t}!handle@{handle}}
+\index{handle@{handle}!\_aes\_context\_t@{\_aes\_context\_t}}
+\doxysubsubsection{\texorpdfstring{handle}{handle}}
+{\footnotesize\ttfamily VOID\texorpdfstring{$\ast$}{*} \+\_\+aes\+\_\+context\+\_\+t\+::handle}
+
+Internal handle or reference for context management. \Hypertarget{struct__aes__context__t_a12101c7f0d5b838610a9ceaf8d7bd226}\label{struct__aes__context__t_a12101c7f0d5b838610a9ceaf8d7bd226} 
+\index{\_aes\_context\_t@{\_aes\_context\_t}!in@{in}}
+\index{in@{in}!\_aes\_context\_t@{\_aes\_context\_t}}
+\doxysubsubsection{\texorpdfstring{in}{in}}
+{\footnotesize\ttfamily \mbox{\hyperlink{structSBC__CipherTLV}{SBC\+\_\+\+Cipher\+TLV}}\texorpdfstring{$\ast$}{*} \+\_\+aes\+\_\+context\+\_\+t\+::in}
+
+Pointer to input data in TLV format. \Hypertarget{struct__aes__context__t_a2a5ff3e2a72ce7602d43b2219b7942e7}\label{struct__aes__context__t_a2a5ff3e2a72ce7602d43b2219b7942e7} 
+\index{\_aes\_context\_t@{\_aes\_context\_t}!iv@{iv}}
+\index{iv@{iv}!\_aes\_context\_t@{\_aes\_context\_t}}
+\doxysubsubsection{\texorpdfstring{iv}{iv}}
+{\footnotesize\ttfamily UINT8\texorpdfstring{$\ast$}{*} \+\_\+aes\+\_\+context\+\_\+t\+::iv}
+
+Initialization vector used for CBC or GCM modes. \Hypertarget{struct__aes__context__t_a40a420872f94c2b068d399d7eceaa248}\label{struct__aes__context__t_a40a420872f94c2b068d399d7eceaa248} 
+\index{\_aes\_context\_t@{\_aes\_context\_t}!key@{key}}
+\index{key@{key}!\_aes\_context\_t@{\_aes\_context\_t}}
+\doxysubsubsection{\texorpdfstring{key}{key}}
+{\footnotesize\ttfamily UINT8\texorpdfstring{$\ast$}{*} \+\_\+aes\+\_\+context\+\_\+t\+::key}
+
+Pointer to the AES key. \Hypertarget{struct__aes__context__t_ad6df37f6448d898fb846183d9efdb720}\label{struct__aes__context__t_ad6df37f6448d898fb846183d9efdb720} 
+\index{\_aes\_context\_t@{\_aes\_context\_t}!keylen@{keylen}}
+\index{keylen@{keylen}!\_aes\_context\_t@{\_aes\_context\_t}}
+\doxysubsubsection{\texorpdfstring{keylen}{keylen}}
+{\footnotesize\ttfamily UINTN \+\_\+aes\+\_\+context\+\_\+t\+::keylen}
+
+Length of the AES key in bytes. \Hypertarget{struct__aes__context__t_a543ed050e75a1da1ed0f86205a9a6068}\label{struct__aes__context__t_a543ed050e75a1da1ed0f86205a9a6068} 
+\index{\_aes\_context\_t@{\_aes\_context\_t}!out@{out}}
+\index{out@{out}!\_aes\_context\_t@{\_aes\_context\_t}}
+\doxysubsubsection{\texorpdfstring{out}{out}}
+{\footnotesize\ttfamily \mbox{\hyperlink{structSBC__CipherTLV}{SBC\+\_\+\+Cipher\+TLV}}\texorpdfstring{$\ast$}{*} \+\_\+aes\+\_\+context\+\_\+t\+::out}
+
+Pointer to output buffer in TLV format. 
+
+The documentation for this struct was generated from the following file\+:\begin{DoxyCompactItemize}
+\item 
+SBC\+\_\+\+Crypt\+AES.\+h\end{DoxyCompactItemize}
