@@ -268,7 +268,7 @@ UefiMain (
                  SYS_LOG_CSC_NAME,
                  0,
                  SYS_LOG_EVT_DETECTION,
-                 L"SBC_VENDOR_SP *** SSBL Statring ***");
+                 L"GCS_VENDOR_SP *** SSBL Statring ***");
 
     sys_start_time = SBC_PerfNowTicks();
 
@@ -286,7 +286,7 @@ UefiMain (
                      SYS_LOG_CSC_NAME,
                      0,
                      SYS_LOG_EVT_DETECTION,
-                     L"SBC_SP_BlkIO Raw-Partition Not Detected");
+                     L"GCS_SP_BlkIO Raw-Partition Not Detected");
           goto errdone;
     }
 
@@ -348,7 +348,7 @@ UefiMain (
                  SYS_LOG_CSC_NAME,
                  8,
                  SYS_LOG_EVT_DETECTION,
-                 L"SBC_tamper_SSBL signature verification failed\n");
+                 L"GCS_tamper_SSBL signature verification failed\n");
           retval = EFI_INVALID_PARAMETER;
           btproc.bootst = SB_PROC_ST_ABNRAM;
           if (h_rawptrheader.bootmode == BOOT_MODE_NORMAL) {
@@ -363,7 +363,7 @@ UefiMain (
                  SYS_LOG_CSC_NAME,
                  8,
                  SYS_LOG_EVT_DETECTION,
-                 L"SBC_tamper_ SSBL signature verification success\n");
+                 L"GCS_tamper_SSBL signature verification success\n");
 
 #ifdef _TEST_BED_
     dprint("*** 5.3.6.1 5.Extract the Boot FW  baseanswer --->");
@@ -379,7 +379,7 @@ UefiMain (
                  SYS_LOG_CSC_NAME,
                  8,
                  SYS_LOG_EVT_DETECTION,
-                 L"SBC_tamper_OS image signature verification failed\n");
+                 L"GCS_tamper_OS image signature verification failed\n");
           retval = EFI_INVALID_PARAMETER;
           btproc.bootst = SB_PROC_ST_ABNRAM;
           if (h_rawptrheader.bootmode == BOOT_MODE_NORMAL) {
@@ -399,7 +399,7 @@ UefiMain (
              SYS_LOG_CSC_NAME,
              1,
              SYS_LOG_EVT_VALDIATION,
-             L"SBC_Dice_Key HW&SW Base Key Creation Fail");
+             L"GCS_Dice_Key HW&SW Base Key Creation Fail");
         retval = EFI_INVALID_PARAMETER;
         btproc.bootst = SB_PROC_ST_ABNRAM;
         goto errdone;
@@ -413,7 +413,7 @@ UefiMain (
 //       SYS_LOG_CSC_NAME,
 //       1,
 //       SYS_LOG_EVT_VALDIATION,
-//       L"SBC_Dice_Key HW&SW Base Key Creation Success");
+//       L"GCS_Dice_Key HW&SW Base Key Creation Success");
 
     if (h_rawptrheader.bootmode != BOOT_MODE_NORMAL) {
         
@@ -423,7 +423,7 @@ UefiMain (
              SYS_LOG_CSC_NAME,
              8,
              SYS_LOG_EVT_VALDIATION,
-             L"SBC_Integrity_All boot components passed signature verification \n");
+             L"GCS_Integrity_All boot components passed signature verification \n");
     }
 #if defined(_FILE_RD_BM_)
 //#warning   "SBC Boot Mode Read from File"
@@ -451,7 +451,7 @@ UefiMain (
                              SYS_LOG_APP_NAME,SYS_LOG_CSC_NAME, 
                              0, 
                              SYS_LOG_EVT_DETECTION, 
-                             L"SBC_BootFW The System has booted from recovery mode \n");
+                             L"GCS_BootFW The System has booted from recovery mode \n");
 
             ret = SBC_GenMigrationKey((void *)&btproc, diceid.migid);
             if (ret != SBCOK) {
@@ -461,7 +461,7 @@ UefiMain (
                              SYS_LOG_APP_NAME,SYS_LOG_CSC_NAME, 
                              4, 
                              SYS_LOG_EVT_DETECTION, 
-                             L"SBC_BootFW_Update Fail to MigrationKey Creation \n");
+                             L"GCS_BootFW_Update Fail to MigrationKey Creation \n");
                 retval = EFI_INVALID_PARAMETER;
                 btproc.bootst = SB_PROC_ST_ABNRAM;
 
@@ -473,7 +473,7 @@ UefiMain (
             if (ret == SBCOK) {
                 SBC_BuildHexFormattedMessage(
                     (CONST VOID *)diceid.migid, 32,
-                    L"SBC_BootFW_Update Migration Key  (%s)\n",
+                    L"GCS_BootFW_Update Migration Key  (%s)\n",
                     mrgmsg, sizeof mrgmsg);
 
                 sbc_err_sysprn(SBC_LOG_CMN_PRIO_INFO, 2,
@@ -516,7 +516,7 @@ UefiMain (
             SYS_LOG_CSC_NAME, 
             8, 
             L"Validation ", 
-            L"SBC_VENDOR_SP Grub Load Done");  
+            L"GCS_VENDOR_SP Grub Load Done");  
 
         ret = SBC_GRUB_LoadAndStart(ImageHandle);
         if(ret != SBCOK) {
@@ -526,7 +526,7 @@ UefiMain (
                    SYS_LOG_CSC_NAME, 
                     8, 
                     L"Detection ", 
-                    L"SBC_VENDOR_SP Grub Load fail");
+                    L"GCS_VENDOR_SP Grub Load fail");
             retval = EFI_INVALID_PARAMETER;
         }
 
@@ -536,7 +536,7 @@ UefiMain (
             SYS_LOG_CSC_NAME, 
             8, 
             L"Validation ", 
-            L"SBC_VENDOR_SP Grub Load Done");      
+            L"GCS_VENDOR_SP Grub Load Done");      
        //dprint("Factory Boot Mode !!! \n");
        //ret = SBCFAIL;
        //goto errdone;
@@ -555,7 +555,7 @@ UefiMain (
                          SYS_LOG_APP_NAME,SYS_LOG_CSC_NAME, 
                          4, 
                          SYS_LOG_EVT_DETECTION, 
-                         L"SBC_BootFW_Update Fail to MigrationKey Creation \n");
+                         L"GCS_BootFW_Update Fail to MigrationKey Creation \n");
           retval = EFI_INVALID_PARAMETER;
           btproc.bootst = SB_PROC_ST_ABNRAM;
 
@@ -567,7 +567,7 @@ UefiMain (
       if (ret == SBCOK) {
           SBC_BuildHexFormattedMessage(
                 (CONST VOID *)diceid.migid, 32,
-                L"SBC_BootFW_Update Migration Key  (%s)\n",
+                L"GCS_BootFW_Update Migration Key  (%s)\n",
                 mrgmsg, sizeof mrgmsg);
 
           sbc_err_sysprn(SBC_LOG_CMN_PRIO_INFO, 2,
@@ -597,7 +597,7 @@ UefiMain (
                          SYS_LOG_APP_NAME,SYS_LOG_CSC_NAME, 
                          4, 
                          SYS_LOG_EVT_DETECTION, 
-                         L"SBC_BootFW_Update Fail to MigrationKey Creation \n");
+                         L"GCS_BootFW_Update Fail to MigrationKey Creation \n");
             retval = EFI_INVALID_PARAMETER;
             btproc.bootst = SB_PROC_ST_ABNRAM;
 
@@ -609,7 +609,7 @@ UefiMain (
         if (ret == SBCOK) {
             SBC_BuildHexFormattedMessage(
                 (CONST VOID *)diceid.migid, 32,
-                L"SBC_BootFW_Recovery Migration Key  (%s)\n",
+                L"GCS_BootFW_Recovery Migration Key  (%s)\n",
                 mrgmsg, sizeof mrgmsg);
 
             sbc_err_sysprn(SBC_LOG_CMN_PRIO_INFO, 2,
@@ -647,7 +647,7 @@ UefiMain (
                SYS_LOG_CSC_NAME, 
                 8, 
                 L"Detection ", 
-                L"SBC_VENDOR_SP Grub Load fail");
+                L"GCS_VENDOR_SP Grub Load fail");
         retval = EFI_INVALID_PARAMETER;
     }
 
@@ -657,7 +657,7 @@ UefiMain (
         SYS_LOG_CSC_NAME, 
         8, 
         L"Validation ", 
-        L"SBC_VENDOR_SP Grub Load Done");
+        L"GCS_VENDOR_SP Grub Load Done");
 
     //ret = SBC_FSBL_Verify(h_blkio, &baseansr);
 

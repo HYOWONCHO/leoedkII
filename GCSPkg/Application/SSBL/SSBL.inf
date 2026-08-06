@@ -40,8 +40,8 @@
   SBC_ProtectedSW.c
   SBC_Nvram.c
   SBC_Timer.c
-  SBC_Tpm.c
-
+  
+  #SBC_Tpm.c
   #SBC_UseCaseUpdateTest.c
 
 

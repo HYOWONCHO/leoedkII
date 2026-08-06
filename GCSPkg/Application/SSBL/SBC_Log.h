@@ -97,9 +97,7 @@ VOID SBC_LogMsg(CHAR8* logmsg, CONST CHAR8 *funcname, UINTN linenumber,
 #define iprint(fmt, ...) \
     DEBUG(( \
         DEBUG_INFO, \
-        " " C_BLU "[Info]" C_RST "  (%a:%d) : " fmt "\n", \
-        __FUNCTION__, \
-        __LINE__, \
+        " " C_BLU "[Info]" C_RST "  GCS: " fmt "\n", \
         ##__VA_ARGS__ \
     ))
 
@@ -108,9 +106,7 @@ VOID SBC_LogMsg(CHAR8* logmsg, CONST CHAR8 *funcname, UINTN linenumber,
 #define wprint(fmt, ...) \
     DEBUG(( \
         DEBUG_WARN, \
-        " " C_YEL "[Warn]" C_RST "  (%a:%d) : " fmt "\n", \
-        __FUNCTION__, \
-        __LINE__, \
+        " " C_YEL "[Warn]" C_RST "  GCS : " fmt "\n", \
         ##__VA_ARGS__ \
     ))
 
@@ -119,9 +115,7 @@ VOID SBC_LogMsg(CHAR8* logmsg, CONST CHAR8 *funcname, UINTN linenumber,
 #define eprint(fmt, ...) \
     DEBUG(( \
         DEBUG_ERROR, \
-        " " C_RED "[Error]" C_RST " (%a:%d) : " fmt "\n", \
-        __FUNCTION__, \
-        __LINE__, \
+        " " C_RED "[Error]" C_RST " GCS : " fmt "\n", \
         ##__VA_ARGS__ \
     ))
 
@@ -130,9 +124,7 @@ VOID SBC_LogMsg(CHAR8* logmsg, CONST CHAR8 *funcname, UINTN linenumber,
 #define dprint(fmt, ...) \
     DEBUG(( \
         DEBUG_INFO, \
-        " " C_GRN "[Debug]" C_RST " (%a:%d) : " fmt "\n", \
-        __FUNCTION__, \
-        __LINE__, \
+        " " C_GRN "[Debug]" C_RST " GCS : " fmt "\n", \
         ##__VA_ARGS__ \
     ))
 

@@ -414,7 +414,7 @@ SBCStatus  SBC_BaseAnswerStore(VOID *blkio, VOID *p)
                  SYS_LOG_CSC_NAME,
                  0,
                  SYS_LOG_EVT_DETECTION,
-                 L"SBC_VENDOR_SP Fail to the Base answer storing");
+                 L"GCS_VENDOR_SP Fail to the Base answer storing");
         ret = SBCFAIL;
         goto errdone;
     }
@@ -530,7 +530,7 @@ SBCStatus SBC_DeviceSecuirtyKeyCreate(VOID *key)
                      SYS_LOG_CSC_NAME,
                      0,
                      SYS_LOG_EVT_DETECTION,
-                     L"SBC_VENDOR_SP Fail to Genearte the Device Security Key ");
+                     L"GCS_VENDOR_SP Fail to Genearte the Device Security Key ");
         ret = SBCFAIL;
 
         goto errdone;
@@ -581,7 +581,7 @@ SBCStatus SBC_DeviceSecuirtyKeyCreate(VOID *key)
                      SYS_LOG_CSC_NAME,
                      1,
                      SYS_LOG_EVT_DETECTION,
-                     L"SBC_RawFS_Key Failed the security key create \n"
+                     L"GCS_RawFS_Key Failed the security key create \n"
                     );
 
         goto errdone;
@@ -589,7 +589,7 @@ SBCStatus SBC_DeviceSecuirtyKeyCreate(VOID *key)
 
     SBC_BuildHexFormattedMessage(
                 (CONST VOID *)key, 32,
-                L"SBC_RawFS_Key Create security key  (%s)\n",
+                L"GCS_RawFS_Key Create security key  (%s)\n",
                 mrgmsg, sizeof mrgmsg);
 
     sbc_err_sysprn(SBC_LOG_CMN_PRIO_INFO, 2,
@@ -802,7 +802,7 @@ SBCStatus  SBC_FirmwareIdKyeVerify(VOID *priv)
     if(CompareMem(key_pair.q.value,  pubkey, pubkeyl) != 0) {
         SBC_BuildHexFormattedMessage(
             (CONST VOID *)pubkey, (UINTN)pubkeyl,
-            L"SBC_Dice_Verify Failed to Firmware ID Public Key (%s)\n",
+            L"GCS_Dice_Verify Failed to Firmware ID Public Key (%s)\n",
             mrgmsg, sizeof mrgmsg);
 
         sbc_err_sysprn(SBC_LOG_CMN_PRIO_ERR, 2,
@@ -1034,7 +1034,7 @@ SBCStatus  SBC_OSIdKyeVerify(VOID *priv)
         
         SBC_BuildHexFormattedMessage(
             (CONST VOID *)pubkey, (UINTN)pubkeyl,
-            L"SBC_Dice_Verify Failed to OSID Public Key (%s)\n",
+            L"GCS_Dice_Verify Failed to OSID Public Key (%s)\n",
             mrgmsg, sizeof mrgmsg);
 
         sbc_err_sysprn(SBC_LOG_CMN_PRIO_ERR, 2,
@@ -1090,7 +1090,7 @@ SBCStatus SBC_DiceIDKeyVerify(VOID *priv)
            SYS_LOG_CSC_NAME,
            1,
            SYS_LOG_EVT_VALDIATION,
-           L"SBC_Dice_Key FWID Verify Success");
+           L"GCS_Dice_Key FWID Verify Success");
 
     ret = SBC_OSIdKyeVerify(priv);
     if (ret != SBCOK) {
@@ -1103,7 +1103,7 @@ SBCStatus SBC_DiceIDKeyVerify(VOID *priv)
                SYS_LOG_CSC_NAME,
                1,
                SYS_LOG_EVT_VALDIATION,
-               L"SBC_Dice_Key OSID Verify Success");
+               L"GCS_Dice_Key OSID Verify Success");
  
 
 errdone:
@@ -1290,7 +1290,7 @@ SBCStatus SBC_BaseAnswerEncryptStore(VOID *blkhnd, UINT8* msg, UINT32 msgl, UINT
         SBC_BuildHexFormattedMessage(
             (CONST VOID *)ctx.key.value,
             32,
-            L"SFR-Vendor-SP Base Answer Encrypt Fail (%s) \n",
+            L"GCS-Vendor-SP Base Answer Encrypt Fail (%s) \n",
             mrgmsg, sizeof mrgmsg);
 
         sbc_err_sysprn(SBC_LOG_CMN_PRIO_ERR, 2,
@@ -1318,7 +1318,7 @@ SBCStatus SBC_BaseAnswerEncryptStore(VOID *blkhnd, UINT8* msg, UINT32 msgl, UINT
         SBC_BuildHexFormattedMessage(
             (CONST VOID *)ansid.encmsg,
             ansid.msglen,
-            L"SFR-Vendor-SP Base Answer Storet Fail (%s) \n",
+            L"GCS-Vendor-SP Base Answer Storet Fail (%s) \n",
             mrgmsg, sizeof mrgmsg);
 
         sbc_err_sysprn(SBC_LOG_CMN_PRIO_ERR, 2,
@@ -1334,7 +1334,7 @@ SBCStatus SBC_BaseAnswerEncryptStore(VOID *blkhnd, UINT8* msg, UINT32 msgl, UINT
     SBC_BuildHexFormattedMessage(
             (CONST VOID *)ansid.encmsg,
             ansid.msglen,
-            L"SFR-Vendor-SP Base Answer Store Success (%s) \n",
+            L"GCS-Vendor-SP Base Answer Store Success (%s) \n",
             mrgmsg, sizeof mrgmsg);
 
     sbc_err_sysprn(SBC_LOG_CMN_PRIO_ERR, 2,
@@ -1377,7 +1377,7 @@ SBCStatus  SBC_BaseAnswerValidate(VOID *blkhnd, UINT8 *answer, UINTN answerl, UI
                  SYS_LOG_CSC_NAME,
                  0,
                  SYS_LOG_EVT_DETECTION,
-                 L"SBC_VENDOR_SP Fail to Base Answer Decrypt");
+                 L"GCS_VENDOR_SP Fail to Base Answer Decrypt");
         ret = SBCFAIL;
         goto errdone;
     }
@@ -1389,7 +1389,7 @@ SBCStatus  SBC_BaseAnswerValidate(VOID *blkhnd, UINT8 *answer, UINTN answerl, UI
                  SYS_LOG_CSC_NAME,
                  0,
                  SYS_LOG_EVT_DETECTION,
-                 L"SBC_VENDOR_SP Fail to Base Answer Encrypt");
+                 L"GCS_VENDOR_SP Fail to Base Answer Encrypt");
         ret = SBCFAIL;
         goto errdone;
     }
@@ -1437,7 +1437,7 @@ SBCStatus  SBC_BaseAnswerValidate(VOID *blkhnd, UINT8 *answer, UINTN answerl, UI
         SBC_BuildHexFormattedMessage(
             (CONST VOID *)ctx.key.value,
             32,
-            L"SFR-Vendor-SP BaseAnswer decrypt fail (Key - %s) \n",
+            L"GCS-Vendor-SP BaseAnswer decrypt fail (Key - %s) \n",
             mrgmsg, sizeof mrgmsg);
 
         sbc_err_sysprn(SBC_LOG_CMN_PRIO_ERR, 2,
@@ -1473,7 +1473,7 @@ SBCStatus  SBC_BaseAnswerValidate(VOID *blkhnd, UINT8 *answer, UINTN answerl, UI
             SBC_BuildHexFormattedMessage(
                 (CONST VOID *)ctx.key.value,
                 ctx.out.length,
-                L"SFR-Vendor-SP Mismatched Base Answer (%s) \n",
+                L"GCS-Vendor-SP Mismatched Base Answer (%s) \n",
                 mrgmsg, sizeof mrgmsg);
 
             sbc_err_sysprn(SBC_LOG_CMN_PRIO_ERR, 2,
@@ -1509,7 +1509,7 @@ SBCStatus  SBC_BaseAnswerValidate(VOID *blkhnd, UINT8 *answer, UINTN answerl, UI
          SYS_LOG_CSC_NAME,
          3,
          SYS_LOG_EVT_VALDIATION,
-         L"SBC_Integrity_OSID derived answer matched known answer");
+         L"GCS_Integrity_OSID derived answer matched known answer");
 
     return ret;
 errdone:
@@ -1524,7 +1524,7 @@ errdone:
        SYS_LOG_CSC_NAME,
        3,
        SYS_LOG_EVT_DETECTION,
-       L"SBC_tamper_OSID derived answer mismatched known answer");
+       L"GCS_tamper_OSID derived answer mismatched known answer");
 
     return ret;
 
@@ -1856,7 +1856,7 @@ SBCStatus  SBC_SSBL_Verify(VOID *blkhnd, VOID *ansr, UINTN normbank, UINT16 bm)
            SYS_LOG_CSC_NAME,
            8,
            SYS_LOG_EVT_DETECTION,
-           L"SBC_tamper_SSBL signature verification faied");
+           L"GCS_tamper_SSBL signature verification faied");
       ret = SBCFAIL;
       goto errdone;
     }
@@ -1928,7 +1928,7 @@ SBCStatus  SBC_Kernel_Verify(VOID *handle)
            SYS_LOG_CSC_NAME,
            8,
            SYS_LOG_EVT_DETECTION,
-           L"SBC_VENDOR_SP Failed to the Kernel image load");
+           L"GCS_VENDOR_SP Failed to the Kernel image load");
 
       goto errdone;
     }
@@ -2035,7 +2035,7 @@ SBCStatus  SBC_Kernel_Verify(VOID *handle)
            SYS_LOG_CSC_NAME,
            8,
            SYS_LOG_EVT_DETECTION,
-           L"SBC_tamper_SSBL Failed to the OS signagure verify");
+           L"GCS_tamper_SSBL Failed to the OS signagure verify");
       ret = SBCFAIL;
       goto errdone;
     }
@@ -2046,7 +2046,7 @@ SBCStatus  SBC_Kernel_Verify(VOID *handle)
            SYS_LOG_CSC_NAME,
            8,
            SYS_LOG_EVT_DETECTION,
-           L"SBC_tamper_SSBL Successed the OS Signature verify");
+           L"GCS_tamper_SSBL Successed the OS Signature verify");
 
 errdone:
 
@@ -2247,7 +2247,7 @@ SBCStatus SBC_GenDeviceID(UINT8 *devid)
     ///SBC_mem_print_bin("Print out key", (UINT8 *)print_out_key, sizeof print_out_key);
 
     dprint("*** Unique Information Combination --->");
-    UnicodeSPrint(mrgmsg,  sizeof mrgmsg, L"SBC_Dice_DEVID Creation Succeess (%s) \n", print_out_key);
+    UnicodeSPrint(mrgmsg,  sizeof mrgmsg, L"GCS_Dice_DEVID Creation Succeess (%s) \n", print_out_key);
 
 
     sbc_err_sysprn(SBC_LOG_CMN_PRIO_INFO, 2, 
@@ -2267,7 +2267,7 @@ errdone:
               SYS_LOG_CSC_NAME, 
               1, 
               L"Validation ", 
-              L"SBC_Dice_DEVID Creation Fail");
+              L"GCS_Dice_DEVID Creation Fail");
     }
 
     if(computebuf) {
@@ -2318,7 +2318,7 @@ SBCStatus SBC_GenFWIDOld(EFI_HANDLE *h_image, UINT8 *devid, UINT8 *fwid, UINTN n
           SYS_LOG_CSC_NAME, 
           0, 
           L"Detection ", 
-          L"SBC_Vendor Not enough resource \n");
+          L"GCS_Vendor Not enough resource \n");
     goto errdone;
   }
 
@@ -2338,7 +2338,7 @@ SBCStatus SBC_GenFWIDOld(EFI_HANDLE *h_image, UINT8 *devid, UINT8 *fwid, UINTN n
 
   //SBC_mem_print_bin("Print out key", (UINT8 *)print_out_key, sizeof print_out_key);
 
-  UnicodeSPrint(mrgmsg,  sizeof mrgmsg, L"SBC_Dice_FWID Old Creation Succeess (%s) \n", print_out_key);
+  UnicodeSPrint(mrgmsg,  sizeof mrgmsg, L"GCS_Dice_FWID Old Creation Succeess (%s) \n", print_out_key);
 
   //SBC_LogHexKeyConvToChar16(mrgmsg, (VOID *)print_msg, fwid);
 
@@ -2359,7 +2359,7 @@ errdone:
               SYS_LOG_CSC_NAME, 
               1, 
               L"Validation ", 
-              L"SBC_Dice_FWID Creation Fail");
+              L"GCS_Dice_FWID Creation Fail");
     }
 
 
@@ -2426,7 +2426,7 @@ SBCStatus SBC_GenFWID(VOID  *priv, UINT8 *devid, UINT8 *fwid, UINTN normbank, UI
   //UINT8 *rdbuf = NULL;
   LV_t lv;
   UINT8 hash_ssbl[SBC_AT_HASH_LEN] = {0, };
-  //CHAR16 *print_msg = L"SBC_Dice_FWID Creation Succeess (%s) \n";
+  //CHAR16 *print_msg = L"GCS_Dice_FWID Creation Succeess (%s) \n";
 
 
   lv.value = NULL;
@@ -2472,7 +2472,7 @@ SBCStatus SBC_GenFWID(VOID  *priv, UINT8 *devid, UINT8 *fwid, UINTN normbank, UI
 
   //SBC_mem_print_bin("Print out key", (UINT8 *)print_out_key, sizeof print_out_key);
 
-  UnicodeSPrint(mrgmsg,  sizeof mrgmsg, L"SBC_Dice_FWID Creation Succeess (%s) \n", print_out_key);
+  UnicodeSPrint(mrgmsg,  sizeof mrgmsg, L"GCS_Dice_FWID Creation Succeess (%s) \n", print_out_key);
 
   //SBC_LogHexKeyConvToChar16(mrgmsg, (VOID *)print_msg, fwid);
 
@@ -2520,7 +2520,7 @@ SBCStatus SBC_GenOSID(EFI_HANDLE *h_image, UINT8 *fwid, UINT8 *osid)
                  SYS_LOG_CSC_NAME,
                  0,
                  SYS_LOG_EVT_DETECTION,
-                 L"SBC_VENDOR_SP Fail to create the OSID");
+                 L"GCS_VENDOR_SP Fail to create the OSID");
         ret = SBCFAIL;
         goto errdone;
     }
@@ -2538,7 +2538,7 @@ SBCStatus SBC_GenOSID(EFI_HANDLE *h_image, UINT8 *fwid, UINT8 *osid)
           SYS_LOG_CSC_NAME, 
           1, 
           L"Detection ", 
-          L"SBC_SP_FILE_RD OS File Not Found \n");
+          L"GCS_SP_FILE_RD OS File Not Found \n");
     goto errdone;
   }
 
@@ -2556,7 +2556,7 @@ SBCStatus SBC_GenOSID(EFI_HANDLE *h_image, UINT8 *fwid, UINT8 *osid)
           SYS_LOG_CSC_NAME, 
           0, 
           L"Detection ", 
-          L"SBC_Vendor OS Hash Create Fail \n");
+          L"GCS_Vendor OS Hash Create Fail \n");
     goto errdone;
   }
   //SBC_RET_VALIDATE_ERRCODEMSG((ret == SBCOK), ret, "SSBL hash compute failed");
@@ -2569,7 +2569,7 @@ SBCStatus SBC_GenOSID(EFI_HANDLE *h_image, UINT8 *fwid, UINT8 *osid)
           SYS_LOG_CSC_NAME, 
           0, 
           L"Detection ", 
-          L"SBC_Vendor Not enough resource \n");
+          L"GCS_Vendor Not enough resource \n");
     goto errdone;
   }
   //SBC_RET_VALIDATE_ERRCODEMSG((temp != NULL), SBCNULLP, "memeory creation fail");
@@ -2591,7 +2591,7 @@ SBCStatus SBC_GenOSID(EFI_HANDLE *h_image, UINT8 *fwid, UINT8 *osid)
           SYS_LOG_CSC_NAME, 
           0, 
           L"Detection ", 
-          L"SBC_Vendor OSID compute Fail \n");
+          L"GCS_Vendor OSID compute Fail \n");
 
         goto errdone;
   }
@@ -2604,7 +2604,7 @@ SBCStatus SBC_GenOSID(EFI_HANDLE *h_image, UINT8 *fwid, UINT8 *osid)
 
   //SBC_mem_print_bin("Print out key", (UINT8 *)print_out_key, sizeof print_out_key);
 
-  UnicodeSPrint(mrgmsg,  sizeof mrgmsg, L"SBC_Dice_OSID Creation Succeess (%s) \n", print_out_key);
+  UnicodeSPrint(mrgmsg,  sizeof mrgmsg, L"GCS_Dice_OSID Creation Succeess (%s) \n", print_out_key);
 
 
   sbc_err_sysprn(SBC_LOG_CMN_PRIO_INFO, 2, 
@@ -2862,7 +2862,7 @@ SBCStatus SBC_GenMigrationKey(void *priv, void *outmsg)
              SYS_LOG_APP_NAME,SYS_LOG_CSC_NAME, 
              4, 
              SYS_LOG_EVT_DETECTION, 
-             L"SBC_BootFW_Update Fail to MigrationKey Creation \n");
+             L"GCS_BootFW_Update Fail to MigrationKey Creation \n");
 
         ret = SBCFAIL;
         goto errdone;
@@ -3414,7 +3414,7 @@ SBCStatus  SBC_FSBLIntgCheck([[gnu::unused]]EFI_HANDLE *h_image ,
         SBC_BuildHexFormattedMessage(
             (CONST VOID *)secret_key,
             32,
-            L"SFR-Vendor-SP RooTCA decrypt fail (%s) \n",
+            L"GCS-Vendor-SP RooTCA decrypt fail (%s) \n",
             mrgmsg, sizeof mrgmsg);
 
         sbc_err_sysprn(SBC_LOG_CMN_PRIO_ERR, 2,
@@ -3450,7 +3450,7 @@ SBCStatus  SBC_FSBLIntgCheck([[gnu::unused]]EFI_HANDLE *h_image ,
 //      SBC_BuildHexFormattedMessage(
 //          (CONST VOID *)secret_key,
 //          32,
-//          L"SFR-Vendor-SP RooTCA decrypt fail (%s) \n",
+//          L"GCS-Vendor-SP RooTCA decrypt fail (%s) \n",
 //          mrgmsg, sizeof mrgmsg);
 
         sbc_err_sysprn(SBC_LOG_CMN_PRIO_ERR, 2,
@@ -3459,7 +3459,7 @@ SBCStatus  SBC_FSBLIntgCheck([[gnu::unused]]EFI_HANDLE *h_image ,
                      SYS_LOG_CSC_NAME,
                      0,
                      SYS_LOG_EVT_DETECTION,
-                     L"SFR-Vendor-SP RootCA Verify Fail \n");
+                     L"GCS-Vendor-SP RootCA Verify Fail \n");
       goto errdone;
     }
 
@@ -3471,7 +3471,7 @@ SBCStatus  SBC_FSBLIntgCheck([[gnu::unused]]EFI_HANDLE *h_image ,
              SYS_LOG_CSC_NAME,
              0,
              L"Validation",
-             L"SFR-Vendor-SP RootCA Verify Success \n");
+             L"GCS-Vendor-SP RootCA Verify Success \n");
 
 
     

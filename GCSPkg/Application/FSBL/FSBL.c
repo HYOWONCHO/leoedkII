@@ -753,7 +753,7 @@ UefiMain (
                   SYS_LOG_CSC_NAME,
                   0,
                   L"Detetion",
-                  L"SBC_VENDOR_SP Can not found \\EFI\\BOOT\\SSBL.efi \n");
+                  L"GCS_VENDOR_SP Can not found \\EFI\\BOOT\\SSBL.efi \n");
      }
 
      if ((ret != SBCOK) && (ret != SBCNOTFND )) {
@@ -763,7 +763,7 @@ UefiMain (
                   SYS_LOG_CSC_NAME,
                   0,
                   L"Detetion",
-                  L"SBC_VENDOR_SP Failed to delete the \\EFI\\BOOT\\SSBL.efi \n");
+                  L"GCS_VENDOR_SP Failed to delete the \\EFI\\BOOT\\SSBL.efi \n");
              //goto errdone;
      }
 
@@ -773,7 +773,7 @@ UefiMain (
                   SYS_LOG_CSC_NAME,
                   0,
                   L"Detetion",
-                  L"SBC_VENDOR_SP Success to delete the \\EFI\\BOOT\\SSBL.efi \n");
+                  L"GCS_VENDOR_SP Success to delete the \\EFI\\BOOT\\SSBL.efi \n");
 
     retval =  MapRebuild();
     if (EFI_ERROR(retval)) {
@@ -783,7 +783,7 @@ UefiMain (
                  SYS_LOG_CSC_NAME,
                  0,
                  L"Detetion",
-                 L"SBC_VENDOR_SP Faile to Reconnect to All controller \n");
+                 L"GCS_VENDOR_SP Faile to Reconnect to All controller \n");
     }
     else {
       sbc_err_sysprn(SBC_LOG_CMN_PRIO_INFO, 2,
@@ -792,7 +792,7 @@ UefiMain (
                  SYS_LOG_CSC_NAME,
                  0,
                  L"Detetion",
-                 L"SBC_VENDOR_SP Success to Reconnect to All controller \n");
+                 L"GCS_VENDOR_SP Success to Reconnect to All controller \n");
     }
 
 #ifdef _LOG_RECODING_
@@ -810,14 +810,14 @@ UefiMain (
 //    PrintMappingTable();
 //#endif
 
-    SBC_LogElapsedTime(L"SBC Driver Load", driver_load_ns);
+    SBC_LogElapsedTime(L"GCS Driver Load", driver_load_ns);
     sbc_err_sysprn(SBC_LOG_CMN_PRIO_INFO, 2,
                  SYS_LOG_HOST_BOOT,
                  SYS_LOG_APP_NAME,
                  SYS_LOG_CSC_NAME,
                  0,
                  L"Detetion",
-                 L"SBC_VENDOR_SP FSBL Statring");
+                 L"GCS_VENDOR_SP FSBL Statring");
 
     btproc.bootst = TRUE;
 
@@ -834,7 +834,7 @@ UefiMain (
                      SYS_LOG_CSC_NAME,
                      0,
                      L"Detetion",
-                     L"SBC_VENDOR_SP TPM Init not OK \n");
+                     L"GCS_VENDOR_SP TPM Init not OK \n");
 
         goto errdone;
     }
@@ -845,7 +845,7 @@ UefiMain (
                      SYS_LOG_CSC_NAME,
                      0,
                      L"Detetion",
-                     L"SBC_VENDOR_SP TPM Init OK \n");
+                     L"GCS_VENDOR_SP TPM Init OK \n");
 
     //retval= SBC_DumpTpmFixedProperties();
     retval = SBC_PrintTpmVersionInfo();
@@ -856,7 +856,7 @@ UefiMain (
                      SYS_LOG_CSC_NAME,
                      0,
                      L"Detetion",
-                     L"SBC_VENDOR_SP TPM Version Not found \n");
+                     L"GCS_VENDOR_SP TPM Version Not found \n");
 
         goto errdone;
     }
@@ -867,7 +867,7 @@ UefiMain (
                      SYS_LOG_CSC_NAME,
                      0,
                      L"Detetion",
-                     L"SBC_VENDOR_SP TPM Version found \n");
+                     L"GCS_VENDOR_SP TPM Version found \n");
 #if 0
     UINT8      RandBuf[512];
     UINT8      RdBuf[512] = {0,};
@@ -909,7 +909,7 @@ UefiMain (
                  SYS_LOG_CSC_NAME,
                  0,
                  L"Detetion",
-                 L"SBC_VENDOR_SP Block I/O Init Fail");
+                 L"GCS_VENDOR_SP Block I/O Init Fail");
       SBC_ShutdownSystem(); 
       //goto errdone;
     }
@@ -954,7 +954,7 @@ UefiMain (
 
     dprint("Boot Mode is %d", h_rawprtheader.bootmode);
     ZeroMem(mrgmsg, sizeof mrgmsg);
-    UnicodeSPrint(mrgmsg, sizeof mrgmsg, L"SBC_SP_FW FSBL Boot Mode (0x%x) And Key Mode (0x%x) Recovery Mode (0x%x) \n", 
+    UnicodeSPrint(mrgmsg, sizeof mrgmsg, L"GCS_SP_FW FSBL Boot Mode (0x%x) And Key Mode (0x%x) Recovery Mode (0x%x) \n", 
                   btproc.bm, btproc.km, btproc.rcvmode);
 
     sbc_err_sysprn(SBC_LOG_CMN_PRIO_INFO, 2,
@@ -991,7 +991,7 @@ UefiMain (
                  SYS_LOG_CSC_NAME,
                  8,
                  SYS_LOG_EVT_DETECTION,
-                 L"SBC_tamper_ FSBL signature verification failed\n");
+                 L"GCS_tamper_FSBL signature verification failed\n");
           retval = EFI_INVALID_PARAMETER;
           if (h_rawprtheader.bootmode  == BOOT_MODE_NORMAL) {
               btproc.b_forced = TRUE;
@@ -1013,7 +1013,7 @@ UefiMain (
              SYS_LOG_CSC_NAME,
              1,
              SYS_LOG_EVT_DETECTION,
-             L"SBC_Dice_Key HW&SW Base Key Creation Fail");
+             L"GCS_Dice_Key HW&SW Base Key Creation Fail");
         retval = EFI_INVALID_PARAMETER;
         btproc.bootst = SB_PROC_ST_ABNRAM;
           if (h_rawprtheader.bootmode  == BOOT_MODE_NORMAL) {
@@ -1053,7 +1053,7 @@ UefiMain (
                      SYS_LOG_CSC_NAME,
                      8,
                      SYS_LOG_EVT_DETECTION,
-                     L"SBC_tamper_ SSBL signature verification failed");
+                     L"GCS_tamper_SSBL signature verification failed");
 
           btproc.bootst = SB_PROC_ST_ABNRAM;
           if (h_rawprtheader.bootmode  == BOOT_MODE_NORMAL) {
@@ -1071,7 +1071,7 @@ UefiMain (
                      SYS_LOG_CSC_NAME,
                      8,
                      SYS_LOG_EVT_VALIDATION,
-                     L"SBC_tamper_SSBL signature verification suuccess");
+                     L"GCS_tamper_SSBL signature verification suuccess");
 
         ret =  SBC_DeviceIdKyeVerify(h_blkio, diceid.devid, diceid.osid);
         if (ret != SBCOK) {
@@ -1081,7 +1081,7 @@ UefiMain (
                      SYS_LOG_CSC_NAME,
                      8,
                      L"EVT",
-                     L"SBC_Dice_Verify Failed to Device ID verify");
+                     L"GCS_Dice_Verify Failed to Device ID verify");
           retval = EFI_INVALID_PARAMETER;
           btproc.bootst = SB_PROC_ST_ABNRAM;
           if (h_rawprtheader.bootmode  == BOOT_MODE_NORMAL) {
@@ -1098,7 +1098,7 @@ UefiMain (
              SYS_LOG_CSC_NAME,
              8,
              SYS_LOG_EVT_VALIDATION,
-             L"SBC_Integrity_All boot components passed signature verification \n");
+             L"GCS_Integrity_All boot components passed signature verification \n");
 
         ret = SBC_RunSsblNormalScenario(
                 &btproc,
@@ -1131,7 +1131,7 @@ UefiMain (
                      SYS_LOG_CSC_NAME,
                      8,
                      SYS_LOG_EVT_DETECTION,
-                     L"SBC_tamper_SSBL signature verification failed");
+                     L"GCS_tamper_SSBL signature verification failed");
             btproc.bootst = SB_PROC_ST_ABNRAM;
             //btproc.b_forced = TRUE;
             retval = EFI_INVALID_PARAMETER;
@@ -1147,7 +1147,7 @@ UefiMain (
                      SYS_LOG_CSC_NAME,
                      8,
                      SYS_LOG_EVT_VALIDATION,
-                     L"SBC_tamper_SSBL signature verification suuccess");
+                     L"GCS_tamper_SSBL signature verification suuccess");
 
       
       SBC_OSID_KeyStore((void *)&btproc);
@@ -1161,7 +1161,7 @@ UefiMain (
                      SYS_LOG_CSC_NAME,
                      8,
                      SYS_LOG_EVT_DETECTION,
-                     L"SBC_Dice_Verify Failed to Device ID verify");
+                     L"GCS_Dice_Verify Failed to Device ID verify");
 
           factory_md_abnormal_boot_state(&btproc);
           retval = EFI_INVALID_PARAMETER;
@@ -1181,7 +1181,7 @@ UefiMain (
              SYS_LOG_CSC_NAME,
              8,
              SYS_LOG_EVT_VALIDATION,
-             L"SBC_Integrity_All boot components passed signature verification \n");
+             L"GCS_Integrity_All boot components passed signature verification \n");
 #endif     
 
       ret = SBC_BootModeFactory(h_blkio, ImageHandle);
@@ -1206,7 +1206,7 @@ UefiMain (
                      SYS_LOG_CSC_NAME,
                      8,
                      SYS_LOG_EVT_DETECTION,
-                     L"SBC_tamper_ SSBL signature verification failed");
+                     L"GCS_tamper_SSBL signature verification failed");
             btproc.bootst = SB_PROC_ST_ABNRAM;
           if (h_rawprtheader.bootmode == BOOT_MODE_NORMAL) {
               btproc.b_forced = TRUE;
@@ -1223,7 +1223,7 @@ UefiMain (
                      SYS_LOG_CSC_NAME,
                      8,
                      SYS_LOG_EVT_VALIDATION,
-                     L"SBC_tamper_SSBL signature verification suuccess");
+                     L"GCS_tamper_SSBL signature verification suuccess");
 #if 1
       ret =  SBC_DeviceIdKyeVerify(h_blkio, diceid.devid, diceid.migid);
       if (ret != SBCOK) {
@@ -1233,7 +1233,7 @@ UefiMain (
                      SYS_LOG_CSC_NAME,
                      8,
                      L"Detection",
-                     L"SBC_Dice_Verify Failed to Device ID verify");
+                     L"GCS_Dice_Verify Failed to Device ID verify");
           retval = EFI_INVALID_PARAMETER;
           //btproc.b_forced = TRUE;
           btproc.bootst = SB_PROC_ST_ABNRAM;
@@ -1253,7 +1253,7 @@ UefiMain (
 //                       SYS_LOG_CSC_NAME,
 //                       8,
 //                       L"Detection",
-//                       L"SBC_tamper_OSID derived answer mismatched known answer");
+//                       L"GCS_tamper_OSID derived answer mismatched known answer");
 //        btproc.bootst = SB_PROC_ST_ABNRAM;
 //        goto errdone;
 //    }
@@ -1266,7 +1266,7 @@ UefiMain (
              SYS_LOG_CSC_NAME,
              8,
              SYS_LOG_EVT_VALIDATION,
-             L"SBC_Integrity_All boot components passed signature verification \n");
+             L"GCS_Integrity_All boot components passed signature verification \n");
 #endif     
       ret = SBC_BootModeNormalAndpUdate(h_blkio, ImageHandle, currbank_id);
       if (ret != SBCOK) {
@@ -1294,7 +1294,7 @@ UefiMain (
                      SYS_LOG_CSC_NAME,
                      8,
                      SYS_LOG_EVT_DETECTION,
-                     L"SBC_tamper_ SSBL signature verification failed");
+                     L"GCS_tamper_SSBL signature verification failed");
             btproc.bootst = SB_PROC_ST_ABNRAM;
             //btproc.b_forced = TRUE;
             retval = EFI_INVALID_PARAMETER;
@@ -1309,7 +1309,7 @@ UefiMain (
                      SYS_LOG_CSC_NAME,
                      8,
                      SYS_LOG_EVT_VALIDATION,
-                     L"SBC_tamper_SSBL signature verification suuccess");
+                     L"GCS_tamper_SSBL signature verification suuccess");
 
      ret =  SBC_DeviceIdKyeVerify(h_blkio, diceid.devid, diceid.migid);
      if (ret != SBCOK) {
@@ -1319,7 +1319,7 @@ UefiMain (
                      SYS_LOG_CSC_NAME,
                      8,
                      SYS_LOG_EVT_DETECTION,
-                     L"SBC_Dice_Verify Failed to Device ID verify");
+                     L"GCS_Dice_Verify Failed to Device ID verify");
              retval = EFI_INVALID_PARAMETER;
           if (h_rawprtheader.bootmode == BOOT_MODE_NORMAL) {
               btproc.b_forced = TRUE;
@@ -1336,7 +1336,7 @@ UefiMain (
              SYS_LOG_CSC_NAME,
              8,
              SYS_LOG_EVT_VALIDATION,
-             L"SBC_Integrity_All boot components passed signature verification \n");
+             L"GCS_Integrity_All boot components passed signature verification \n");
 #endif  
 
       // Previously Boot FW loading 
@@ -1416,7 +1416,7 @@ errdone:
                  SYS_LOG_CSC_NAME,
                  8,
                  SYS_LOG_EVT_VALIDATION,
-                 L"SBC_tamper_Factory firmware integrity is compromised and System Shutdown\n");
+                 L"GCS_tamper_Factory firmware integrity is compromised and System Shutdown\n");
         }
 
 

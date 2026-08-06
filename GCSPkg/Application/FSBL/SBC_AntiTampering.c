@@ -1506,7 +1506,7 @@ SBCStatus SBC_DeviceSecuirtyKeyCreate(VOID *key)
 
     SBC_BuildHexFormattedMessage(
         (CONST VOID *)key, 32,
-        L"SBC_RawFS_Key Create security key  (%s)\n",
+        L"GCS_RawFS_Key Create security key  (%s)\n",
         mrgmsg, sizeof mrgmsg); 
 
     sbc_err_sysprn(SBC_LOG_CMN_PRIO_INFO, 2,
@@ -1684,7 +1684,7 @@ SBCStatus  SBC_DeviceIdKyeVerify(VOID *blkio, UINT8 *fwid, UINT8 *deckey)
     if(CompareMem(key_pair.q.value,  pubkey, pubkeyl) != 0) {
         SBC_BuildHexFormattedMessage(
             (CONST VOID *)pubkey, (UINTN)pubkeyl,
-            L"SBC_Dice_Verify Failed to Device ID Verify (%s)\n",
+            L"GCS_Dice_Verify Failed to Device ID Verify (%s)\n",
             mrgmsg, sizeof mrgmsg);
 
         sbc_err_sysprn(SBC_LOG_CMN_PRIO_ERR, 2,
@@ -1709,7 +1709,7 @@ SBCStatus  SBC_DeviceIdKyeVerify(VOID *blkio, UINT8 *fwid, UINT8 *deckey)
                  SYS_LOG_CSC_NAME,
                  1,
                  L"Detectoin",
-                 L"SBC_RootCA_Verify Faile to verify the Device Crt \n");
+                 L"GCS_RootCA_Verify Faile to verify the Device Crt \n");
         ret = SBCINVPARAM;
         goto errdone;
     }
@@ -1724,7 +1724,7 @@ SBCStatus  SBC_DeviceIdKyeVerify(VOID *blkio, UINT8 *fwid, UINT8 *deckey)
                  SYS_LOG_CSC_NAME,
                  1,
                  L"Detectoin",
-                 L"SBC_RootCA_Verify Success to verify the Device Crt \n");
+                 L"GCS_RootCA_Verify Success to verify the Device Crt \n");
 //  sbc_err_sysprn(SBC_LOG_CMN_PRIO_ERR, 2,
 //         L"SBC",
 //         L"FSBL",
@@ -2127,7 +2127,7 @@ SBCStatus  SBC_BaseAnswerValidate(VOID *blkhnd, UINT8 *answer, UINTN answerl, UI
 
 
         ZeroMem(mrgmsg, sizeof mrgmsg);
-        UnicodeSPrint(mrgmsg, sizeof mrgmsg, L"SBC_tamper_OSID derived answer mismatched known answer(%a:%a) \n",
+        UnicodeSPrint(mrgmsg, sizeof mrgmsg, L"GCS_tamper_OSID derived answer mismatched known answer(%a:%a) \n",
                       (CHAR8 *)log_answr, (CHAR8 *)decbuf);
         sbc_err_sysprn(SBC_LOG_CMN_PRIO_ERR, 2,
              L"AT_BOOT",
@@ -2141,7 +2141,7 @@ SBCStatus  SBC_BaseAnswerValidate(VOID *blkhnd, UINT8 *answer, UINTN answerl, UI
     }
 
     ZeroMem(mrgmsg, sizeof mrgmsg);
-    UnicodeSPrint(mrgmsg, sizeof mrgmsg, L"SBC_Integrity_OSID derived answer matched known answer (%a:%a) \n",
+    UnicodeSPrint(mrgmsg, sizeof mrgmsg, L"GCS_Integrity_OSID derived answer matched known answer (%a:%a) \n",
                   (CHAR8 *)log_answr, (CHAR8 *)decbuf);
     sbc_err_sysprn(SBC_LOG_CMN_PRIO_ERR, 2,
          L"AT_BOOT",
@@ -2365,7 +2365,7 @@ SBCStatus  SBC_SSBL_Verify(VOID *blkhnd, VOID *ansr,  UINTN nrombank, UINTN bm, 
 #endif
 
     ZeroMem(mrgmsg, sizeof mrgmsg);
-    UnicodeSPrint(mrgmsg, sizeof mrgmsg, L"SBC_tamper_SSBL On FSBL, signature verification success\n");
+    UnicodeSPrint(mrgmsg, sizeof mrgmsg, L"GCS_tamper_SSBL On FSBL, signature verification success\n");
     sbc_err_sysprn(SBC_LOG_CMN_PRIO_ERR, 2,
            L"AT_BOOT",
            L"FSBL",
@@ -2378,7 +2378,7 @@ errdone:
 
     if (ret != SBCOK) {
       ZeroMem(mrgmsg, sizeof mrgmsg);
-      UnicodeSPrint(mrgmsg, sizeof mrgmsg, L"SBC_tamper_SSBL On SSBL, signature verification failed\n");
+      UnicodeSPrint(mrgmsg, sizeof mrgmsg, L"GCS_tamper_SSBL On SSBL, signature verification failed\n");
       sbc_err_sysprn(SBC_LOG_CMN_PRIO_ERR, 2,
              L"AT_BOOT",
              L"FSBL",
@@ -2596,7 +2596,7 @@ SBCStatus  SBC_Vmlinuz_Verify(VOID *blkhnd, VOID *ansr, UINTN normbank, UINTN bm
 //    }
 
     ZeroMem(mrgmsg, sizeof mrgmsg);
-    UnicodeSPrint(mrgmsg, sizeof mrgmsg, L"SBC_tamper_OS signature verification success\n");
+    UnicodeSPrint(mrgmsg, sizeof mrgmsg, L"GCS_tamper_OS signature verification success\n");
     sbc_err_sysprn(SBC_LOG_CMN_PRIO_ERR, 2,
            L"AT_BOOT",
            L"FSBL",
@@ -2610,7 +2610,7 @@ errdone:
 
     if (ret != SBCOK) {
       ZeroMem(mrgmsg, sizeof mrgmsg);
-      UnicodeSPrint(mrgmsg, sizeof mrgmsg, L"SBC_tamper_OS signature verification failed\n");
+      UnicodeSPrint(mrgmsg, sizeof mrgmsg, L"GCS_tamper_OS signature verification failed\n");
       sbc_err_sysprn(SBC_LOG_CMN_PRIO_ERR, 2,
              L"AT_BOOT",
              L"FSBL",
@@ -2850,7 +2850,7 @@ SBCStatus  SBC_FSBL_Verify(VOID *blkhnd, VOID *ansr, UINTN normbank, UINTN bm, U
 //    }
 
     ZeroMem(mrgmsg, sizeof mrgmsg);
-    UnicodeSPrint(mrgmsg, sizeof mrgmsg, L"SBC_tamper_FSBL signature verification success\n");
+    UnicodeSPrint(mrgmsg, sizeof mrgmsg, L"GCS_tamper_FSBL signature verification success\n");
     sbc_err_sysprn(SBC_LOG_CMN_PRIO_ERR, 2,
            L"AT_BOOT",
            L"FSBL",
@@ -2864,7 +2864,7 @@ errdone:
 
     if (ret != SBCOK) {
       ZeroMem(mrgmsg, sizeof mrgmsg);
-      UnicodeSPrint(mrgmsg, sizeof mrgmsg, L"SBC_tamper_FSBL signature verification failed\n");
+      UnicodeSPrint(mrgmsg, sizeof mrgmsg, L"GCS_tamper_FSBL signature verification failed\n");
       sbc_err_sysprn(SBC_LOG_CMN_PRIO_ERR, 2,
              L"AT_BOOT",
              L"FSBL",
@@ -2956,7 +2956,7 @@ SBCStatus SBC_GenDeviceID(UINT8 *devid)
               SYS_LOG_CSC_NAME, 
               0, 
               L"Detection ", 
-              L"SBC_Vendor Not enough resource \n");
+              L"GCS_Vendor Not enough resource \n");
         goto errdone;
     }
 
@@ -3001,7 +3001,7 @@ SBCStatus SBC_GenDeviceID(UINT8 *devid)
 
     ///SBC_mem_print_bin("Print out key", (UINT8 *)print_out_key, sizeof print_out_key);
 
-    UnicodeSPrint(mrgmsg,  sizeof mrgmsg, L"SBC_Dice_DEVID Creation Succeess (%s) \n", print_out_key);
+    UnicodeSPrint(mrgmsg,  sizeof mrgmsg, L"GCS_Dice_DEVID Creation Succeess (%s) \n", print_out_key);
 
 
     sbc_err_sysprn(SBC_LOG_CMN_PRIO_INFO, 2, 
@@ -3021,7 +3021,7 @@ errdone:
               SYS_LOG_CSC_NAME, 
               1, 
               L"Validation ", 
-              L"SBC_Dice_DEVID Creation Fail");
+              L"GCS_Dice_DEVID Creation Fail");
     }
 
     if(computebuf) {
@@ -3067,7 +3067,7 @@ SBCStatus SBC_GenFWID(EFI_HANDLE *h_image, UINT8 *devid, UINT8 *fwid, UINTN norm
           SYS_LOG_CSC_NAME, 
           0, 
           L"Detection ", 
-          L"SBC_Vendor Not enough resource \n");
+          L"GCS_Vendor Not enough resource \n");
     goto errdone;
   }
 
@@ -3087,7 +3087,7 @@ SBCStatus SBC_GenFWID(EFI_HANDLE *h_image, UINT8 *devid, UINT8 *fwid, UINTN norm
 
   //SBC_mem_print_bin("Print out key", (UINT8 *)print_out_key, sizeof print_out_key);
 
-  UnicodeSPrint(mrgmsg,  sizeof mrgmsg, L"SBC_Dice_FWID Creation Succeess (%s) \n", print_out_key);
+  UnicodeSPrint(mrgmsg,  sizeof mrgmsg, L"GCS_Dice_FWID Creation Succeess (%s) \n", print_out_key);
 
   //SBC_LogHexKeyConvToChar16(mrgmsg, (VOID *)print_msg, fwid);
 
@@ -3108,7 +3108,7 @@ errdone:
               SYS_LOG_CSC_NAME, 
               1, 
               L"Validation ", 
-              L"SBC_Dice_FWID Creation Fail");
+              L"GCS_Dice_FWID Creation Fail");
     }
 
 
@@ -3149,7 +3149,7 @@ SBCStatus SBC_GenOSID(EFI_HANDLE *h_image, UINT8 *fwid, UINT8 *osid)
           SYS_LOG_CSC_NAME, 
           1, 
           L"Detection ", 
-          L"SBC_SP_FILE_RD OS File Not Found \n");
+          L"GCS_SP_FILE_RD OS File Not Found \n");
     goto errdone;
   }
 
@@ -3169,7 +3169,7 @@ SBCStatus SBC_GenOSID(EFI_HANDLE *h_image, UINT8 *fwid, UINT8 *osid)
           SYS_LOG_CSC_NAME, 
           0, 
           L"Detection ", 
-          L"SBC_Vendor Not enough resource \n");
+          L"GCS_Vendor Not enough resource \n");
     goto errdone;
   }
 
@@ -3190,7 +3190,7 @@ SBCStatus SBC_GenOSID(EFI_HANDLE *h_image, UINT8 *fwid, UINT8 *osid)
           SYS_LOG_CSC_NAME, 
           0, 
           L"Detection ", 
-          L"SBC_Vendor OSID compute Fail \n");
+          L"GCS_Vendor OSID compute Fail \n");
 
         goto errdone;
   }
@@ -3201,7 +3201,7 @@ SBCStatus SBC_GenOSID(EFI_HANDLE *h_image, UINT8 *fwid, UINT8 *osid)
 
   //SBC_mem_print_bin("Print out key", (UINT8 *)print_out_key, sizeof print_out_key);
 
-  UnicodeSPrint(mrgmsg,  sizeof mrgmsg, L"SBC_Dice_OSID Creation Succeess (%s) \n", print_out_key);
+  UnicodeSPrint(mrgmsg,  sizeof mrgmsg, L"GCS_Dice_OSID Creation Succeess (%s) \n", print_out_key);
 
 
   sbc_err_sysprn(SBC_LOG_CMN_PRIO_INFO, 2, 
@@ -3695,7 +3695,7 @@ SBCStatus  SBC_FSBLIntgCheck([[gnu::unused]]EFI_HANDLE *h_image , VOID *blkio, V
                  SYS_LOG_CSC_NAME,
                  8,
                  L"Detectoin",
-                 L"SBC_SP_FW  Success to FSBL RootCA Verify \n");
+                 L"GCS_SP_FW  Success to FSBL RootCA Verify \n");
 
 
     
@@ -3709,7 +3709,7 @@ errdone:
                  SYS_LOG_CSC_NAME,
                  8,
                  L"Detectoin",
-                 L"SBC_SP_FW  Failed to FSBL RootCA Verify \n");
+                 L"GCS_SP_FW  Failed to FSBL RootCA Verify \n");
     }
 
     if (imgbuf != NULL) {

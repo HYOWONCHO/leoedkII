@@ -2052,7 +2052,7 @@ errdone:
                 SYS_LOG_CSC_NAME, 
                 8, 
                 L"Detectrion ", 
-                L"SBC_SP_RAWPRT Failed to the Raw-partition read");
+                L"GCS_SP_RAWPRT Failed to the Raw-partition read");
     }
     return ret;
 
@@ -2152,7 +2152,7 @@ errdone:
                 SYS_LOG_CSC_NAME, 
                 8, 
                 L"Detectrion ", 
-                L"SBC_SP_RAWPRT Failed to the Raw-partition read");
+                L"GCS_SP_RAWPRT Failed to the Raw-partition read");
     }
     //SBC_mem_print_bin("Read Buf", (UINT8 *)buf, sz);
     if (tmp) {

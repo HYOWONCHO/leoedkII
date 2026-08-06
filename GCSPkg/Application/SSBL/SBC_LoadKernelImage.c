@@ -225,7 +225,7 @@ SBCStatus SBC_GRUB_LoadAndStart(EFI_HANDLE ImageHandle)
             SYS_LOG_CSC_NAME, 
             8, 
             L"Validation ", 
-            L"SBC_VENDOR_SP Grub Loading !!!");  
+            L"GCS_VENDOR_SP Grub Loading !!!");  
 
  #ifdef _LOG_RECODING_
     SBC_LogDeinit(&gLogCtx);

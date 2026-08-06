@@ -102,6 +102,90 @@ extern CHAR16      mrgmsg[8192];
 /* -------------------------------------------------------------------------- */
 
 #ifdef _DEBUG_PRINT_ON_
+#ifdef _RUN_GCS_
+        #define SBCLOGBOOLEAN(expression)                                      \
+    do {                                                               \
+        SBC_LogBoolean(                                                \
+            (expression),                                              \
+            __func__,                                                  \
+            __LINE__,                                                  \
+            __FILE__,                                                  \
+            #expression                                                \
+        );                                                             \
+    } while (0)
+
+        #define SBCLOGMSG(logmsg)                                              \
+    do {                                                               \
+        SBC_LogMsg(                                                    \
+            #logmsg,                                                   \
+            __func__,                                                  \
+            __LINE__,                                                  \
+            __FILE__                                                   \
+        );                                                             \
+    } while (0)
+
+        #define iprint(fmt, ...)                                               \
+    do {                                                               \
+        DEBUG((                                                        \
+            DEBUG_INFO,                                                \
+             "[INFO]"  " GCS " fmt "\n",        \
+            ##__VA_ARGS__                                              \
+        ));                                                            \
+    } while (0)
+
+        #define wprint(fmt, ...)                                               \
+    do {                                                               \
+        DEBUG((                                                        \
+            DEBUG_WARN,                                                \
+             "[WARN]"  " GCS " fmt "\n",        \
+            ##__VA_ARGS__                                              \
+        ));                                                            \
+    } while (0)
+
+        #define eprint(fmt, ...)                                               \
+    do {                                                               \
+        DEBUG((                                                        \
+            DEBUG_ERROR,                                               \
+             "[ERROR]"  " GCS " fmt "\n",       \
+            ##__VA_ARGS__                                              \
+        ));                                                            \
+    } while (0)
+
+
+        #define dprint(fmt, ...)                                               \
+    do {                                                               \
+        DEBUG((                                                        \
+            DEBUG_INFO,                                                \
+             "[DEBUG]"  " GCS " fmt "\n",       \
+            ##__VA_ARGS__                                              \
+        ));                                                            \
+    } while (0)
+
+
+        #define intgreen_dprint(fmt, ...)                                      \
+    do {                                                               \
+        Print(                                                         \
+             L"GCS : " fmt L"\n" SBC_UC_RST,            \
+            ##__VA_ARGS__                                              \
+        );                                                             \
+    } while (0)
+
+        #define int_dprint(fmt, ...)                                           \
+    do {                                                               \
+        Print(                                                         \
+            L"GCS : " fmt L"\n",                                  \
+            ##__VA_ARGS__                                              \
+        );                                                             \
+    } while (0)
+
+        #define int_eprint(fmt, ...)                                           \
+    do {                                                               \
+        Print(                                                         \
+             L"GCS : " fmt L"\n" SBC_UC_RST,       \
+            ##__VA_ARGS__                                              \
+        );                                                             \
+    } while (0)
+#else
 
 #define SBCLOGBOOLEAN(expression)                                      \
     do {                                                               \
@@ -199,7 +283,7 @@ extern CHAR16      mrgmsg[8192];
             ##__VA_ARGS__                                              \
         );                                                             \
     } while (0)
-
+#endif
 #else  /* !_DEBUG_PRINT_ON_ */
 
 #define SBCLOGBOOLEAN(expression)                                      \
@@ -345,7 +429,20 @@ SBC_LogMrg(
     IN CONST CHAR16 *Fmt,
     ...
 );
-
+#ifdef _RUN_GCS_
+VOID
+SBC_LogPrint(
+    IN UINT32        Prio,
+    IN UINT32        Ver,
+    IN CHAR16       *Host,
+    IN CHAR16       *AppName,
+    IN CHAR16       *Csc,
+    IN UINT32        SfrId,
+    IN CHAR16       *EvType,
+    IN CHAR16       *Format,
+    ...
+    ); 
+#else
 VOID
 SBC_LogPrint(
     IN CONST CHAR16 *Func,
@@ -360,6 +457,7 @@ SBC_LogPrint(
     IN CHAR16       *Format,
     ...
 );
+#endif
 
 EFI_STATUS
 SBC_BuildHexFormattedMessage(
@@ -444,6 +542,20 @@ SBC_LogElapsedTime(
     IN UINTN         Ns
 );
 
+#ifdef _RUN_GCS_
+#define sbc_err_sysprn(prio, ver, host, appname, csc, sfrid, evtype, fmt, ...) \
+    SBC_LogPrint(                                                             \
+        (prio),                                                               \
+        (ver),                                                                \
+        (host),                                                               \
+        (appname),                                                            \
+        (csc),                                                                \
+        (sfrid),                                                              \
+        (evtype),                                                             \
+        (fmt),                                                                \
+        ##__VA_ARGS__                                                         \
+    )
+#else
 #define sbc_err_sysprn(prio, ver, host, appname, csc, sfrid, evtype, fmt, ...) \
     SBC_LogPrint(                                                             \
         (CONST CHAR16 *)__FUNCTION__,                                         \
@@ -458,5 +570,5 @@ SBC_LogElapsedTime(
         (fmt),                                                                \
         ##__VA_ARGS__                                                         \
     )
-
+#endif
 #endif /* __SBCLOG__ */

@@ -489,7 +489,7 @@ SBCStatus SBC_SSBL_LoadAndStart(EFI_HANDLE ImageHandle)
                  SYS_LOG_CSC_NAME,
                  0,
                  L"Detetion",
-                 L"SBC_VENDOR_SP Jump to SSBL !!!"); 
+                 L"GCS_VENDOR_SP Jump to SSBL !!!"); 
 #ifdef _LOG_RECODING_
     SBC_LogDeinit(&gLogCtx);
 #endif

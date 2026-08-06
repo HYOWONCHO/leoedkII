@@ -254,7 +254,7 @@ VOID SBC_ShutdownSystem(VOID)
          SYS_LOG_CSC_NAME,
          1,
          L"Detectoin",
-         L"SBC_VENDOR_SP System Shutdown - Boot State Ab-normal");
+         L"GCS_VENDOR_SP System Shutdown - Boot State Ab-normal");
 #ifndef _ALL_PASS_
 #ifdef _LOG_RECODING_
     SBC_LogDeinit(&gLogCtx);
@@ -421,7 +421,7 @@ SBCStatus SBC_SecureBootUpdateScenario(VOID *priv)
              SYS_LOG_CSC_NAME,
              8,
              SYS_LOG_EVT_VALIDATION,
-             L"SBC_tamper_Updated boot firmware invalid and initiating rollback to factory version\n");
+             L"GCS_tamper_Updated boot firmware invalid and initiating rollback to factory version\n");
 
         
         ret = SBC_RawPrtHdrChange(
@@ -439,7 +439,7 @@ SBCStatus SBC_SecureBootUpdateScenario(VOID *priv)
              SYS_LOG_CSC_NAME,
              8,
              SYS_LOG_EVT_VALIDATION,
-             L"SBC_Integrity_Boot mode is FACTORY mode and Reboot\n");
+             L"GCS_Integrity_Boot mode is FACTORY mode and Reboot\n");
 
 
         SBC_RebootSystem();
@@ -451,7 +451,7 @@ SBCStatus SBC_SecureBootUpdateScenario(VOID *priv)
                    SYS_LOG_CSC_NAME,
                    1,
                    SYS_LOG_EVT_VALIDATION,
-                   L"SBC_VENDOR_FP FSBL Change Boot Mode based on "
+                   L"GCS_VENDOR_SP FSBL Change Boot Mode based on "
                    L"Normal Mode Ab-normal state");
 
     key_mode = (p->bm == BOOT_MODE_UPDATE) ? KEY_MODE_UPDATE : KEY_MODE_BOOT;
@@ -467,7 +467,7 @@ SBCStatus SBC_SecureBootUpdateScenario(VOID *priv)
                        SYS_LOG_CSC_NAME,
                        8,
                        SYS_LOG_EVT_VALIDATION,
-                       L"SBC_tamper_Updated boot firmware invalid and initiating rollback to factory version\n"); 
+                       L"GCS_tamper_Updated boot firmware invalid and initiating rollback to factory version\n"); 
 
 
         next_bm = BOOT_MODE_FACTORY;
@@ -478,7 +478,7 @@ SBCStatus SBC_SecureBootUpdateScenario(VOID *priv)
                        SYS_LOG_CSC_NAME,
                        8,
                        SYS_LOG_EVT_VALIDATION,
-                       L"SBC_Integrity_Boot mode is FACTORY mode and Reboot\n");
+                       L"GCS_Integrity_Boot mode is FACTORY mode and Reboot\n");
         break;
 
     case 1:
@@ -506,7 +506,7 @@ SBCStatus SBC_SecureBootUpdateScenario(VOID *priv)
                        SYS_LOG_CSC_NAME,
                        1,
                        SYS_LOG_EVT_VALIDATION,
-                       L"SBC_VENDOR_FP FSBL Shutdown from Abnormal of Normal or Update Boot Mode");
+                       L"GCS_VENDOR_SP FSBL Shutdown from Abnormal of Normal or Update Boot Mode");
         goto errdone;
     }
 
@@ -516,7 +516,7 @@ SBCStatus SBC_SecureBootUpdateScenario(VOID *priv)
                    SYS_LOG_CSC_NAME,
                    1,
                    SYS_LOG_EVT_VALIDATION,
-                   L"SBC_VENDOR_FP FSBL Reset from Abnormal of Normal or Update Boot Mode");
+                   L"GCS_VENDOR_SP FSBL Reset from Abnormal of Normal or Update Boot Mode");
 
     SBC_RebootSystem();
 
@@ -569,7 +569,7 @@ VOID SBC_HardWareInfoReadFailed(VOID *handle)
     }
 
 
-    dprint("SBC_ForcedFaultReject : %d \n", fault_flag);
+    dprint("GCS_ForcedFaultReject : %d \n", fault_flag);
     if (fault_flag == 1) {
         SBC_ShutdownSystem();
     }

@@ -871,7 +871,7 @@ Exit:
 }
 //
 //EFI_STATUS
-//SBC_LogInitAuto(
+//GCS_LogInitAuto(
 //    OUT SBC_LOG_CTX   *Ctx,
 //    IN  EFI_HANDLE     ImageHandle,
 //    IN  CONST CHAR16  *LogPath,
@@ -882,7 +882,7 @@ Exit:
 //    EFI_STATUS Status;
 //    EFI_LOADED_IMAGE_PROTOCOL *LoadedImage;
 //
-//    Print(L"SBC_LogInitAuto sttart \n");
+//    Print(L"GCS_LogInitAuto sttart \n");
 //    if (Ctx == NULL || ImageHandle == NULL || LogPath == NULL){
 //        Print(L"EFI_INVALID_PARAMETER \n");
 //        return EFI_INVALID_PARAMETER;
@@ -965,7 +965,7 @@ SBC_LogInitAuto(
     EFI_LOADED_IMAGE_PROTOCOL *LoadedImage = NULL;
     EFI_HANDLE FsHandle = NULL;
 
-    Print(L"SBC_LogInitAuto start\n");
+    Print(L"GCS_LogInitAuto start\n");
 
     if (Ctx == NULL || ImageHandle == NULL || LogPath == NULL) {
         Print(L"EFI_INVALID_PARAMETER\n");
@@ -1124,6 +1124,235 @@ SBC_LogDeinit(
 //{
 //    gLogWriteCtx = (SBC_LOG_CTX *)ctx;
 //}
+
+
+#ifdef _RUN_GCS_
+VOID SBC_LogPrint(
+    UINT32 prio,            // Priority
+    UINT32 ver,             // Version (e.g., event version)
+    CHAR16 *host,           // Hostname or system identifier (potentially NULL)
+    CHAR16 *appname,        // Application name (potentially NULL)
+    CHAR16 *csc,            // Custom field (e.g., Component Specific Code, potentially NULL)
+    UINT32 sfrid,           // Specific Function/Event ID
+    CHAR16 *evtype,         // Event Type string (potentially NULL)
+    CHAR16 *format,         // Format string for the message body (can contain %s, %d etc.)
+    ...
+    ) {
+    EFI_STATUS retval;
+    VA_LIST args;
+    EFI_TIME logtime;
+
+    // Buffer for the full Unicode log message. Size in CHAR16s.
+    CHAR16 full_log_msg[PcdGet32(PcdUefiLibMaxPrintBufferSize) + 1];
+    UINTN nxtofs = 0; // Current offset in CHAR16s
+    UINTN remaining_buffer_bytes;
+
+    // Calculate total buffer size in bytes for safer print functions
+    UINTN max_full_log_msg_bytes = sizeof(full_log_msg);
+
+    //dPrint(L"SBC_LogPrint: Log buf size in CHAR16s: %d (Bytes: %d)\n",
+    //                     PcdGet32(PcdUefiLibMaxPrintBufferSize) + 1, max_full_log_msg_bytes);
+
+    ZeroMem(full_log_msg, max_full_log_msg_bytes); // Clear the buffer
+    ZeroMem(&logtime, sizeof(EFI_TIME)); // Clear time struct
+
+    ////dprint();
+    retval = gRT->GetTime(&logtime, NULL);
+    if (EFI_ERROR(retval)) {
+        // Fallback if time retrieval fails (e.g., set to a fixed epoch or default)
+        logtime.Year = 2000;
+        logtime.Month = 1;
+        logtime.Day = 1;
+        logtime.Hour = 0;
+        logtime.Minute = 0;
+        logtime.Second = 0;
+        logtime.Nanosecond = 0;
+        // Also set timezone and DaylightSaving if needed
+    }
+
+    ////dprint();
+
+    // --- Safely handle potentially NULL CHAR16* arguments for the header ---
+    // These pointers are passed directly to UnicodeSPrint, which itself is safe.
+    // However, explicitly ensuring non-NULL pointers is good practice and clear.
+    //[[maybe_unused]] CONST CHAR16 *safe_func    = (func != NULL) ? func : gEmptyStringUefi; // If func is CHAR16*
+    CONST CHAR16 *safe_host    = (host != NULL) ? host : gNullStringUefi;
+    CONST CHAR16 *safe_appname = (appname != NULL) ? appname : gNullStringUefi;
+    CONST CHAR16 *safe_csc     = (csc != NULL) ? csc : gNullStringUefi;
+    CONST CHAR16 *safe_evtype  = (evtype != NULL) ? evtype : gNullStringUefi;
+
+    remaining_buffer_bytes = max_full_log_msg_bytes;
+
+// Optional: Prepend function name and line number
+// Assuming 'func' is a CHAR16* as per your signature.
+// If 'func' was CHAR8*, you would use %a or convert it first.
+// nxtofs += UnicodeSPrint(
+//             full_log_msg + nxtofs,
+//             remaining_buffer_bytes,
+//             L"[%s:%d] ", // Added space after ]
+//             safe_func, funcline
+//             );
+// remaining_buffer_bytes -= (nxtofs * sizeof(CHAR16));
+
+
+////dprint();
+// --- Construct the main header part of the log message ---
+// Format: PRIO VER YYYY-MM-DDTHH:MM:SS HOST APPNAME CSC R-SAT-PWT-SFR-XXX EVTYPE [Message Body]
+// Using %02d for consistent two-digit formatting for month, day, hour, etc.
+    nxtofs += UnicodeSPrint(
+        full_log_msg + nxtofs,
+        remaining_buffer_bytes,
+        L"<%d> %d %04d-%02d-%02dT%02d:%02d:%02d %s %s %s R-SAT-PWT-SFR-%03d %s ",
+        prio, ver,
+        logtime.Year, logtime.Month, logtime.Day,
+        logtime.Hour, logtime.Minute, logtime.Second,
+        safe_host, safe_appname, safe_csc, // Using the safely handled pointers
+        sfrid, safe_evtype
+        );
+
+    // Update remaining buffer size in bytes for the next print.
+    remaining_buffer_bytes -= (nxtofs * sizeof(CHAR16));
+
+    ////dprint();
+    // Ensure we have at least some space left for the message body and null terminator
+    if (remaining_buffer_bytes <= sizeof(CHAR16) * 4) { // Small space for "..." + NULL
+        //dPrint(L"SBC_LogPrint: Buffer almost full before message body. Truncating.\n");
+        UnicodeSPrint(full_log_msg + nxtofs, sizeof(CHAR16) * 4, L"..."); // Indicate truncation
+        return; // Skip to the end
+    }
+
+    // --- Message body (variable part) ---
+    VA_START(args, format);
+    ////dprint();
+    // Call the enhanced _LogFmtVPrint, which now handles NULL CHAR16* arguments safely.
+    #if 0
+    nxtofs += SBC_InternalPrint(format,
+                                args);
+    #else
+    nxtofs += _LogFmtVPrint(
+        format, // The format string for the variable arguments
+        args,
+        full_log_msg + nxtofs, // Start writing from current offset
+        remaining_buffer_bytes   // Remaining buffer size in bytes
+        );
+    #endif
+    VA_END(args);
+
+    // --- Final null-termination and length check ---
+    // _LogFmtVPrint should null-terminate, but being explicit for the overall buffer.
+    // Ensure the final message length does not exceed the total buffer capacity.
+    if (nxtofs >= PcdGet32(PcdUefiLibMaxPrintBufferSize)) {
+        // Truncate if necessary and ensure final null-termination
+        full_log_msg[PcdGet32(PcdUefiLibMaxPrintBufferSize)] = L'\0';
+    } else {
+        full_log_msg[nxtofs] = L'\0'; // Explicit null termination
+    }
+
+    // --- Post-processing and output ---
+    // Convert the full Unicode log message to ASCII for file/network output
+    // Assuming `remove_all_space` and `_sbc_write_log_file` expect ASCII CHAR8*.
+    CHAR8  AsciiLogBuffer[PcdGet32(PcdUefiLibMaxPrintBufferSize) + 1]; // One byte per CHAR16 (safe for ASCII range)
+    UINTN  AsciiConvertedLen;
+
+    AsciiConvertedLen = MyUnicodeStrToAsciiStrS(AsciiLogBuffer, sizeof(AsciiLogBuffer), full_log_msg);
+    if (AsciiConvertedLen == 0 && full_log_msg[0] != L'\0') {
+        DEBUG((DEBUG_ERROR, "SBC_LogPrint: Failed to convert Unicode log to ASCII or buffer too small.\n"));
+        // Handle conversion error, maybe log truncated msg or error to console
+        Print(L"WARNING: ASCII conversion failed for log. Unicode content: %s\n", full_log_msg);
+        goto ExitLog;
+    }
+
+
+    Print(L"%s\n", full_log_msg);
+    // Now wrlog points to a proper ASCII string
+    //CHAR8 *wrlog_ptr = AsciiLogBuffer;
+
+    // Print for debug (both Unicode and ASCII for comparison)
+    //dPrint(L"SBC_LogPrint: Full Unicode Log msg : %s \n", full_log_msg);
+    //dPrint(L"SBC_LogPrint: Full ASCII Log msg   : %a (Length: %d) \n", wrlog_ptr, AsciiConvertedLen);
+
+    // Call your remove_all_space function (expects ASCII CHAR8*)
+    // It should modify wrlog_ptr in place and return the new length.
+    // Make sure remove_all_space works on a null-terminated string and updates length correctly.
+    //UINTN final_ascii_len = remove_all_space(wrlog_ptr, AsciiConvertedLen); // Pass converted length, not full buffer size
+
+    //dPrint(L"SBC_LogPrint: ASCII Log msg after space removal: %a (Final Length: %d)\n", wrlog_ptr, final_ascii_len);
+    #if 1
+    #ifdef _LOG_RECODING_
+    SBC_LogWrite16(&gLogCtx, full_log_msg);
+    #endif
+    #else
+    {
+        EFI_SIMPLE_FILE_SYSTEM_PROTOCOL *SimpleFs;
+        EFI_FILE_PROTOCOL *Root;
+        EFI_FILE_PROTOCOL *File;
+        EFI_STATUS Status;
+
+        UINTN AsciiLen = StrLen(full_log_msg) * 3 + 1;
+
+        CHAR8 *AsciiBuf = AllocateZeroPool(AsciiLen);
+        UnicodeStrToAsciiStrS(full_log_msg, AsciiBuf, AsciiLen);
+        //dprint();
+    //      Status = gBS->HandleProtocol(
+    //                      write_log_handle,
+    //                      &gEfiSimpleFileSystemProtocolGuid,
+    //                      (VOID**)&SimpleFs
+    //                  );
+
+        Status = gBS->LocateProtocol(&gEfiSimpleFileSystemProtocolGuid, NULL, (VOID**)&SimpleFs);
+        if (!EFI_ERROR(Status)) {
+
+            Status = SimpleFs->OpenVolume(SimpleFs, &Root);
+            if (!EFI_ERROR(Status)) {
+
+                // Open file for append (READ | WRITE). Do NOT use CREATE.
+                Status = Root->Open(
+                                    Root,
+                                    &File,
+                                    SSBL_LOG_PATH,
+                                    EFI_FILE_MODE_READ | EFI_FILE_MODE_WRITE,
+                                    0
+                                   );
+
+                if (!EFI_ERROR(Status)) {
+                    //dprint();
+                    // Move cursor to end for append
+                    File->SetPosition(File, (UINT64)-1);
+
+                    // Write ASCII buffer
+    //                  UINTN WriteLen = final_ascii_len;
+    //                  File->Write(File, &WriteLen, wrlog_ptr);
+                    UINTN WriteLen = AsciiLen;
+                    File->Write(File, &WriteLen, AsciiBuf);
+                    // Add newline
+                    CHAR8 NewLine[2] = { '\n', 0 };
+                    UINTN NL = 1;
+                    File->Write(File, &NL, NewLine);
+
+                    File->Close(File);
+                } else {
+
+                    dprint();
+                    ePrint(L"Log File Open fail (%r) ", Status);
+                }
+
+                Root->Close(Root);
+            } else {
+
+                dprint();
+                ePrint(L"Log File OpenVolume fail (%r) ", Status);
+            }
+        }
+
+        FreePool(AsciiBuf);
+    }
+    #endif
+
+
+    ExitLog:
+    return;
+}
+#else
 
 VOID SBC_LogPrint(
   CONST CHAR16* func,     // For [%s:%d] if uncommented (CHAR16*)
@@ -1355,7 +1584,7 @@ VOID SBC_LogPrint(
 ExitLog:
     return;
 }
-
+#endif
 
 
 EFI_STATUS SBC_LogFileInit( EFI_HANDLE        logHandle)

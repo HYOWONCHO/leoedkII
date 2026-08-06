@@ -772,10 +772,10 @@ SbcLogBufAppend(IN OUT SBC_LOG_CTX *Ctx, IN CONST CHAR8 *Data, IN UINTN Len)
 
     //Print(L"Len :%lu, BufCap : %lu \n", Ctx->BufLen + Len , Ctx->BufCap);
     if (Ctx->BufLen + Len > Ctx->BufCap) {
-        Print(L"SBC_LogFlush .... \n");
+        Print(L"GCS_LogFlush .... \n");
         Status = SBC_LogFlush(Ctx);
         if (EFI_ERROR(Status))  {
-            Print(L"2.. SBC_LogFlush call fail \n");
+            Print(L"2.. GCS_LogFlush call fail \n");
             return Status;
         }
     }
@@ -949,7 +949,7 @@ SBC_LogInitAuto(
     EFI_LOADED_IMAGE_PROTOCOL *LoadedImage = NULL;
     EFI_HANDLE FsHandle = NULL;
 
-    Print(L"SSBL SBC_LogInitAuto start\n");
+    Print(L"SSBL GCS_LogInitAuto start\n");
 
     if (Ctx == NULL || ImageHandle == NULL || LogPath == NULL) {
         Print(L"EFI_INVALID_PARAMETER\n");
@@ -1078,7 +1078,7 @@ SBC_LogFlush(
     }
 
     UINTN W = Ctx->BufLen;
-    Print(L"SBC_LogFlush Ctx->File->Write ... \n");
+    Print(L"GCS_LogFlush Ctx->File->Write ... \n");
     Status = Ctx->File->Write(Ctx->File, &W, Ctx->Buf);
     if (EFI_ERROR(Status)) {
         Print(L"Log write fail (%r) \n", Status);

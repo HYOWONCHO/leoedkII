@@ -776,7 +776,7 @@ SBCStatus SBC_RawPrtReadBlock(VOID *blkhnd, VOID *rdbuf,  UINT32 *rdlen, UINTN r
                 SYS_LOG_CSC_NAME, 
                 8, 
                 L"Detectrion ", 
-                L"SBC_SP_RAWPRT Failed to the Raw-partition read");
+                L"GCS_SP_RAWPRT Failed to the Raw-partition read");
         ret = SBCIO;
         goto errdone;
     }
@@ -833,7 +833,7 @@ SBCStatus  SBC_RawPrtBlockWrite(VOID *blkio, UINT8 *wrbuf, UINT32 wrlen, UINT32 
                 SYS_LOG_CSC_NAME, 
                 8, 
                 L"Detectrion ", 
-                L"SBC_SP_RAWPRT Failed to the Raw-partition write");
+                L"GCS_SP_RAWPRT Failed to the Raw-partition write");
         ret = SBCIO;
         goto errdone;
     }
@@ -1109,7 +1109,7 @@ errdone:
                 SYS_LOG_CSC_NAME, 
                 8, 
                 L"Detectrion ", 
-                L"SBC_SP_RAWPRT Failed to the Raw-partition read");
+                L"GCS_SP_RAWPRT Failed to the Raw-partition read");
     }
     return ret;
 
@@ -1301,7 +1301,7 @@ errdone:
                 SYS_LOG_CSC_NAME, 
                 8, 
                 L"Detectrion ", 
-                L"SBC_SP_RAWPRT Failed to the Raw-partition read");
+                L"GCS_SP_RAWPRT Failed to the Raw-partition read");
     }
     //SBC_mem_print_bin("Read Buf", (UINT8 *)buf, sz);
     if (tmp) {
@@ -1405,7 +1405,7 @@ SBCStatus SBC_ProtSwLoadRawPrt(VOID *handle,
     //dprint("");
     if (SBC_AESGcmDecrypt(&aesctx) != SBCOK) {
         SBC_LogHexToStrChar16(shared_secret, 32, err_out_key_val, sizeof(err_out_key_val)/sizeof(err_out_key_val[0]),  FALSE, 0);
-        UnicodeSPrint(mrgmsg,  sizeof mrgmsg, L"SBC_ProtSW_Update Failed to decrypt (%s) \n", err_out_key_val);
+        UnicodeSPrint(mrgmsg,  sizeof mrgmsg, L"GCS_ProtSW_Update Failed to decrypt (%s) \n", err_out_key_val);
         sbc_err_sysprn(SBC_LOG_CMN_PRIO_ERR, 2,
                  SYS_LOG_HOST_BOOT,
                  SYS_LOG_APP_NAME,

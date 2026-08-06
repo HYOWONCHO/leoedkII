@@ -130,7 +130,7 @@ SBCStatus SBC_AESGcmEncrypt(SBC_AESContext *ctx)
                        gcm->out.value, &gcm->out.length) == FALSE) {
         SBC_BuildHexFormattedMessage(
                 (CONST VOID *)gcm->key.value, gcm->key.length,
-                L"SBC_SP_GcmEncrypt Failed the Encrypt (%s)\n",
+                L"GCS_SP_GcmEncrypt Failed the Encrypt (%s)\n",
                 mrgmsg, sizeof mrgmsg);
 
         sbc_err_sysprn(SBC_LOG_CMN_PRIO_ERR, 2,
@@ -146,7 +146,7 @@ SBCStatus SBC_AESGcmEncrypt(SBC_AESContext *ctx)
 
   SBC_BuildHexFormattedMessage(
         (CONST VOID *)gcm->key.value, gcm->key.length,
-        L"SBC_SP_GcmEncrypt Done (Key - %s)\n",
+        L"GCS_SP_GcmEncrypt Done (Key - %s)\n",
         mrgmsg, sizeof mrgmsg);
 
   sbc_err_sysprn(SBC_LOG_CMN_PRIO_ERR, 2,
@@ -180,7 +180,7 @@ SBCStatus SBC_AESGcmDecrypt(SBC_AESContext *ctx)
     //eprint("GCM Decrypt fail \r\n");
         SBC_BuildHexFormattedMessage(
                 (CONST VOID *)gcm->key.value, gcm->key.length,
-                L"SBC_SP_GcmDecrypt Failed the Decrypt (%s)\n",
+                L"GCS_SP_GcmDecrypt Failed the Decrypt (%s)\n",
                 mrgmsg, sizeof mrgmsg);
 
         sbc_err_sysprn(SBC_LOG_CMN_PRIO_ERR, 2,
@@ -196,7 +196,7 @@ SBCStatus SBC_AESGcmDecrypt(SBC_AESContext *ctx)
 
   SBC_BuildHexFormattedMessage(
         (CONST VOID *)gcm->key.value, gcm->key.length,
-        L"SBC_SP_GcmDecrypt Done (Key - %s)\n",
+        L"GCS_SP_GcmDecrypt Done (Key - %s)\n",
         mrgmsg, sizeof mrgmsg);
 
   sbc_err_sysprn(SBC_LOG_CMN_PRIO_ERR, 2,

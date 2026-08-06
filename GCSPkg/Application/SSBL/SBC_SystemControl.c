@@ -104,7 +104,7 @@ SBCStatus SBC_BootKeyModeChange(UINT32 newbm, UINT32 newkey, VOID *priv)
                  SYS_LOG_CSC_NAME,
                  0,
                  SYS_LOG_EVT_DETECTION,
-                 L"SFR-Vendor-SP Success to change the Boot and Key Mode \n");
+                 L"GCS-Vendor-SP Success to change the Boot and Key Mode \n");
 
         //goto errdone;
 
@@ -119,7 +119,7 @@ errdone:
                      SYS_LOG_CSC_NAME,
                      0,
                      SYS_LOG_EVT_DETECTION,
-                     L"SFR-Vendor-SP Failed to change the Boot and Key Mode \n");
+                     L"GCS-Vendor-SP Failed to change the Boot and Key Mode \n");
 
         //goto errdone;
     }
@@ -305,7 +305,7 @@ SBCStatus SBC_GetOSIDFromRawPrt(VOID *priv, UINT8 *decbuf)
                      SYS_LOG_CSC_NAME,
                      8,
                      SYS_LOG_EVT_VALDIATION,
-                     L"SBC_RawFS_Key Creation Fail");
+                     L"GCS_RawFS_Key Creation Fail");
         goto errdone;
     }
 
@@ -353,7 +353,7 @@ SBCStatus SBC_GetOSIDFromRawPrt(VOID *priv, UINT8 *decbuf)
 
     if (SBC_AESGcmDecrypt(&aesctx) != SBCOK) {
         SBC_LogHexToStrChar16(shared_secret, 32, err_out_key_val, sizeof(err_out_key_val)/sizeof(err_out_key_val[0]),  FALSE, 0);
-        UnicodeSPrint(mrgmsg,  sizeof mrgmsg, L"SBC_VENDOR_SP Failed to decrypt (%s) \n", err_out_key_val);
+        UnicodeSPrint(mrgmsg,  sizeof mrgmsg, L"GCS_VENDOR_SP Failed to decrypt (%s) \n", err_out_key_val);
         sbc_err_sysprn(SBC_LOG_CMN_PRIO_ERR, 2,
                  SYS_LOG_HOST_BOOT,
                  SYS_LOG_APP_NAME,
@@ -390,7 +390,7 @@ static SBCStatus _compute_previously_osid(VOID *handle, VOID *old)
              SYS_LOG_CSC_NAME,
              1,
              SYS_LOG_EVT_VALDIATION,
-             L"SBC_Dice_Key HW&SW Base Old OSID Key Creation Fail");
+             L"GCS_Dice_Key HW&SW Base Old OSID Key Creation Fail");
        
         bp->bootst = SB_PROC_ST_ABNRAM;
         goto errdone;
@@ -407,7 +407,7 @@ static SBCStatus _compute_previously_osid(VOID *handle, VOID *old)
              SYS_LOG_CSC_NAME,
              1,
              SYS_LOG_EVT_VALDIATION,
-             L"SBC_Dice_Key HW&SW Base Old OSID Key Creation Fail");
+             L"GCS_Dice_Key HW&SW Base Old OSID Key Creation Fail");
        
         bp->bootst = SB_PROC_ST_ABNRAM;
         goto errdone;
@@ -558,7 +558,7 @@ static SBCStatus SBC_ProtSwReEncDec(VOID *handle)
                SYS_LOG_CSC_NAME,
                6,
                SYS_LOG_EVT_DETECTION,
-               L"SBC_Integrity_Protected SW integrity check failed");
+               L"GCS_Integrity_Protected SW integrity check failed");
 
         goto errdone;
     }
@@ -569,7 +569,7 @@ static SBCStatus SBC_ProtSwReEncDec(VOID *handle)
                SYS_LOG_CSC_NAME,
                6,
                SYS_LOG_EVT_VALDIATION,
-               L"SBC_Integrity_Protected SW successfully decryped using OSID-derived key");
+               L"GCS_Integrity_Protected SW successfully decryped using OSID-derived key");
 
 
 errdone:
@@ -581,7 +581,7 @@ errdone:
            SYS_LOG_CSC_NAME,
            0,
            SYS_LOG_EVT_DETECTION,
-           L"SBC_ProtSW_Update Failed to update the Protected Software");
+           L"GCS_ProtSW_Update Failed to update the Protected Software");
     }
 
     return ret;
@@ -606,7 +606,7 @@ static SBCStatus _update_behavior_for_km(void *priv)
                  SYS_LOG_CSC_NAME,
                  0,
                  L"Validation",
-                 L"SBC_VENDOR_SP Previously Firmware Not Exists \n");
+                 L"GCS_VENDOR_SP Previously Firmware Not Exists \n");
 
             //ret = SBCFAIL;
 
@@ -642,7 +642,7 @@ static SBCStatus _update_behavior_for_km(void *priv)
 //                                       ATP_IDENT_KEY_STG);
         ret = SBC_BaseAnswerDecAndEnc((void *)bp);
         if(ret != SBCOK) {
-            eprint("Detection SBC_tamper_OSID derived answer "
+            eprint("Detection GCS_tamper_OSID derived answer "
                             "mismatched known answer");
             goto errdone;
         }
@@ -689,7 +689,7 @@ errdone:
              SYS_LOG_CSC_NAME,
              0,
              L"Validation",
-             L"SBC_VENDOR_SP Update Mode operation fail \n");
+             L"GCS_VENDOR_SP Update Mode operation fail \n");
 
         sbc_err_sysprn(SBC_LOG_CMN_PRIO_INFO, 2,
              SYS_LOG_HOST_BOOT,
@@ -697,7 +697,7 @@ errdone:
              SYS_LOG_CSC_NAME,
              0,
              L"Validation",
-             L"SBC_VENDOR_SP Firmware Restore Starting \n");
+             L"GCS_VENDOR_SP Firmware Restore Starting \n");
 
 
         if(_check_prev_fw(bp->pvs_sw_bnk) == TRUE) {
@@ -710,8 +710,8 @@ errdone:
             UINTN dst_offset = 0ULL;
             UINTN src_offset = 0ULL;
             EFI_STATUS Status = EFI_SUCCESS;
-            src_offset = (BOOT_SECTOR1_OFS + BOOT_SSBL_OFS + ((bp->pvs_sw_bnk -1) << SBC_BOOTFW_BKN_OFS));
-            dst_offset = (BOOT_SECTOR1_OFS + BOOT_SSBL_OFS + ((bp->curr_sw_bnk -1) << SBC_BOOTFW_BKN_OFS));
+            src_offset = (BOOT_SECTOR1_OFS + BOOT_SSBL_OFS + ((bp->pvs_sw_bnk -1) << GCS_BootFW_BKN_OFS));
+            dst_offset = (BOOT_SECTOR1_OFS + BOOT_SSBL_OFS + ((bp->curr_sw_bnk -1) << GCS_BootFW_BKN_OFS));
             dprint("Restoring Firmware Source Offset :0x%lx", src_offset);
             dprint("Restoring Firmware Destnation Offset :0x%lx", dst_offset);
 
@@ -725,7 +725,7 @@ errdone:
                      SYS_LOG_CSC_NAME,
                      0,
                      L"Validation",
-                     L"SBC_VENDOR_SP Previously Firmware Restore Fail \n");
+                     L"GCS_VENDOR_SP Previously Firmware Restore Fail \n");
                 ret = SBCFAIL;
                 goto errdone2;
             }
@@ -736,7 +736,7 @@ errdone:
                      SYS_LOG_CSC_NAME,
                      0,
                      L"Validation",
-                     L"SBC_VENDOR_SP Previously Firmware Restore Success \n");
+                     L"GCS_VENDOR_SP Previously Firmware Restore Success \n");
 
 #ifdef _HANDLE_PROTSW_
             if(skip_protsw != TRUE) {
@@ -759,7 +759,7 @@ errdone:
                  SYS_LOG_CSC_NAME,
                  0,
                  L"Validation",
-                 L"SBC_VENDOR_SP Previously Firmware Not Exists, Restoring Start \n");
+                 L"GCS_VENDOR_SP Previously Firmware Not Exists, Restoring Start \n");
 
             SBC_BootKeyModeChange(BOOT_MODE_FACTORY,
                                   KEY_MODE_UPDATE,
@@ -771,7 +771,7 @@ errdone:
             UINTN src_offset = 0ULL;
             EFI_STATUS Status = EFI_SUCCESS;
             src_offset = (BOOT_SECTOR3_OFS + BOOT_SSBL_OFS);
-            dst_offset = (BOOT_SECTOR1_OFS + BOOT_SSBL_OFS + ((bp->curr_sw_bnk -1) << SBC_BOOTFW_BKN_OFS));
+            dst_offset = (BOOT_SECTOR1_OFS + BOOT_SSBL_OFS + ((bp->curr_sw_bnk -1) << GCS_BootFW_BKN_OFS));
             dprint("Restoring Firmware Source Offset :0x%lx", src_offset);
             dprint("Restoring Firmware Destnation Offset :0x%lx", dst_offset);
 
@@ -785,7 +785,7 @@ errdone:
                      SYS_LOG_CSC_NAME,
                      0,
                      L"Validation",
-                     L"SBC_VENDOR_SP Factory Firmware Restore Fail \n");
+                     L"GCS_VENDOR_SP Factory Firmware Restore Fail \n");
                 ret = SBCFAIL;
                 goto errdone2;
             }
@@ -796,7 +796,7 @@ errdone:
                      SYS_LOG_CSC_NAME,
                      0,
                      L"Validation",
-                     L"SBC_VENDOR_SP Factory Firmware Restore Success \n");
+                     L"GCS_VENDOR_SP Factory Firmware Restore Success \n");
 
 #ifdef _HANDLE_PROTSW_
             if(skip_protsw != TRUE) {
@@ -823,7 +823,7 @@ errdone:
              SYS_LOG_CSC_NAME,
              0,
              L"Validation",
-             L"SBC_VENDOR_SP Update Mode operation fail \n");
+             L"GCS_VENDOR_SP Update Mode operation fail \n");
     }
     else {
         sbc_err_sysprn(SBC_LOG_CMN_PRIO_INFO, 2,
@@ -832,7 +832,7 @@ errdone:
              SYS_LOG_CSC_NAME,
              0,
              L"Validation",
-             L"SBC_VENDOR_SP Update Mode operation done \n");
+             L"GCS_VENDOR_SP Update Mode operation done \n");
     }
 
     return ret;
@@ -1014,7 +1014,7 @@ static SBCStatus SBC_StoreFwAndOsKeyPairStore(VOID *priv, VOID *fwid, VOID *osid
     if( ret != SBCOK ) {
         SBC_BuildHexFormattedMessage(
                 (CONST VOID *)fwid, 32,
-                L"SBC_Dice_Key Failed the Create FWID key-pair (%s)\n",
+                L"GCS_Dice_Key Failed the Create FWID key-pair (%s)\n",
                 mrgmsg, sizeof mrgmsg);
 
         sbc_err_sysprn(SBC_LOG_CMN_PRIO_ERR, 2,
@@ -1032,7 +1032,7 @@ static SBCStatus SBC_StoreFwAndOsKeyPairStore(VOID *priv, VOID *fwid, VOID *osid
     if( ret != SBCOK ) {
         SBC_BuildHexFormattedMessage(
                 (CONST VOID *)osid, 32,
-                L"SBC_Dice_Key Failed the Create OSID key-pair (%s)\n",
+                L"GCS_Dice_Key Failed the Create OSID key-pair (%s)\n",
                 mrgmsg, sizeof mrgmsg);
 
         sbc_err_sysprn(SBC_LOG_CMN_PRIO_ERR, 2,
@@ -1366,7 +1366,7 @@ void  SBC_RecoveryBootProcessing(VOID *priv)
              SYS_LOG_CSC_NAME,
              1,
              SYS_LOG_EVT_DETECTION,
-             L"SBC_VENDOR_SP System Reset - Recovery Boot State Ab-normal");
+             L"GCS_VENDOR_SP System Reset - Recovery Boot State Ab-normal");
      
 #ifndef _ALL_PASS_
         SBC_RebootSystem();
@@ -1407,7 +1407,7 @@ void  SBC_RecoveryBootProcessing(VOID *priv)
              SYS_LOG_CSC_NAME,
              1,
              SYS_LOG_EVT_VALDIATION,
-             L"SBC_Dice_Key New Create");
+             L"GCS_Dice_Key New Create");
 
     ret = SBC_DiceKeysReGen(bt_proc->ldhndl, 
                       &new_dice_id, 
@@ -1422,7 +1422,7 @@ void  SBC_RecoveryBootProcessing(VOID *priv)
              SYS_LOG_CSC_NAME,
              1,
              SYS_LOG_EVT_VALDIATION,
-             L"SBC_Dice_Key HW&SW Base New Dice Key Creation Fail");
+             L"GCS_Dice_Key HW&SW Base New Dice Key Creation Fail");
         bt_proc->bootst = SB_PROC_ST_ABNRAM;
     }
 
@@ -1490,7 +1490,7 @@ void  SBC_RecoveryBootProcessing(VOID *priv)
                      SYS_LOG_CSC_NAME,
                      4,
                      SYS_LOG_EVT_DETECTION,
-                     L"SBC_tamper_Updated boot firmware invalid and initiating rollback to previous version");
+                     L"GCS_tamper_Updated boot firmware invalid and initiating rollback to previous version");
 
             ret = SBC_RawPrtHdrChangeWithRecovery(priv,
                                       bt_proc->pvs_sw_bnk,
@@ -1505,7 +1505,7 @@ void  SBC_RecoveryBootProcessing(VOID *priv)
                      SYS_LOG_CSC_NAME,
                      4,
                      SYS_LOG_EVT_DETECTION,
-                     L"SBC_Integrity_Boot mode is NORMAL mode and Reboot");
+                     L"GCS_Integrity_Boot mode is NORMAL mode and Reboot");
             break;
         case KEY_MODE_UPDATE:
             dprint("KEY_MODE_UPDATE");
@@ -1554,7 +1554,7 @@ void  SBC_RecoveryBootProcessing(VOID *priv)
                      SYS_LOG_CSC_NAME,
                      4,
                      SYS_LOG_EVT_DETECTION,
-                     L"SBC_tamper_Updated boot firmware invalid and initiating rollback to previous version");
+                     L"GCS_tamper_Updated boot firmware invalid and initiating rollback to previous version");
 
             ret = SBC_RawPrtHdrChange(priv,
                                       bt_proc->pvs_sw_bnk,
@@ -1576,7 +1576,7 @@ void  SBC_RecoveryBootProcessing(VOID *priv)
                      SYS_LOG_CSC_NAME,
                      4,
                      SYS_LOG_EVT_DETECTION,
-                     L"SBC_Integrity_Boot mode is NORMAL mode and Reboot");
+                     L"GCS_Integrity_Boot mode is NORMAL mode and Reboot");
             //((boot_proc_t *)priv)->prevmode = 0;
             //ret = SBC_BootKeyModeChange(BOOT_MODE_NORMAL, KEY_MODE_NORMAL, priv);
             break;
@@ -1589,7 +1589,7 @@ void  SBC_RecoveryBootProcessing(VOID *priv)
                          SYS_LOG_CSC_NAME,
                          1,
                          SYS_LOG_EVT_DETECTION,
-                         L"SBC_VENDOR_SP RECOVERY BOOT STATUS - UNKNOWN KEY MODE");
+                         L"GCS_VENDOR_SP RECOVERY BOOT STATUS - UNKNOWN KEY MODE");
             goto errdone;
         }
 
@@ -1612,7 +1612,7 @@ void  SBC_RecoveryBootProcessing(VOID *priv)
                          SYS_LOG_CSC_NAME,
                          1,
                          SYS_LOG_EVT_DETECTION,
-                         L"SBC_VENDOR_SP RECOVERY BOOT STATUS - UNKNOWN");
+                         L"GCS_VENDOR_SP RECOVERY BOOT STATUS - UNKNOWN");
 
         goto errdone;
     }
@@ -1634,7 +1634,7 @@ errdone:
                          SYS_LOG_CSC_NAME,
                          1,
                          SYS_LOG_EVT_DETECTION,
-                         L"SBC_VENDOR_SP System Reset - Recovery Boot State Ab-normal");
+                         L"GCS_VENDOR_SP System Reset - Recovery Boot State Ab-normal");
     }
     else {
         sbc_err_sysprn(SBC_LOG_CMN_PRIO_INFO, 2,
@@ -1643,7 +1643,7 @@ errdone:
                          SYS_LOG_CSC_NAME,
                          1,
                          SYS_LOG_EVT_DETECTION,
-                         L"SBC_VENDOR_SP System Reset - Recovery Boot State Normal");     
+                         L"GCS_VENDOR_SP System Reset - Recovery Boot State Normal");     
 
     }
 
@@ -1706,7 +1706,7 @@ static void _update_reset_check_and_behavior(VOID *priv)
                      SYS_LOG_CSC_NAME,
                      4,
                      SYS_LOG_EVT_DETECTION,
-                     L"SBC_Integrity_Boot mode is NORMAL mode and Reboot");
+                     L"GCS_Integrity_Boot mode is NORMAL mode and Reboot");
             break;
         case SB_PROC_ST_ABNRAM:
             dprint("Boot is AbNormal");
@@ -1732,7 +1732,7 @@ static void _update_reset_check_and_behavior(VOID *priv)
                  SYS_LOG_CSC_NAME,
                  1,
                  SYS_LOG_EVT_DETECTION,
-                 L"SBC_VENDOR_SP System Reset - Boot State Ab-normal");
+                 L"GCS_VENDOR_SP System Reset - Boot State Ab-normal");
         }
 
 #ifndef _ALL_PASS_
@@ -1767,7 +1767,7 @@ static VOID _handling_sb_process_for_bm_normal(VOID *priv)
                      SYS_LOG_CSC_NAME,
                      4,
                      SYS_LOG_EVT_DETECTION,
-                     L"SBC_Integrity_Boot mode is NORMAL mode and Reboot");
+                     L"GCS_Integrity_Boot mode is NORMAL mode and Reboot");
         }
 
         stay_recovery_flag = 0;
@@ -1780,7 +1780,7 @@ static VOID _handling_sb_process_for_bm_normal(VOID *priv)
              SYS_LOG_CSC_NAME,
              1,
              SYS_LOG_EVT_DETECTION,
-             L"SBC_VENDOR_SP System Shutdown - Boot State Ab-normal");
+             L"GCS_VENDOR_SP System Shutdown - Boot State Ab-normal");
 
         SBC_ShutdownSystem();
 
@@ -1801,7 +1801,7 @@ static VOID _handling_sb_process_for_bm_normal(VOID *priv)
                  SYS_LOG_CSC_NAME,
                  1,
                  SYS_LOG_EVT_DETECTION,
-                 L"SBC_VENDOR_SP System Reset - Boot State Ab-normal");
+                 L"GCS_VENDOR_SP System Reset - Boot State Ab-normal");
         }
 #ifndef _ALL_PASS_
 
@@ -1811,7 +1811,7 @@ static VOID _handling_sb_process_for_bm_normal(VOID *priv)
                      SYS_LOG_CSC_NAME,
                      4,
                      SYS_LOG_EVT_DETECTION,
-                     L"SBC_Integrity_Boot mode is NORMAL mode and Reboot");
+                     L"GCS_Integrity_Boot mode is NORMAL mode and Reboot");
 
         SBC_RebootSystem();
         return;
@@ -1946,7 +1946,7 @@ SBCStatus  SBC_SecureBootCheck(VOID *priv)
                  SYS_LOG_CSC_NAME,
                  8,
                  SYS_LOG_EVT_VALDIATION,
-                 L"SBC_Integrity_All boot components passed signature verification \n");
+                 L"GCS_Integrity_All boot components passed signature verification \n");
 
         }
 
@@ -1999,7 +1999,7 @@ SBCStatus  SBC_SecureBootCheck(VOID *priv)
                            SYS_LOG_CSC_NAME,
                              1,
                              SYS_LOG_EVT_DETECTION,
-                             L"SBC_VENDOR_SP System Reset - Update Boot State Ab-Normal");     
+                             L"GCS_VENDOR_SP System Reset - Update Boot State Ab-Normal");     
         }
         else {
 
@@ -2031,7 +2031,7 @@ SBCStatus  SBC_SecureBootCheck(VOID *priv)
                            SYS_LOG_CSC_NAME,
                              1,
                              SYS_LOG_EVT_DETECTION,
-                             L"SBC_VENDOR_SP System Reset - Update Boot State Normal");
+                             L"GCS_VENDOR_SP System Reset - Update Boot State Normal");
         }
 
 
@@ -2107,7 +2107,7 @@ VOID SBC_RebootSystem(VOID)
          SYS_LOG_CSC_NAME,
          1,
          SYS_LOG_EVT_DETECTION,
-         L"SBC_VENDOR_SP System Reboo Re-starting ");
+         L"GCS_VENDOR_SP System Reboo Re-starting ");
 
 #ifdef _LOG_RECODING_
     SBC_LogDeinit(&gLogCtx);
@@ -2127,7 +2127,7 @@ VOID SBC_ShutdownSystem(VOID)
          SYS_LOG_CSC_NAME,
          1,
          SYS_LOG_EVT_DETECTION,
-         L"SBC_VENDOR_SP System Shutdown - Boot State Ab-normal");
+         L"GCS_VENDOR_SP System Shutdown - Boot State Ab-normal");
 #ifdef _LOG_RECODING_
     SBC_LogDeinit(&gLogCtx);
 #endif
@@ -2254,7 +2254,7 @@ SBCStatus SBC_RawPrtHdrChange(
                  SYS_LOG_CSC_NAME,
                  0,
                  SYS_LOG_EVT_DETECTION,
-                 L"SFR-Vendor-SP Success to change the "
+                 L"GCS-Vendor-SP Success to change the "
                  L"Header informaiton of Raw-partition \n");
 
     ret = SBC_RawAlignedReadBlockIO(b_proc->blkhnd,
@@ -2279,7 +2279,7 @@ errdone:
                  SYS_LOG_CSC_NAME,
                  0,
                  SYS_LOG_EVT_DETECTION,
-                 L"SFR-Vendor-SP Failed to change the "
+                 L"GCS-Vendor-SP Failed to change the "
                  L"Header informaiton of Raw-partition \n");
     }
 
@@ -2377,7 +2377,7 @@ SBCStatus SBC_RawPrtHdrChangeWithRecovery(
                  SYS_LOG_CSC_NAME,
                  0,
                  SYS_LOG_EVT_DETECTION,
-                 L"SFR-Vendor-SP Success to change the "
+                 L"GCS-Vendor-SP Success to change the "
                  L"Header informaiton of Raw-partition \n");
 
     ret = SBC_RawAlignedReadBlockIO(b_proc->blkhnd,
@@ -2402,7 +2402,7 @@ errdone:
                  SYS_LOG_CSC_NAME,
                  0,
                  SYS_LOG_EVT_DETECTION,
-                 L"SFR-Vendor-SP Failed to change the "
+                 L"GCS-Vendor-SP Failed to change the "
                  L"Header informaiton of Raw-partition \n");
     }
 

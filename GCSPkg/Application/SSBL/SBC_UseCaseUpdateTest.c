@@ -101,7 +101,7 @@ SBCStatus UC_BootFWTamperingCheck(VOID *handle)
                      SYS_LOG_CSC_NAME,
                      0,
                      SYS_LOG_EVT_DETECTION,
-                     L"SBC Boot Mode Change from Update to Recovery");
+                     L"GCS Boot Mode Change from Update to Recovery");
             SBC_BootKeyModeChange(BOOT_MODE_RECOVERY, KEY_MODE_UPDATE, (VOID *)p);
             set_order = SBC_UC_MODE_RECOVERY;
             varsz = sizeof set_order;
@@ -116,7 +116,7 @@ SBCStatus UC_BootFWTamperingCheck(VOID *handle)
                      SYS_LOG_CSC_NAME,
                      0,
                      SYS_LOG_EVT_DETECTION,
-                     L"SBC Boot Mode Change from Update to Factory");
+                     L"GCS Boot Mode Change from Update to Factory");
 
             SBC_BootKeyModeChange(BOOT_MODE_FACTORY, KEY_MODE_UPDATE, (VOID *)p);
             set_order = SBC_UC_MODE_FACTORY;
@@ -132,7 +132,7 @@ SBCStatus UC_BootFWTamperingCheck(VOID *handle)
                  SYS_LOG_CSC_NAME,
                  0,
                  SYS_LOG_EVT_DETECTION,
-                 L"SBC Key Mode Change from Normal to Update");
+                 L"GCS Key Mode Change from Normal to Update");
         SBC_RawAlignedReadBlockIO(p->blkhnd, 0x0, 128, buf);
         _uc_mem_print_bin("Boot Mode Buf", buf, 128);
 
@@ -194,7 +194,7 @@ SBCStatus UC_RecoveryAbnormalAndNormal(VOID *handle)
     SBC_BuildHexFormattedMessage(
         (CONST VOID *)((atp_ident_t *)p->keyinfo)->migid,
         32,
-        L"SBC_Mig_ID creation success (%s) \n",
+        L"GCS_Mig_ID creation success (%s) \n",
         mrgmsg, sizeof mrgmsg);
     sbc_err_sysprn(SBC_LOG_CMN_PRIO_INFO, 2,
                  SYS_LOG_HOST_BOOT,
@@ -251,7 +251,7 @@ errdone:
                  SYS_LOG_CSC_NAME,
                  0,
                  SYS_LOG_EVT_DETECTION,
-                 L"SBC Boot Mode Change from Recovery to Factory");
+                 L"GCS Boot Mode Change from Recovery to Factory");
         SBC_BootKeyModeChange(BOOT_MODE_FACTORY, KEY_MODE_UPDATE, (VOID *)p);
         SBC_RawAlignedReadBlockIO(p->blkhnd, 0x0, 128, buf);
         _uc_mem_print_bin("Boot Mode Buf", buf, 128);
@@ -264,7 +264,7 @@ errdone:
                  SYS_LOG_CSC_NAME,
                  0,
                  SYS_LOG_EVT_DETECTION,
-                 L"SBC Boot Mode Change from Recovery to NOrmal");
+                 L"GCS Boot Mode Change from Recovery to NOrmal");
         SBC_BootKeyModeChange(BOOT_MODE_NORMAL, KEY_MODE_NORMAL, (VOID *)p);
         SBC_RawAlignedReadBlockIO(p->blkhnd, 0x0, 128, buf);
         _uc_mem_print_bin("Boot Mode Buf", buf, 128);

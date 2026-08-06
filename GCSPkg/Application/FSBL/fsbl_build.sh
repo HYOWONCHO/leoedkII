@@ -43,13 +43,14 @@ while [ $# -gt 0 ]; do
     shift
 done
 
+echo "[INFO] ROOTDIR=$ROOT_DIR"
 pushd "$ROOT_DIR" > /dev/null || {
     echo "[ERROR] Failed to change directory to project root"
     exit 1
 }
 
 echo "[INFO] Building FSBL..."
-./leo_build.sh --build-fsbl
+./leo_build.sh --build-gcs-fsbl
 ret=$?
 
 popd > /dev/null || {

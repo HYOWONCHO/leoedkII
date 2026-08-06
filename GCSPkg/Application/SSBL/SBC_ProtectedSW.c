@@ -167,7 +167,7 @@ SBCStatus SBC_GetProtectedSwName(VOID *handle, UINTN st, CHAR8 *sw_name, UINTN s
                      SYS_LOG_CSC_NAME,
                      8,
                      SYS_LOG_EVT_VALDIATION,
-                     L"SBC_RawFS_Key Creation Fail");
+                     L"GCS_RawFS_Key Creation Fail");
         goto errdone;
     }
 
@@ -176,7 +176,7 @@ SBCStatus SBC_GetProtectedSwName(VOID *handle, UINTN st, CHAR8 *sw_name, UINTN s
     ret = SBC_ProtSwLoadRawPrt(handle, deckey, decbuf, &rdlen, SYS_CONF_START_OFS + SYS_CONF_SW_LIST_OFS);
     if( ret != SBCOK ) {
         SBC_LogHexToStrChar16(deckey, 32, err_out_key_val, sizeof(err_out_key_val)/sizeof(err_out_key_val[0]),  FALSE, 0);
-        UnicodeSPrint(mrgmsg,  sizeof mrgmsg, L"SBC_ProtSW_Update Failed to decrypt (%s) \n", err_out_key_val);
+        UnicodeSPrint(mrgmsg,  sizeof mrgmsg, L"GCS_ProtSW_Update Failed to decrypt (%s) \n", err_out_key_val);
         sbc_err_sysprn(SBC_LOG_CMN_PRIO_ERR, 2,
                  SYS_LOG_HOST_BOOT,
                  SYS_LOG_APP_NAME,
@@ -290,7 +290,7 @@ SBCStatus SBC_FindProtectedSw(VOID *handle, CHAR8 name[256], CHAR8 *ver, UINTN *
                      SYS_LOG_CSC_NAME,
                      8,
                      SYS_LOG_EVT_VALDIATION,
-                     L"SBC_RawFS_Key Creation Fail");
+                     L"GCS_RawFS_Key Creation Fail");
         goto errdone;
     }
 
@@ -396,7 +396,7 @@ SBCStatus SBC_UpdateProtectedSWListVersion(VOID *handle, CHAR8 *sw_name, CHAR8 *
                      SYS_LOG_CSC_NAME,
                      8,
                      SYS_LOG_EVT_VALDIATION,
-                     L"SBC_RawFS_Key Creation Fail");
+                     L"GCS_RawFS_Key Creation Fail");
         goto errdone;
     }
 
@@ -642,7 +642,7 @@ SBCStatus SBC_RecryptoProtectedSW(VOID *handle, UINTN ofs,  UINT8* sw_secret_key
     if (NvramErr_IsTrue(ERR_PROTSW_DEC)) {
         SBC_BuildHexFormattedMessage(
                 (CONST VOID *)sw_mig_key, 32,
-                L"SBC_SP_GcmDecrypt Failed the Decrypt (%s)\n",
+                L"GCS_SP_GcmDecrypt Failed the Decrypt (%s)\n",
                 mrgmsg, sizeof mrgmsg);
 
         sbc_err_sysprn(SBC_LOG_CMN_PRIO_ERR, 2,
@@ -691,7 +691,7 @@ SBCStatus SBC_RecryptoProtectedSW(VOID *handle, UINTN ofs,  UINT8* sw_secret_key
                      SYS_LOG_CSC_NAME,
                      4,
                      SYS_LOG_EVT_DETECTION,
-                     L"SBC_Integrity_Boot mode is NORMAL mode and Reboot");
+                     L"GCS_Integrity_Boot mode is NORMAL mode and Reboot");
         goto errdone;
     }
     else {
@@ -701,7 +701,7 @@ SBCStatus SBC_RecryptoProtectedSW(VOID *handle, UINTN ofs,  UINT8* sw_secret_key
                      SYS_LOG_CSC_NAME,
                      4,
                      SYS_LOG_EVT_VALDIATION,
-                     L"SBC_Integrity_ Protected SW is encrypted using the migration key");
+                     L"GCS_Integrity_ Protected SW is encrypted using the migration key");
     }
 
 
@@ -709,7 +709,7 @@ SBCStatus SBC_RecryptoProtectedSW(VOID *handle, UINTN ofs,  UINT8* sw_secret_key
     if (NvramErr_IsTrue(ERR_PROTSW_ENC)) {
         SBC_BuildHexFormattedMessage(
                 (CONST VOID *)sw_secret_key, 32,
-                L"SBC_SP_GcmEncrypt Failed the Encrypt (%s)\n",
+                L"GCS_SP_GcmEncrypt Failed the Encrypt (%s)\n",
                 mrgmsg, sizeof mrgmsg);
 
         sbc_err_sysprn(SBC_LOG_CMN_PRIO_ERR, 2,
@@ -855,7 +855,7 @@ SBCStatus SBC_RecryptoProtectedSW(VOID *handle, UINTN ofs,  UINT8* sw_secret_key
              SYS_LOG_CSC_NAME,
              4,
              SYS_LOG_EVT_VALDIATION,
-             L"SBC_Integrity_ Protected SW is Saving encrypted block to raw partition");
+             L"GCS_Integrity_ Protected SW is Saving encrypted block to raw partition");
 
 //  {
 //      UINTN node_off;

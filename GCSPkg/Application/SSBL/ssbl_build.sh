@@ -49,7 +49,7 @@ pushd "$ROOT_DIR" > /dev/null || {
 }
 
 echo "[INFO] Building SSBL..."
-./leo_build.sh --build-ssbl
+./leo_build.sh --build-gcs-ssbl
 ret=$?
 
 popd > /dev/null || {
