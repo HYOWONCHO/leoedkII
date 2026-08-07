@@ -281,6 +281,8 @@ declare -A long=([env-setup]=: \
                   [build-moduleX64]=: \
                   [build-ssbl]=: \
                   [build-fsbl]=: \
+                  [build-gcs-ssbl]=: \
+                  [build-gcs-fsbl]=: \
                 )
 
 echo "$@ - $#"
@@ -315,6 +317,21 @@ while _getopts_long long p:m:x opt "$@"; do
         echo "build-fsbl"
         pkgname="SBCPkg"
         module="SBCPkg/Application/FSBL/FSBL.inf"
+        module_build
+        ;;
+    build-gcs-ssbl)
+        echo "build-ssbl"
+        pkgname="GCSPkg"
+        echo "build-ssbl-1"
+        module="GCSPkg/Application/SSBL/SSBL.inf"
+        echo "build-ssbl-2"
+        module_build
+        echo "build-ssbl-3"
+        ;;
+    build-gcs-fsbl)
+        echo "build-fsbl"
+        pkgname="GCSPkg"
+        module="GCSPkg/Application/FSBL/FSBL.inf"
         module_build
         ;;
     p)
