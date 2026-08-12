@@ -3,6 +3,7 @@
 *.efi
 *.exe
 *.o
+*.sh
 
 rawfs_*
 dump_*
@@ -12,3 +13,4 @@ build/
 */build/
 
 *:Zone.Identifier
+Conf/
