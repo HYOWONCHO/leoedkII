@@ -2,6 +2,8 @@
 *.vtg
 *.efi
 *.exe
+*.o
+
 rawfs_*
 dump_*
 
