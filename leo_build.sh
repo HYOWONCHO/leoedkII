@@ -2,6 +2,8 @@
 
 set -e
 
+EFI_COPY_PATH=$HOME/workspace/build_image/build_efi
+
 
 # Define colors
 RED='\e[31m'
@@ -12,6 +14,8 @@ MAGENTA='\e[35m'
 CYAN='\e[36m'
 WHITE='\e[37m'
 NC='\e[0m' # No Color
+
+
 pkgname=none
 module=none #"LeoTest/leo_test.inf"
 build_flag=none
@@ -19,6 +23,9 @@ build_flag=none
 
 fw_version=""
 sat_baseanswr="sat-based-answer"
+
+
+
 
 file="./sbc_v.txt"
 declare -A VARS=()
@@ -152,9 +159,10 @@ function post_copy_fsbl()
 
     echo $copyname
 
-    cp -i ./FSBL.efi ../../../../FwSignPy/.
-    cp -i ./FSBL.efi ../../../../FwSignPy/$copyname
-    cp -i ./FSBL.efi ../../../../../../workspace_sat/build_efi/$copyname
+    #cp -i ./FSBL.efi ../../../../FwSignPy/.
+    #cp -i ./FSBL.efi ../../../../FwSignPy/$copyname
+    cp -i  ./FSBL.efi $EFI_COPY_PATH/$copyname
+    #cp -i ./FSBL.efi ../../../../build_image/build_efi/$copyname
 
     popd
     echo -e "${NC}"
@@ -174,9 +182,11 @@ function post_copy_ssbl()
     copyname="SSBL_${fw_version}_${ts}.efi"
     echo $copyname
 
-    cp -i ./SSBL.efi ../../../../FwSignPy/.
-    cp -i ./SSBL.efi ../../../../FwSignPy/$copyname
-    cp -i ./SSBL.efi ../../../../../../workspace_sat/build_efi/$copyname
+    #cp -i ./SSBL.efi ../../../../FwSignPy/.
+    #cp -i ./SSBL.efi ../../../../FwSignPy/$copyname
+    #cp -i ./SSBL.efi ../../../../build_image/build_efi/$copyname
+
+    cp -i  ./SSBL.efi $EFI_COPY_PATH/$copyname
 
     popd
     echo -e "${NC}"
@@ -281,6 +291,8 @@ declare -A long=([env-setup]=: \
                   [build-moduleX64]=: \
                   [build-ssbl]=: \
                   [build-fsbl]=: \
+                  [build-gcs-ssbl]=: \
+                  [build-gcs-fsbl]=: \
                 )
 
 echo "$@ - $#"
@@ -315,6 +327,21 @@ while _getopts_long long p:m:x opt "$@"; do
         echo "build-fsbl"
         pkgname="SBCPkg"
         module="SBCPkg/Application/FSBL/FSBL.inf"
+        module_build
+        ;;
+    build-gcs-ssbl)
+        echo "build-ssbl"
+        pkgname="GCSPkg"
+        echo "build-ssbl-1"
+        module="GCSPkg/Application/SSBL/SSBL.inf"
+        echo "build-ssbl-2"
+        module_build
+        echo "build-ssbl-3"
+        ;;
+    build-gcs-fsbl)
+        echo "build-fsbl"
+        pkgname="GCSPkg"
+        module="GCSPkg/Application/FSBL/FSBL.inf"
         module_build
         ;;
     p)
