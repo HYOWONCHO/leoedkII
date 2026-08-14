@@ -1,5 +1,5 @@
 #ifndef _UNIT_TEST_H_
-#define _UNTI_TEST_H_
+#define _UNIT_TEST_H_
 
 #define SB_PROC_ST_MAGICID              0xABCD0000
 
